@@ -42,7 +42,10 @@ static inline void Phase_WriteSvpwm(Phase_VOut_T * p_phase, uint32_t vBusInv_fra
     Phase_WriteDuty_Fract16(p_phase, duty.a, duty.b, duty.c);
 }
 
-
+// void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_fract32, fract16_t v_pu)
+// {
+//     Phase_Align(p_phase, id, svpwm_norm_vbus_inv(vBusInv_fract32, v_pu));
+// }
 
 // static inline void Phase_WriteSvpwm_Vector(Phase_VOut_T * p_phase, uint32_t vBusInv_fract32, Phase_Triplet_T v_abc)
 // {

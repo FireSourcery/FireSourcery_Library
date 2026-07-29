@@ -86,10 +86,11 @@ void Motor_Reset(Motor_Context_T * p_motor)
     /* Output Limits Set later depending on commutation mode, feedback mode, direction */
     PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
 
-    Motor_InitSpeedRamp(p_motor);
-    Motor_InitTorqueRamp(p_motor);
-    // Motor_ResetSpeedLimit(p_motor);
-    // Motor_ResetILimit(p_motor);
+    /* Limits update on direction set */
+    Ramp_Init_Slope(&p_motor->SpeedRamp, p_motor->Config.SpeedRampSlope_Accum32);
+    Ramp_Init_Slope(&p_motor->TorqueRamp, p_motor->Config.TorqueRampSlope_Accum32);
+    // Motor_ResolveSpeedLimits(p_motor);
+    // Motor_ResolveILimits(p_motor);
     // Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_Calibration_GetVRated_Fract16());
 
     /* Preset rate ramps do not need output limits */
@@ -129,7 +130,7 @@ bool Motor_IsConfigValid(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     uint16_t speedCeiling = FOC_Config_IsFwEnabled(&p_context->Foc.Config) ? INT16_MAX : Motor_SpeedRated_Fract16(p_motor);
-    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, speedCeiling);
+    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, speedCeiling) && _Motor_Config_IsValidVoltage(&p_context->Config, VBus_Fract16(p_motor->P_VBUS));
 }
 
 /******************************************************************************/
@@ -167,41 +168,6 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 
 */
 /******************************************************************************/
-/* Ramp slope set independent of user Config.limits. By characteristics. */
-/* Limits update on direction set */
-void Motor_InitSpeedRamp(Motor_Context_T * p_motor)
-{
-    Ramp_Init_Slope(&p_motor->SpeedRamp, p_motor->Config.SpeedRampSlope_Accum32);
-    // Motor_ResolveSpeedLimits(p_motor);
-}
-
-void Motor_InitTorqueRamp(Motor_Context_T * p_motor)
-{
-    Ramp_Init_Slope(&p_motor->TorqueRamp, p_motor->Config.TorqueRampSlope_Accum32);
-    // Motor_ResolveILimits(p_motor);
-}
-
-void Motor_ResetSpeedPid(Motor_Context_T * p_motor)
-{
-    PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
-}
-
-void Motor_ResetIPid(Motor_Context_T * p_motor)
-{
-    PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
-    PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
-}
-
-void _Motor_ResetTuning(Motor_T * p_motor)
-{
-    /* load from nvm to maintain consistency for save */
-    p_motor->P_MOTOR->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
-    p_motor->P_MOTOR->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
-    Motor_ResetSpeedPid(p_motor->P_MOTOR);
-    Motor_ResetIPid(p_motor->P_MOTOR);
-}
-
-
 void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
 {
     PID_Reset(&p_motor->PidSpeed);
@@ -214,7 +180,6 @@ void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
 }
 
 /* Reset from Derating */
-/* use wider config window before direction are known */
 // void Motor_ResetSpeedLimit(Motor_Context_T * p_motor)
 // {
 //     Ramp_SetLimits(&p_motor->SpeedRamp, -p_motor->Config.SpeedLimitForward_Fract16, p_motor->Config.SpeedLimitForward_Fract16);
@@ -225,7 +190,7 @@ void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
 //     Ramp_SetLimits(&p_motor->TorqueRamp, -p_motor->Config.ILimitMotoring_Fract16, p_motor->Config.ILimitMotoring_Fract16);
 // }
 
-// void Motor_EnableSpeedRamp(Motor_Context_T * p_motor) { Motor_InitSpeedRamp(p_motor); }
+// void Motor_EnableSpeedRamp(Motor_Context_T * p_motor) { Ramp_Init_Slope(&p_motor->SpeedRamp, p_motor->Config.SpeedRampSlope_Accum32); }
 // void Motor_DisableSpeedRamp(Motor_Context_T * p_motor) { _Ramp_Disable(&p_motor->SpeedRamp); }
 // void Motor_EnableTorqueRamp(Motor_Context_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
 // void Motor_DisableTorqueRamp(Motor_Context_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
@@ -267,6 +232,59 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
     Motor_ResolveILimits(p_dev);
 }
 
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+void Motor_ResetSpeedPid(Motor_Context_T * p_motor)
+{
+    PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
+}
+
+void Motor_ResetIPid(Motor_Context_T * p_motor)
+{
+    PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
+    PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
+}
+
+void _Motor_ResetTuning(Motor_T * p_motor)
+{
+    /* load from nvm to maintain consistency for save */
+    p_motor->P_MOTOR->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
+    p_motor->P_MOTOR->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
+    Motor_ResetSpeedPid(p_motor->P_MOTOR);
+    Motor_ResetIPid(p_motor->P_MOTOR);
+}
+
+/* Maintain consistency between runtime and Nvm */
+void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
+{
+    p_state->Config.PidSpeed.Kp_Fixed32 = value;
+    PID_SetKp_Fixed32(&p_state->PidSpeed, value);
+}
+
+void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
+{
+    p_state->Config.PidSpeed.Ki_Fixed32 = value;
+    PID_SetKi_Fixed32(&p_state->PidSpeed, value);
+}
+
+// optionally switch on commutation mode
+void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
+{
+    p_state->Config.PidI.Kp_Fixed32 = value;
+    PID_SetKp_Fixed32(&p_state->Foc.PidIq, value);
+    PID_SetKp_Fixed32(&p_state->Foc.PidId, value);
+}
+
+void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
+{
+    p_state->Config.PidI.Ki_Fixed32 = value;
+    PID_SetKi_Fixed32(&p_state->Foc.PidIq, value);
+    PID_SetKi_Fixed32(&p_state->Foc.PidId, value);
+}
 
 /******************************************************************************/
 /*!

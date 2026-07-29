@@ -66,17 +66,17 @@
     [rpm] = [angle] * pollingFreq / ANGLE16_PER_REVOLUTION * SECONDS_PER_MINUTE
         => 20 kHz pollingFreq => ~600000 erpm
         4 pole pairs:  150,001 RPM mechanical
-        40 pole pairs:  150,00 RPM mechanical
 */
-#define MOTOR_EL_ANGLE_SPEED_MAX_RADS  ANGLE_SPEED_MAX_RADS(MOTOR_CONTROL_FREQ)
-#define MOTOR_EL_ANGLE_SPEED_MAX_RPM   ANGLE_SPEED_MAX_RPM(MOTOR_CONTROL_FREQ) /* MOTOR_ERPM_MAX */
-// #define MOTOR_EL_ANGLE_SPEED_MAX        (32768)
 /*
     alternatively /k, compile time const, uneven psi
     e.g.
         speed max = 6000 rpm /60 · 4 = 400 Hz
         speed base = anglespeedmax · f_s / 65536 = 2048 · 20000 / 65536 = 625 Hz
 */
+#define MOTOR_ANGLE_SPEED_MAX       (32768)
+#define MOTOR_ANGLE_SPEED_MAX_RADS  ANGLE_SPEED_MAX_RADS(MOTOR_CONTROL_FREQ)
+#define MOTOR_ANGLE_SPEED_MAX_RPM   ANGLE_SPEED_MAX_RPM(MOTOR_CONTROL_FREQ)
+#define MOTOR_ANGLE_SPEED_MAX_MECH_RPM(polePairs)   (ANGLE_SPEED_MAX_RPM(MOTOR_CONTROL_FREQ) / (polePairs))
 
 /*
     Motor_Config   use
@@ -88,6 +88,7 @@
 #define MOTOR_CONTROL_TIME_MS(Cycles)       MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
 
 /* Ramp Time */
+/* Torque Ramp may differ from I Loop */
 #define MOTOR_TORQUE_CYCLES(Milliseconds)   CYCLES_OF_MS(MOTOR_CONTROL_FREQ, Milliseconds)
 #define MOTOR_TORQUE_TIME_MS(Cycles)        MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
 

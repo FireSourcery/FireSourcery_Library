@@ -279,7 +279,7 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_context->FeedbackMode.Current = 1U;
     Motor_FOC_ClearFeedbackState(p_context);
     // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(&p_motor->P_MOTOR->Config)); // v inject will surpass
+    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(p_motor->P_MOTOR)); // v inject will surpass
     // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
     // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
 
@@ -294,13 +294,13 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_params->SpeedBaseRpm = _Motor_GetSpeedTypeMax_Rpm(&p_context->Config.SpeedRating);
     p_params->PolePairs    = p_context->Config.SpeedRating.PolePairs;
 
-    p_params->IdBias = _Motor_GetIAlign(&p_context->Config);
+    p_params->IdBias = _Motor_GetIAlign(p_context);
     p_params->HfiFreqHz = PARAMID_HFI_FREQ_HZ;
     p_params->HfiDelta = PARAMID_HFI_PHASE_DELTA;
     p_params->Vhfi = VBus_Fract16(p_motor->P_VBUS) / 10;
     p_params->VdStep = VBus_Fract16(p_motor->P_VBUS) / 20;
-    // p_params->VdStep = _Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS) / 2;
-    // p_params->Vhfi = _Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS) / 2;
+    // p_params->VdStep = _Motor_GetVAlign(p_context) / 2;
+    // p_params->Vhfi = _Motor_GetVAlign(p_context) / 2;
 }
 
 static void Electrical_Proc(Motor_T * p_motor)

@@ -55,8 +55,6 @@ typedef struct AngleCounter_Ref
 }
 AngleCounter_Ref_T;
 
-static inline int32_t _speed_fract16_of_counter_freq(uint32_t speed_per_count, int32_t freqD) { return (freqD * (int32_t)speed_per_count >> 15); }
-static inline int32_t _angle_speed_of_counter_freq(uint32_t angle32_per_count, int32_t freqD) { return (freqD * (int32_t)angle32_per_count >> ANGLE_EXT_SHIFT); }
 
 /******************************************************************************/
 /*
@@ -67,6 +65,7 @@ typedef struct AngleCounter
 {
     Angle_T Base;
     int32_t CounterD;       /* Signed pulse counter. Accumulated +1/-1 from edges */
+    int32_t DeltaD;         /* Intermediate interface. */
     int32_t FreqD;          /* Pulse frequency [Hz]. DeltaD over 1 second */
     AngleCounter_Ref_T Ref; /* Runtime unit conversion */
 }
@@ -76,7 +75,6 @@ AngleCounter_T;
 typedef struct AngleCounter_Config
 {
     uint16_t CountsPerRevolution;       /* Counter counts per mechanical revolution */
-    // Angle_SpeedFractCalib_T SpeedFractCalib;  base config
     uint32_t PollingFreq;               /* Polling frequency [Hz] */
     uint16_t FractSpeedRef_Rpm;         /* Reference speed for Fract16 normalization */
 }
@@ -88,6 +86,7 @@ static inline Angle_T * AngleCounter_Angle(AngleCounter_T * p_counter) { return 
 
 /******************************************************************************/
 /*
+    Integrator from pulse count
     Count Accumulation
 */
 /******************************************************************************/
@@ -95,18 +94,22 @@ static inline Angle_T * AngleCounter_Angle(AngleCounter_T * p_counter) { return 
     On pulse edge. Accumulates signed count.
     @param[in] sign { -1, 0, +1 } direction of this edge
 */
-static inline void AngleCounter_CaptureCount(AngleCounter_T * p_counter, int sign)
+static inline void _AngleCounter_CaptureCount(AngleCounter_T * p_counter, int sign)
 {
     p_counter->CounterD += sign;
 }
 
-static inline void AngleCounter_CaptureCountAngle(AngleCounter_T * p_counter, int sign)
+static inline void AngleCounter_CaptureCount(AngleCounter_T * p_counter, int sign)
 {
     p_counter->CounterD += sign;
     p_counter->Base.Angle += sign * p_counter->Ref.Angle32PerCount;
 }
 
 static inline void AngleCounter_Zero(AngleCounter_T * p_counter) { p_counter->CounterD = 0; }
+
+// static inline void AngleCounter_SetCount(AngleCounter_T * p_counter, int count)
+// {
+// }
 
 /*
     Directly set angle on sensor snapshot.
@@ -128,7 +131,6 @@ static inline int32_t AngleCounter_CaptureDeltaD(AngleCounter_T * p_counter)
     ModeDT Frequency Estimation - call at SampleFreq (~1kHz)
     Samples DeltaD from CounterD, computes PeriodT from DeltaTh, runs ModeDT.
 
-
     @param[in] periodTk  Timer reading from PulseTimer
 */
 /******************************************************************************/
@@ -143,12 +145,6 @@ static inline void AngleCounter_CaptureFreq(AngleCounter_T * p_counter, uint32_t
         p_counter->FreqD = ((deltaD != 0) ? deltaD : math_sign(p_counter->FreqD)) * (int32_t)sampleTkFreq;
     }
 }
-
-/*
-    Query — FreqD conversions
-*/
-// static inline angle16_t AngleCounter_GetDelta(AngleCounter_T * p_counter) { return _angle_speed_of_counter_freq(p_counter->Ref.AngleSpeed32PerCount, p_counter->FreqD); }
-static inline int32_t AngleCounter_GetSpeed_Fract16(AngleCounter_T * p_counter) { return _speed_fract16_of_counter_freq(p_counter->Ref.SpeedFractPerCount, p_counter->FreqD); }
 
 /******************************************************************************/
 /*
@@ -166,6 +162,12 @@ static inline angle16_t AngleCounter_ResolveAngleDelta(AngleCounter_T * p_counte
     return p_counter->Base.Delta >> ANGLE_EXT_SHIFT;
 }
 
+// static inline void AngleCounter_ResolveSpeed(AngleCounter_T * p_counter, uint32_t sampleTkFreq)
+// {
+//     AngleCounter_CaptureFreq(p_counter, sampleTkFreq);
+//     AngleCounter_ResolveAngleDelta(p_counter);
+// }
+
 /*
     Angle_T Base forwarding — interpolation interface
 */
@@ -180,12 +182,16 @@ static inline void AngleCounter_InitLimits(AngleCounter_T * p_counter, angle16_t
     Query
 */
 /******************************************************************************/
+static inline angle16_t AngleCounter_GetAngleDelta(AngleCounter_T * p_counter) { return Angle_Delta(&p_counter->Base); }
+static inline int32_t AngleCounter_GetSpeed_Fract16(AngleCounter_T * p_counter) { return (p_counter->FreqD * (int32_t)p_counter->Ref.SpeedFractPerCount >> 15); }
+
 /* FreqD-based RPM/RPS using stored CountsPerRevolution */
 static inline int32_t AngleCounter_GetRpm(const AngleCounter_T * p_counter) { return rpm_of_count_freq(p_counter->Ref.CountsPerRevolution, p_counter->FreqD); }
 static inline int32_t AngleCounter_GetCps(const AngleCounter_T * p_counter) { return cps_of_count_freq(p_counter->Ref.CountsPerRevolution, p_counter->FreqD); }
 
 static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { return p_counter->FreqD; }
 // static inline int32_t AngleCounter_GetDeltaD(const AngleCounter_T * p_counter) { return p_counter->DeltaD; }
+
 
 /******************************************************************************/
 /*
@@ -199,16 +205,16 @@ static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { 
     Counter Ref Init - Compute runtime units from calibration
 */
 /******************************************************************************/
-// static inline AngleCounter_Ref_T AngleCounter_Ref(uint32_t pollingFreq, uint32_t countsPerRevolution, uint32_t fractSpeedRefRpm)
-// {
-//     return (AngleCounter_Ref_T)
-//     {
-//         .Angle32PerCount = angle32_per_count(countsPerRevolution),
-//         .AngleSpeed32PerCount = angle32_speed_per_count(pollingFreq, angle32_per_count(countsPerRevolution)),
-//         .SpeedFractPerCount = rpm_accum32_per_count(pollingFreq, countsPerRevolution, fractSpeedRefRpm),
-//         .CountsPerRevolution = countsPerRevolution,
-//     };
-// }
+static inline AngleCounter_Ref_T AngleCounter_Ref(uint32_t pollingFreq, uint32_t countsPerRevolution, uint32_t fractSpeedRefRpm)
+{
+    return (AngleCounter_Ref_T)
+    {
+        .Angle32PerCount = angle32_per_count(countsPerRevolution),
+        .AngleSpeed32PerCount = angle32_speed_per_count(pollingFreq, angle32_per_count(countsPerRevolution)),
+        .SpeedFractPerCount = rpm_accum32_per_count(pollingFreq, countsPerRevolution, fractSpeedRefRpm),
+        .CountsPerRevolution = countsPerRevolution,
+    };
+}
 
 static inline void AngleCounter_Ref_Init(AngleCounter_Ref_T * p_ref, const AngleCounter_Config_T * p_config)
 {

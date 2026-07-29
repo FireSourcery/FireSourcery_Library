@@ -183,7 +183,7 @@ typedef struct MotorController_Config
 
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 //     uint8_t CanServicesId;
-    bool IsCanEnable;
+    bool IsCanEnable; //move to can module
 #endif
 }
 MotorController_Config_T;

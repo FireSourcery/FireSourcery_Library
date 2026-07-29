@@ -43,14 +43,14 @@
 // static inline void PulseTimer_Counter_CaptureEdge(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
 // {
 //     PulseTimer_CaptureEdge(p_timer);
-//     AngleCounter_CaptureCount(p_counter, sign);
+//     _AngleCounter_CaptureCount(p_counter, sign);
 // }
 
 // /* Count + wrap angle. Angle derived from counter (Timer-style) */
 // static inline void PulseTimer_Counter_CaptureEdgeWrap(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
 // {
 //     PulseTimer_CaptureEdge(p_timer);
-//     AngleCounter_CaptureCountAngle(p_counter, sign);
+//     AngleCounter_CaptureCount(p_counter, sign);
 // }
 
 // static inline void PulseTimer_Counter_CaptureFreq(PulseTimer_T * p_timer, AngleCounter_T * p_counter)

@@ -384,11 +384,11 @@ static void Run_Entry(Motor_T * p_motor)
 
 static void Run_Proc(Motor_T * p_motor)
 {
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcAngleV(p_motor); }
     // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     //     Motor_ExternControl(p_motor);
     // #endif
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
-    if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcVControl(p_motor); }
 }
 
 /*

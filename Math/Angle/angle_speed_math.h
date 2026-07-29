@@ -35,7 +35,7 @@
 
 /*
     Convert between [angle16/polling] and standard representations: [rad/s] or [turns/time].
-        AngleSpeed: angle16[angle16/polling]
+        AngleSpeed: angle16 [angle16/polling]
         AngleFreq: n [turns per seconds or minute]
     e.g.
         - angle16/polling for control loops, internal calculations.
@@ -65,12 +65,12 @@
 /*
     Constant expression path (for #define composition, initializers)
 */
-// #define ANGLE_SPEED(Fs, rps)    (((float)rps) * ANGLE16_PER_REVOLUTION) / (Fs))
 #define ANGLE_SPEED_OF(Fs, rps)    (((int64_t)(rps) * ANGLE16_PER_REVOLUTION) / (Fs))
+/* turns per second */
 #define ANGLE_FREQ_OF(Fs, angle16) (((int64_t)(angle16) * (Fs)) / ANGLE16_PER_REVOLUTION)
 
 /* direct for comparison */
-static inline int32_t _angle_speed_of_freq_direct(uint32_t fs, int32_t cps) { return ANGLE_SPEED_OF(fs, cps); }
+static inline int32_t _angle_speed_of_freq_direct(uint32_t fs, int32_t rps) { return ANGLE_SPEED_OF(fs, rps); }
 static inline int32_t _angle_freq_of_speed_direct(uint32_t fs, int32_t angle_per_poll) { return ANGLE_FREQ_OF(fs, angle_per_poll); }
 
 
@@ -92,8 +92,8 @@ static inline int32_t _angle_freq_of_speed_direct(uint32_t fs, int32_t angle_per
 /* optionally without int64 cast for base rates */
 static inline int32_t _angle_freq_of(uint32_t fs, int32_t angle_per_poll) { return angle_per_poll * (int32_t)RPS_PER_ANGLE_SPEED(fs) / FRACT16_SCALE; }
 
-/* cps [0:Fs/2] */
-static inline int32_t angle_speed_of(uint32_t fs, int32_t cps) { return cps * (int32_t)ANGLE_SPEED_PER_RPS(fs) / FRACT16_SCALE; }
+/* rps [0:Fs/2] */
+static inline int32_t angle_speed_of(uint32_t fs, int32_t rps) { return rps * (int32_t)ANGLE_SPEED_PER_RPS(fs) / FRACT16_SCALE; }
 /* keep (int64_t) for scaled polling rate. e.g rpm */
 static inline int32_t angle_freq_of(uint32_t fs, int32_t angle_per_poll) { return ANGLE_FREQ_OF(fs, angle_per_poll); }
 
@@ -106,10 +106,10 @@ static inline int32_t angle_freq_of(uint32_t fs, int32_t angle_per_poll) { retur
 /*
     ω_du[angle16/poll] = ω[rad/s] * (65536 / 2π) / Fs
 */
-#define ANGLE_SPEED_PER_RADIAN(Fs) ((float)ANGLE16_PER_RADIAN / Fs)
-#define RADIAN_PER_ANGLE_SPEED(Fs) ((float)Fs / ANGLE16_PER_RADIAN) /* Fs * π / 32768 */
+#define ANGLE_SPEED_PER_RADS(Fs) (ANGLE16_PER_RADIAN / Fs)
+#define RADS_PER_ANGLE_SPEED(Fs) (Fs / ANGLE16_PER_RADIAN) /* Fs * π / 32768 */
 
-#define ANGLE_SPEED(Fs, RadPerSecond) ((float)(RadPerSecond) * ANGLE16_PER_RADIAN / Fs)
+#define ANGLE_SPEED(Fs, RadPerSecond) ((RadPerSecond) * ANGLE16_PER_RADIAN / Fs)
 
 /*
     from scaled SI units
@@ -117,8 +117,6 @@ static inline int32_t angle_freq_of(uint32_t fs, int32_t angle_per_poll) { retur
 */
 static inline int32_t angle_of_rads(uint32_t Fs, int32_t rads, uint16_t scale) { return ((int64_t)rads * ANGLE16_PER_RADIAN) / Fs / scale; }
 static inline int32_t rads_of_angle(uint32_t Fs, int16_t angle16, uint16_t scale) { return ((int64_t)angle16 * Fs * scale) / ANGLE16_PER_RADIAN; }
-
-
 
 
 
@@ -161,10 +159,10 @@ static inline int32_t mech_rpm_of_el_angle(uint32_t Fs, uint8_t polePairs, int16
 /*
     Cycles Per Second
 */
-/* cps [0:POLLING_FREQ/2] */
-static inline int32_t angle_of_cps(uint32_t Fs, int16_t cps) { return angle_speed_of(Fs, cps); }
-static inline int32_t cps_of_angle(uint32_t Fs, int16_t angle16) { return angle16 * (int32_t)RPS_PER_ANGLE_SPEED(Fs) / FRACT16_SCALE; }
-// static inline int32_t cps_of_angle(uint32_t Fs, int16_t angle16) { return _angle_freq_of(Fs, angle16); }
+/* rps [0:POLLING_FREQ/2] */
+static inline int32_t angle_of_rps(uint32_t Fs, int16_t rps) { return angle_speed_of(Fs, rps); }
+static inline int32_t rps_of_angle(uint32_t Fs, int16_t angle16) { return angle16 * (int32_t)RPS_PER_ANGLE_SPEED(Fs) / FRACT16_SCALE; }
+// static inline int32_t rps_of_angle(uint32_t Fs, int16_t angle16) { return _angle_freq_of(Fs, angle16); }
 
 
 /******************************************************************************/
@@ -227,3 +225,4 @@ static inline uint32_t rpm_of_mrads(uint32_t mrads) { return rpm_of_rads(mrads, 
 
 static inline uint32_t el_rads_of_mech_rpm(uint8_t pole_pairs, uint32_t mech_rpm) { return rads_of_rpm(mech_rpm, pole_pairs); }
 static inline uint32_t mech_rpm_of_el_rads(uint8_t pole_pairs, uint32_t el_rads) { return rpm_of_rads(el_rads, pole_pairs); }
+

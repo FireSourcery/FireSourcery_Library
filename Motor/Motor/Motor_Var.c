@@ -176,35 +176,6 @@ void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_
     Runtime Tuning version
 */
 /******************************************************************************/
-
-/* Maintain consistency for save Nvm */
-void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
-{
-    p_state->Config.PidSpeed.Kp_Fixed32 = value;
-    PID_SetKp_Fixed32(&p_state->PidSpeed, value);
-}
-
-void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
-{
-    p_state->Config.PidSpeed.Ki_Fixed32 = value;
-    PID_SetKi_Fixed32(&p_state->PidSpeed, value);
-}
-
-// optionally switch on commutation mode
-void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
-{
-    p_state->Config.PidI.Kp_Fixed32 = value;
-    PID_SetKp_Fixed32(&p_state->Foc.PidIq, value);
-    PID_SetKp_Fixed32(&p_state->Foc.PidId, value);
-}
-
-void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
-{
-    p_state->Config.PidI.Ki_Fixed32 = value;
-    PID_SetKi_Fixed32(&p_state->Foc.PidIq, value);
-    PID_SetKi_Fixed32(&p_state->Foc.PidId, value);
-}
-
 int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
 {
     const Motor_Context_T * p_state = p_motor->P_MOTOR;

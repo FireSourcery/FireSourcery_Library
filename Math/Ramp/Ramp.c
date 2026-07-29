@@ -114,7 +114,7 @@ void Ramp_Init_Slope(Ramp_T * p_ramp, uint32_t coeff)
     p_ramp->Target = 0;
 }
 
-/* symetric limits */
+/* symmetric limits */
 /* range as positive only [0:INT16_MAX] */
 void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range)
 {

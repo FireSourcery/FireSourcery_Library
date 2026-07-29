@@ -37,16 +37,19 @@
 
 
 /* storage in range, ticks */
-#define RAMP_TICKS_OF_MILLIS(updateFreq_Hz, duration_Ms) (updateFreq_Hz * duration_Ms / 1000U)
 /* for storage in ticks */
+#define RAMP_TICKS_OF_MILLIS(updateFreq_Hz, Ms) (updateFreq_Hz * Ms / 1000U)
 #define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Range, UnitsPerSecond) ((UpdateFreq_Hz) * (Range) / (UnitsPerSecond))
 
 /* SLOPE_OF_S */
 #define RAMP_COEF_OF_SLOPE(UpdateFreq_Hz, SlopePerSecond) (((int64_t)(SlopePerSecond) << ACCUMULATOR_SHIFT) / (UpdateFreq_Hz))
+#define RAMP_SLOPE_OF_COEF(UpdateFreq_Hz, Coef) (((int64_t)(Coef) * (UpdateFreq_Hz)) >> ACCUMULATOR_SHIFT)
+
 #define RAMP_COEF_OF_TICKS(Range, Ticks) (((int32_t)(Range) << ACCUMULATOR_SHIFT) / (Ticks))
 #define RAMP_TICKS_OF_COEF(Range, Coef) (((int32_t)(Range) << ACCUMULATOR_SHIFT) / (Coef)) /* inverse of RAMP_COEF_OF_TICKS */
+
 #define RAMP_COEF_OF_MS(UpdateFreq_Hz, Range, Ms) (((int64_t)(Range) << ACCUMULATOR_SHIFT) * 1000U / ((UpdateFreq_Hz) * (Ms)))
-// #define RAMP_COEF_OF_MS(UpdateFreq_Hz, Range, Ms) (RAMP_COEF_OF_TICKS(Range, RAMP_TICKS_OF_MILLIS((float)UpdateFreq_Hz, Ms)) )
+#define RAMP_MS_OF_COEF(UpdateFreq_Hz, Range, Coef) (((int64_t)(Range) << ACCUMULATOR_SHIFT) * 1000U / ((UpdateFreq_Hz) * (Coef)))
 
 /*
     Compile time full init

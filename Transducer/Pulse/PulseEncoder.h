@@ -99,14 +99,14 @@ static inline PulseTimer_T * PulseEncoder_Timer(PulseEncoder_T * p_encoder) { re
 static inline void PulseEncoder_CaptureCount(PulseEncoder_T * p_encoder, int sign)
 {
     PulseTimer_CaptureEdge(&p_encoder->TIMER);
-    AngleCounter_CaptureCount(&p_encoder->P_STATE->Counter, sign);
+    _AngleCounter_CaptureCount(&p_encoder->P_STATE->Counter, sign);
 }
 
 /* Count + wrap angle. Angle derived from counter (encoder-style) */
 static inline void PulseEncoder_CaptureAngleCount(PulseEncoder_T * p_encoder, int sign)
 {
     PulseTimer_CaptureEdge(&p_encoder->TIMER);
-    AngleCounter_CaptureCountAngle(&p_encoder->P_STATE->Counter, sign);
+    AngleCounter_CaptureCount(&p_encoder->P_STATE->Counter, sign);
 }
 
 /******************************************************************************/

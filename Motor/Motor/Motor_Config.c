@@ -37,32 +37,20 @@
    Validate
 */
 /******************************************************************************/
-/* scale to rated max */
-  /* Limit of rated. as scalar [0:1.0F] [0:32768]. V/I Align_Fract16 < OpenLoopLimitScalar_Fract16 * V/I Rated */
-#ifndef MOTOR_OPEN_LOOP_CEILING
-#define MOTOR_OPEN_LOOP_CEILING FRACT16(0.1F)
-#endif
 
 /*
     Rated Limit - applied on Config Bounds
     the setting limit by TypeMax, SpeedRated ~VBusRef
     When SpeedTypeMax is scaled, INT16_MAX is 2x RatedSpeed
 */
-// static inline uint16_t _Motor_SpeedRatedLimit(const Motor_Config_T * p_config) { (void)p_config; return FRACT16_1_DIV_SQRT3; }
-static inline uint16_t _Motor_SpeedRatedLimit(const Motor_Config_T * p_config) { (void)p_config; return Phase_Calibration_GetVRated_Fract16(); } /* approximate limit without coupling VBusNominal */
+/* optionally resolve as a config field, or get global */
+/* approximate limit without coupling VBusNominal */
+static inline uint16_t _Motor_SpeedRatedLimit(const Motor_Config_T * p_config) { (void)p_config; return Phase_Calibration_GetVRated_Fract16(); }
 static inline uint16_t _Motor_SpeedFwLimit(const Motor_Config_T * p_config) { (void)p_config; return INT16_MAX; }
-
-static inline uint16_t _Motor_GetOpenLoopScalarLimit(const Motor_Config_T * p_config) { return math_min(p_config->OpenLoopLimitScalar_Fract16, MOTOR_OPEN_LOOP_CEILING); }
-static inline uint16_t _Motor_GetOpenLoopILimit_Fract16(const Motor_Config_T * p_config) { return fract16_mul(_Motor_GetOpenLoopScalarLimit(p_config), Phase_Calibration_GetIRatedPeak_Fract16()); }
-static inline uint16_t _Motor_GetOpenLoopVLimit_Fract16(const Motor_Config_T * p_config) { return fract16_mul(_Motor_GetOpenLoopScalarLimit(p_config), Phase_Calibration_GetVRated_Fract16()); }
-
-
-/* potentially depreciate */
-static inline uint16_t Motor_IRatedLimitOf(uint16_t i_fract16) { return math_min(Phase_Calibration_GetIRatedPeak_Fract16(), i_fract16); } /* depreciate unless virtualized */
-static inline uint16_t Motor_VRatedLimitOf(uint16_t v_fract16) { return math_min(Phase_Calibration_GetVRated_Fract16(), v_fract16); }
-static inline uint16_t Motor_SpeedRatedLimitOf(const Motor_Config_T * p_config, uint16_t speed_fract16) { return math_min(_Motor_SpeedRatedLimit(p_config), speed_fract16); }
-static inline uint16_t _Motor_OpenLoopIRatedLimitOf(const Motor_Config_T * p_config, uint16_t fract16) { return math_min(fract16, _Motor_GetOpenLoopILimit_Fract16(p_config)); }
-static inline uint16_t _Motor_OpenLoopSpeedRatedLimitOf(const Motor_Config_T * p_config, uint16_t fract16) { return math_min(fract16, _Motor_SpeedRatedLimit(p_config) / 2); }
+static inline uint16_t _Motor_IRatedLimit() { return Phase_Calibration_GetIRatedPeak_Fract16(); }
+static inline uint16_t _Motor_VRatedLimit() { return Phase_Calibration_GetVRated_Fract16(); }
+static inline uint16_t _Motor_GetOpenLoopILimit(const Motor_Config_T * p_config) { return fract16_mul(_Motor_OpenLoopCeilingRate(p_config), _Motor_IRatedLimit()); }
+static inline uint16_t _Motor_GetOpenLoopVLimit(const Motor_Config_T * p_config) { return fract16_mul(_Motor_OpenLoopCeilingRate(p_config), _Motor_VRatedLimit()); }
 
 bool Motor_Config_IsValid(const Motor_Config_T * p_config)
 {
@@ -71,17 +59,27 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
         (p_config->DirectionForward != MOTOR_DIRECTION_NULL) &&
         (p_config->IabcZeroRef_Adcu.A != 0U) && (p_config->IabcZeroRef_Adcu.B != 0U) && (p_config->IabcZeroRef_Adcu.C != 0U) &&
         (p_config->SpeedRating.PolePairs != 0U) && (p_config->SpeedRating.Kv != 0U) && (p_config->SpeedRating.VSpeedAdjustment <= INT16_MAX)
-        && (p_config->ILimitMotoring_Fract16 <= Phase_Calibration_GetIRatedPeak_Fract16()) && (p_config->ILimitGenerating_Fract16 <= Phase_Calibration_GetIRatedPeak_Fract16())
-        // && (p_config->OpenLoopLimitScalar_Fract16 <= MOTOR_OPEN_LOOP_CEILING)
-        && (p_config->IAlign_Fract16 <= fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetIRatedPeak_Fract16()))
-        && (p_config->VAlign_Fract16 <= fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetVRated_Fract16()))
-        && (p_config->OpenLoopRampIFinal_Fract16  <= _Motor_GetOpenLoopILimit_Fract16(p_config))
+        && (p_config->ILimitMotoring_Fract16 <= _Motor_IRatedLimit())
+        && (p_config->ILimitGenerating_Fract16 <= _Motor_IRatedLimit())
+        // && (p_config->OpenLoopLimitRatio <= MOTOR_OPEN_LOOP_CEILING)
+        && (p_config->IAlign_Fract16 <= _Motor_GetOpenLoopILimit(p_config))
+        && (p_config->VAlign_Fract16 <= _Motor_GetOpenLoopVLimit(p_config))
+        && (p_config->OpenLoopRampIFinal_Fract16 <= _Motor_GetOpenLoopILimit(p_config))
+        && (p_config->OpenLoopRampSpeedFinal_Fract16 <= _Motor_SpeedRatedLimit(p_config) / 2)
     );
 }
 
+/*
+   additional using caller context
+*/
 bool _Motor_Config_IsValidSpeed(const Motor_Config_T * p_config, uint16_t speedCeiling)
 {
     return (p_config->SpeedLimitForward_Fract16 <= speedCeiling) && (p_config->SpeedLimitReverse_Fract16 <= speedCeiling);
+}
+
+bool _Motor_Config_IsValidVoltage(const Motor_Config_T * p_config, uint16_t vBus)
+{
+    return (p_config->VAlign_Fract16 <= fract16_mul(p_config->OpenLoopLimitRatio, vBus));
 }
 
 // bool Motor_Config_IsValidSpeedLimits_Fw(const Motor_Config_T * p_config) { return _Motor_Config_IsValidSpeed(p_config, INT16_MAX); }
@@ -90,7 +88,41 @@ bool _Motor_Config_IsValidSpeed(const Motor_Config_T * p_config, uint16_t speedC
 // {
 //     return ((p_config->SpeedLimitForward_Fract16 <= _Motor_SpeedRatedLimit(p_config)) && (p_config->SpeedLimitReverse_Fract16 <= _Motor_SpeedRatedLimit(p_config)));
 // }
+/******************************************************************************/
+/*
 
+*/
+/******************************************************************************/
+void Motor_Config_Validate(Motor_Config_T * p_config)
+{
+    /* SpeedRated is now derived (Kv·VRated) — nothing to clamp */
+    p_config->SpeedRating.VSpeedAdjustment        = math_min(p_config->SpeedRating.VSpeedAdjustment, INT16_MAX);
+
+    // p_config->SpeedLimitForward_Fract16   = math_min(_Motor_SpeedRatedLimit(p_config), p_config->SpeedLimitForward_Fract16);
+    // p_config->SpeedLimitReverse_Fract16   = math_min(_Motor_SpeedRatedLimit(p_config), p_config->SpeedLimitReverse_Fract16);
+    p_config->ILimitMotoring_Fract16      = math_min(p_config->ILimitMotoring_Fract16, _Motor_IRatedLimit());
+    p_config->ILimitGenerating_Fract16    = math_min(p_config->ILimitGenerating_Fract16, _Motor_IRatedLimit());
+
+    p_config->OpenLoopLimitRatio            = math_min(p_config->OpenLoopLimitRatio, MOTOR_OPEN_LOOP_CEILING);
+    p_config->IAlign_Fract16                = math_min(p_config->IAlign_Fract16, _Motor_GetOpenLoopILimit(p_config)); /* or i motoring */
+    p_config->VAlign_Fract16                = math_min(p_config->VAlign_Fract16, _Motor_GetOpenLoopVLimit(p_config)); /* or vbus norminal */
+    p_config->OpenLoopRampIFinal_Fract16        = math_min(p_config->OpenLoopRampIFinal_Fract16, _Motor_GetOpenLoopILimit(p_config));
+    p_config->OpenLoopRampSpeedFinal_Fract16    = math_min(p_config->OpenLoopRampSpeedFinal_Fract16, _Motor_SpeedRatedLimit(p_config) / 2);
+}
+
+void Motor_Config_ValidateFw(Motor_Config_T * p_config, bool isFwEnabled)
+{
+    uint16_t speedCeiling = isFwEnabled ? _Motor_SpeedFwLimit(p_config) : _Motor_SpeedRatedLimit(p_config);
+
+    p_config->SpeedLimitForward_Fract16 = math_min(speedCeiling, p_config->SpeedLimitForward_Fract16);
+    p_config->SpeedLimitReverse_Fract16 = math_min(speedCeiling, p_config->SpeedLimitReverse_Fract16);
+}
+
+
+
+/*
+    Keep functions interface for potential descriptor map and in case base unit changes
+*/
 /******************************************************************************/
 /*
     Nvm Reference/Calibration
@@ -123,18 +155,17 @@ void Motor_Config_SetKv(Motor_Config_T * p_config, uint16_t kv)
 /*
     V of Speed Ref
     SpeedVRef =< SpeedFeedbackRef to ensure not match to higher speed
-    [0:32767] unitless Fract16
+    [0:32767] <=> [0, 1] unitless Fract16
 */
 void Motor_Config_SetVSpeedRatio_UFract16(Motor_Config_T * p_config, uint16_t scalar) { p_config->SpeedRating.VSpeedAdjustment = math_min(scalar, INT16_MAX); }
 
 /* SpeedRated is derived (Kv·VRated); setting it back-solves Kv so Kv·VRated == rpm (recomputes Ke/Psi/SpeedTypeMax) */
 // void Motor_Config_SetSpeedRated(Motor_Config_T * p_config, uint16_t rpm)
 // {
-//     // Motor_Config_SetKv(p_config, rpm / VNominal());
+//     Motor_Config_SetKv(p_config, rpm / VNominal());
 // }
 // void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedRatio_UFract16(p_motor, fract16_div(rpm, _Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating))); }
 // static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->SpeedRating.VSpeedAdjustment, _Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating)); }
-
 
 
 /******************************************************************************/
@@ -154,24 +185,23 @@ void Motor_Config_SetIcZero_Adcu(Motor_Config_T * p_config, uint16_t adcu) { p_c
 */
 /******************************************************************************/
 /*  */
-void Motor_Config_SetIAlign(Motor_Config_T * p_config, uint16_t scalar16) { p_config->IAlign_Fract16 = math_min(scalar16, _Motor_GetOpenLoopILimit_Fract16(p_config)); }
-void Motor_Config_SetVAlign(Motor_Config_T * p_config, uint16_t scalar16) { p_config->VAlign_Fract16 = math_min(scalar16, _Motor_GetOpenLoopVLimit_Fract16(p_config)); }
+void Motor_Config_SetIAlign(Motor_Config_T * p_config, uint16_t scalar16) { p_config->IAlign_Fract16 = math_min(scalar16, _Motor_GetOpenLoopILimit(p_config)); }
+void Motor_Config_SetVAlign(Motor_Config_T * p_config, uint16_t scalar16) { p_config->VAlign_Fract16 = math_min(scalar16, _Motor_GetOpenLoopVLimit(p_config)); }
 
-/*  */
-void Motor_Config_SetOpenLoopScalarLimit(Motor_Config_T * p_config, uint16_t scalar16)
+/* re-resolve align against new limit */
+void Motor_Config_SetOpenLoopLimitRatio(Motor_Config_T * p_config, uint16_t scalar16)
 {
-    p_config->OpenLoopLimitScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING);
-    Motor_Config_SetIAlign(p_config, p_config->IAlign_Fract16); /* re-resolve align against new limit */
-    Motor_Config_SetVAlign(p_config, p_config->VAlign_Fract16); /* re-resolve align against new limit */
+    p_config->OpenLoopLimitRatio = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING);
+    Motor_Config_SetIAlign(p_config, p_config->IAlign_Fract16);
+    Motor_Config_SetVAlign(p_config, p_config->VAlign_Fract16);
 }
 
-// void Motor_Config_SetAlignPowerScalar(Motor_Config_T * p_config, uint16_t scalar16) { p_config->AlignScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING); }
 void Motor_Config_SetAlignTime_Cycles(Motor_Config_T * p_config, uint32_t cycles) { p_config->AlignTime_Cycles = cycles; }
 void Motor_Config_SetAlignTime_Millis(Motor_Config_T * p_config, uint16_t millis) { p_config->AlignTime_Cycles = _Motor_ControlCyclesOf(millis); }
 
 /*
 */
-void Motor_Config_SetOpenLoopRampIFinal_Fract16(Motor_Config_T * p_config, uint16_t i_fract16) { p_config->OpenLoopRampIFinal_Fract16 = _Motor_OpenLoopIRatedLimitOf(p_config, i_fract16); }
+void Motor_Config_SetOpenLoopRampIFinal_Fract16(Motor_Config_T * p_config, uint16_t i_fract16) { p_config->OpenLoopRampIFinal_Fract16 = math_min(i_fract16, _Motor_GetOpenLoopILimit(p_config)); }
 
 void Motor_Config_SetOpenLoopRampITime_Cycles(Motor_Config_T * p_config, uint32_t cycles) { p_config->OpenLoopRampITime_Cycles = cycles; }
 void Motor_Config_SetOpenLoopRampITime_Millis(Motor_Config_T * p_config, uint16_t millis) { Motor_Config_SetOpenLoopRampITime_Cycles(p_config, _Motor_ControlCyclesOf(millis)); }
@@ -179,53 +209,12 @@ void Motor_Config_SetOpenLoopRampITime_Millis(Motor_Config_T * p_config, uint16_
 /*
     OpenLoop Ramp ticks on control timer, unlike speedRamp
 */
-void Motor_Config_SetOpenLoopRampSpeedFinal_Fract16(Motor_Config_T * p_config, uint16_t speed_fract16) { p_config->OpenLoopRampSpeedFinal_Fract16 = _Motor_OpenLoopSpeedRatedLimitOf(p_config, speed_fract16); }
+void Motor_Config_SetOpenLoopRampSpeedFinal_Fract16(Motor_Config_T * p_config, uint16_t speed_fract16) { p_config->OpenLoopRampSpeedFinal_Fract16 = math_min(speed_fract16, _Motor_SpeedRatedLimit(p_config) / 2); }
 
 void Motor_Config_SetOpenLoopRampSpeedTime_Cycles(Motor_Config_T * p_config, uint32_t cycles) { p_config->OpenLoopRampSpeedTime_Cycles = cycles; }
 void Motor_Config_SetOpenLoopRampSpeedTime_Millis(Motor_Config_T * p_config, uint16_t millis) { Motor_Config_SetOpenLoopRampSpeedTime_Cycles(p_config, _Motor_ControlCyclesOf(millis)); }
 
 
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-void Motor_Config_Validate(Motor_Config_T * p_config)
-{
-    /* SpeedRated is now derived (Kv·VRated) — nothing to clamp */
-    p_config->SpeedRating.VSpeedAdjustment        = math_min(p_config->SpeedRating.VSpeedAdjustment, INT16_MAX);
-
-    // p_config->SpeedLimitForward_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitForward_Fract16);
-    // p_config->SpeedLimitReverse_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitReverse_Fract16);
-    p_config->ILimitMotoring_Fract16      = Motor_IRatedLimitOf(p_config->ILimitMotoring_Fract16);
-    p_config->ILimitGenerating_Fract16    = Motor_IRatedLimitOf(p_config->ILimitGenerating_Fract16);
-
-    p_config->OpenLoopLimitScalar_Fract16   = math_min(p_config->OpenLoopLimitScalar_Fract16, MOTOR_OPEN_LOOP_CEILING);
-    p_config->IAlign_Fract16                = math_min(p_config->IAlign_Fract16, fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetIRatedPeak_Fract16())); /* or i motoring */
-    p_config->VAlign_Fract16                = math_min(p_config->VAlign_Fract16, fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetVRated_Fract16())); /* or vbus norminal */
-
-    // p_config->AlignScalar_Fract16         = math_min(p_config->AlignScalar_Fract16, MOTOR_OPEN_LOOP_CEILING);
-    p_config->OpenLoopRampIFinal_Fract16        = _Motor_OpenLoopIRatedLimitOf(p_config, p_config->OpenLoopRampIFinal_Fract16);
-    p_config->OpenLoopRampSpeedFinal_Fract16    = _Motor_OpenLoopSpeedRatedLimitOf(p_config, p_config->OpenLoopRampSpeedFinal_Fract16);
-}
-
-void Motor_Config_ValidateFw(Motor_Config_T * p_config, bool isFwEnabled)
-{
-    uint16_t speedCeiling = isFwEnabled ? _Motor_SpeedFwLimit(p_config) : _Motor_SpeedRatedLimit(p_config);
-
-    p_config->SpeedLimitForward_Fract16 = math_min(speedCeiling, p_config->SpeedLimitForward_Fract16);
-    p_config->SpeedLimitReverse_Fract16 = math_min(speedCeiling, p_config->SpeedLimitReverse_Fract16);
-}
-
-
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-/*
-    Keep interface for potential VField map and in case base unit changes
-*/
 /******************************************************************************/
 /*
     Calibration
@@ -238,9 +227,6 @@ static inline void Motor_Config_SetCommutationMode(Motor_Config_T * p_config, Mo
 /* The user direction that is the positive direction */
 static inline Motor_Direction_T Motor_Config_GetDirectionCalibration(const Motor_Config_T * p_config) { return p_config->DirectionForward; }
 static inline void Motor_Config_SetDirectionCalibration(Motor_Config_T * p_config, Motor_Direction_T forward) { if (forward != MOTOR_DIRECTION_NULL) { p_config->DirectionForward = forward; } }
-
-// static inline void Motor_Config_SetDirectionCalibration(Motor_Config_T * p_motor, Motor_Direction_T forward) { if (forward != MOTOR_DIRECTION_NULL) { p_motor->DirectionForward = forward; } }
-// static inline bool Motor_Config_IsCcwPositive(Motor_Config_T * p_motor) { return p_motor->DirectionForward == MOTOR_DIRECTION_CCW; }
 // static inline void Motor_Config_SetCcwPositive(Motor_Config_T * p_motor, bool isCcwPositive) { p_motor->DirectionForward = (isCcwPositive) ? MOTOR_DIRECTION_CCW : MOTOR_DIRECTION_CW; }
 
 /*
@@ -250,7 +236,7 @@ static inline RotorSensor_Id_T Motor_Config_GetSensorMode(const Motor_Config_T *
 static inline uint8_t Motor_Config_GetPolePairs(const Motor_Config_T * p_config) { return p_config->SpeedRating.PolePairs; }
 static inline uint16_t Motor_Config_GetKv(const Motor_Config_T * p_config) { return p_config->SpeedRating.Kv; }
 // static inline uint16_t Motor_Config_GetSpeedRated(const Motor_Config_T * p_config) { return _Motor_SpeedRated_Rpm(&p_config->SpeedRating); }
-static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_Config_T * p_config) { return p_config->SpeedRating.VSpeedAdjustment; }
+static inline uint16_t Motor_Config_GetVSpeedRatio_UFract16(const Motor_Config_T * p_config) { return p_config->SpeedRating.VSpeedAdjustment; }
 
 static inline uint16_t Motor_Config_GetIaZero_Adcu(const Motor_Config_T * p_config) { return p_config->IabcZeroRef_Adcu.A; }
 static inline uint16_t Motor_Config_GetIbZero_Adcu(const Motor_Config_T * p_config) { return p_config->IabcZeroRef_Adcu.B; }
@@ -281,20 +267,20 @@ static inline uint16_t Motor_Config_GetILimitGenerating_Fract16(const Motor_Conf
     Interface in time to saturation
 */
 // time to configured limit, both directions use forawrd as limit, optionally add opposite ramp coeffcient later.
-static inline uint32_t Motor_Config_GetSpeedRampTime_Cycles(const Motor_Config_T * p_config) { return (p_config->SpeedRampSlope_Accum32 != 0U) ? RAMP_TICKS_OF_COEF(p_config->SpeedLimitForward_Fract16, p_config->SpeedRampSlope_Accum32) : 0U; }
-static inline uint32_t Motor_Config_GetTorqueRampTime_Cycles(const Motor_Config_T * p_config) { return (p_config->TorqueRampSlope_Accum32 != 0U) ? RAMP_TICKS_OF_COEF(p_config->ILimitMotoring_Fract16, p_config->TorqueRampSlope_Accum32) : 0U; }
+static inline uint32_t Motor_Config_GetSpeedRampTime_Ticks(const Motor_Config_T * p_config) { return (p_config->SpeedRampSlope_Accum32 != 0U) ? RAMP_TICKS_OF_COEF(p_config->SpeedLimitForward_Fract16, p_config->SpeedRampSlope_Accum32) : 0U; }
+static inline uint32_t Motor_Config_GetTorqueRampTime_Ticks(const Motor_Config_T * p_config) { return (p_config->TorqueRampSlope_Accum32 != 0U) ? RAMP_TICKS_OF_COEF(p_config->ILimitMotoring_Fract16, p_config->TorqueRampSlope_Accum32) : 0U; }
 
-static inline uint16_t Motor_Config_GetSpeedRampTime_Millis(const Motor_Config_T * p_config) { return MOTOR_SPEED_TIME_MS(Motor_Config_GetSpeedRampTime_Cycles(p_config)); } /* Base Cycle in Millis */
-static inline uint16_t Motor_Config_GetTorqueRampTime_Millis(const Motor_Config_T * p_config) { return MOTOR_TORQUE_TIME_MS(Motor_Config_GetTorqueRampTime_Cycles(p_config)); }
+/* Speed Base Ticks is Millis */
+static inline uint16_t Motor_Config_GetSpeedRampTime_Millis(const Motor_Config_T * p_config) { return (Motor_Config_GetSpeedRampTime_Ticks(p_config)); }
+static inline uint16_t Motor_Config_GetTorqueRampTime_Millis(const Motor_Config_T * p_config) { return MOTOR_TORQUE_TIME_MS(Motor_Config_GetTorqueRampTime_Ticks(p_config)); }
 
 /*
     Interface in Fract16
 */
 // static inline uint16_t Motor_Config_GetSpeedRampSlope_Fract16PerTick(const Motor_Config_T * p_config) { return p_config->SpeedRampSlope_Accum32 / ACCUMULATOR_SCALE; }
 // static inline uint16_t Motor_Config_GetTorqueRampSlope_Fract16PerTick(const Motor_Config_T * p_config) { return  p_config->TorqueRampSlope_Accum32 / ACCUMULATOR_SCALE; }
-
-static inline uint16_t Motor_Config_GetSpeedRampSlope_PuPerTick(const Motor_Config_T * p_config) { return p_config->SpeedRampSlope_Accum32; }
-static inline uint16_t Motor_Config_GetTorqueRampSlope_PuPerTick(const Motor_Config_T * p_config) { return  p_config->TorqueRampSlope_Accum32; }
+static inline uint32_t Motor_Config_GetSpeedRampSlope_PuPerTick(const Motor_Config_T * p_config) { return p_config->SpeedRampSlope_Accum32; }
+static inline uint32_t Motor_Config_GetTorqueRampSlope_PuPerTick(const Motor_Config_T * p_config) { return p_config->TorqueRampSlope_Accum32; }
 
 /*
     Interface in Physical Units (display/readout)
@@ -304,18 +290,17 @@ static inline uint32_t Motor_Config_GetSpeedRampSlope_RpmPerS(const Motor_Config
 static inline uint32_t Motor_Config_GetTorqueRampSlope_AmpPerS(const Motor_Config_T * p_config) { return Phase_I_AmpsOfFract16((int64_t)p_config->TorqueRampSlope_Accum32 * MOTOR_CONTROL_FREQ / ACCUMULATOR_SCALE); }
 
 
-
 /*
     Persistent Base SpeedLimit
 */
-void Motor_Config_SetSpeedLimitForward_Fract16(Motor_Config_T * p_config, uint16_t forward_Fract16) { p_config->SpeedLimitForward_Fract16 = Motor_SpeedRatedLimitOf(p_config, forward_Fract16); }
-void Motor_Config_SetSpeedLimitReverse_Fract16(Motor_Config_T * p_config, uint16_t reverse_Fract16) { p_config->SpeedLimitReverse_Fract16 = Motor_SpeedRatedLimitOf(p_config, reverse_Fract16); }
+void Motor_Config_SetSpeedLimitForward_Fract16(Motor_Config_T * p_config, uint16_t forward_Fract16) { p_config->SpeedLimitForward_Fract16 = math_min(_Motor_SpeedRatedLimit(p_config), forward_Fract16); }
+void Motor_Config_SetSpeedLimitReverse_Fract16(Motor_Config_T * p_config, uint16_t reverse_Fract16) { p_config->SpeedLimitReverse_Fract16 = math_min(_Motor_SpeedRatedLimit(p_config), reverse_Fract16); }
 
 /*
     Persistent Base ILimit
 */
-void Motor_Config_SetILimitMotoring_Fract16(Motor_Config_T * p_config, uint16_t motoring_Fract16) { p_config->ILimitMotoring_Fract16 = Motor_IRatedLimitOf(motoring_Fract16); }
-void Motor_Config_SetILimitGenerating_Fract16(Motor_Config_T * p_config, uint16_t generating_Fract16) { p_config->ILimitGenerating_Fract16 = Motor_IRatedLimitOf(generating_Fract16); }
+void Motor_Config_SetILimitMotoring_Fract16(Motor_Config_T * p_config, uint16_t motoring_Fract16) { p_config->ILimitMotoring_Fract16 = math_min(Phase_Calibration_GetIRatedPeak_Fract16(), motoring_Fract16); }
+void Motor_Config_SetILimitGenerating_Fract16(Motor_Config_T * p_config, uint16_t generating_Fract16) { p_config->ILimitGenerating_Fract16 = math_min(Phase_Calibration_GetIRatedPeak_Fract16(), generating_Fract16); }
 
 /*
     Ramps
@@ -336,11 +321,12 @@ void Motor_Config_SetTorqueRampSlope_AmpPerS(Motor_Config_T * p_config, uint32_t
 
 
 /******************************************************************************/
-/* OpenLoop Ramp/Limit */
+/*
+    OpenLoop
+*/
 /******************************************************************************/
-static inline uint16_t Motor_Config_GetOpenLoopScalarLimit(const Motor_Config_T * p_config) { return p_config->OpenLoopLimitScalar_Fract16; }
+static inline uint16_t Motor_Config_GetOpenLoopLimitRatio(const Motor_Config_T * p_config) { return p_config->OpenLoopLimitRatio; }
 
-// static inline uint16_t Motor_Config_GetAlignPowerScalar(const Motor_Config_T * p_config) { return p_config->AlignScalar_Fract16; }
 static inline uint32_t Motor_Config_GetAlignTime_Cycles(const Motor_Config_T * p_config) { return p_config->AlignTime_Cycles; }
 static inline uint16_t Motor_Config_GetAlignTime_Millis(const Motor_Config_T * p_config) { return _Motor_MillisOf(p_config->AlignTime_Cycles); }
 
@@ -370,7 +356,7 @@ int _Motor_Var_ConfigCalibration_Get(const Motor_Config_T * p_motor, Motor_Var_C
         case MOTOR_VAR_POLE_PAIRS:              value = Motor_Config_GetPolePairs(p_motor);                 break;
         case MOTOR_VAR_KV:                      value = Motor_Config_GetKv(p_motor);                        break;
         // case MOTOR_VAR_SPEED_RATED:             value = Motor_Config_GetSpeedRated(p_motor);                break;
-        case MOTOR_VAR_V_SPEED_TUNING:          value = Motor_Config_GetVSpeedScalar_UFract16(p_motor);     break;
+        case MOTOR_VAR_V_SPEED_TUNING:          value = Motor_Config_GetVSpeedRatio_UFract16(p_motor);     break;
         case MOTOR_VAR_IA_ZERO_ADCU:            value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
         case MOTOR_VAR_IB_ZERO_ADCU:            value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
         case MOTOR_VAR_IC_ZERO_ADCU:            value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
@@ -409,10 +395,9 @@ int _Motor_Var_ConfigActuation_Get(const Motor_Config_T * p_motor, Motor_Var_Con
         case MOTOR_VAR_BASE_I_LIMIT_GENERATING:     value = Motor_Config_GetILimitGenerating_Fract16(p_motor);      break;
         case MOTOR_VAR_SPEED_RAMP_TIME:             value = Motor_Config_GetSpeedRampTime_Millis(p_motor);          break;
         case MOTOR_VAR_TORQUE_RAMP_TIME:            value = Motor_Config_GetTorqueRampTime_Millis(p_motor);         break;
-        // case MOTOR_VAR_SPEED_RAMP_TIME:             value = Motor_Config_GetSpeedRampSlope_PuPerTick(p_motor);          break;
-        // case MOTOR_VAR_TORQUE_RAMP_TIME:            value = Motor_Config_GetTorqueRampSlope_PuPerTick(p_motor);         break;
-        /*  */
-        case MOTOR_VAR_OPEN_LOOP_POWER_LIMIT:       value = Motor_Config_GetOpenLoopScalarLimit(p_motor);           break;
+        // case MOTOR_VAR_SPEED_RAMP_RATE:             value = Motor_Config_GetSpeedRampSlope_PuPerTick(p_motor);          break;
+        // case MOTOR_VAR_TORQUE_RAMP_RATE:            value = Motor_Config_GetTorqueRampSlope_PuPerTick(p_motor);         break;
+        case MOTOR_VAR_OPEN_LOOP_POWER_LIMIT:       value = Motor_Config_GetOpenLoopLimitRatio(p_motor);           break;
         case MOTOR_VAR_I_ALIGN:                     value = p_motor->IAlign_Fract16;  break;
         case MOTOR_VAR_V_ALIGN:                     value = p_motor->VAlign_Fract16;  break;
         case MOTOR_VAR_ALIGN_TIME:                  value = Motor_Config_GetAlignTime_Millis(p_motor);              break;
@@ -437,11 +422,11 @@ void _Motor_Var_ConfigActuation_Set(Motor_Config_T * p_motor, Motor_Var_ConfigAc
         case MOTOR_VAR_BASE_SPEED_LIMIT_REVERSE:    Motor_Config_SetSpeedLimitReverse_Fract16(p_motor, varValue);       break;
         case MOTOR_VAR_BASE_I_LIMIT_MOTORING:       Motor_Config_SetILimitMotoring_Fract16(p_motor, varValue);          break;
         case MOTOR_VAR_BASE_I_LIMIT_GENERATING:     Motor_Config_SetILimitGenerating_Fract16(p_motor, varValue);        break;
-        //
         case MOTOR_VAR_SPEED_RAMP_TIME:             Motor_Config_SetSpeedRampTime_Millis (p_motor, varValue);           break;
         case MOTOR_VAR_TORQUE_RAMP_TIME:            Motor_Config_SetTorqueRampTime_Millis (p_motor, varValue);          break;
-        /*  */
-        case MOTOR_VAR_OPEN_LOOP_POWER_LIMIT:       Motor_Config_SetOpenLoopScalarLimit(p_motor, varValue);             break;
+        // case MOTOR_VAR_SPEED_RAMP_RATE:             Motor_Config_SetSpeedRampTime_Millis (p_motor, varValue);           break;
+        // case MOTOR_VAR_TORQUE_RAMP_RATE:            Motor_Config_SetTorqueRampTime_Millis (p_motor, varValue);          break;
+        case MOTOR_VAR_OPEN_LOOP_POWER_LIMIT:       Motor_Config_SetOpenLoopLimitRatio(p_motor, varValue);             break;
         case MOTOR_VAR_I_ALIGN:                     Motor_Config_SetIAlign(p_motor, varValue);                                break;
         case MOTOR_VAR_V_ALIGN:                     Motor_Config_SetVAlign(p_motor, varValue);                                break;
         case MOTOR_VAR_ALIGN_TIME:                  Motor_Config_SetAlignTime_Millis(p_motor, varValue);                break;

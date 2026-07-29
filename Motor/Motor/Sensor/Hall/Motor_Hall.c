@@ -82,7 +82,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Hall_StartCalibrate(GetHall(p_motor));
-    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(p_motor->P_MOTOR));
     Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
 }
 
@@ -91,7 +91,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 */
 static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 {
-    Phase_Align(&p_motor->PHASE, id, _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config));
+    Phase_Align(&p_motor->PHASE, id, _Motor_GetVAlign_Duty(p_motor->P_MOTOR));
 }
 
 /*
@@ -100,8 +100,8 @@ static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 */
 static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 {
-    // _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), Phase_AngleOf(id), _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
-    Motor_FOC_ProcAngleAlign(p_motor, Phase_AngleOf(id), _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+    // _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), Phase_AngleOf(id), _Motor_GetIAlign(p_motor->P_MOTOR));
+    Motor_FOC_ProcAngleAlign(p_motor, Phase_AngleOf(id), _Motor_GetIAlign(p_motor->P_MOTOR));
 }
 
 /*
@@ -185,7 +185,7 @@ void Motor_Hall_Cmd(Motor_T * p_motor, int varId, int varValue)
 // {
 //     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) != true) return;
 
-//     const uint16_t duty = _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config);
+//     const uint16_t duty = _Motor_GetVAlign_Duty(p_motor->P_MOTOR);
 
 //     switch (p_buffer->Step)
 //     {

@@ -64,10 +64,10 @@ static State_T * OpenLoop_Jog(Motor_T * p_motor, state_value_t direction)
 {
     (void)direction;
     // if (Phase_IsFloat(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
-    if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config)); }
+    if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, _Motor_GetVAlign_Duty(p_motor->P_MOTOR)); }
     else
     {
-        Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config))));
+        Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, _Motor_GetVAlign_Duty(p_motor->P_MOTOR))));
     }
     return NULL;
 }
@@ -252,7 +252,7 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 //     // Phase_ActivateV0(&p_motor->PHASE);
 //     // PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
 //     Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-//     // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+//     // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(p_motor->P_MOTOR));
 //     // Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
 //     // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 // }
@@ -262,12 +262,12 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 // */
 // static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 // {
-//     Phase_Align(&p_motor->PHASE, id, _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config));
+//     Phase_Align(&p_motor->PHASE, id, _Motor_GetVAlign_Duty(p_motor->P_MOTOR));
 // }
 
 // static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 // {
-//     _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, Phase_AngleOf(id), _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+//     _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, Phase_AngleOf(id), _Motor_GetIAlign(p_motor->P_MOTOR));
 //     //Motor_FOC_WriteDuty(p_motor);
 // }
 

@@ -102,7 +102,7 @@ static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 */
 static inline void VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 {
-    _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
+    _VBus_Capture(p_vbus, ((uint32_t)fract16 + p_vbus->VBus_Fract16) / 2U);
 }
 
 /*
@@ -110,9 +110,7 @@ static inline void VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 */
 #include "../Phase_Input/Phase_Analog.h" /* for Phase_Analog_VFract16Of() */
 static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBus_Capture(p_vbus, Phase_Analog_VFract16Of(adcu)); }
-/* optionally  */
-// static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { _VBus_Capture(p_vbus, Phase_Analog_VFract16Of(adcu)); }
-
+/* optionally seperate filter for monitor vs vout scaling  */
 
 /******************************************************************************/
 /*!
@@ -127,7 +125,6 @@ static inline uint16_t VBus_Volts(const VBus_T * p_vbus) { return fract16_mul(p_
 /* Runtime phase peak references — VBus/2 (sine) and VBus/√3 (SVPWM) */
 static inline ufract16_t VBus_GetVPhaseRef(const VBus_T * p_vbus) { return p_vbus->VBus_Fract16 / 2U; }
 static inline ufract16_t VBus_GetVPhaseRefSvpwm(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, FRACT16_1_DIV_SQRT3); }
-// static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t direction) { return interval_of_sign(direction, VBus_GetVPhaseRefSvpwm(p_vbus)); }
 
 /* Normalize a phase voltage to fraction-of-VBus (duty cycle) */
 static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->PerV_Accum32 / FRACT16_SCALE; }

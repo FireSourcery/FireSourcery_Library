@@ -41,10 +41,12 @@
     Angle State — 32-bit shifted tracker.
 
     Angle accumulator shifts 16 for wrap.
+    Wrapping integrator via overflow
+    Independent path from pu integrator which may be in float or fixed-point.
 
     Three integration modes share one struct:
-        - wrap     : Angle_Integrate      (position tracker, free wrap)
-        - clamp    : Angle_Interpolate         (bounded step; Limit is signed remaining-allowance)
+        - wrap     : Angle_Integrate       (position tracker, free wrap)
+        - clamp    : Angle_Interpolate     (bounded step)
         - none     : Angle_SetAngle        (direct sensor snapshot)
 */
 /******************************************************************************/
@@ -129,7 +131,7 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 /*
     Step Delta: [down_room, up_room]
     which when both are negative (Angle above LimitUpper) forces any Delta back toward the window.
-    Angle next = clamp(Angle + Delta, LimitLower, LimitUpper)
+    Effectively Angle next = clamp(Angle + Delta, LimitLower, LimitUpper)
 */
 static inline int32_t _Angle_DeltaSat(const Angle_T * p_angle)
 {
@@ -146,21 +148,21 @@ static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
     Bounded step — wrapping-aware clamp.
     Unsigned subtraction recovers the correct span/offset even when limits
 */
-// static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
-// {
-//     /*  assert(math_abs(p_angle->Delta >> ANGLE32_SHIFT) < ANGLE16_PER_REVOLUTION / 2); */
-//     /* (x − low) > (high − low) */
-//     if ((uint32_t)(p_angle->Angle + p_angle->Delta - p_angle->LimitLower) > (uint32_t)(p_angle->LimitUpper - p_angle->LimitLower))
-//     {
-//         p_angle->Angle = (p_angle->Delta >= 0) ? p_angle->LimitUpper : p_angle->LimitLower;
-//     }
-//     else
-//     {
-//         p_angle->Angle += p_angle->Delta;
-//     }
+static inline angle16_t Angle_Interpolate_Branch(Angle_T * p_angle)
+{
+    /*  assert(math_abs(p_angle->Delta >> ANGLE32_SHIFT) < ANGLE16_PER_REVOLUTION / 2); */
+    /* (x − low) > (high − low) */
+    if ((uint32_t)(p_angle->Angle + p_angle->Delta - p_angle->LimitLower) > (uint32_t)(p_angle->LimitUpper - p_angle->LimitLower))
+    {
+        p_angle->Angle = (p_angle->Delta >= 0) ? p_angle->LimitUpper : p_angle->LimitLower;
+    }
+    else
+    {
+        p_angle->Angle += p_angle->Delta;
+    }
 
-//     return Angle_Value(p_angle);
-// }
+    return Angle_Value(p_angle);
+}
 
 /* Set bounds as an angle window [lower, upper] from angle16 inputs. */
 static inline void Angle_SetLimits(Angle_T * p_angle, angle16_t lower, angle16_t upper)
@@ -170,8 +172,7 @@ static inline void Angle_SetLimits(Angle_T * p_angle, angle16_t lower, angle16_t
 }
 
 /*
-    Set bounds as a one-sided sector window: width ahead in sign(Delta), 0 behind.
-    Called after snapping Angle to a sensor boundary (e.g. Hall edge).
+    Set bounds as a one-sided sector window:
         Delta > 0 : [Angle, Angle + width]
         Delta < 0 : [Angle - width, Angle]
 */
@@ -211,12 +212,11 @@ static inline void Angle_ZeroAngle(Angle_T * p_angle) { p_angle->Angle = 0; }
 static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 
 
-
 /*
     Step is pinned in [−room, 0] or [0, +room]
     no auto-correction, 0 on overshoot.
     e.g. Already above upper : Angle = 110, Upper = 100, Lower = 0, Delta = +5
-    returns 0, stay at 110.
+    returns 0, angle stays at 110.
 */
 // static inline angle16_t _Angle_GetDeltaSat(const Angle_T * p_angle)
 // {
@@ -227,7 +227,7 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 
 /******************************************************************************/
 /*
-    as progress state
+    as progress state θ + φ
 */
 /******************************************************************************/
 // static inline angle16_t Angle_Abs_Interpolate(Angle_T * p_angle)

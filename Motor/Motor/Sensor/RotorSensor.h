@@ -71,26 +71,29 @@ RotorSensor_VTable_T;
 
 
 /*
-    [RotorSensor_Units_T]/[RotorSensor_Calibration_T]
+    [RotorSensor_Units_T]
+    temporary args
 */
 typedef struct RotorSensor_Config
 {
     uint8_t PolePairs;              /* Motor Pole Pairs. Config Mech/Electrical conversion */
-
     /* Config scalar speed. Caller derive  */
     uint16_t SpeedTypeMax_Rpm; /* mechanical */
     uint16_t SpeedTypeMax_Angle16; /* electrical */
     /* uint32_t PollingFreq */
-
-    // uint16_t MismatchLimit;
-
-    // optionally move
-    // Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
-    // uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
-    // uint16_t Kv;                        /* [RpmPerVolt] Motor Constant. Use to derive SpeedVRef. Optionally sets SpeedRated */
-    // uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. Derives Angle and Fract16 */
 }
 RotorSensor_Config_T;
+
+/* RotorSensor_SpeedCalibration_T */
+// typedef struct RotorSensor_Config
+// {
+//     // optionally move
+//     // Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
+//     // uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
+//     // uint16_t Kv;                        /* [RpmPerVolt] Motor Constant. Use to derive SpeedVRef. Optionally sets SpeedRated */
+//     // uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. Derives Angle and Fract16 */
+// }
+// RotorSensor_Config_T;
 
 /*
     [Angle_T] Wrap
@@ -100,8 +103,7 @@ typedef struct RotorSensor_State
     Angle_T AngleSpeed;     /* Electrical angle and speed state. */
     Angle_SpeedUnitRef_T SpeedFractRef;
     accum32_t Speed_Fract16;
-    angle16_t MechanicalAngle;
-    // RotorSensor_Config_T Config;
+    angle16_t MechanicalAngle; /* optionally supported */
 }
 RotorSensor_State_T;
 
@@ -115,7 +117,7 @@ RotorSensor_State_T;
 /*
     [RotorSensor_T]
     Instance/Entry
-    No backpointer to container. Use as first member in container.
+    Base class. No backpointer to container. Use as first member in container.
 */
 typedef const struct RotorSensor
 {

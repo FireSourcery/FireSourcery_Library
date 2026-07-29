@@ -77,8 +77,8 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 /* idReq input is userReq or preset IAlign. */
 void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq)
 {
-    Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_OpenLoopILimit(&p_motor->Config))), 0);
-    // Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(&p_motor->Config))), 0);
+    Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_OpenLoopILimit(p_motor))), 0);
+    // Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))), 0);
     // optionally split to non deboupled.
 }
 
@@ -150,7 +150,7 @@ void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 /*
     Voltage-mode on a seperate path
 */
-void Motor_FOC_ProcVControl(Motor_T * p_motor)
+void Motor_FOC_ProcAngleV(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     fract16_t vReq = _Ramp_ProcNextOf(&p_context->TorqueRamp, Ramp_GetTarget(&p_context->TorqueRamp)); /* inner loop clips with VLimit */
@@ -259,7 +259,7 @@ void Motor_FOC_StartStartUpAlign(Motor_Context_T * p_motor)
 void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), Angle_Value(&p_context->OpenLoopAngle), _Motor_GetIAlign(&p_context->Config));
+    _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), Angle_Value(&p_context->OpenLoopAngle), _Motor_GetIAlign(p_context));
 }
 
 
@@ -272,7 +272,7 @@ void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor)
 */
 void Motor_FOC_StartOpenLoop(Motor_Context_T * p_motor)
 {
-    // Ramp_SetOutputState(&p_motor->OpenLoopIRamp, _Motor_GetIAlign(&p_motor->Config) * p_motor->Direction);  /* continue from align current */
+    // Ramp_SetOutputState(&p_motor->OpenLoopIRamp, _Motor_GetIAlign(p_motor) * p_motor->Direction);  /* continue from align current */
     Ramp_SetOutputState(&p_motor->OpenLoopIRamp, 0);
     Ramp_SetOutputState(&p_motor->OpenLoopSpeedRamp, 0);
     /* continue from OpenLoopAngle */

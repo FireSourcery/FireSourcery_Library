@@ -187,6 +187,10 @@ static inline bool Motor_IsConfig(Motor_T * p_motor)
     Stop disables inputs until next Start.
 */
 /******************************************************************************/
+/*
+    for now exit calibration use MOTOR_STATE_INPUT_PHASE_OUTPUT - PHASE_VOUT_Z
+    alternatively MOTOR_STATE_INPUT_STATE_START normalizes exit from calibration
+*/
 static State_T * _Motor_InputDisable(Motor_T * p_motor, state_value_t value)
 {
     (void)value;

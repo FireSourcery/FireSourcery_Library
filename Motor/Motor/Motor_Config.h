@@ -33,14 +33,20 @@
 #ifndef MOTOR_CONFIG_H
 #define MOTOR_CONFIG_H
 
-
 #include "Motor.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 
+/* scale to rated max */
+  /* Limit of rated. as scalar [0:1.0F] [0:32768]. V/I Align_Fract16 < OpenLoopLimitRatio * V/I Rated */
+#ifndef MOTOR_OPEN_LOOP_CEILING
+#define MOTOR_OPEN_LOOP_CEILING FRACT16(0.1F)
+#endif
 
+// static inline uint16_t _Motor_GetOpenLoopScalarLimit(const Motor_Config_T * p_config) { return math_min(p_config->OpenLoopLimitRatio, MOTOR_OPEN_LOOP_CEILING); }
+static inline uint16_t _Motor_OpenLoopCeilingRate(const Motor_Config_T * p_config) { (void)p_config; return MOTOR_OPEN_LOOP_CEILING; }
 
 /******************************************************************************/
 /*
@@ -50,6 +56,7 @@
 extern void Motor_Config_Validate(Motor_Config_T * p_config);
 extern bool Motor_Config_IsValid(const Motor_Config_T * p_config);
 bool _Motor_Config_IsValidSpeed(const Motor_Config_T * p_config, uint16_t speedCeiling);
+bool _Motor_Config_IsValidVoltage(const Motor_Config_T * p_config, uint16_t vBus);
 extern void Motor_Config_ValidateFw(Motor_Config_T * p_config, bool isFwEnabled);
 extern bool Motor_Config_IsValidFw(const Motor_Config_T * p_config, bool isFwEnabled);
 
@@ -62,7 +69,8 @@ extern bool Motor_Config_IsValidElectrical(const Motor_Config_T * p_config);
     Config Field Id
     Preferably in dependency order. Simplify propagate write.
 */
-/******************************************************************************/
+/******************************************************************************
+/* direct field map or  */
 typedef enum Motor_Var_ConfigCalibration
 {
     MOTOR_VAR_COMMUTATION_MODE,       /* Motor_CommutationMode_T, if runtime supported */
@@ -89,9 +97,11 @@ typedef enum Motor_Var_ConfigActuation
     MOTOR_VAR_BASE_SPEED_LIMIT_REVERSE,
     MOTOR_VAR_BASE_I_LIMIT_MOTORING,
     MOTOR_VAR_BASE_I_LIMIT_GENERATING,
-    MOTOR_VAR_SPEED_RAMP_TIME,     // MOTOR_VAR_SPEED_RAMP_RATE,
-    MOTOR_VAR_TORQUE_RAMP_TIME,     // MOTOR_VAR_TORQUE_RAMP_RATE,
-    MOTOR_VAR_OPEN_LOOP_POWER_LIMIT, //split
+    // MOTOR_VAR_SPEED_RAMP_RATE,
+    // MOTOR_VAR_TORQUE_RAMP_RATE,
+    MOTOR_VAR_SPEED_RAMP_TIME,
+    MOTOR_VAR_TORQUE_RAMP_TIME,
+    MOTOR_VAR_OPEN_LOOP_POWER_LIMIT,
     MOTOR_VAR_I_ALIGN,
     MOTOR_VAR_V_ALIGN,
     MOTOR_VAR_ALIGN_TIME,
@@ -101,6 +111,14 @@ typedef enum Motor_Var_ConfigActuation
     MOTOR_VAR_OPEN_LOOP_RAMP_I_TIME,
 }
 Motor_Var_ConfigActuation_T;
+
+// typedef enum Motor_Var_ConfigActuationAlt
+// {
+//      MOTOR_VAR_SPEED_RAMP_TIME,
+//      MOTOR_VAR_TORQUE_RAMP_TIME,
+//      MOTOR_VAR_OPEN_LOOP_POWER_LIMIT,
+// }
+// Motor_Var_ConfigActuationAlt_T;
 
 /*
     PID

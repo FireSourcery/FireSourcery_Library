@@ -100,6 +100,7 @@ typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
 ##
 Config structs
 stores to flash
+not a domain model, rather a container for mapping to a memory region.
 include transport interface via enum ids map
 optionally use schema descriptor or per value id
 
