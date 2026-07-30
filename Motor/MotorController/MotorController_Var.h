@@ -220,6 +220,8 @@ typedef enum MotorController_VarType_Communication
     MOT_VAR_TYPE_SOCKET_CONFIG, /* Instance by Protocol Count */
     MOT_VAR_TYPE_CAN_BUS_STATE,
     MOT_VAR_TYPE_CAN_BUS_CONFIG,
+    MOT_VAR_TYPE_CIA_402_STATE,
+    MOT_VAR_TYPE_CIA_402_CONFIG, /* Instanced */
 }
 MotorController_VarType_Communication_T;
 

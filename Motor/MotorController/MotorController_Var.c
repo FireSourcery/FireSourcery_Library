@@ -374,9 +374,11 @@ static MotVarId_Status_T _HandleCommunication_Set(MotorController_T * p_dev, Mot
     switch ((MotorController_VarType_Communication_T)varId.Type)
     {
         case MOT_VAR_TYPE_SOCKET_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_CAN_BUS_STATE:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_SOCKET_CONFIG:            Socket_ConfigId_Set(SocketAt(p_dev, varId.Instance), varId.Base, value);     break;
+        case MOT_VAR_TYPE_CAN_BUS_STATE:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_CAN_BUS_CONFIG:           break;
+        case MOT_VAR_TYPE_CIA_402_STATE:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_CIA_402_CONFIG:           break;
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
     return MOT_VAR_STATUS_OK;
@@ -436,6 +438,7 @@ static MotVarId_Status_T CheckInputPolicy(MotorController_T * p_dev, MotVarId_T 
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_USER_SETPOINT):
             if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             if (!MotorController_IsMotorCmdAccess(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            // if (MotorAt(p_dev, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
             break;
 
         // Motor: State commands

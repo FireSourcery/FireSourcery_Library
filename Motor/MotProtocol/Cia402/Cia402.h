@@ -145,14 +145,14 @@ Cia402_Status_T;
 #define CIA402_STATUS_MASK_NRSO             (0x004FU) /* {SOD, F, OE, SO, RTSO} */
 #define CIA402_STATUS_MASK_GENERAL          (0x006FU) /* {SOD, QS, F, OE, SO, RTSO} */
 
-// #define CIA402_STATUS_NOT_READY_TO_SWITCH_ON    (0x0000U) /* mask NRSO */
-// #define CIA402_STATUS_SWITCH_ON_DISABLED        (0x0040U) /* mask NRSO */
-// #define CIA402_STATUS_READY_TO_SWITCH_ON        (0x0021U) /* mask GENERAL */
-// #define CIA402_STATUS_SWITCHED_ON               (0x0023U) /* mask GENERAL */
-// #define CIA402_STATUS_OPERATION_ENABLED         (0x0027U) /* mask GENERAL */
-// #define CIA402_STATUS_QUICK_STOP_ACTIVE         (0x0007U) /* mask GENERAL */
-// #define CIA402_STATUS_FAULT_REACTION_ACTIVE     (0x000FU) /* mask NRSO */
-// #define CIA402_STATUS_FAULT                     (0x0008U) /* mask NRSO */
+#define CIA402_STATUS_NOT_READY_TO_SWITCH_ON    (0x0000U) /* mask NRSO */
+#define CIA402_STATUS_SWITCH_ON_DISABLED        (0x0040U) /* mask NRSO */
+#define CIA402_STATUS_READY_TO_SWITCH_ON        (0x0021U) /* mask GENERAL */
+#define CIA402_STATUS_SWITCHED_ON               (0x0023U) /* mask GENERAL */
+#define CIA402_STATUS_OPERATION_ENABLED         (0x0027U) /* mask GENERAL */
+#define CIA402_STATUS_QUICK_STOP_ACTIVE         (0x0007U) /* mask GENERAL */
+#define CIA402_STATUS_FAULT_REACTION_ACTIVE     (0x000FU) /* mask NRSO */
+#define CIA402_STATUS_FAULT                     (0x0008U) /* mask NRSO */
 
 /*
     Drive State (decoded enum form of Statusword)
@@ -171,23 +171,23 @@ typedef enum Cia402_State
 }
 Cia402_State_T;
 
-// static inline Cia402_Status_T Cia402_EncodeStatus(Cia402_State_T status) { return (Cia402_Status_T) { .Word = (uint16_t)status }; }
+static inline Cia402_Status_T Cia402_EncodeStatus(Cia402_State_T status) { return (Cia402_Status_T) { .Word = (uint16_t)status }; }
 
-// static inline Cia402_State_T Cia402_DecodeStatus(Cia402_Status_T status)
-// {
-//     uint16_t general = status.Word & CIA402_STATUS_MASK_GENERAL;
-//     uint16_t nrso = status.Word & CIA402_STATUS_MASK_NRSO;
+static inline Cia402_State_T Cia402_DecodeStatus(Cia402_Status_T status)
+{
+    uint16_t general = status.Word & CIA402_STATUS_MASK_GENERAL;
+    uint16_t nrso = status.Word & CIA402_STATUS_MASK_NRSO;
 
-//     if (nrso == CIA402_STATUS_NOT_READY_TO_SWITCH_ON)   return CIA402_STATE_NOT_READY_TO_SWITCH_ON;
-//     if (nrso == CIA402_STATUS_SWITCH_ON_DISABLED)       return CIA402_STATE_SWITCH_ON_DISABLED;
-//     if (nrso == CIA402_STATUS_FAULT_REACTION_ACTIVE)    return CIA402_STATE_FAULT_REACTION_ACTIVE;
-//     if (nrso == CIA402_STATUS_FAULT)                    return CIA402_STATE_FAULT;
-//     if (general == CIA402_STATUS_READY_TO_SWITCH_ON)    return CIA402_STATE_READY_TO_SWITCH_ON;
-//     if (general == CIA402_STATUS_SWITCHED_ON)           return CIA402_STATE_SWITCHED_ON;
-//     if (general == CIA402_STATUS_OPERATION_ENABLED)     return CIA402_STATE_OPERATION_ENABLED;
-//     if (general == CIA402_STATUS_QUICK_STOP_ACTIVE)     return CIA402_STATE_QUICK_STOP_ACTIVE;
-//     return CIA402_STATE_UNKNOWN;
-// }
+    if (nrso == CIA402_STATUS_NOT_READY_TO_SWITCH_ON)   return CIA402_STATE_NOT_READY_TO_SWITCH_ON;
+    if (nrso == CIA402_STATUS_SWITCH_ON_DISABLED)       return CIA402_STATE_SWITCH_ON_DISABLED;
+    if (nrso == CIA402_STATUS_FAULT_REACTION_ACTIVE)    return CIA402_STATE_FAULT_REACTION_ACTIVE;
+    if (nrso == CIA402_STATUS_FAULT)                    return CIA402_STATE_FAULT;
+    if (general == CIA402_STATUS_READY_TO_SWITCH_ON)    return CIA402_STATE_READY_TO_SWITCH_ON;
+    if (general == CIA402_STATUS_SWITCHED_ON)           return CIA402_STATE_SWITCHED_ON;
+    if (general == CIA402_STATUS_OPERATION_ENABLED)     return CIA402_STATE_OPERATION_ENABLED;
+    if (general == CIA402_STATUS_QUICK_STOP_ACTIVE)     return CIA402_STATE_QUICK_STOP_ACTIVE;
+    return CIA402_STATE_UNKNOWN;
+}
 
 
 /******************************************************************************/
@@ -735,10 +735,10 @@ Cia402_OdInterface_T;
 extern uint8_t Cia402_Sdo_HandleRequest(const Cia402_OdInterface_T * p_od, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_rsp);
 extern void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter_T * p_adapter, uint16_t cob_id, const Cia402_Pdo_T * p_pdo, uint8_t dlc);
 
-// /*
-//     Table Entry
-// */
-// /* Generic accessor — pulls a typed value from a raw byte pointer */
+/*
+    Table Entry
+*/
+/* Generic accessor — pulls a typed value from a raw byte pointer */
 // typedef struct Cia402_OdEntry
 // {
 //     Cia402_OdMeta_T Meta;

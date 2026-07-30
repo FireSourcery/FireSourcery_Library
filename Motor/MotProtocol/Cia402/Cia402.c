@@ -49,6 +49,41 @@
 #define OD_U32(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U32, (acc), sizeof(uint32_t) })
 #define OD_ABSENT    ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_NONE, CIA402_OD_ACCESS_NONE, 0U })
 
+
+/******************************************************************************/
+/*
+    OD metadata — spec-fixed compile-time table.
+
+    Rows are sorted by (Index, SubIndex) for readability and to permit
+    binary search if the table grows past ~50 entries. Linear scan is
+    fine at this size.
+
+    To add an object: append a row. To remove: delete the row.
+    No code change required in the SDO server.
+*/
+/******************************************************************************/
+// const Cia402_OdMeta_T CIA402_OD_META[] =
+// {
+//     { CIA402_OD_CONTROLWORD,             0U, CIA402_OD_TYPE_U16, CIA402_OD_ACCESS_RW, sizeof(uint16_t) },
+//     { CIA402_OD_STATUSWORD,              0U, CIA402_OD_TYPE_U16, CIA402_OD_ACCESS_RO, sizeof(uint16_t) },
+//     { CIA402_OD_QUICK_STOP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+//     { CIA402_OD_SHUTDOWN_OPTION_CODE,    0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+//     { CIA402_OD_DISABLE_OP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+//     { CIA402_OD_HALT_OPTION_CODE,        0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+//     { CIA402_OD_FAULT_REACTION_CODE,     0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+//     { CIA402_OD_MODES_OF_OPERATION,      0U, CIA402_OD_TYPE_I8,  CIA402_OD_ACCESS_RW, sizeof(int8_t)   },
+//     { CIA402_OD_MODES_OF_OPERATION_DISP, 0U, CIA402_OD_TYPE_I8,  CIA402_OD_ACCESS_RO, sizeof(int8_t)   },
+//     { CIA402_OD_POSITION_ACTUAL,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RO, sizeof(int32_t)  },
+//     { CIA402_OD_VELOCITY_ACTUAL,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RO, sizeof(int32_t)  },
+//     { CIA402_OD_TARGET_TORQUE,           0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+//     { CIA402_OD_TORQUE_ACTUAL,           0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RO, sizeof(int16_t)  },
+//     { CIA402_OD_CURRENT_ACTUAL,          0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RO, sizeof(int16_t)  },
+//     { CIA402_OD_DC_LINK_VOLTAGE,         0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, sizeof(uint32_t) },
+//     { CIA402_OD_QUICK_STOP_DECELERATION, 0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RW, sizeof(uint32_t) },
+//     { CIA402_OD_TARGET_VELOCITY,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RW, sizeof(int32_t)  },
+//     { CIA402_OD_SUPPORTED_DRIVE_MODES,   0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, sizeof(uint32_t) },
+// };
+
 Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex)
 {
     if (subindex != 0U) { return OD_ABSENT; }
@@ -109,6 +144,7 @@ uint8_t Cia402_Sdo_HandleRequest(const Cia402_OdInterface_T * p_od, const Cia402
                     *p_rsp = Cia402_Sdo_EncodeAbort(p_req->Index, p_req->SubIndex, CIA402_OD_ERR_READ_ONLY);
                     break;
                 }
+                // if (info.AdapterOffet != 0xFFFFU)
 
                 int32_t value = Cia402_SdoData_Decode(info.Type, p_req->Data);
                 Cia402_OdStatus_T r = (p_od->Set != NULL) ? p_od->Set(p_od->p_Context, p_req->Index, p_req->SubIndex, value) : CIA402_OD_ERR_GENERAL;
@@ -238,38 +274,3 @@ void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter
 
 
 
-
-
-/******************************************************************************/
-/*
-    OD metadata — spec-fixed compile-time table.
-
-    Rows are sorted by (Index, SubIndex) for readability and to permit
-    binary search if the table grows past ~50 entries. Linear scan is
-    fine at this size.
-
-    To add an object: append a row. To remove: delete the row.
-    No code change required in the SDO server.
-*/
-/******************************************************************************/
-// const Cia402_OdMeta_T CIA402_OD_META[] =
-// {
-//     { CIA402_OD_CONTROLWORD,             0U, CIA402_OD_TYPE_U16, CIA402_OD_ACCESS_RW, sizeof(uint16_t) },
-//     { CIA402_OD_STATUSWORD,              0U, CIA402_OD_TYPE_U16, CIA402_OD_ACCESS_RO, sizeof(uint16_t) },
-//     { CIA402_OD_QUICK_STOP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_SHUTDOWN_OPTION_CODE,    0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_DISABLE_OP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_HALT_OPTION_CODE,        0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_FAULT_REACTION_CODE,     0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_MODES_OF_OPERATION,      0U, CIA402_OD_TYPE_I8,  CIA402_OD_ACCESS_RW, sizeof(int8_t)   },
-//     { CIA402_OD_MODES_OF_OPERATION_DISP, 0U, CIA402_OD_TYPE_I8,  CIA402_OD_ACCESS_RO, sizeof(int8_t)   },
-//     { CIA402_OD_POSITION_ACTUAL,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RO, sizeof(int32_t)  },
-//     { CIA402_OD_VELOCITY_ACTUAL,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RO, sizeof(int32_t)  },
-//     { CIA402_OD_TARGET_TORQUE,           0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_TORQUE_ACTUAL,           0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RO, sizeof(int16_t)  },
-//     { CIA402_OD_CURRENT_ACTUAL,          0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RO, sizeof(int16_t)  },
-//     { CIA402_OD_DC_LINK_VOLTAGE,         0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, sizeof(uint32_t) },
-//     { CIA402_OD_QUICK_STOP_DECELERATION, 0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RW, sizeof(uint32_t) },
-//     { CIA402_OD_TARGET_VELOCITY,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RW, sizeof(int32_t)  },
-//     { CIA402_OD_SUPPORTED_DRIVE_MODES,   0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, sizeof(uint32_t) },
-// };
