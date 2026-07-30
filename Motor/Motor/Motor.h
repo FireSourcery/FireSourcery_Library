@@ -395,11 +395,11 @@ Motor_T;
 
 static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
 {
-// #ifdef MOTOR_CONFIG_NVM_ONLY
-//     return p_motor->P_NVM_CONFIG;
-// #else
+#ifdef MOTOR_CONFIG_NVM_ONLY
+    return p_motor->P_NVM_CONFIG;
+#else
     return &p_motor->P_MOTOR->Config;
-// #endif
+#endif
 }
 
 /******************************************************************************/

@@ -302,8 +302,8 @@ void Motor_SetSpeedMotoringCmd_Norm(Motor_Context_T * p_motor, int16_t scalar_fr
 */
 /******************************************************************************/
 /*
-    Unitless scalar as Motoring Direction
-    Scalar to Config value for consistent user handling
+    Percent value [-32768:32767] as Motoring Direction
+    Scale to Config value for consistent user handling
 */
 void _Motor_SetMotoringCmd_Norm(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
@@ -326,7 +326,7 @@ void Motor_SetActiveCmd_Norm(Motor_T * p_motor, int16_t userCmd)
 
 
 /*
-    mixed units
+    Pu max mixed units
 */
 void _Motor_SetMotoringCmdUnits(Motor_Context_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {

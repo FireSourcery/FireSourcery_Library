@@ -254,7 +254,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         {
             // todo as empty service struct
             if (p_mc->Config.IsCanEnable == true) { CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_20); }
-            // CanBus_ProcBroadcast(p_dev->P_CAN_BUS, p_mc->Config.IsCanEnable ? &p_dev->CAN_BUS_BROADCAST_20 : NULL);
         }
     #endif
 

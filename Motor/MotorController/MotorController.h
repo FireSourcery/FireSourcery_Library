@@ -180,11 +180,6 @@ typedef struct MotorController_Config
     // optionally move to Din P_VM
     UserDIn_Config_T DInConfigs[MOT_USER_DIN_COUNT]; /* stores cmd id */
     UserAIn_Config_T AInConfigs[MOT_USER_AIN_COUNT];
-
-#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-//     uint8_t CanServicesId;
-    bool IsCanEnable; //move to can module
-#endif
 }
 MotorController_Config_T;
 

@@ -125,6 +125,7 @@ typedef struct Protocol_HeaderMeta
 {
     packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */
     packet_size_t Length;           /* Total packet length */
+// uint32_t PayloadIndex;
 // uint32_t responseId;
 // uint32_t Sequence;   /* Sequence number (optional) */
 }
