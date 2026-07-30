@@ -241,6 +241,7 @@ static bool Standby_IsStartReady(MotorController_T * p_dev)
     Automatic exit from STANDBY per the resolved policy —
     Resolved Config.StandbyExitMode keep InputMode / Park topology out of the state machine.
 */
+// todo and check protocol not connected, alternatively disable exit on manual entry, or allow lock form main
 static State_T * Standby_Next(MotorController_T * p_dev)
 {
     switch (p_dev->P_MC->Config.StandbyExitMode)
@@ -599,7 +600,7 @@ static void Fault_Entry(MotorController_T * p_dev)
 
     Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit); /* exit on fault and exit lock. or implement input id */
-    // Motor_Table_ForEach(&p_dev->MOTORS, Motor_Disable);
+
 // #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
 //     memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
 // #endif

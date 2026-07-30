@@ -289,12 +289,12 @@ int Motor_Var_Board_Get(Motor_Var_Board_T varId)
         case MOTOR_VAR_BOARD_I_RATED:                 value = Phase_Calibration_GetIRatedPeak_Fract16();             break;
         case MOTOR_VAR_BOARD_V_MAX:                   value = Phase_Calibration_GetVMaxVolts();                      break;
         case MOTOR_VAR_BOARD_I_MAX:                   value = Phase_Calibration_GetIMaxAmps();                       break;
-        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1;            break;
-        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2;            break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_BASE;        break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_MOSFETS;     break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_SHUNT:         value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_SHUNT;       break;
-        case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN;          break;
+        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_BOARD.V_PHASE_R1;            break;
+        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_BOARD.V_PHASE_R2;            break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ANALOG_BOARD.I_PHASE_R_BASE;        break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_BOARD.I_PHASE_R_MOSFETS;     break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_SHUNT:         value = PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT;       break;
+        case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_BOARD.I_PHASE_GAIN;          break;
         // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
         /* Precompile Options */
         case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;                        break;

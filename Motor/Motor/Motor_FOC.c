@@ -30,9 +30,6 @@
 /******************************************************************************/
 #include "Motor_FOC.h"
 
-#if !defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE) && !defined(MOTOR_FOC_FIELD_WEAKENING_DISABLE)
-#define MOTOR_FOC_FIELD_WEAKENING_ENABLE
-#endif
 
 /******************************************************************************/
 /*!

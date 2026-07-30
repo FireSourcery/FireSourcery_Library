@@ -129,8 +129,13 @@ void Motor_Reinit(Motor_T * p_motor)
 bool Motor_IsConfigValid(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
     uint16_t speedCeiling = FOC_Config_IsFwEnabled(&p_context->Foc.Config) ? INT16_MAX : Motor_SpeedRated_Fract16(p_motor);
-    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, speedCeiling) && _Motor_Config_IsValidVoltage(&p_context->Config, VBus_Fract16(p_motor->P_VBUS));
+#else
+    uint16_t speedCeiling = Motor_SpeedRated_Fract16(p_motor);
+#endif
+    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, speedCeiling);
+    // && _Motor_Config_IsValidVoltage(&p_context->Config, VBus_Fract16(p_motor->P_VBUS));
 }
 
 /******************************************************************************/

@@ -104,7 +104,7 @@ extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm);
 
 extern NvMemory_Status_T MotNvm_WritePhaseCalibration(const MotNvm_T * p_motNvm, const Phase_Calibration_T * p_source);
-extern NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_motNvm, const Phase_AnalogCalibration_T * p_source);
+extern NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_motNvm, const Phase_AnalogBoard_T * p_source);
 
 
 // extern NvMemory_Status_T MotNvm_WriteConstRef(const MotNvm_T * p_motNvm);
@@ -115,6 +115,6 @@ extern NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_m
 // typedef const struct Nvm_Manufacturer Nvm_Manufacturer_T;
 
 // extern void HAL_Nvm_MapPhaseCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
-// extern void HAL_Nvm_MapPhaseAnalogCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_AnalogCalibration_T * p_buffer);
+// extern void HAL_Nvm_MapPhaseAnalogCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_AnalogBoard_T * p_buffer);
 
 // NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source);
