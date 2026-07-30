@@ -32,7 +32,8 @@
 #include "MotorController_Cia402.h"
 #include "Cia402.h"
 #include "Motor_Cia402.h"
-#include "Motor/MotorController/MotorController_Var.h"
+#include "Motor/MotorController/MotorController.h"
+// #include "Motor/MotorController/MotorController_Var.h"
 
 /******************************************************************************/
 /*

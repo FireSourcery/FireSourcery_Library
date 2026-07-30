@@ -175,8 +175,6 @@ typedef enum Motor_Var_Board
 {
     MOTOR_VAR_BOARD_V_RATED,
     MOTOR_VAR_BOARD_I_RATED,
-    // MOTOR_VAR_BOARD_V_RATED_,
-    // MOTOR_VAR_BOARD_I_RATED_,
     MOTOR_VAR_BOARD_V_MAX,
     MOTOR_VAR_BOARD_I_MAX,
     MOTOR_VAR_BOARD_V_MAX_ADCU,
@@ -188,6 +186,7 @@ typedef enum Motor_Var_Board
     MOTOR_VAR_BOARD_I_PHASE_R_SHUNT,
     MOTOR_VAR_BOARD_I_PHASE_GAIN,
     MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION,
+    MOTOR_VAR_BOARD_VERSION_FLAGS,
     // MOTOR_VAR_BOARD_CONTROL_FREQ,
 }
 Motor_Var_Board_T;
@@ -250,9 +249,6 @@ typedef enum Motor_VarType_Base
     MOTOR_VAR_TYPE_USER_OUT,
     MOTOR_VAR_TYPE_USER_CONTROL, /* Polling IO. Setpoint/StateMachine. */
     MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
-
-    MOTOR_VAR_TYPE_ROTOR_OUT, /* Speed Angle */
-    // MOTOR_VAR_TYPE_FOC_OUT,
     MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
     MOTOR_VAR_TYPE_OPEN_LOOP_CMD,
     MOTOR_VAR_TYPE_CALIBRATION_CMD,
@@ -272,8 +268,7 @@ extern bool Motor_VarType_Base_CheckSet(Motor_T * p_motor, Motor_VarType_Base_T 
 typedef enum Motor_VarType_SubModule
 {
     MOTOR_VAR_TYPE_BOARD_CONST,    /* Not instanced */
-    MOTOR_VAR_TYPE_SUBMODULE_RESV0,
-    // MOTOR_VAR_TYPE_ROTOR_OUT, /* Common generic interface */
+    MOTOR_VAR_TYPE_ROTOR_OUT, /* Common generic interface */
     MOTOR_VAR_TYPE_PHASE,
     MOTOR_VAR_TYPE_PHASE_INPUT,
     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
@@ -282,7 +277,7 @@ typedef enum Motor_VarType_SubModule
     MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
     MOTOR_VAR_TYPE_FOC_OUT,
     MOTOR_VAR_TYPE_FOC_CONFIG,
-    // move to sensor module
+    // opt move to sensor module
     MOTOR_VAR_TYPE_FOC_SENSORLESS,
     MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG,
 }

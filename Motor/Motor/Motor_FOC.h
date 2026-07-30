@@ -25,19 +25,13 @@
     @file   Motor_FOC.h
     @author FireSourcery
     @brief  Motor FOC submodule. FOC control functions.
-
 */
 /******************************************************************************/
 #ifndef MOTOR_FOC_H
 #define MOTOR_FOC_H
 
-// #include "Sensor/RotorSensor.h"
-
 #include "Motor.h"
-#include "Motor_Debug.h"
-
 #include "Math/FOC_Ext.h"
-
 #include "Phase/Phase_Svpwm.h"
 
 
@@ -83,17 +77,10 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
     }
 }
 
-// void Motor_FOC_WriteDuty(Motor_T * p_motor)
-// {
-//     Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Fract32(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
-// }
 
 
 /*
     Decoupling-basis ω input for FOC_CaptureSpeed.
-    angle16      ω_max = π·Fs
-    rpm/Q15      ω_pu (fract16, 32768 = ω_base)
-    Pairs with the L_pu / ψ_pu encoding selected by MOTOR_PU_BASIS_ANGLE16.
 */
 static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor)
 {

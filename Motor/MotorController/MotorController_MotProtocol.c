@@ -68,6 +68,7 @@ static packet_size_t Version(MotorController_T * p_dev, MotPacket_T * p_txPacket
     p_resp->Protocol = MOT_PACKET_VERSION_WORD32;
     p_resp->Library  = MOTOR_LIBRARY_VERSION;
     p_resp->Firmware = p_dev->MAIN_VERSION.Word32.Value32;
+    // p_resp->Flags = MOTOR_VERSION_FLAGS;
 
     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_T));
 }

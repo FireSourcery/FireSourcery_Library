@@ -30,7 +30,8 @@
 */
 /******************************************************************************/
 #include "Motor/MotorController/MotorController_Var.h"
-
+#include "Peripheral/CanBus/CanBus.h"
+#include "Peripheral/CanBus/CanBus_Service.h"
 
 /******************************************************************************/
 /*

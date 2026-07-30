@@ -362,10 +362,6 @@ Motor_Context_T;
     program, meta, unrelated to end user config.
     Context for Thread and StateMachine.
 */
-/*
-    const context dependency of StateMachine: PHASE, TIMER
-    alternatively, reduce StateMachine context to mutable only, handle with pointer from state
-*/
 typedef const struct Motor
 {
     Motor_Context_T * P_MOTOR;
@@ -376,6 +372,10 @@ typedef const struct Motor
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
     HeatMonitor_T HEAT_MONITOR;
     Analog_Conversion_T HEAT_MONITOR_CONVERSION;
+    /*
+        const context dependency of StateMachine: PHASE, TIMER
+        alternatively, reduce StateMachine context to mutable only, handle with pointer from state
+    */
     StateMachine_T STATE_MACHINE;
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */
@@ -568,7 +568,8 @@ static inline bool Motor_IsSpeedFreewheelLimitRange(Motor_T * p_motor) { return 
 /*
     bus ratio IS the no-FW speed ceiling, VBus_GetSpeedDerate
 */
-static inline ufract16_t Motor_SpeedVLimit_Fract16(Motor_T * p_motor) { return VBus_Fract16(p_motor->P_VBUS); } /* SpeedRated_pu = VNominal_pu */
+/* SpeedRated_pu = VNominal_pu */
+static inline ufract16_t Motor_SpeedVLimit_Fract16(Motor_T * p_motor) { return VBus_Fract16(p_motor->P_VBUS); }
 static inline bool Motor_IsVoltageLimited(Motor_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor->P_MOTOR)) >= Motor_SpeedVLimit_Fract16(p_motor)); }
 
 

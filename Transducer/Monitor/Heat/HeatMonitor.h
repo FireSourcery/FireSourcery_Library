@@ -136,12 +136,12 @@ extern void HeatMonitor_InitFrom(const HeatMonitor_T * p_context, const HeatMoni
 extern void HeatMonitor_Init(const HeatMonitor_T * p_context);
 
 
-/* move */
 /******************************************************************************/
 /*
     Group Context
 */
 /******************************************************************************/
+/* Handle FanIn */
 typedef const struct HeatMonitor_Group
 {
     /* Array of HeatMonitor_T */
@@ -157,7 +157,6 @@ typedef const struct HeatMonitor_Group
 }
 HeatMonitor_Group_T;
 
-/* or merge with limit array */
 /* Monitor_GetLastInputComparable returns value for > compare */
 /* Find hottest sensor */
 static inline uint8_t _HeatMonitor_Group_FindHottest(const HeatMonitor_Group_T * p_group)

@@ -69,8 +69,8 @@ typedef struct FOC_SensorlessConfig
 
     // fract16_t Rs_pu;        /* Rs · I_max / V_max */
     // fract16_t Ls_pu;        /* Ls · I_max · Fs / V_max  (multiplies Δi_pu → v_pu) */
-    // fract16_t G_pu;         /* 1 / Ls_pu — SMO integrator gain (precomputed) */
     // fract16_t Psi_pu;       /* π · Fs · ψ_f · 32768 / V_max  (psi_vfract16_per_angle16) */
+    // fract16_t G_pu;         /* 1 / Ls_pu — SMO integrator gain (precomputed) */
 
     /* SMO tuning (unused in voltage-model mode). */
     fract16_t K_smo;        /* sliding gain — > peak EMF in pu */
@@ -131,7 +131,7 @@ typedef struct FOC_Sensorless
 
     /* Angle tracker (PLL). AngleSpeed.Angle is θ̂; AngleSpeed.Delta is ω̂ (angle16/poll). */
     Angle_T AngleSpeed;
-    // Angle_SpeedUnitRef_T SpeedFractRef;
+    Angle_SpeedUnitRef_T SpeedUnitRef;
 
     PID_T PllPid;
     fract16_t PllErr;                  /* last normalised PLL phase error */
@@ -144,16 +144,6 @@ typedef struct FOC_Sensorless
 }
 FOC_Sensorless_T;
 
-/* one shot params */
-// typedef struct FOC_SensorlessRefConfig
-// {
-//     uint32_t polling_freq,
-//     uint32_t omega_base_e,
-//     uint32_t lAvg
-//     PollingFreq,
-//     SpeedMax_ERpm,
-// }
-// FOC_SensorlessRefConfig_T;
 
 /******************************************************************************/
 /*!
@@ -292,8 +282,6 @@ static void FOC_Sensorless_InitG(FOC_Sensorless_T * p_obs, uint32_t g)
 
 
 
-
-
 /******************************************************************************/
 /*!
     Observer outputs
@@ -336,27 +324,27 @@ static inline int32_t FOC_Sensorless_GetVar(const FOC_Sensorless_T * p_obs, FOC_
     }
 }
 
-
-
 typedef enum FOC_SensorlessConfigVar
 {
-    FOC_SENSORLESS_CONFIG_VAR_RS_PU,
-    FOC_SENSORLESS_CONFIG_VAR_LS_PU,
-    FOC_SENSORLESS_CONFIG_VAR_G_INT_PU,
-    FOC_SENSORLESS_CONFIG_VAR_PSI_PU,
     FOC_SENSORLESS_CONFIG_VAR_K_SMO,
     FOC_SENSORLESS_CONFIG_VAR_SMO_SAT,
     FOC_SENSORLESS_CONFIG_VAR_LPF_COEF,
+    FOC_SENSORLESS_CONFIG_VAR_LOCK_EMF_MIN,
+    FOC_SENSORLESS_CONFIG_VAR_LOCK_ERR_TOL,
+    FOC_SENSORLESS_CONFIG_VAR_LOCK_HOLD_COUNT,
 }
 FOC_SensorlessConfigVar_T;
 
-static inline int32_t FOC_SensorlessConfig_Get(const FOC_SensorlessConfig_T * p_obs, FOC_SensorlessVar_T var)
+static inline int32_t FOC_SensorlessConfig_Get(const FOC_SensorlessConfig_T * p_obs, FOC_SensorlessConfigVar_T var)
 {
     switch (var)
     {
         case FOC_SENSORLESS_CONFIG_VAR_K_SMO: return p_obs->K_smo;
         case FOC_SENSORLESS_CONFIG_VAR_SMO_SAT: return p_obs->SmoSat;
         case FOC_SENSORLESS_CONFIG_VAR_LPF_COEF: return p_obs->LpfCoef;
+        case FOC_SENSORLESS_CONFIG_VAR_LOCK_EMF_MIN: return p_obs->LockEmfMin;
+        case FOC_SENSORLESS_CONFIG_VAR_LOCK_ERR_TOL: return p_obs->LockErrTol;
+        case FOC_SENSORLESS_CONFIG_VAR_LOCK_HOLD_COUNT: return p_obs->LockHoldCount;
         default: return 0;
     }
 }

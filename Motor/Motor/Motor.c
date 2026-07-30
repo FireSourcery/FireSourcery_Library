@@ -154,8 +154,8 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 }
 
 
-/* propagate kv config — re-derive FOC Psi from Kv (FOC config is now a separate NVM blob) */
-// void Motor_InitPsi(Motor_Context_T * p_motor)
+/* propagate kv config — re-derive FOC Psi from Kv */
+// void Motor_ResolvePsi(Motor_Context_T * p_motor)
 // {
 //     FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_Calibration_GetVMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
 // // #ifdef MOTOR_PU_BASIS_ANGLE16

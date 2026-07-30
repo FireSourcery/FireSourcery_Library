@@ -289,17 +289,16 @@ int Motor_Var_Board_Get(Motor_Var_Board_T varId)
         case MOTOR_VAR_BOARD_I_RATED:                 value = Phase_Calibration_GetIRatedPeak_Fract16();             break;
         case MOTOR_VAR_BOARD_V_MAX:                   value = Phase_Calibration_GetVMaxVolts();                      break;
         case MOTOR_VAR_BOARD_I_MAX:                   value = Phase_Calibration_GetIMaxAmps();                       break;
-        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1 / 10;       break;
-        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2 / 10;       break;
-        // case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1;       break;
-        // case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2;       break;
+        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1;            break;
+        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2;            break;
         case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_BASE;        break;
         case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_MOSFETS;     break;
         case MOTOR_VAR_BOARD_I_PHASE_R_SHUNT:         value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_SHUNT;       break;
         case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN;          break;
         // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
+        /* Precompile Options */
         case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;                        break;
-            // /* Precompile Options */
+        // case MOTOR_VAR_BOARD_VERSION_FLAGS:           value = MOTOR_VERSION_FLAGS.Value;                        break;
         default: break;
     }
     return value;
@@ -378,7 +377,6 @@ int Motor_VarType_Base_Get(Motor_T * p_motor, Motor_VarType_Base_T typeId, int v
     switch (typeId)
     {
         case MOTOR_VAR_TYPE_USER_OUT:               return _Motor_Var_UserOut_Get(p_motor, varId);
-        case MOTOR_VAR_TYPE_ROTOR_OUT:              return _Motor_Var_Rotor_Get(p_motor->P_MOTOR->p_ActiveSensor, varId);
         case MOTOR_VAR_TYPE_USER_CONTROL:           return _Motor_Var_UserControl_Get(p_motor, varId);
         case MOTOR_VAR_TYPE_USER_SETPOINT:          return 0;
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:     return _Motor_Var_ConfigCalibration_Get(&p_motor->P_MOTOR->Config, varId);
@@ -400,7 +398,6 @@ void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int 
     switch (typeId)
     {
         case MOTOR_VAR_TYPE_USER_OUT:               break;
-        case MOTOR_VAR_TYPE_ROTOR_OUT:              break;
         case MOTOR_VAR_TYPE_USER_CONTROL:           _Motor_Var_UserControl_Set(p_motor, varId, varValue);     break;
         case MOTOR_VAR_TYPE_USER_SETPOINT:          _Motor_Var_UserSetpoint_Set(p_motor, varId, varValue);    break;
         case MOTOR_VAR_TYPE_STATE_CMD:              _Motor_Var_StateCmd_Call(p_motor, varId, varValue);        break;
@@ -423,7 +420,6 @@ void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int 
 /******************************************************************************/
 #include "Math/FOC_Sensorless.h"
 
-
 int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId)
 {
     if (p_motor == NULL) { return 0; }
@@ -432,7 +428,7 @@ int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typ
         case MOTOR_VAR_TYPE_BOARD_CONST:                return Motor_Var_Board_Get(varId);
         // case MOTOR_VAR_TYPE_PHASE:                      return Phase_VOutVar_Get( &p_motor->PHASE, varId);
         case MOTOR_VAR_TYPE_PHASE_INPUT:                return Phase_Input_Var_Get((Phase_Input_T *)&p_motor->P_MOTOR->PhaseInput, varId);
-        // case MOTOR_VAR_TYPE_ROTOR_OUT:              return _Motor_Var_Rotor_Get(p_motor->P_MOTOR->p_ActiveSensor, varId);
+        case MOTOR_VAR_TYPE_ROTOR_OUT:                  return _Motor_Var_Rotor_Get(p_motor->P_MOTOR->p_ActiveSensor, varId);
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
@@ -451,14 +447,15 @@ void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T ty
 {
     switch (typeId)
     {
-        case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           break;
-        case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR, varId, varValue);              break;
-        case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          HeatMonitor_Thermistor_ConfigId_Set(&p_motor->HEAT_MONITOR, varId, varValue);   break;
-        case MOTOR_VAR_TYPE_PID_TUNING_IO:              _Motor_Var_PidTuning_Set(p_motor, varId, varValue);                             break;
         case MOTOR_VAR_TYPE_BOARD_CONST:                break;
         case MOTOR_VAR_TYPE_PHASE:                      break;
         case MOTOR_VAR_TYPE_FOC_OUT:                    break;
         case MOTOR_VAR_TYPE_FOC_CONFIG:                 FOC_Config_Set(&p_motor->P_MOTOR->Foc.Config, varId, varValue);          break;
+        case MOTOR_VAR_TYPE_ROTOR_OUT:                  break;
+        case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           break;
+        case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR, varId, varValue);              break;
+        case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          HeatMonitor_Thermistor_ConfigId_Set(&p_motor->HEAT_MONITOR, varId, varValue);   break;
+        case MOTOR_VAR_TYPE_PID_TUNING_IO:              _Motor_Var_PidTuning_Set(p_motor, varId, varValue);                             break;
         default: break;
     }
 }
@@ -473,14 +470,7 @@ void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T ty
 /*
     Include all compile time sensor options
 */
-// #if defined(MOTOR_SENSOR_HALL_ENABLE)
-#include "Sensor/Hall/Motor_Hall.h"
-// #endif
-#if defined(MOTOR_SENSOR_ENCODER_ENABLE)
-#include "Sensor/Encoder/Motor_Encoder.h"
-#endif
-
-#include "Sensor/RotorSensor_Table.h"
+#include "Sensor/Motor_Sensor.h"
 
 int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
 {
@@ -501,8 +491,8 @@ void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, 
 {
     switch (typeId)
     {
-        case MOTOR_VAR_TYPE_HALL_CONFIG:      _Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL.P_STATE->Config, varId, varValue);            break;
-        case MOTOR_VAR_TYPE_HALL_CMD:         Motor_Hall_Cmd(p_motor, varId, varValue); break;
+        case MOTOR_VAR_TYPE_HALL_CONFIG:      _Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL.P_STATE->Config, varId, varValue);        break;
+        case MOTOR_VAR_TYPE_HALL_CMD:         Motor_Hall_Cmd(p_motor, varId, varValue);                                                     break;
         case MOTOR_VAR_TYPE_HALL_STATE:                  break;
         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
         case MOTOR_VAR_TYPE_ENCODER_CONFIG:   _Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId, varValue);   break;

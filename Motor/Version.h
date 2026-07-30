@@ -39,23 +39,28 @@
 #define MOTOR_LIBRARY_VERSION           ((MOTOR_LIBRARY_VERSION_OPT << 24U) | (MOTOR_LIBRARY_VERSION_MAJOR << 16U) | (MOTOR_LIBRARY_VERSION_MINOR << 8U) | (MOTOR_LIBRARY_VERSION_FIX))
 
 /* Precompile Flags */
-// typedef union Version_Flags
-// {
-//     struct
-//     {
-//         uint16_t FieldWeakening : 1U;
-//         uint16_t OpenLoop : 1U;
-//         uint16_t ElectricalCalibration : 1U;
-//         uint16_t FloatingPoint : 1U;
-//     };
-//     // uint32_t Value;
-// }
-// Version_Flags_T;
+typedef union Version_Flags
+{
+    struct
+    {
+        uint16_t FloatingPoint : 1U;
+        uint16_t FieldWeakening : 1U;
+        uint16_t OpenLoop : 1U;
+        uint16_t ElectricalCalibration : 1U;
+    };
+    uint32_t Value;
+}
+Version_Flags_T;
 
-
-// static const Version_Flags_T MOTOR_LIBRARY_VERSION_FLAGS =
-// {
-//     .FieldWeakening = MOTOR_FOC_FIELD_WEAKENING_ENABLE,
-//     .OpenLoop = MOTOR_FOC_OPEN_LOOP_ENABLE,
-//     .ElectricalCalibration = MOTOR_FOC_ELECTRICAL_CALIBRATION_ENABLE,
-// };
+static const Version_Flags_T MOTOR_VERSION_FLAGS =
+{
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    .FieldWeakening = 1U,
+#endif
+#if defined(MOTOR_FOC_OPEN_LOOP_ENABLE)
+    .OpenLoop = 1U,
+#endif
+#if defined(MOTOR_FOC_ELECTRICAL_CALIBRATION_ENABLE)
+    .ElectricalCalibration = 1U,
+#endif
+};

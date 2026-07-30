@@ -47,13 +47,10 @@ MotorController_OptDinMode_T;
 
 typedef struct OptDin_Config
 {
-    // bool           ActiveHigh; /* polarity */
-    // uint16_t       DebounceMs;
-    uint16_t       SpeedPreset_Fract16;
-    uint16_t       SpeedLimit_Fract16;
-    uint16_t       TorqueLimit_Fract16;
+    uint16_t       SpeedPreset_Fract16; // unimplemented
+    uint16_t       SpeedLimit_Fract16;   //as derate for now
+    uint16_t       TorqueLimit_Fract16; //as derate for now
     uint16_t       SwitchBrakeFloor_Percent16;
-    // bool           AutoParkOnStop;
 }
 OptDin_Config_T;
 

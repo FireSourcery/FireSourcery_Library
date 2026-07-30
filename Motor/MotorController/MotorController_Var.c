@@ -169,6 +169,8 @@ int MotorController_InstancesRef_Get(MotorController_T * p_dev, MotorController_
         case MOT_VAR_BOARD_CAN_SOCKET_COUNT:          return MotorController_Var_GetCanSocketCount(p_dev);
         case MOT_VAR_BOARD_DIN_COUNT:                 return MOT_USER_DIN_COUNT;
         case MOT_VAR_BOARD_AIN_COUNT:                 return MOT_USER_AIN_COUNT;
+        case MOT_VAR_BOARD_ROTOR_SENSOR_OPTION:       return ROTOR_SENSOR_ENABLED.ALL;
+        case MOT_VAR_BOARD_VERSION_FLAGS:             return MOTOR_VERSION_FLAGS.Value;
         default: return 0;
     }
 }

@@ -165,6 +165,12 @@ void Motor_Hall_Calibrate(Motor_T * p_motor)
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 void Motor_Hall_Cmd(Motor_T * p_motor, int varId, int varValue)
 {
     (void)varValue;

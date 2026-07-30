@@ -83,7 +83,7 @@ static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_
 /*
     when SpeedBase = Kv * V_Max
     SpeedRated_pu = VNominal_pu,  SpeedRated_Rpm = Kv * VNominal
-    Speed_pu = V_pu
+    Speed_pu = V_pu = V_phase_pu * 2
     ke_pu = 1.0
     ψ_pu = .5
 

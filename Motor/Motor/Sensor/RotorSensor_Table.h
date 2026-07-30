@@ -58,10 +58,10 @@
 */
 typedef enum RotorSensor_Id
 {
+    ROTOR_SENSOR_ID_SENSORLESS,
     ROTOR_SENSOR_ID_HALL,
     ROTOR_SENSOR_ID_ENCODER,
     ROTOR_SENSOR_ID_SIN_COS,
-    ROTOR_SENSOR_ID_SENSORLESS,
     // ROTOR_SENSOR_ID_EXTERN,
     ROTOR_SENSOR_ID_COUNT,
 }
@@ -91,15 +91,19 @@ typedef const struct RotorSensor_Table
 }
 RotorSensor_Table_T;
 
+
+/*
+    for status
+*/
 typedef union __attribute__((packed)) RotorSensor_Enabled
 {
     uint8_t ALL;
     struct
     {
+        uint8_t SENSORLESS  : 1;
         uint8_t HALL        : 1;
         uint8_t ENCODER     : 1;
         uint8_t SIN_COS     : 1;
-        uint8_t SENSORLESS  : 1;
     };
 }
 RotorSensor_Enabled_T;
@@ -118,10 +122,6 @@ static const RotorSensor_Enabled_T ROTOR_SENSOR_ENABLED =
 #endif
 };
 
-
-// #define ROTOR_SENSOR_TABLE_INIT_EMPTY(p_State) ROTOR_SENSOR_INIT_AS_EMPTY(p_State)
-// #define ROTOR_SENSOR_TABLE_INIT_HALL(p_State, HallStruct, p_Encoder) HALL_ROTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State)
-// #define ROTOR_SENSOR_TABLE_INIT_ENCODER(p_State, EncoderStruct) ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, p_State)
 
 
 /*
