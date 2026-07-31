@@ -82,36 +82,42 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
 }
 
 
+// known after min
+size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_t rxCount)
+{
+    switch (p_rxPacket->Header.Id)
+    {
+        // Sync packets — complete immediately, no checksum verification needed
+        case MOT_PACKET_SYNC_ACK:   return sizeof(MotPacket_Sync_T);
+        case MOT_PACKET_SYNC_NACK:  return sizeof(MotPacket_Sync_T);
+        case MOT_PACKET_SYNC_ABORT: return sizeof(MotPacket_Sync_T);
+        case MOT_PACKET_PING:       return sizeof(MotPacket_Sync_T);
+        case MOT_PACKET_PING_BOOT:  return sizeof(MotPacket_Sync_T);
+        case MOT_PACKET_PING_ALT:   return sizeof(MotPacket_Sync_T);
 
-// size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_t rxCount)
-// {
-//     switch (p_rxPacket->Header.Id)
-//     {
-//         // Sync packets — complete immediately, no checksum verification needed
-//         case MOT_PACKET_SYNC_ACK:   return sizeof(MotPacket_Sync_T);
-//         case MOT_PACKET_SYNC_NACK:  return sizeof(MotPacket_Sync_T);
-//         case MOT_PACKET_SYNC_ABORT: return sizeof(MotPacket_Sync_T);
-//         case MOT_PACKET_PING:       return sizeof(MotPacket_Sync_T);
-//         case MOT_PACKET_PING_BOOT:  return sizeof(MotPacket_Sync_T);
-//         case MOT_PACKET_PING_ALT:   return sizeof(MotPacket_Sync_T);
+            /* fixed length, directly map id */
+        case MOT_PACKET_STOP_ALL:       return sizeof(MotPacket_StopReq_T);     break;
+        case MOT_PACKET_VERSION:        return sizeof(MotPacket_VersionReq_T);  break;
+            // case MOT_PACKET_REBOOT:        return sizeof(MotPacket_CallReq_T);     break;
+        case MOT_PACKET_CALL:               return sizeof(MotPacket_CallReq_T);     break;
+        case MOT_PACKET_FIXED_VAR_READ:     return sizeof(MotPacket_VarReadFixedReq_T); break;
+        case MOT_PACKET_FIXED_VAR_WRITE:    return sizeof(MotPacket_VarWriteFixedReq_T); break;
 
-//             /* fixed length, directly map id */
-//         case MOT_PACKET_STOP_ALL:       return sizeof(MotPacket_StopReq_T);     break;
-//         case MOT_PACKET_VERSION:        return sizeof(MotPacket_VersionReq_T);  break;
-//             // case MOT_PACKET_REBOOT:        return sizeof(MotPacket_CallReq_T);     break;
-//         case MOT_PACKET_CALL:               return sizeof(MotPacket_CallReq_T);     break;
-//         case MOT_PACKET_FIXED_VAR_READ:     return sizeof(MotPacket_VarReadFixedReq_T); break;
-//         case MOT_PACKET_FIXED_VAR_WRITE:    return sizeof(MotPacket_VarWriteFixedReq_T); break;
+        // Data packets — set length, await remaining bytes
+        default:
+            if (rxCount < offsetof(MotPacket_Header_T, Length))
+            {
+                return 0;
+            }
+            else
+            {
+                return MotPacket_ParseTotalLength(p_rxPacket);
+            }
+    }
+}
 
-//         // Data packets — set length, await remaining bytes
-//         default:
-//             if (rxCount < offsetof(MotPacket_Header_T, Length))
-//             {
-//                 return 0;
-//             }
-//             else
-//             {
-//                 return MotPacket_ParsePayloadLength(p_rxPacket);
-//             }
-//     }
-// }
+// on complete
+packet_id_t MotPacket_ParseId(const MotPacket_T * p_rxPacket, packet_size_t rxCount)
+{
+    return (p_rxPacket->Header.Id);
+}
