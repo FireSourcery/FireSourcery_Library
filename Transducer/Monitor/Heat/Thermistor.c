@@ -90,6 +90,28 @@ static inline double inv_steinhart(uint32_t b, uint32_t t0, uint32_t r0, double 
     return exp((invT_Kelvin - 1.0F / t0) * b) * r0;
 }
 
+/*!
+    Silicon PTC quadratic (KTY / RTD Callendar-Van Dusen):
+        R/R0 = 1 + Alpha*dT + Beta*dT^2,  dT = T - T0 [Kelvin]
+    Solve for dT (positive root); reduces to linear when Beta == 0.
+    @return T [Kelvin]
+*/
+static inline double quadratic(float alpha, float beta, uint32_t t0, uint32_t r0, uint32_t r_thermal)
+{
+    double c = 1.0 - (double)r_thermal / r0; /* constant term: Beta*dT^2 + Alpha*dT + c = 0 */
+    double dT = (beta != 0.0F) ? (-alpha + sqrt((double)alpha * alpha - 4.0 * beta * c)) / (2.0 * beta) : -c / alpha;
+    return t0 + dT;
+}
+
+/*!
+    @return R_Thermistor
+*/
+static inline double inv_quadratic(float alpha, float beta, uint32_t t0, uint32_t r0, double degK)
+{
+    double dT = degK - t0;
+    return r0 * (1.0 + alpha * dT + beta * dT * dT);
+}
+
 /******************************************************************************/
 /*
     Direct conversion using steinhart coefficients.
@@ -111,39 +133,78 @@ static uint16_t AdcuOfKelvin_Steinhart(const Thermistor_T * p_therm, float degK)
 
 static float CelsiusOfAdcu_Steinhart(const Thermistor_T * p_therm, uint16_t adcu) { return (KelvinOfAdcu_Steinhart(p_therm, adcu) - 273.15F); }
 static uint16_t AdcuOfCelsius_Steinhart(const Thermistor_T * p_therm, float celsius) { return AdcuOfKelvin_Steinhart(p_therm, celsius + 273.15F); }
+
+float Thermistor_KelvinOfR_Quadratic(const Thermistor_T * p_therm, uint32_t r_thermal)
+{
+    return (float)quadratic(Thermistor_GetAlpha(p_therm), Thermistor_GetBeta(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), r_thermal);
+}
+
+uint32_t Thermistor_ROfKelvin_Quadratic(const Thermistor_T * p_therm, float degK)
+{
+    return (uint32_t)inv_quadratic(Thermistor_GetAlpha(p_therm), Thermistor_GetBeta(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), degK);
+}
+
+static float CelsiusOfAdcu_Quadratic(const Thermistor_T * p_therm, uint16_t adcu) { return (Thermistor_KelvinOfR_Quadratic(p_therm, Thermistor_ROhmOfAdcu(p_therm, adcu)) - 273.15F); }
+static uint16_t AdcuOfCelsius_Quadratic(const Thermistor_T * p_therm, float celsius) { return Thermistor_AdcuOfROhm(p_therm, Thermistor_ROfKelvin_Quadratic(p_therm, celsius + 273.15F)); }
 #endif
 
-// static int16_t CelsiusOfAdcu_Linear(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_Of(&p_therm->LinearUnits, adcu); }
-// static uint16_t AdcuOfCelsius_Linear(const Thermistor_T * p_therm, int16_t celsius) { return Linear_InvOf(&p_therm->LinearUnits, celsius); }
+/******************************************************************************/
+/*
+    Two-point linear R<->T model (point-slope through (R0, T0)).
+    Model-agnostic to tempco sign: the sign of DeltaR/DeltaT encodes NTC vs PTC.
+    Used directly for PTC / linear silicon sensors (e.g. KTY84).
+        T = T0 + DeltaT*(R - R0)/DeltaR
+        R = R0 + DeltaR*(T - T0)/DeltaT
+*/
+/******************************************************************************/
+static thermal_t CelsiusOfR_Linear(const Thermistor_T * p_therm, uint32_t r_thermal)
+{
+    int32_t deltaR = Thermistor_GetLinearDeltaR(p_therm);
+    if (deltaR == 0) { return Thermistor_GetT0_Celsius(p_therm); }
+    return Thermistor_GetT0_Celsius(p_therm) + (thermal_t)((int64_t)Thermistor_GetLinearDeltaT(p_therm) * ((int64_t)r_thermal - (int64_t)Thermistor_GetR0(p_therm)) / deltaR);
+}
 
-// static thermal_t CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
-// {
-//     thermal_t celsius = 0;
-// #if     defined(THERMISTOR_UNITS_LINEAR)
-//     // celsius = CelsiusOfAdcu_Linear(p_therm, adcu);
-// #elif   defined(THERMISTOR_UNITS_FLOAT)
-//     celsius = CelsiusOfAdcu_Steinhart(p_therm, adcu);
-// #elif   defined(THERMISTOR_UNITS_LUT)
-//     celsius = CelsiusOfAdcu_Lut(p_therm, adcu);
-// #endif
-//     return celsius;
-// }
+static uint32_t ROfCelsius_Linear(const Thermistor_T * p_therm, thermal_t celsius)
+{
+    int16_t deltaT = Thermistor_GetLinearDeltaT(p_therm);
+    if (deltaT == 0) { return Thermistor_GetR0(p_therm); }
+    return (uint32_t)((int64_t)Thermistor_GetR0(p_therm) + (int64_t)Thermistor_GetLinearDeltaR(p_therm) * (celsius - Thermistor_GetT0_Celsius(p_therm)) / deltaT);
+}
 
-// static uint16_t AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t celsius)
-// {
-//     uint16_t adcu = 0;
-// #if     defined(THERMISTOR_UNITS_LINEAR)
-//     // adcu = AdcuOfCelsius_Linear(p_therm, celsius);
-// #elif   defined(THERMISTOR_UNITS_FLOAT)
-//     adcu = AdcuOfCelsius_Steinhart(p_therm, celsius);
-// #elif   defined(THERMISTOR_UNITS_LUT)
-//     adcu = AdcuOfCelsius_Lut(p_therm, celsius);
-// #endif
-//     return adcu;
-// }
+/******************************************************************************/
+/*
+    Type-dispatched conversion.
+    NTC -> Steinhart-Hart B-model; negative tempco.
+    PTC -> quadratic (KTY/RTD) when Alpha/Beta are set; positive tempco.
+    Any type -> two-point linear model otherwise (and always in non-float builds).
+*/
+/******************************************************************************/
+/* falls back to the linear model when uncharacterized. */
+thermal_t Thermistor_CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
+{
+    switch (p_therm->P_COEFFS->Fit)
+    {
+    #if defined(THERMISTOR_UNITS_FLOAT)
+        case THERM_FIT_STEINHART:   return (thermal_t)CelsiusOfAdcu_Steinhart(p_therm, adcu);
+        case THERM_FIT_QUADRATIC:   return (thermal_t)CelsiusOfAdcu_Quadratic(p_therm, adcu);
+    #endif
+        case THERM_FIT_LINEAR:      /* return CelsiusOfR_Linear(p_therm, Thermistor_ROhmOfAdcu(p_therm, adcu)); */
+        default:                    return CelsiusOfR_Linear(p_therm, Thermistor_ROhmOfAdcu(p_therm, adcu));
+    }
+}
 
-// thermal_t Thermistor_CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu) { return CelsiusOfAdcu(p_therm, adcu); }
-// uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t celsius) { return AdcuOfCelsius(p_therm, celsius); }
+uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t celsius)
+{
+    switch (p_therm->P_COEFFS->Fit)
+    {
+    #if defined(THERMISTOR_UNITS_FLOAT)
+        case THERM_FIT_STEINHART:   return AdcuOfCelsius_Steinhart(p_therm, celsius);
+        case THERM_FIT_QUADRATIC:   return AdcuOfCelsius_Quadratic(p_therm, celsius);
+    #endif
+        case THERM_FIT_LINEAR:      /* return Thermistor_AdcuOfROhm(p_therm, ROfCelsius_Linear(p_therm, celsius)); */
+        default:                    return Thermistor_AdcuOfROhm(p_therm, ROfCelsius_Linear(p_therm, celsius));
+    }
+}
 
 /* Direct calculation without linear precomputed */
 uint32_t Thermistor_ROhmOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
@@ -158,6 +219,7 @@ uint16_t Thermistor_AdcuOfROhm(const Thermistor_T * p_therm, uint32_t rThermisto
     return adcu_of_r(ANALOG_REFERENCE.ADC_MAX, ANALOG_REFERENCE.ADC_VREF_MILLIV, Thermistor_GetVInRef_MilliV(p_therm), p_therm->R_SERIES, rNet);
 }
 
+
 /******************************************************************************/
 /*
 
@@ -165,7 +227,11 @@ uint16_t Thermistor_AdcuOfROhm(const Thermistor_T * p_therm, uint32_t rThermisto
 /******************************************************************************/
 void Thermistor_InitFrom(const Thermistor_T * p_therm, const Thermistor_Coeffs_T * p_config)
 {
-    if (!Thermistor_IsFixed(p_therm) && p_config != NULL) { *p_therm->P_COEFFS = *p_config; }
+    if (!Thermistor_IsFixed(p_therm) && p_config != NULL)
+    {
+        *p_therm->P_COEFFS = *p_config;
+        if (p_therm->P_COEFFS->Fit == THERM_FIT_NONE) { p_therm->P_COEFFS->Fit = Thermistor_FitOf(p_therm->P_COEFFS); }
+    }
 }
 
 void Thermistor_Init(const Thermistor_T * p_therm)
@@ -215,22 +281,33 @@ void Thermistor_ToLinear_CelsiusPerAdcu(const Thermistor_T * p_therm, Linear_T *
 
 /******************************************************************************/
 /*
-
+    Id Access
 */
 /******************************************************************************/
+/******************************************************************************/
+/*
+    Alpha/Beta are float; carried through the int32 Config interface as raw
+    IEEE-754 bits (lossless, no scale assumption). Caller reinterprets on the host.
+*/
+/******************************************************************************/
+static inline int32_t f32_bits(float f) { union { float f; int32_t i; } u = { .f = f }; return u.i; }
+static inline float f32_of_bits(int32_t i) { union { int32_t i; float f; } u = { .i = i }; return u.f; }
+
 int32_t _Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_ConfigId_T id)
 {
     int32_t value = 0;
     switch (id)
     {
-        case THERMISTOR_BOARD_R_SERIES:        value = p_therm->R_SERIES;                    break;
-        case THERMISTOR_BOARD_R_PARALLEL:      value = p_therm->R_PARALLEL;                  break;
-        case THERMISTOR_BOARD_V_SERIES_MV:     value = p_therm->V_SERIES_MV;                       break;
-            // case THERMISTOR_CONFIG_TYPE:            value = Thermistor_GetType(p_therm);                break;
+        case THERMISTOR_BOARD_R_SERIES:         value = p_therm->R_SERIES;                          break;
+        case THERMISTOR_BOARD_R_PARALLEL:       value = p_therm->R_PARALLEL;                        break;
+        case THERMISTOR_BOARD_V_SERIES_MV:      value = p_therm->V_SERIES_MV;                       break;
+        case THERMISTOR_CONFIG_FIT:             value = Thermistor_GetFit(p_therm);                 break;
         case THERMISTOR_CONFIG_B:               value = Thermistor_GetB(p_therm);                   break;
-        case THERMISTOR_CONFIG_R0:              value = Thermistor_GetR0(p_therm);            break;
+        case THERMISTOR_CONFIG_ALPHA:           value = f32_bits(Thermistor_GetAlpha(p_therm));     break;
+        case THERMISTOR_CONFIG_BETA:            value = f32_bits(Thermistor_GetBeta(p_therm));      break;
+        case THERMISTOR_CONFIG_R0:              value = Thermistor_GetR0(p_therm);                  break;
         case THERMISTOR_CONFIG_T0:              value = Thermistor_GetT0(p_therm);                  break;
-        case THERMISTOR_CONFIG_LINEAR_DELTA_R:  value = Thermistor_GetLinearDeltaR(p_therm);       break;
+        case THERMISTOR_CONFIG_LINEAR_DELTA_R:  value = Thermistor_GetLinearDeltaR(p_therm);        break;
         case THERMISTOR_CONFIG_LINEAR_DELTA_T:  value = Thermistor_GetLinearDeltaT(p_therm);        break;
         default: break;
     }
@@ -246,8 +323,10 @@ void _Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_
             case THERMISTOR_BOARD_R_SERIES:        break;
             case THERMISTOR_BOARD_R_PARALLEL:      break;
             case THERMISTOR_BOARD_V_SERIES_MV:     break;
-                // case THERMISTOR_CONFIG_TYPE:            _Thermistor_SetType(p_therm, value);                break;
+            case THERMISTOR_CONFIG_FIT:             _Thermistor_SetFit(p_therm, value);                 break;
             case THERMISTOR_CONFIG_B:               _Thermistor_SetB(p_therm, value);                   break;
+            case THERMISTOR_CONFIG_ALPHA:           _Thermistor_SetAlpha(p_therm, f32_of_bits(value));  break;
+            case THERMISTOR_CONFIG_BETA:            _Thermistor_SetBeta(p_therm, f32_of_bits(value));   break;
             case THERMISTOR_CONFIG_R0:              _Thermistor_SetR0(p_therm, value);                  break;
             case THERMISTOR_CONFIG_T0:              _Thermistor_SetT0(p_therm, value);                  break;
             case THERMISTOR_CONFIG_LINEAR_DELTA_R:  _Thermistor_SetLinearDeltaR(p_therm, value);        break;
@@ -261,17 +340,20 @@ int Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_ConfigId_T 
 
 void Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_T id, int value) { if (p_therm != NULL) { _Thermistor_ConfigId_Set(p_therm, id, value); } }
 
-
+/*
+*/
 int32_t _Thermistor_ConfigId_Get16(const Thermistor_T * p_therm, Thermistor_ConfigId_T id)
 {
     int32_t value = 0;
     switch (id)
     {
-        case THERMISTOR_BOARD_R_SERIES:        value = p_therm->R_SERIES / 10U;                    break;
-        case THERMISTOR_BOARD_R_PARALLEL:      value = p_therm->R_PARALLEL / 10U;                  break;
-        case THERMISTOR_BOARD_V_SERIES_MV:     value = p_therm->V_SERIES_MV;                       break;
-            // case THERMISTOR_CONFIG_TYPE:            value = Thermistor_GetType(p_therm);                break;
+        case THERMISTOR_BOARD_R_SERIES:         value = p_therm->R_SERIES / 10U;                    break;
+        case THERMISTOR_BOARD_R_PARALLEL:       value = p_therm->R_PARALLEL / 10U;                  break;
+        case THERMISTOR_BOARD_V_SERIES_MV:      value = p_therm->V_SERIES_MV;                       break;
+        case THERMISTOR_CONFIG_FIT:             value = Thermistor_GetFit(p_therm);                 break;
         case THERMISTOR_CONFIG_B:               value = Thermistor_GetB(p_therm);                   break;
+        case THERMISTOR_CONFIG_ALPHA:           value = f32_bits(Thermistor_GetAlpha(p_therm));     break;
+        case THERMISTOR_CONFIG_BETA:            value = f32_bits(Thermistor_GetBeta(p_therm));      break;
         case THERMISTOR_CONFIG_R0:              value = Thermistor_GetR0(p_therm) / 10U;            break;
         case THERMISTOR_CONFIG_T0:              value = Thermistor_GetT0(p_therm);                  break;
         case THERMISTOR_CONFIG_LINEAR_DELTA_R:  value = Thermistor_GetLinearDeltaR(p_therm);       break;
@@ -290,8 +372,10 @@ void _Thermistor_ConfigId_Set16(const Thermistor_T * p_therm, Thermistor_ConfigI
             case THERMISTOR_BOARD_R_SERIES:        break;
             case THERMISTOR_BOARD_R_PARALLEL:      break;
             case THERMISTOR_BOARD_V_SERIES_MV:     break;
-                // case THERMISTOR_CONFIG_TYPE:            _Thermistor_SetType(p_therm, value);                break;
+            case THERMISTOR_CONFIG_FIT:             _Thermistor_SetFit(p_therm, value);                 break;
             case THERMISTOR_CONFIG_B:               _Thermistor_SetB(p_therm, value);                   break;
+            case THERMISTOR_CONFIG_ALPHA:           _Thermistor_SetAlpha(p_therm, f32_of_bits(value));  break;
+            case THERMISTOR_CONFIG_BETA:            _Thermistor_SetBeta(p_therm, f32_of_bits(value));   break;
             case THERMISTOR_CONFIG_R0:              _Thermistor_SetR0(p_therm, value * 10U);            break;
             case THERMISTOR_CONFIG_T0:              _Thermistor_SetT0(p_therm, value);                  break;
             case THERMISTOR_CONFIG_LINEAR_DELTA_R:  _Thermistor_SetLinearDeltaR(p_therm, value);        break;

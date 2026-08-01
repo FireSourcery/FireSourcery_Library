@@ -420,7 +420,7 @@ static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_mo
 
 static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
 
-/* virtual getter for runtime configurable or compile time fixed */
+/* getter for runtime configurable or compile time fixed */
 static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
 static inline uint16_t Motor_SpeedTypeMax_Rads(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rads(&Motor_Config(p_motor)->SpeedRating); }
 
