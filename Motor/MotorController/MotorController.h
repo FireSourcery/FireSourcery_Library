@@ -193,7 +193,7 @@ typedef struct MotorController_Context
     StateMachine_Active_T StateMachine; /* Data */
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     // MotorController_InitFlags_T InitFlags;
-    uint32_t StateCounter; /* Calibration */
+    // MotorController_StandbyExitMode_T StandbyExitMode;
     uint32_t ControlCounter; /* PWM */
 
     MotLimits_T Limits;     /* Q15 unitless derate ratios — contiguous augments + values for I and Speed system arbitration. */
@@ -216,6 +216,7 @@ typedef struct MotorController_Context
     BootRef_T BootRef; /* Buffer */
 
     // uint8_t CalibrationBuffer[32];
+    uint32_t StateCounter;
     MovAvg_T AvgBuffer0;
     MovAvg_T AvgBuffer1;
 
@@ -227,9 +228,6 @@ typedef struct MotorController_Context
     uint16_t ShellSubState;
 #endif
 
-#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    // CanBus_Service_T * p_CanBus_Service; /* optional runtime disable */
-#endif
 }
 MotorController_Context_T;
 
@@ -249,11 +247,14 @@ typedef const struct MotorController
     Serial_T * P_SERIALS;
     uint8_t SERIAL_COUNT;
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    CanBus_T * P_CAN_BUS;
-    uint8_t CAN_BUS_COUNT;
-    // CanBus_Service_T CAN_BUS_SERVICE;
-    CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_20; /* Broadcast function callback, e.g. for periodic Tx */
-    CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_1000;
+    // CanBus_T * P_CAN_BUS;
+    // uint8_t CAN_BUS_COUNT;
+    // // CanBus_Service_T CAN_BUS_SERVICE;
+    // CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_20; /* Broadcast function callback, e.g. for periodic Tx */
+    // CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_1000;
+
+    CanBus_Socket_T * P_CAN_SOCKETS;
+    uint8_t CAN_SOCKET_COUNT;
 #endif
 
     /*

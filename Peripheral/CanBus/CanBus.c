@@ -8,6 +8,7 @@ void CanBus_Init(CanBus_T * p_can)
 {
     HAL_CAN_Init(p_can->P_HAL);
     HAL_CAN_EnableRxFullInterrupt(p_can->P_HAL);
+    // p_can->P_STATE->ServiceHandler = CanBus_ProcServiceDisabled;
 }
 
 void CanBus_InitBaudRate(CanBus_T * p_can, uint32_t bitRate)
@@ -16,14 +17,10 @@ void CanBus_InitBaudRate(CanBus_T * p_can, uint32_t bitRate)
 }
 
 /* Tx a Data frame */
-void CanBus_TxData(CanBus_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
-{
-    HAL_CAN_WriteTxId(p_can->P_HAL, id);
-    HAL_CAN_WriteTxData(p_can->P_HAL, p_txData, length); /* includes start Transmit */
-}
-
-// void CanBus_TxRequestMapResponse(CanBus_T * p_can, uint32_t tx_id, uint8_t * data, uint32_t rx_id, uint32_t timeout_ms)
+// void CanBus_TxData(CanBus_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
 // {
+//     HAL_CAN_WriteTxId(p_can->P_HAL, id);
+//     HAL_CAN_WriteTxData(p_can->P_HAL, p_txData, length); /* includes start Transmit */
 // }
 
 /*

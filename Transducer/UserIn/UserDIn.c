@@ -48,45 +48,6 @@ static inline uint32_t GetTime(UserDIn_T * p_dev) { return *p_dev->P_TIMER; }
     Public Functions
 */
 /******************************************************************************/
-/*
-    Disable skips init, Modal Poll always returns 0
-*/
-void UserDIn_InitFrom(UserDIn_T * p_dev, UserDIn_Config_T * p_config)
-{
-    if (p_dev->PIN.P_HAL_PIN == NULL) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; } /* runtime config for no pin connected. read as 0 */
-    else
-    {
-        Pin_Input_Init(&p_dev->PIN);
-
-        // if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
-        if (p_config != NULL)
-        {
-            p_dev->P_STATE->Mode = p_config->Mode;
-        #ifdef USER_DIN_CMD_TABLE_ENABLE
-            p_dev->P_STATE->OptCmd = p_dev->P_CMD_TABLE[p_config->CmdId];
-        #else
-            p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
-        #endif
-        }
-        else
-        {
-            p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
-            p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
-        }
-
-        Debounce_Init(&p_dev->P_STATE->Debounce, p_dev->DEBOUNCE_TIME);
-
-        p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
-        /* Initialize debounce state to current pin reading */
-        p_dev->P_STATE->Debounce.Time0 = GetTime(p_dev);
-        p_dev->P_STATE->Debounce.State0 = ReadPin(p_dev);
-        p_dev->P_STATE->Debounce.Output = p_dev->P_STATE->Debounce.State0;
-        p_dev->P_STATE->OutputPrev = p_dev->P_STATE->Debounce.State0;
-    }
-}
-
-void UserDIn_Init(UserDIn_T * p_dev) { UserDIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }
-
 /******************************************************************************/
 /*
     Essential Polling Functions
@@ -109,11 +70,11 @@ UserDIn_Edge_T UserDIn_PollEdgeValue(UserDIn_T * p_dev) { return UserDIn_PollEdg
 
 
 /* run time select should not also be disabled.  */
-UserDIn_Edge_T UserDIn_PollOptional(UserDIn_T * p_dev)
-{
-    if (p_dev == NULL) { return USER_DIN_EDGE_NULL; }
-    return UserDIn_PollEdgeValue(p_dev);
-}
+// UserDIn_Edge_T UserDIn_PollAsOptional(UserDIn_T * p_dev)
+// {
+//     if (p_dev == NULL) { return USER_DIN_EDGE_NULL; }
+//     return UserDIn_PollEdgeValue(p_dev);
+// }
 
 /******************************************************************************/
 /*
@@ -140,14 +101,53 @@ void _UserDIn_Modal_PollEdgeCmd(UserDIn_T * p_dev, void * p_context)
     if (edge != USER_DIN_EDGE_NULL) { p_dev->P_STATE->OptCmd(p_context, edge); }
 }
 
+/******************************************************************************/
+/*
+    Public Functions
+*/
+/******************************************************************************/
+/*
+    Disable skips init, Modal Poll always returns 0
+*/
+void UserDIn_InitFrom(UserDIn_T * p_dev, UserDIn_Config_T * p_config)
+{
+    if (p_dev->PIN.P_HAL_PIN == NULL) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; } /* runtime config for no pin connected. read as 0 */
+    else
+    {
+        Pin_Input_Init(&p_dev->PIN);
 
-// /*
-//     Array helper
-// */
-// static inline void UserDIn_Array_ResolveCallbacks(UserDIn_T * p_dins, const UserDIn_Config_T * p_configs, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
-// {
-//     for (uint8_t i = 0; i < count; i++) { p_dins[i].P_STATE->OptCmd = p_cmdTable[p_configs[i].CmdId]; }
-// }
+        // alternativel copy to local then resolve
+        // if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
+        if (p_config != NULL)
+        {
+            p_dev->P_STATE->Config = *p_config;
+            p_dev->P_STATE->Mode = p_config->Mode;
+        #ifdef USER_DIN_CMD_TABLE_ENABLE
+            p_dev->P_STATE->OptCmd = p_dev->P_CMD_TABLE[p_config->CmdId];
+        #else
+            p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
+        #endif
+        }
+        else
+        {
+            p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
+            p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
+        }
+
+        Debounce_Init(&p_dev->P_STATE->Debounce, p_dev->DEBOUNCE_TIME);
+
+        // p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
+        /* Initialize debounce state to current pin reading */
+        p_dev->P_STATE->Debounce.Time0 = GetTime(p_dev);
+        p_dev->P_STATE->Debounce.State0 = ReadPin(p_dev);
+        p_dev->P_STATE->Debounce.Output = p_dev->P_STATE->Debounce.State0;
+        p_dev->P_STATE->OutputPrev = p_dev->P_STATE->Debounce.State0;
+    }
+}
+
+void UserDIn_Init(UserDIn_T * p_dev) { UserDIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }
+
+
 
 
 // /******************************************************************************/

@@ -36,18 +36,7 @@
 /******************************************************************************/
 #include "Cia402.h"
 
-/*
-    Per-type expansion macros — each yields a compile-time const Cia402_OdInfo_T
-    literal. Size resolves via sizeof() on the wire type, so the entire switch
-    folds to a compare-and-load with no helper-function call.
-*/
-#define OD_I8(acc)   ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I8,  (acc), sizeof(int8_t)   })
-#define OD_U8(acc)   ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U8,  (acc), sizeof(uint8_t)  })
-#define OD_I16(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I16, (acc), sizeof(int16_t)  })
-#define OD_U16(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U16, (acc), sizeof(uint16_t) })
-#define OD_I32(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I32, (acc), sizeof(int32_t)  })
-#define OD_U32(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U32, (acc), sizeof(uint32_t) })
-#define OD_ABSENT    ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_NONE, CIA402_OD_ACCESS_NONE, 0U })
+
 
 
 /******************************************************************************/
@@ -62,27 +51,42 @@
     No code change required in the SDO server.
 */
 /******************************************************************************/
-// const Cia402_OdMeta_T CIA402_OD_META[] =
-// {
-//     { CIA402_OD_CONTROLWORD,             0U, CIA402_OD_TYPE_U16, CIA402_OD_ACCESS_RW, sizeof(uint16_t) },
-//     { CIA402_OD_STATUSWORD,              0U, CIA402_OD_TYPE_U16, CIA402_OD_ACCESS_RO, sizeof(uint16_t) },
-//     { CIA402_OD_QUICK_STOP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_SHUTDOWN_OPTION_CODE,    0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_DISABLE_OP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_HALT_OPTION_CODE,        0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_FAULT_REACTION_CODE,     0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_MODES_OF_OPERATION,      0U, CIA402_OD_TYPE_I8,  CIA402_OD_ACCESS_RW, sizeof(int8_t)   },
-//     { CIA402_OD_MODES_OF_OPERATION_DISP, 0U, CIA402_OD_TYPE_I8,  CIA402_OD_ACCESS_RO, sizeof(int8_t)   },
-//     { CIA402_OD_POSITION_ACTUAL,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RO, sizeof(int32_t)  },
-//     { CIA402_OD_VELOCITY_ACTUAL,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RO, sizeof(int32_t)  },
-//     { CIA402_OD_TARGET_TORQUE,           0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
-//     { CIA402_OD_TORQUE_ACTUAL,           0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RO, sizeof(int16_t)  },
-//     { CIA402_OD_CURRENT_ACTUAL,          0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RO, sizeof(int16_t)  },
-//     { CIA402_OD_DC_LINK_VOLTAGE,         0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, sizeof(uint32_t) },
-//     { CIA402_OD_QUICK_STOP_DECELERATION, 0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RW, sizeof(uint32_t) },
-//     { CIA402_OD_TARGET_VELOCITY,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RW, sizeof(int32_t)  },
-//     { CIA402_OD_SUPPORTED_DRIVE_MODES,   0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, sizeof(uint32_t) },
-// };
+const Cia402_OdMeta_T CIA402_OD_META[] =
+{
+    { CIA402_OD_CONTROLWORD,             0U, CIA402_OD_TYPE_U16, CIA402_OD_ACCESS_RW, sizeof(uint16_t) },
+    { CIA402_OD_STATUSWORD,              0U, CIA402_OD_TYPE_U16, CIA402_OD_ACCESS_RO, sizeof(uint16_t) },
+    { CIA402_OD_QUICK_STOP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+    // { CIA402_OD_QUICK_STOP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, offsetof(Cia402_Adapter_T, Config.QuickStopOption) },
+    { CIA402_OD_SHUTDOWN_OPTION_CODE,    0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+    { CIA402_OD_DISABLE_OP_OPTION_CODE,  0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+    { CIA402_OD_HALT_OPTION_CODE,        0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+    { CIA402_OD_FAULT_REACTION_CODE,     0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+    { CIA402_OD_MODES_OF_OPERATION,      0U, CIA402_OD_TYPE_I8,  CIA402_OD_ACCESS_RW, sizeof(int8_t)   },
+    { CIA402_OD_MODES_OF_OPERATION_DISP, 0U, CIA402_OD_TYPE_I8,  CIA402_OD_ACCESS_RO, sizeof(int8_t)   },
+    { CIA402_OD_POSITION_ACTUAL,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RO, sizeof(int32_t)  },
+    { CIA402_OD_VELOCITY_ACTUAL,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RO, sizeof(int32_t)  },
+    { CIA402_OD_TARGET_TORQUE,           0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RW, sizeof(int16_t)  },
+    { CIA402_OD_TORQUE_ACTUAL,           0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RO, sizeof(int16_t)  },
+    { CIA402_OD_CURRENT_ACTUAL,          0U, CIA402_OD_TYPE_I16, CIA402_OD_ACCESS_RO, sizeof(int16_t)  },
+    { CIA402_OD_DC_LINK_VOLTAGE,         0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, sizeof(uint32_t) },
+    { CIA402_OD_QUICK_STOP_DECELERATION, 0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RW, sizeof(uint32_t) },
+    { CIA402_OD_TARGET_VELOCITY,         0U, CIA402_OD_TYPE_I32, CIA402_OD_ACCESS_RW, sizeof(int32_t)  },
+    { CIA402_OD_SUPPORTED_DRIVE_MODES,   0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, sizeof(uint32_t) },
+};
+
+
+/*
+    Per-type expansion macros — each yields a compile-time const Cia402_OdInfo_T
+    literal. Size resolves via sizeof() on the wire type, so the entire switch
+    folds to a compare-and-load with no helper-function call.
+*/
+#define OD_I8(acc)   ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I8,  (acc), sizeof(int8_t)   })
+#define OD_U8(acc)   ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U8,  (acc), sizeof(uint8_t)  })
+#define OD_I16(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I16, (acc), sizeof(int16_t)  })
+#define OD_U16(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U16, (acc), sizeof(uint16_t) })
+#define OD_I32(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I32, (acc), sizeof(int32_t)  })
+#define OD_U32(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U32, (acc), sizeof(uint32_t) })
+#define OD_ABSENT    ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_NONE, CIA402_OD_ACCESS_NONE, 0U })
 
 Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex)
 {

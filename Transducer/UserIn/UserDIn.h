@@ -58,7 +58,15 @@ typedef enum UserDIn_Mode
     // USER_DIN_MODE_HOLD,             /* Requires hold time */
 }
 UserDIn_Mode_T;
+// typedef struct UserDIn_Hold
+// {
+//     // bool ToggleState;                   /* For toggle mode */
+//     // bool HoldState;                     /* For hold mode */
+//     // uint16_t HoldStartTime;             /* Hold timing */
+// }
+// UserDIn_Hold_T;
 
+/* Store to flash container */
 typedef struct UserDIn_Config
 {
     UserDIn_Mode_T Mode;
@@ -78,13 +86,10 @@ typedef void (*UserDIn_Fn_T)(void * p_context, UserDIn_Edge_T edge);
 typedef struct UserDIn_State
 {
     Debounce_T Debounce;
-    bool OutputPrev;
+    bool OutputPrev;            /* for async edge detection */
     UserDIn_Mode_T Mode;        /* Provide Disable */
-    UserDIn_Fn_T OptCmd;        /* hold the function for simplicity */
+    UserDIn_Fn_T OptCmd;        /* hold the function for simplicity, alternatively collaborator pattern */
     UserDIn_Config_T Config;
-    // bool ToggleState;                   /* For toggle mode */
-    // bool HoldState;                     /* For hold mode */
-    // uint16_t HoldStartTime;             /* Hold timing */
 }
 UserDIn_State_T;
 
@@ -101,8 +106,6 @@ typedef const struct UserDIn
     const volatile uint32_t * P_TIMER;
     uint16_t DEBOUNCE_TIME;
     UserDIn_Config_T * P_NVM_CONFIG; /* optionally */
-    // UserDIn_Mode_T MODE; /* Default mode */
-    // UserDIn_Cmd_T CMD; /* Fixed Cmd */
     // UserDIn_Fn_T * P_CMD_TABLE;
 }
 UserDIn_T;
@@ -167,7 +170,6 @@ extern void _UserDIn_Modal_PollEdgeCmd(UserDIn_T * p_dev, void * p_context);
 
 */
 /******************************************************************************/
-
 typedef enum UserDIn_VarId
 {
     USER_DIN_OUTPUT,
@@ -213,6 +215,7 @@ static inline int UserDIn_Var_GetInstance(UserDIn_T * p_array, uint8_t length, u
     return UserDIn_Var_Get(&p_array[instance], varId);
 }
 
+/* whe config is  */
 static inline int UserDIn_Config_GetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId)
 {
     if (instance >= length) { return 0; }

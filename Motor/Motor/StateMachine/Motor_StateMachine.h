@@ -122,6 +122,10 @@ extern const StateMachine_Machine_T MSM_MACHINE;
     @param p_MotorDev [Motor_T *]
     @param MotorRuntime [Motor_Context_T]
 */
+/*
+    const context dependency of StateMachine: PHASE, TIMER
+    alternatively, reduce StateMachine context to mutable only, handle with pointer from state
+*/
 #define MOTOR_STATE_MACHINE_INIT(p_MotorDev, MotorRuntime) STATE_MACHINE_INIT((p_MotorDev), &MSM_MACHINE, &((MotorRuntime).StateMachine))
 
 /* select proc composite  */

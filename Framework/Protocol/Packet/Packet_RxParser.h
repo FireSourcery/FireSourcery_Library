@@ -62,75 +62,75 @@ typedef struct Packet_RxParserState
 }
 Packet_RxParserState_T;
 
-static inline Protocol_RxCode_T Packet_ProcRxState(const Packet_Format_T * p_specs, const uint8_t * p_rxBuffer, Packet_RxParserState_T * p_state)
-{
-    Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
+// static inline Protocol_RxCode_T Packet_ProcRxState(const Packet_Format_T * p_specs, const uint8_t * p_rxBuffer, Packet_RxParserState_T * p_state)
+// {
+//     Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
 
-    switch (p_state->RxState)
-    {
-        case PROTOCOL_RX_STATE_WAIT_BYTE_1:
-            if (p_state->RxIndex > 0U)
-            {
-                if ((p_rxBuffer[0U] == p_specs->RX_START_ID) || (p_specs->RX_START_ID == 0x00U))
-                {
-                    p_state->RxMeta.Length = 0U;
-                    // p_state->RxTimeStart = *p_socket->P_TIMER;
-                    p_state->RxState = PROTOCOL_RX_STATE_WAIT_LENGTH;
-                }
-                else
-                {
-                    p_state->RxIndex = 0U; // reset and keep waiting
-                }
-            }
-            break;
+//     switch (p_state->RxState)
+//     {
+//         case PROTOCOL_RX_STATE_WAIT_BYTE_1:
+//             if (p_state->RxIndex > 0U)
+//             {
+//                 if ((p_rxBuffer[0U] == p_specs->RX_START_ID) || (p_specs->RX_START_ID == 0x00U))
+//                 {
+//                     p_state->RxMeta.Length = 0U;
+//                     // p_state->RxTimeStart = *p_socket->P_TIMER;
+//                     p_state->RxState = PROTOCOL_RX_STATE_WAIT_LENGTH;
+//                 }
+//                 else
+//                 {
+//                     p_state->RxIndex = 0U; // reset and keep waiting
+//                 }
+//             }
+//             break;
 
-        case PROTOCOL_RX_STATE_WAIT_LENGTH:
-            if (p_state->RxIndex >= p_specs->RX_LENGTH_MIN)
-            {
-                rxStatus = p_specs->PARSE_RX_FRAMING(p_rxBuffer, p_state->RxIndex, &p_state->RxMeta);
-                switch (rxStatus)
-                {
-                    case PROTOCOL_RX_CODE_AWAIT_PACKET:     // Length now set, need payload
-                        p_state->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
-                        break;
-                    case PROTOCOL_RX_CODE_ACK:              // Sync — complete, no Phase 2
-                    case PROTOCOL_RX_CODE_NACK:
-                    case PROTOCOL_RX_CODE_ABORT:
-                    case PROTOCOL_RX_CODE_PACKET_COMPLETE:  // Header only packer / Ping — complete, no Phase 2
-                        p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
-                        break;
-                    case PROTOCOL_RX_CODE_ERROR_META:
-                        // TxSync(p_socket, p_state, PROTOCOL_TX_SYNC_NACK_PACKET_META);
-                        p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
-                        break;
-                    default:
-                        p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
-                        break;
-                }
-            }
-            break;
+//         case PROTOCOL_RX_STATE_WAIT_LENGTH:
+//             if (p_state->RxIndex >= p_specs->RX_LENGTH_MIN)
+//             {
+//                 rxStatus = p_specs->PARSE_RX_FRAMING(p_rxBuffer, p_state->RxIndex, &p_state->RxMeta);
+//                 switch (rxStatus)
+//                 {
+//                     case PROTOCOL_RX_CODE_AWAIT_PACKET:     // Length now set, need payload
+//                         p_state->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
+//                         break;
+//                     case PROTOCOL_RX_CODE_ACK:              // Sync — complete, no Phase 2
+//                     case PROTOCOL_RX_CODE_NACK:
+//                     case PROTOCOL_RX_CODE_ABORT:
+//                     case PROTOCOL_RX_CODE_PACKET_COMPLETE:  // Header only packer / Ping — complete, no Phase 2
+//                         p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+//                         break;
+//                     case PROTOCOL_RX_CODE_ERROR_META:
+//                         // TxSync(p_socket, p_state, PROTOCOL_TX_SYNC_NACK_PACKET_META);
+//                         p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+//                         break;
+//                     default:
+//                         p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+//                         break;
+//                 }
+//             }
+//             break;
 
-        case PROTOCOL_RX_STATE_WAIT_PACKET:
-            if (p_state->RxIndex >= p_state->RxMeta.Length)
-            {
-                rxStatus = p_specs->PARSE_RX_HEADER(p_rxBuffer, &p_state->RxMeta);   // PACKET_COMPLETE or ERROR_DATA
-                switch (rxStatus)
-                {
-                    case PROTOCOL_RX_CODE_PACKET_COMPLETE: break;
-                    case PROTOCOL_RX_CODE_ERROR_DATA: break; // TxSync(p_socket, p_state, PROTOCOL_TX_SYNC_NACK_PACKET_DATA);
-                    default: break;
-                }
-                p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
-            }
-            break;
+//         case PROTOCOL_RX_STATE_WAIT_PACKET:
+//             if (p_state->RxIndex >= p_state->RxMeta.Length)
+//             {
+//                 rxStatus = p_specs->PARSE_RX_HEADER(p_rxBuffer, &p_state->RxMeta);   // PACKET_COMPLETE or ERROR_DATA
+//                 switch (rxStatus)
+//                 {
+//                     case PROTOCOL_RX_CODE_PACKET_COMPLETE: break;
+//                     case PROTOCOL_RX_CODE_ERROR_DATA: break; // TxSync(p_socket, p_state, PROTOCOL_TX_SYNC_NACK_PACKET_DATA);
+//                     default: break;
+//                 }
+//                 p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+//             }
+//             break;
 
-        case PROTOCOL_RX_STATE_INACTIVE:
-            break;
-    }
+//         case PROTOCOL_RX_STATE_INACTIVE:
+//             break;
+//     }
 
 
-    return rxStatus;
-}
+//     return rxStatus;
+// }
 
 
 

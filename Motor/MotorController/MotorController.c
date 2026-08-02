@@ -141,6 +141,7 @@ MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorCo
     Use _LimitArray parameters form (augments + values + length explicit) since there's no LimitArray_T descriptor to wrap them.
 
     input percent derate
+    todo reconcile with user set limits in speed_pu
 */
 bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t speed_fract16)
 {

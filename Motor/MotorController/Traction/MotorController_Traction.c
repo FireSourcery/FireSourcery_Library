@@ -182,7 +182,7 @@ static void Drive_Entry(MotorController_T * p_mc)
 {
     assert(TractionAdapter(p_mc)->Input.Direction != MOTOR_DIRECTION_NULL); /* Direction should have been checked on transition.*/
     TractionAdapter(p_mc)->Input.DriveCmd = TRACTION_CMD_RELEASE; // next input is edge transition
-    Motor_Table_ApplyUserDirection(&p_mc->MOTORS, TractionAdapter(p_mc)->Input.Direction); /* Buffered direction cmd from user input, independent of motor state */
+    Motor_Table_ApplyUserDirection(&p_mc->MOTORS, (Motor_Direction_T)TractionAdapter(p_mc)->Input.Direction); /* Buffered direction cmd from user input, independent of motor state */
 }
 
 static void Drive_Proc(MotorController_T * p_mc)

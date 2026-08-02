@@ -55,6 +55,7 @@
 /******************************************************************************/
 static Cia402_Adapter_T * Cia402_Adapter(MotorController_T * p_mc) { /* return p_mc->P_MC->Cia402Adapter; */ }
 
+
 void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 {
     Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc);
@@ -151,30 +152,56 @@ void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * 
 }
 
 
-// /* Integration glue (application) */
+/*
+    Map to the same handler for now
+*/
+const CanBus_RxRoute_T CIA402_ROUTES[] =
+{
+    { CIA402_COB_RXPDO1_BASE | 0, 0x7FFU, MotorController_Cia402_HandleRxRequest },
+    { CIA402_COB_RXPDO2_BASE | 0, 0x7FFU, MotorController_Cia402_HandleRxRequest },
+    { CIA402_COB_SDO_REQ_BASE | 0, 0x7FFU, MotorController_Cia402_HandleRxRequest },
+};
 
-// /* Protocol-side handlers — wrap the typed CiA 402 entry points
-//    into the driver's full-frame callback shape. */
+const CanBus_BroadcastEntry_T CIA402_BROADCASTS[] = {
+  { .ID = 0U, MotorController_Cia402_BuildTxPdo1, 1000U /* 1 ms */ },
+  { .ID = 0U, MotorController_Cia402_BuildTxPdo2, 1000U /* 1 ms */ },
+  /* Heartbeat, etc. */
+};
+
+CanBus_Service_T CIA402_SERVICE =
+{
+    .P_ROUTES = CIA402_ROUTES,
+    .ROUTE_COUNT = sizeof(CIA402_ROUTES) / sizeof(CIA402_ROUTES[0]),
+    .P_BROADCASTS = CIA402_BROADCASTS,
+    .BROADCAST_COUNT = sizeof(CIA402_BROADCASTS) / sizeof(CIA402_BROADCASTS[0]),
+};
+
+/* Integration glue (application) */
+
+/* Protocol-side handlers — wrap the typed CiA 402 entry points into the driver's full-frame callback shape. */
 // static void OnSdoFrame(void * ctx, const CAN_Frame_T * f)
 // {
 //     Cia402_CanFrame_T rx = ToCia402(f), tx;
 //     if (Motor_Cia402_HandleCanRx(ctx, &Adapter, NodeId, &rx, &tx)) { CanBus_SendFrame(p_can, FromCia402(&tx)); }
 // }
+
 // static void OnRxPdoFrame(void * ctx, const CAN_Frame_T * f) { /* same shape */ }
+// static void OnRxPdoFrame2(void * ctx, const CAN_Frame_T * f) { /* same shape */ }
 
 // /* Driver-side route table — pure COB-ID class routing */
-// static const CanBus_RxRoute_T ROUTES[] = {
+// static const CanBus_RxRoute_T ROUTES[] =
+// {
 //     { CIA402_COB_RXPDO1_BASE | NODE_ID, 0x7FFU, OnRxPdoFrame },
 //     { CIA402_COB_RXPDO2_BASE | NODE_ID, 0x7FFU, OnRxPdoFrame },
 //     { CIA402_COB_SDO_REQ_BASE | NODE_ID, 0x7FFU, OnSdoFrame },
 // };
 
 // /* TxPDO build adapters — wrap CiA 402 build into the driver's BuildFrame_T shape */
-// static void BuildTxPdo1(void * ctx, CAN_Frame_T * f)
+// static void BuildTxPdo1(void * ctx, CAN_Frame_T * p_tx)
 // {
-//     Cia402_CanFrame_T tx;
-//      Motor_Cia402_BuildTxPdo1(ctx, NodeId, &tx);
-//     *f = FromCia402(&tx);
+//     // Cia402_CanFrame_T tx;
+//     //  Motor_Cia402_BuildTxPdo1(ctx, NodeId, &tx);
+//     // *f = FromCia402(&tx);
 // }
 
 // static const CanBus_FrameBroadcast_T BROADCASTS[] = {

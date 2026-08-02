@@ -31,7 +31,6 @@
 */
 /******************************************************************************/
 #include "UserDIn.h"
-#include "Math/Linear/Linear.h"
 #include "Math/Linear/Linear_Q16.h"
 
 #include <stdint.h>
@@ -45,7 +44,7 @@ typedef struct UserAIn_Config
     /* Determine Linear_T Units at runtime */
     uint16_t AdcZero;                   /* Minimum ADC value for 0% */
     uint16_t AdcMax;                    /* Maximum ADC value for 100% */
-    bool UseEdgePin;
+    bool UseEdgePin;            /* User option. */
     // bool IsEnabled;                  /* Software enable/disable */
     // uint16_t Threshold;
     // uint16_t FilterShift;
@@ -65,7 +64,7 @@ typedef struct UserAIn_State
     uint16_t ValuePrev;                 /* Previous value for edge detection */
     uint16_t RawValue_Adcu;             /* Raw ADC reading */
 
-    // bool (*EdgePinPassthrough)(UserDIn_T * p_dev);
+    // bool (*EdgePinPassthrough)(UserDIn_T * p_dev); //optionally resolve to empty object
     UserAIn_Config_T Config;            /* Hold for runtime updates */
 }
 UserAIn_State_T;

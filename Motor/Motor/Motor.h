@@ -377,10 +377,6 @@ typedef const struct Motor
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
     HeatMonitor_T HEAT_MONITOR;
     Analog_Conversion_T HEAT_MONITOR_CONVERSION;
-    /*
-        const context dependency of StateMachine: PHASE, TIMER
-        alternatively, reduce StateMachine context to mutable only, handle with pointer from state
-    */
     StateMachine_T STATE_MACHINE;
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */

@@ -295,7 +295,7 @@ typedef enum
 }
 Protocol_SyncStatus_T;
 
-// static Protocol_SyncStatus_T ProcSyncRx(const Socket_T * p_socket, Socket_State_T * p_state, Protocol_RxCode_T rxCode, const Protocol_ReqSync_T * p_syncOpts)
+// static Protocol_SyncStatus_T ProcSyncRx(const Protocol_SyncContext_T_T * p_state, Protocol_RxCode_T rxCode, const Protocol_ReqSync_T * p_syncOpts)
 // {
 //     Protocol_SyncContext_T * p_sync = &p_state->Sync;
 

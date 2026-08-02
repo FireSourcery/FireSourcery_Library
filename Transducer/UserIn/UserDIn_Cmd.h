@@ -41,6 +41,15 @@
 // UserDIn_Cmd_T;
 
 
+// handle as collaborator patterns or
+// handle as wrap with service layer
+// typedef   struct
+// {
+// UserDIn_T  P_DEV;
+// }
+// OptDIn_T;
+
+
 // static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONTEXT = NULL };
 
 
@@ -49,3 +58,16 @@
 //     p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_Modal_PollEdgeValue(p_dev));
 // }
 
+
+// static inline void UserDIn_InitCmdFromTable(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)
+// {
+//     p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_Modal_PollEdgeValue(p_dev));
+// }
+
+// /*
+//     Array helper
+// */
+// static inline void UserDIn_Array_ResolveCallbacks(UserDIn_T * p_dins,   uint8_t count, const UserDIn_Fn_T * p_cmdTable)
+// {
+//     for (uint8_t i = 0; i < count; i++) { p_dins[i].P_STATE->OptCmd = p_cmdTable[p_configs[i].CmdId]; }
+// }

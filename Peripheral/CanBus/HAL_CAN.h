@@ -33,7 +33,10 @@
 #include HAL_PERIPHERAL_PATH(HAL_Types.h)
 
 
-/* split data handling, unless sequence/launch constraints */
+/*
+    Register granularity HAL accessors.
+    split data handling, unless sequence/launch constraints
+*/
 /*
     4 type combinations by function
     1. standard vs extended
@@ -115,7 +118,10 @@ HAL_CAN_DriverStatus_T;
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadErrorStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 
 
-/* using data interface */
+/*
+    using data interface [CAN_Frame_T]
+    default implementation
+*/
 /*
     SocketCAN convention
 */
@@ -142,6 +148,7 @@ can_id_t;
 typedef struct __attribute__((packed))
 {
     can_id_t CanId;
+    // uint32_t CanId;
     uint8_t DataLength;
     uint8_t Opt;
     uint8_t Resv0;
@@ -181,3 +188,24 @@ static inline void HAL_CAN_ReadRxMessage(HAL_CAN_T * p_hal, CAN_Frame_T * p_rxFr
     p_rxFrame->DataLength = HAL_CAN_ReadRxData(p_hal, &p_rxFrame->Data[0U]);
 }
 
+/*
+    granular signature
+*/
+static inline size_t HAL_CAN_ReadRx(HAL_CAN_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData)
+{
+    size_t length = 0U;
+    if (HAL_CAN_ReadRxFullFlag(p_can))
+    {
+        *p_rxId = HAL_CAN_ReadRxId(p_can);
+        HAL_CAN_ReadRxData(p_can, p_rxData);
+        length = HAL_CAN_ReadRxLength(p_can);
+        HAL_CAN_ClearRxFullFlag(p_can);
+    }
+    return length;
+}
+
+void HAL_CAN_WriteTx(HAL_CAN_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
+{
+    HAL_CAN_WriteTxId(p_can, id);
+    HAL_CAN_WriteTxData(p_can, p_txData, length); /* includes start Transmit */
+}

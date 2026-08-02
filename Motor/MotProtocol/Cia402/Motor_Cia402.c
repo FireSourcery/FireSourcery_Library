@@ -115,8 +115,6 @@ static inline Cia402_Status_T Motor_Cia402_ReadStatus(Motor_T * p_motor)
     return status;
 }
 
-
-
 /******************************************************************************/
 /*
     Object Dictionary
@@ -211,43 +209,43 @@ Cia402_OdStatus_T Motor_Cia402_Od_Set(Motor_T * p_motor, Cia402_Adapter_T * p_ad
     Cia402_OdInterface_T.p_Context for the lifetime of one SDO transaction.
 */
 /******************************************************************************/
-typedef const struct Motor_Cia402_Ctx
-{
-    Motor_T * p_Motor;
-    Cia402_Adapter_T * p_Adapter;
-}
-Motor_Cia402_Ctx_T;
+// typedef const struct Motor_Cia402_Ctx
+// {
+//     Motor_T * p_Motor;
+//     Cia402_Adapter_T * p_Adapter;
+// }
+// Motor_Cia402_Ctx_T;
 
-static Cia402_OdInfo_T Od_GetInfo(Motor_Cia402_Ctx_T * p_ctx, uint16_t index, uint8_t subindex)
-{
-    (void)p_ctx;
-    return Cia402_Od_GetInfo(index, subindex);
-}
+// static Cia402_OdInfo_T Od_GetInfo(Motor_Cia402_Ctx_T * p_ctx, uint16_t index, uint8_t subindex)
+// {
+//     (void)p_ctx;
+//     return Cia402_Od_GetInfo(index, subindex);
+// }
 
-static Cia402_OdStatus_T Od_Get(Motor_Cia402_Ctx_T * p_ctx, uint16_t index, uint8_t subindex, int32_t * p_value)
-{
-    return Motor_Cia402_Od_Get(p_ctx->p_Motor, p_ctx->p_Adapter, index, subindex, p_value);
-}
+// static Cia402_OdStatus_T Od_Get(Motor_Cia402_Ctx_T * p_ctx, uint16_t index, uint8_t subindex, int32_t * p_value)
+// {
+//     return Motor_Cia402_Od_Get(p_ctx->p_Motor, p_ctx->p_Adapter, index, subindex, p_value);
+// }
 
-static Cia402_OdStatus_T Od_Set(Motor_Cia402_Ctx_T * p_ctx, uint16_t index, uint8_t subindex, int32_t value)
-{
-    return Motor_Cia402_Od_Set(p_ctx->p_Motor, p_ctx->p_Adapter, index, subindex, value);
-}
+// static Cia402_OdStatus_T Od_Set(Motor_Cia402_Ctx_T * p_ctx, uint16_t index, uint8_t subindex, int32_t value)
+// {
+//     return Motor_Cia402_Od_Set(p_ctx->p_Motor, p_ctx->p_Adapter, index, subindex, value);
+// }
 
-/*
-    Build the OD interface for one in-flight CAN transaction.
-    Bound to a stack-allocated Motor_Cia402_Ctx_T owned by the caller.
-*/
-static inline Cia402_OdInterface_T _OdInterface(Motor_Cia402_Ctx_T * p_ctx)
-{
-    return (Cia402_OdInterface_T)
-    {
-        .p_Context = p_ctx,
-        .GetInfo = (Cia402_OdGetInfoFn_T)Od_GetInfo,
-        .Get = (Cia402_OdGetFn_T)Od_Get,
-        .Set = (Cia402_OdSetFn_T)Od_Set,
-    };
-}
+// /*
+//     Build the OD interface for one in-flight CAN transaction.
+//     Bound to a stack-allocated Motor_Cia402_Ctx_T owned by the caller.
+// */
+// static inline Cia402_OdInterface_T _OdInterface(Motor_Cia402_Ctx_T * p_ctx)
+// {
+//     return (Cia402_OdInterface_T)
+//     {
+//         .p_Context = p_ctx,
+//         .GetInfo = (Cia402_OdGetInfoFn_T)Od_GetInfo,
+//         .Get = (Cia402_OdGetFn_T)Od_Get,
+//         .Set = (Cia402_OdSetFn_T)Od_Set,
+//     };
+// }
 
 /******************************************************************************/
 /*
@@ -264,13 +262,74 @@ static inline Cia402_OdInterface_T _OdInterface(Motor_Cia402_Ctx_T * p_ctx)
     Motor_Cia402_Adapter().
 */
 /******************************************************************************/
-bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_resp)
-{
-    Motor_Cia402_Ctx_T ctx = { .p_Motor = (Motor_T *)p_motor, .p_Adapter = p_adapter };
-    const Cia402_OdInterface_T od = _OdInterface(&ctx);
-    return Cia402_Sdo_HandleRequest(&od, p_req, p_resp) != 0U;
-}
+// bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_resp)
+// {
+//     Motor_Cia402_Ctx_T ctx = { .p_Motor = (Motor_T *)p_motor, .p_Adapter = p_adapter };
+//     const Cia402_OdInterface_T od = _OdInterface(&ctx);
+//     return Cia402_Sdo_HandleRequest(&od, p_req, p_resp) != 0U;
+// }
 
+/******************************************************************************/
+/*
+    SDO
+*/
+/******************************************************************************/
+uint8_t Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_rsp)
+{
+    Cia402_OdInfo_T info = Cia402_Od_GetInfo(p_req->Index, p_req->SubIndex);
+    // Cia402_OdMeta_T info  ; /handle adapter-backed entries here if needed
+
+    switch ((Cia402_SdoCcs_T)p_req->Cmd.Ccs)
+    {
+        case CIA402_SDO_CCS_DOWNLOAD_INIT_REQ: /* master writes object */
+            {
+                if (info.Type == CIA402_OD_TYPE_NONE)
+                {
+                    *p_rsp = Cia402_Sdo_EncodeAbort(p_req->Index, p_req->SubIndex, (p_req->SubIndex != 0U) ? CIA402_OD_ERR_SUBINDEX : CIA402_OD_ERR_NO_OBJECT);
+                    break;
+                }
+                if (info.Access == CIA402_OD_ACCESS_RO)
+                {
+                    *p_rsp = Cia402_Sdo_EncodeAbort(p_req->Index, p_req->SubIndex, CIA402_OD_ERR_READ_ONLY);
+                    break;
+                }
+                int32_t value = Cia402_SdoData_Decode(info.Type, p_req->Data);
+                Cia402_OdStatus_T r = Motor_Cia402_Od_Set(p_motor, p_adapter, p_req->Index, p_req->SubIndex, value);
+                *p_rsp = (r == CIA402_OD_OK) ? Cia402_Sdo_EncodeDownloadAck(p_req->Index, p_req->SubIndex) : Cia402_Sdo_EncodeAbort(p_req->Index, p_req->SubIndex, r);
+                break;
+            }
+
+        case CIA402_SDO_CCS_UPLOAD_INIT_REQ: /* master reads object */
+            {
+                if (info.Type == CIA402_OD_TYPE_NONE)
+                {
+                    *p_rsp = Cia402_Sdo_EncodeAbort(p_req->Index, p_req->SubIndex, (p_req->SubIndex != 0U) ? CIA402_OD_ERR_SUBINDEX : CIA402_OD_ERR_NO_OBJECT);
+                    break;
+                }
+                if (info.Access == CIA402_OD_ACCESS_WO)
+                {
+                    *p_rsp = Cia402_Sdo_EncodeAbort(p_req->Index, p_req->SubIndex, CIA402_OD_ERR_WRITE_ONLY);
+                    break;
+                }
+
+                int32_t value = 0;
+                Cia402_OdStatus_T r = Motor_Cia402_Od_Get(p_motor, p_adapter, p_req->Index, p_req->SubIndex, &value);
+                *p_rsp = (r == CIA402_OD_OK) ? Cia402_Sdo_EncodeUploadResponse(p_req->Index, p_req->SubIndex, info, value) : Cia402_Sdo_EncodeAbort(p_req->Index, p_req->SubIndex, r);
+                break;
+            }
+
+        case CIA402_SDO_CCS_ABORT:
+            /* Master aborted — no response per CiA 301 */
+            return 0U;
+
+        default:
+            /* Segmented and block transfers not supported by this minimal server */
+            *p_rsp = Cia402_Sdo_EncodeAbort(p_req->Index, p_req->SubIndex, CIA402_OD_ERR_GENERAL);
+            break;
+    }
+
+    return 8U;
+}
 
 /******************************************************************************/
 /*
@@ -354,7 +413,6 @@ void Motor_Cia402_HandleRxPdo_CwPosition(Motor_T * p_motor, Cia402_Adapter_T * p
 
 // void Motor_Cia402_BuildTxPdo2(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, CAN_Frame_T * p_tx)
 // {
-
 //     SetCanFrameId(p_tx, CIA402_COB_TXPDO2_BASE | p_adapter->Config.NodeId);
 
 //     switch (p_adapter->Input.ActiveMode)

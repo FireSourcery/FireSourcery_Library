@@ -85,8 +85,8 @@ int MotorController_Var_OutputDebug_Get(MotorController_T * p_dev, MotorControll
 {
     int value = 0;
     // #ifndef NDEBUG
-    Motor_T * p_motor = Motor_Table_At(&p_dev->MOTORS, 0) ;
-    Motor_Context_T * p_motorState = Motor_Table_At(&p_dev->MOTORS, 0)->P_MOTOR;
+    Motor_T * p_motor = &p_dev->MOTORS.P_DEVS[0];
+    Motor_Context_T * p_motorState = p_motor[0].P_MOTOR;
     switch (id)
     {
         case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC->ControlLoopProfile;            break;
@@ -185,7 +185,7 @@ int MotorController_InstancesRef_Get(MotorController_T * p_dev, MotorController_
     @brief Motor Prefix Handlers
 */
 /******************************************************************************/
-static inline Motor_T * MotorAt(MotorController_T * p_dev, uint8_t motor) { return (motor < p_dev->MOTORS.LENGTH) ? Motor_Table_At(&p_dev->MOTORS, motor) : NULL; }
+static inline Motor_T * MotorAt(MotorController_T * p_dev, uint8_t motor) { return (motor < p_dev->MOTORS.LENGTH) ? &p_dev->MOTORS.P_DEVS[motor] : NULL; }
 
 static int _HandleMotor_Get(MotorController_T * p_dev, MotVarId_T varId) { return Motor_VarType_Base_Get(MotorAt(p_dev, varId.Instance), (Motor_VarType_Base_T)varId.Type, varId.Base); }
 
