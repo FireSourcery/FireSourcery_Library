@@ -204,7 +204,7 @@ static inline size_t HAL_CAN_ReadRx(HAL_CAN_T * p_can, can_id_t * p_rxId, uint8_
     return length;
 }
 
-void HAL_CAN_WriteTx(HAL_CAN_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
+static inline void HAL_CAN_WriteTx(HAL_CAN_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
 {
     HAL_CAN_WriteTxId(p_can, id);
     HAL_CAN_WriteTxData(p_can, p_txData, length); /* includes start Transmit */

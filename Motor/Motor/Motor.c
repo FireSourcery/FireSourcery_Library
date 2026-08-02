@@ -138,6 +138,14 @@ bool Motor_IsConfigValid(Motor_T * p_motor)
     // && _Motor_Config_IsValidVoltage(&p_context->Config, VBus_Fract16(p_motor->P_VBUS));
 }
 
+// void Motor_ValidateConfig(Motor_T * p_motor)
+// {
+// #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+//     p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit = math_min(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, _Motor_GetFieldWeakeningIdLimit(p_motor));
+// #else
+// #endif
+// }
+
 /******************************************************************************/
 /*
 

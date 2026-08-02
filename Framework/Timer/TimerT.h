@@ -58,6 +58,7 @@ TimerT_T;
 
 */
 /******************************************************************************/
+static inline uint32_t TimerT_Ticks(TimerT_T * p_timer) { return _TimerT_Ticks(&p_timer->BASE); }
 static inline uint32_t TimerT_GetElapsed(TimerT_T * p_timer) { return _TimerT_Elapsed(&p_timer->BASE, p_timer->P_STATE); }
 static inline bool TimerT_IsElapsed(TimerT_T * p_timer) { return _TimerT_IsElapsed(&p_timer->BASE, p_timer->P_STATE); }
 static inline void TimerT_Restart(TimerT_T * p_timer) { _TimerT_Restart(&p_timer->BASE, p_timer->P_STATE); }

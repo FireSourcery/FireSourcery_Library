@@ -170,7 +170,6 @@ typedef struct MotorController_Config
     // MotorController_MainMode_T InitMode;
     int InitMode; /* Sub app on init. enum stand in. Def in AppTable */
     MotorController_InputMode_T InputMode;
-    MotorController_StandbyExitMode_T StandbyExitMode;
 
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
@@ -193,7 +192,7 @@ typedef struct MotorController_Context
     StateMachine_Active_T StateMachine; /* Data */
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     // MotorController_InitFlags_T InitFlags;
-    // MotorController_StandbyExitMode_T StandbyExitMode;
+    MotorController_StandbyExitMode_T StandbyExitMode; /* Runtime policy — resolved at init from config, overridable at runtime, not persisted */
     uint32_t ControlCounter; /* PWM */
 
     MotLimits_T Limits;     /* Q15 unitless derate ratios — contiguous augments + values for I and Speed system arbitration. */
@@ -247,13 +246,7 @@ typedef const struct MotorController
     Serial_T * P_SERIALS;
     uint8_t SERIAL_COUNT;
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    // CanBus_T * P_CAN_BUS;
-    // uint8_t CAN_BUS_COUNT;
-    // // CanBus_Service_T CAN_BUS_SERVICE;
-    // CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_20; /* Broadcast function callback, e.g. for periodic Tx */
-    // CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_1000;
-
-    CanBus_Socket_T * P_CAN_SOCKETS;
+    CanBus_T * P_CAN_SOCKETS;
     uint8_t CAN_SOCKET_COUNT;
 #endif
 

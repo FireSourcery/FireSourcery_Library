@@ -152,7 +152,7 @@ static inline uint8_t MotorController_Var_GetProtocolCount(MotorController_T * p
 static inline uint8_t MotorController_Var_GetCanSocketCount(MotorController_T * p_dev)
 {
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    return p_dev->CAN_BUS_COUNT;
+    return p_dev->CAN_SOCKET_COUNT;
 #else
     return 0;
 #endif

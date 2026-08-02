@@ -52,6 +52,10 @@ typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc);
     - Registers behavior via a fixed vtable    (Microkernel / Plugin)
     - Internally selects Strategy tables for input motor mappings
 
+    use MotorController_T context vs focused Motor_Table_T / Motor_Drive Context
+    MotorController_T required for integration as HSM branch. inherit parent state common.
+    alternatively, using a narrower Motor_Table_T context, nested state machine, streamlines input alphabet handling.
+
     if only one app is used, alternatively, code as wrapper
     this way optionally exapands to runtime selection
 */

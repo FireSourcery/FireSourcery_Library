@@ -107,10 +107,10 @@ typedef enum MotPacket_Id ENUM8_T
     MOT_PACKET_MEM_READ = 0xD1U,            /* Read Memory Address */
     MOT_PACKET_MEM_WRITE = 0xD2U,           /* Write Memory Address */
 
-    // MOT_PACKET_DATA_MODE_ERASE = 0xD9U,      /* Stateful NvMemory Erase using Address */
     /* Stateful Read/Write */
     MOT_PACKET_DATA_MODE_READ = 0xDAU,      /* Stateful NvMemory Read using Address */
     MOT_PACKET_DATA_MODE_WRITE = 0xDBU,     /* Stateful NvMemory Write using Address */
+    MOT_PACKET_DATA_MODE_ERASE = 0xDCU,     /* Stateful NvMemory Erase using Address */
     MOT_PACKET_DATA_MODE_DATA = 0xDDU,      /* Data Mode Data */
     MOT_PACKET_DATA_MODE_ABORT = MOT_PACKET_SYNC_ABORT,
 
@@ -274,7 +274,6 @@ typedef struct MOT_PACKET_PACKED MotPacket_VarReadResp { uint16_t Value16[16U]; 
 typedef struct MOT_PACKET_PACKED MotPacket_VarWriteReq { struct { uint16_t MotVarId; uint16_t Value16; } Pairs[8U]; }  MotPacket_VarWriteReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_VarWriteResp { uint8_t VarStatus[8U]; }                                     MotPacket_VarWriteResp_T;
 
-
 /******************************************************************************/
 /*!
     Vars 32
@@ -285,7 +284,6 @@ typedef struct MOT_PACKET_PACKED MotPacket_Var32ReadResp { uint32_t Values[8U]; 
 
 /* Request reponse common */
 static inline uint8_t MotPacket_Var32Read_ParseCount(const MotPacket_T * p_packet) { return MotPacket_ParsePayloadLength(p_packet) / sizeof(MotPacket_VarReadFixedReq_T); }
-
 
 typedef struct MOT_PACKET_PACKED MotPacket_Var32WriteReq { MotPacket_VarWriteFixedReq_T Write[4U]; }    MotPacket_Var32WriteReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_Var32WriteResp { uint8_t VarStatus[4U]; }                    MotPacket_Var32WriteResp_T;

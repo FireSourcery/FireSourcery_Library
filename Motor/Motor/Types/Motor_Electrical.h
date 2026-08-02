@@ -123,10 +123,15 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 /* common for use. per motor pi gains absorb per motor max */
 // extern MOTOR_SPEED_CALIB_MAX_RADS;
 // as singleton struct
+
 // struct Motor_ElectricalCalib
 // {
 //     uint16_t SpeedMax_Rads;
+//     uint16_t FieldWeakeningLimit_Pu ;
 // } Motor_ElectricalCalib_T;
+
+// extern Motor_ElectricalCalib_T MOTOR_ELECTRICAL_CALIBRATION;
+
 // static inline uint16_t SpeedTypeMax_Rpm( ) { return }
 
 /*

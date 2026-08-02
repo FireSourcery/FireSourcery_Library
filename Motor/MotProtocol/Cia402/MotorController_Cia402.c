@@ -155,7 +155,7 @@ void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * 
 /*
     Map to the same handler for now
 */
-const CanBus_RxRoute_T CIA402_ROUTES[] =
+const CanBus_ReqRoute_T CIA402_ROUTES[] =
 {
     { CIA402_COB_RXPDO1_BASE | 0, 0x7FFU, MotorController_Cia402_HandleRxRequest },
     { CIA402_COB_RXPDO2_BASE | 0, 0x7FFU, MotorController_Cia402_HandleRxRequest },
@@ -168,7 +168,7 @@ const CanBus_BroadcastEntry_T CIA402_BROADCASTS[] = {
   /* Heartbeat, etc. */
 };
 
-CanBus_Service_T CIA402_SERVICE =
+CanBus_Service_T MOTOR_CONTROLLER_CIA402_SERVICE =
 {
     .P_ROUTES = CIA402_ROUTES,
     .ROUTE_COUNT = sizeof(CIA402_ROUTES) / sizeof(CIA402_ROUTES[0]),
@@ -189,7 +189,7 @@ CanBus_Service_T CIA402_SERVICE =
 // static void OnRxPdoFrame2(void * ctx, const CAN_Frame_T * f) { /* same shape */ }
 
 // /* Driver-side route table — pure COB-ID class routing */
-// static const CanBus_RxRoute_T ROUTES[] =
+// static const CanBus_ReqRoute_T ROUTES[] =
 // {
 //     { CIA402_COB_RXPDO1_BASE | NODE_ID, 0x7FFU, OnRxPdoFrame },
 //     { CIA402_COB_RXPDO2_BASE | NODE_ID, 0x7FFU, OnRxPdoFrame },

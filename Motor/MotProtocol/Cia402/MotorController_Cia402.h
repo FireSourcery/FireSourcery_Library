@@ -51,3 +51,4 @@ extern void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, con
 extern void MotorController_Cia402_BuildTxPdo1(MotorController_T * p_mc, CAN_Frame_T * p_tx);
 extern void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * p_tx);
 
+extern CanBus_Service_T MOTOR_CONTROLLER_CIA402_SERVICE;

@@ -375,13 +375,14 @@ typedef const struct Motor
     Phase_Analog_T PHASE_ANALOG;
     // RotorSensor_T SENSOR; /* Compile time default */
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
-    HeatMonitor_T HEAT_MONITOR;
-    Analog_Conversion_T HEAT_MONITOR_CONVERSION;
     StateMachine_T STATE_MACHINE;
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */
     const Motor_Config_T * P_NVM_CONFIG;
     const FOC_Config_T * P_FOC_NVM_CONFIG; /* config for the FOC struct with a nested config field, without including a 3rd copy in Motor_Config */
+
+    HeatMonitor_T HEAT_MONITOR;
+    Analog_Conversion_T HEAT_MONITOR_CONVERSION;
     /*
         System-scope arbitration handles. Pointers to LimitArray_Augments_T (cached aggregate) only — Motor reads derate state.
         Handle the combined system-wide state at the Motor layer. This way a single getter combines the local and system derate sources.

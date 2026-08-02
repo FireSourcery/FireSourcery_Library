@@ -61,13 +61,13 @@
 
 // static inline void UserDIn_InitCmdFromTable(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)
 // {
-//     p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_Modal_PollEdgeValue(p_dev));
+//
 // }
 
-// /*
-//     Array helper
-// */
-// static inline void UserDIn_Array_ResolveCallbacks(UserDIn_T * p_dins,   uint8_t count, const UserDIn_Fn_T * p_cmdTable)
+/*
+    Array helper
+*/
+// static inline void UserDIn_Array_ResolveCallbacks(UserDIn_T * p_dins, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
 // {
 //     for (uint8_t i = 0; i < count; i++) { p_dins[i].P_STATE->OptCmd = p_cmdTable[p_configs[i].CmdId]; }
 // }

@@ -59,10 +59,6 @@ MotorController_MainMode_T;
 // }
 // MotorController_AppTable_T;
 
-// extern MotorController_App_T * MotorController_App(MotorController_T * p_dev);
-
-// State_T * MotorController_App_EnterMain(MotorController_T * p_dev);
-// void MotorController_App_ProcAnalogUser(MotorController_T * p_dev);
 
 static inline MotorController_MainMode_T MotorController_AppTable_Mode(MotorController_T * p_dev) { return (MotorController_MainMode_T)p_dev->P_MC->Config.InitMode; }
 

@@ -46,7 +46,7 @@ void MotorController_Init(MotorController_T * p_dev)
     for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_Init(&p_dev->P_SERIALS[iSerial]); }
 
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    if (p_dev->P_CAN_BUS != NULL) { CanBus_Init(p_dev->P_CAN_BUS); }
+    for (uint8_t iCan = 0U; iCan < p_dev->CAN_SOCKET_COUNT; iCan++) { CanBus_Init(&p_dev->P_CAN_SOCKETS[iCan]); }
 #endif
 
     for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_dev->P_PROTOCOLS[iProtocol]); }
@@ -96,7 +96,7 @@ void MotorController_Init(MotorController_T * p_dev)
     MotLimits_ClearIDerate(&p_dev->P_MC->Limits);
     MotLimits_ClearSpeedDerate(&p_dev->P_MC->Limits);
 
-    MotorController_ResolveStandbyExitMode(p_dev);
+    p_mc->StandbyExitMode = MotorController_ResolveStandbyExitMode(p_dev);
 
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
@@ -114,21 +114,17 @@ void MotorController_ResetBootDefault(MotorController_Context_T * p_mc)
 }
 
 /*
-    Resolve the Standby exit policy from configuration — the single place mapping input topology to behavior
-      - non-ANALOG (serial/CAN) -> MANUAL:      the master issues START_MAIN
-      - ANALOG with a DIN       -> MANUAL:      the edge issues START_MAIN
-      - ANALOG no DIN           -> ON_THROTTLE / AUTO:  the throttle is the enable interface; auto-advance gated on neutral
+    Resolve the initial Standby exit policy from configuration — the single place mapping input topology to
+    behavior. Seeds the runtime Context.StandbyExitMode at init (pure of state; may be overridden at runtime).
+      - non-ANALOG (serial/CAN)  -> MANUAL: the master issues START_MAIN
+      - ANALOG with a Park DIN    -> MANUAL: the Park edge issues START_MAIN
+      - ANALOG, headless (no Park) -> AUTO:   the throttle is the only enable interface
 */
 MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorController_T * p_dev)
 {
-    // if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return  MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
-    // if (MotorController_IsParkPinMapped(p_dev)) { return  MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
-    // return MOTOR_CONTROLLER_STANDBY_EXIT_ON_THROTTLE;
-    if (p_dev->P_MC->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
-    {
-        if (!MotorController_IsParkPinMapped(p_dev)) { p_dev->P_MC->Config.StandbyExitMode = MOTOR_CONTROLLER_STANDBY_EXIT_AUTO; }
-    }
-    return p_dev->P_MC->Config.StandbyExitMode;
+    if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
+    if (MotorController_IsParkPinMapped(p_dev)) { return MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
+    return MOTOR_CONTROLLER_STANDBY_EXIT_AUTO;
 }
 
 /******************************************************************************/

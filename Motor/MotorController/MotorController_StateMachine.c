@@ -130,6 +130,12 @@ static State_T * Common_InputStandby(MotorController_T * p_dev)
     /* Applies Disable on enter */
     else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS)) { p_nextState = &MC_STATE_STANDBY; }
     else { MotBuzzer_ParkError(MotorController_Buzzer(p_dev)); }
+
+    /*
+        Explicit input command latches MANUAL — a host/operator that commanded STANDBY holds it (e.g. for LOCK access), rather than auto-advancing back to Main.
+        Runtime-only; reboot restores the resolved policy.
+    */
+    if (p_nextState == &MC_STATE_STANDBY) { p_dev->P_MC->StandbyExitMode = MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
     return p_nextState;
 }
 
@@ -225,6 +231,7 @@ static void Standby_Entry(MotorController_T * p_dev)
 {
     Motor_Table_ApplyControl(&p_dev->MOTORS, PHASE_VOUT_Z); /* */
     Motor_Table_DisableAll(&p_dev->MOTORS);
+    // p_dev->P_MC->StandbyExitMode = MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL;
 }
 
 static void Standby_Proc(MotorController_T * p_dev)
@@ -238,18 +245,16 @@ static bool Standby_IsStartReady(MotorController_T * p_dev)
 }
 
 /*
-    Automatic exit from STANDBY per the resolved policy —
-    Resolved Config.StandbyExitMode keep InputMode / Park topology out of the state machine.
+    Automatic exit from STANDBY per StandbyExitMode — a runtime policy resolved at init
+    (MotorController_ResolveStandbyExitMode), keeping InputMode / Park topology out of the state machine.
+    An explicit park (Common_InputStandby) latches MANUAL, so a host can hold STANDBY for LOCK access.
 */
-// todo and check protocol not connected, alternatively disable exit on manual entry, or allow lock form main
 static State_T * Standby_Next(MotorController_T * p_dev)
 {
-    switch (p_dev->P_MC->Config.StandbyExitMode)
+    switch (p_dev->P_MC->StandbyExitMode)
     {
-        case  MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL:        return NULL; /* Await explicit START_MAIN */
-        case  MOTOR_CONTROLLER_STANDBY_EXIT_AUTO:          return Standby_IsStartReady(p_dev) ? MotorController_App_EnterMain(p_dev) : NULL;
-        // case  MOTOR_CONTROLLER_STANDBY_EXIT_ON_THROTTLE:   return Standby_IsStartReady(p_dev) ? MotorController_App_EnterMain(p_dev) : NULL;
-        default:                            return NULL;
+        case MOTOR_CONTROLLER_STANDBY_EXIT_AUTO:    return Standby_IsStartReady(p_dev) ? MotorController_App_EnterMain(p_dev) : NULL;
+        default:                                    return NULL; /* MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL — await explicit START_MAIN */
     }
 }
 
@@ -515,6 +520,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 {
                     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
+                    // MotorController_ResolveStandbyExitMode reresolve
                     p_nextState = &MC_STATE_STANDBY; /* Lock exit always lands in the safe stationary state */
                 }
                 else

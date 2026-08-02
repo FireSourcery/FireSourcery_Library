@@ -35,9 +35,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// #include "CanBus_Service.h"
+/*
+    hold the optional service handler
+*/
+struct CanBus_Service;
+typedef const struct CanBus_Service CanBus_Service_T;
+
 /******************************************************************************/
 /*!
     Wrap additional runtime state and interface to Services structs.
+    CanBus layer start at higher level, include services layer.
+    since register level hardware already handles transport
 */
 /******************************************************************************/
 
@@ -70,14 +79,12 @@ CanBus_Buffer_T;
 /*! Rx Callbacks */
 /******************************************************************************/
 typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data); //, uint32_t length);
-
 /*
     Full-frame Rx callback — preserves DLC, RTR, and ID metadata.
 */
-// typedef void (*CanBus_RxFrame_T)(void * p_dev, const CAN_Frame_T * p_frame);
-
-// void (*CanBus_RxRequestHandler_T)(CanBus_T * p_can, CanBus_Service_T * p_service);
-
+typedef void (*CanBus_RxFrame_T)(void * p_dev, const CAN_Frame_T * p_frame);
+// direct write data to application buffer
+// typedef uint8_t * (*CanBus_RxDataMapper_T)(void * p_dev, uint32_t id);
 
 /******************************************************************************/
 /*! Runtime state */
@@ -90,20 +97,32 @@ typedef struct
 {
     // CanBus_Buffer_T ActiveChannel;
     CanBus_Buffer_T Channel[CAN_BUS_MESSAGE_BUFFER_COUNT];
-    // CanBus_ServiceHandler_T ServiceHandler; // if call on isr
-    // void * p_Service;
-    // CanBus_ServiceCallback_T ServiceCallback; // if call on isr
+    CanBus_Service_T * p_Service; /*  */
 }
 CanBus_State_T;
 
+// typedef struct CanBus_SocketConfig
+// {
+//     //  is enabled / serivce active/ resolve to empty
+//     bool IsEnabled;
+// }
+// CanBus_Config_T;
+
 /******************************************************************************/
-/*! CanBus instance — const config + mutable state pointer */
+/*!
+
+    CanBus instance — const config + mutable state pointer
+
+*/
 /******************************************************************************/
 typedef const struct CanBus
 {
     HAL_CAN_T * P_HAL;
     CanBus_State_T * P_STATE;
     void * P_CONTEXT;
+    CanBus_Service_T * P_SERVICE; /* default */
+    CanBus_Service_T * P_SERVICE_TABLE; /* Protocol selection */
+    uint8_t SERVICE_COUNT;
     CanBus_RxRequest_T REQ_CALLBACK;
     // const volatile uint32_t * P_TIMER;
 }
@@ -117,23 +136,6 @@ CanBus_T;
     .REQ_CALLBACK = Callback,                                                \
 }
 
-/*
-
-*/
-typedef void (*CanBus_ServiceHandler_T)(CanBus_T * p_can, void * p_service, CAN_Frame_T * p_rxFrame);
-static inline void CanBus_ProcServiceDisabled(CanBus_T * p_can, void * p_service, CAN_Frame_T * p_rxFrame) { (void)p_can; (void)p_service; }
-
-// typedef void (*CanBus_ServiceCallback_T)(void * p_service, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
-// static inline void CanBus_ProcServiceDisabled1(void * p_service, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame) { (void)p_service; (void)p_rxFrame; (void)p_txFrame; }
-// CanBus_Service_ProcRx(CanBus_Service_T * p_service, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame)
-
-// typedef const struct CanBus_ServiceBase
-// {
-//     // const volatile uint32_t * P_TIMER;
-//     void * p_APP_CONTEXT;
-//     CanBus_ServiceHandler_T SERVICE_HANDLER;
-// }
-// CanBus_ServiceBase_T;
 
 
 /******************************************************************************/
@@ -143,15 +145,16 @@ static inline void CanBus_ProcServiceDisabled(CanBus_T * p_can, void * p_service
 static inline CAN_Frame_T * CanBus_PollRx(CanBus_T * p_can)
 {
     CAN_Frame_T * p_buffer = &p_can->P_STATE->Channel[0U].Frame;
-    if (HAL_CAN_ReadRxFullFlag(p_can->P_HAL))
+    if (HAL_CAN_ReadRxFullFlag(p_can->P_HAL)) /* todo unify */
     {
-        HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
         if (HAL_CAN_LockRx(p_can->P_HAL, 0))
         {
             HAL_CAN_ReadRxMessage(p_can->P_HAL, p_buffer);
             HAL_CAN_UnlockRx(p_can->P_HAL, 0);
+            HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
             return p_buffer;
         }
+        HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
     }
     return NULL;
 }
@@ -166,19 +169,11 @@ static inline CAN_Frame_T * CanBus_PollRx(CanBus_T * p_can)
 static inline void CanBus_RxData_ISR(CanBus_T * p_can)
 {
     CAN_Frame_T * p_rx = CanBus_PollRx(p_can);
-
     // CAN_Frame_T txBuffer = { 0U };
-    if (p_rx != NULL)
-    {
-        p_can->REQ_CALLBACK(p_can->P_CONTEXT, p_rx->CanId.Id, &p_rx->Data[0U]);
-
-        // p_can->P_STATE->p_ServiceHandler(p_can,  );
-        // if (p_can->P_STATE->ServiceHandler != NULL)
-        // {
-            // p_can->P_STATE->ServiceHandler(p_can, p_can->P_STATE->p_Service, p_rx);
-    //     }
-        // p_can->P_STATE->ServiceCallback(p_can->P_STATE->p_Service, p_buffer, &txBuffer);
-    }
+    // if (p_rx != NULL)
+    // {
+    //     p_can->REQ_CALLBACK(p_can->P_CONTEXT, p_rx->CanId.Id, &p_rx->Data[0U]);
+    // }
 }
 
 

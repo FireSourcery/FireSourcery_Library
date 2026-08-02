@@ -31,6 +31,9 @@
 /******************************************************************************/
 #include "../Motor.h"
 
+/*
+    Include all compile time sensor options
+*/
 // #if defined(MOTOR_SENSOR_HALL_ENABLE)
 #include "Hall/Motor_Hall.h"
 #include "Hall/Motor_HallEncoder.h"
@@ -39,9 +42,6 @@
 #include "Encoder/Motor_Encoder.h"
 #endif
 
-/*
-    Include all compile time sensor options
-*/
 #include "RotorSensor_Table.h"
 
 /* dependent part of Motor_Var   */
