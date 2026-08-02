@@ -104,6 +104,10 @@
 
 
 /* Define to largest used */
+#ifndef MOTOR_ADAPTER_BUFFER_SIZE
+#define MOTOR_ADAPTER_BUFFER_SIZE 64U
+#endif
+
 #ifndef MOTOR_CALIBRATION_BUFFER_SIZE
 #define MOTOR_CALIBRATION_BUFFER_SIZE 128U
 #endif
@@ -320,6 +324,7 @@ typedef struct Motor_Context
     */
     Motor_Config_T Config;
 
+    uint8_t AdapterBuffer[MOTOR_ADAPTER_BUFFER_SIZE]; // per instance buffer, alternatively wrap outer context
     uint8_t CalibrationBuffer[MOTOR_CALIBRATION_BUFFER_SIZE]; /* Opaque buffer for one-shot calibration procedures. */
 
 #if defined(MOTOR_LOCAL_UNIT_CONVERSION_ENABLE)

@@ -69,16 +69,16 @@ CanBus_BroadcastEntry_T;
 /*
     Disabled
 */
-static void  CanBus_BuildEmpty(void * p_context, uint8_t * p_txData) { (void)p_context; (void)p_txData; }
+static void  CanBus_BuildEmpty(void * p_context, CAN_Frame_T * p_frame) { (void)p_context; (void)p_frame; }
 static const CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_EMPTY = { .BUILD = CanBus_BuildEmpty, .ID = 0U, .INTERVAL = 0U, .P_STATE = NULL };
 
-/* App context is the driver's P_CONTEXT (single source; Socket sets CAN.P_CONTEXT). */
+/* App context is the driver's P_CONTEXT (single source). */
  /* Frame-form: callee fills ID, DLC, data (e.g. CiA402 TxPDO) */
 static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_BroadcastEntry_T * p_broadcast)
 {
     CAN_Frame_T frame = { 0U };
+    frame.CanId.CanId = p_broadcast->ID; /* seed default ID; frame builders (e.g. CiA402) may override */
     p_broadcast->BUILD(p_can->P_CONTEXT, &frame);
-    frame.CanId.CanId = p_broadcast->ID;
     HAL_CAN_WriteTxMessage(p_can->P_HAL, &frame);
 }
 
@@ -90,14 +90,15 @@ static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_BroadcastEntry_
 //     HAL_CAN_WriteTx(p_can->P_HAL, ((can_id_t) {.CanId = p_broadcast->ID }), &data[0U], 8U);
 // }
 
-static inline void _CanBus_ProcBroadcastService(CanBus_T * p_can, CanBus_BroadcastEntry_T * p_boardcasts, uint8_t count, uint32_t timer)
+// static inline void _CanBus_ProcBroadcastService(CanBus_T * p_can, CanBus_BroadcastEntry_T * p_b, CanBus_BroadcastState_T * p_s, uint8_t count, uint32_t timer)
+static inline void _CanBus_ProcBroadcastService(CanBus_T * p_can, CanBus_BroadcastEntry_T * p_table, uint8_t count, uint32_t timer)
 {
     for (uint8_t i = 0U; i < count; i++)
     {
-        if ((timer - p_boardcasts[i].P_STATE->Timestamp) >= p_boardcasts[i].INTERVAL)
+        if ((timer - p_table[i].P_STATE->Timestamp) >= p_table[i].INTERVAL)
         {
-            CanBus_ProcBroadcast(p_can, &p_boardcasts[i]);
-            p_boardcasts[i].P_STATE->Timestamp = timer;
+            CanBus_ProcBroadcast(p_can, &p_table[i]);
+            p_table[i].P_STATE->Timestamp = timer;
         }
     }
 }
@@ -125,9 +126,8 @@ typedef const struct
 }
 CanBus_ReqRoute_T;
 
-
 // alternative to table search
-typedef CanBus_ReqRoute_T * (*CanBus_RxRequestMapper_T)(void * p_dev, uint32_t id);
+// typedef CanBus_ReqRoute_T * (*CanBus_RxRequestMapper_T)(void * p_dev, uint32_t id);
 
 static inline CanBus_ReqRoute_T * CanBus_SearchRxTable(CanBus_ReqRoute_T * p_routes, uint8_t count, uint32_t id)
 {
@@ -137,17 +137,14 @@ static inline CanBus_ReqRoute_T * CanBus_SearchRxTable(CanBus_ReqRoute_T * p_rou
     }
     return NULL;
 }
-// if p_can does not hold service pointer
-// static inline void _CanBus_ProcRequestService(CanBus_T * p_can, CanBus_Service_T * p_service,void *p_appContext,  const CAN_Frame_T * p_rxFrame)
 
-// static inline void _CanBus_ProcRequestService(CanBus_T * p_can, CanBus_ReqRoute_T * p_table,   )
-// {
-//     CAN_Frame_T txFrame = { 0U };
-//     CanBus_ReqRoute_T * p_route = CanBus_SearchRxTable(p_service->P_ROUTES, p_service->ROUTE_COUNT, p_rxFrame->CanId.Id);
-//     if (p_route != NULL)                        { p_route->HANDLER(p_appContext, p_rxFrame, &txFrame); }
-//     else if (p_service->REQ_HANDLER != NULL)    { p_service->REQ_HANDLER(p_appContext, p_rxFrame, &txFrame); }
-//     if (txFrame.DataLength > 0U)                { HAL_CAN_WriteTxMessage(p_can->P_HAL, &txFrame); }
-// }
+static inline void _CanBus_ProcRequestService(CanBus_T * p_can, CanBus_ReqRoute_T * p_table, uint8_t count, const CAN_Frame_T * p_rxFrame)
+{
+    CAN_Frame_T txFrame = { 0U };
+    CanBus_ReqRoute_T * p_route = CanBus_SearchRxTable(p_table, count, p_rxFrame->CanId.Id);
+    if (p_route != NULL) { p_route->HANDLER(p_can->P_CONTEXT, p_rxFrame, &txFrame); }
+    if (txFrame.DataLength > 0U) { HAL_CAN_WriteTxMessage(p_can->P_HAL, &txFrame); }
+}
 
 
 /*
@@ -174,22 +171,14 @@ CanBus_Service_T;
     Dispatch one inbound frame: route-table match first, else the service-wide REQ_HANDLER.
     Handler fills txFrame (ID/DLC/data); a non-zero DataLength is transmitted as the reply.
 */
-static inline void CanBus_ProcRequest(CanBus_T * p_can)
+static inline void CanBus_ProcRequestService(CanBus_T * p_can)
 {
-    CanBus_Service_T * p_service = p_can->P_STATE->p_Service;
     CAN_Frame_T * p_rxFrame = &p_can->P_STATE->Channel[0U].Frame; // todo handle selection
-    CAN_Frame_T txFrame = { 0U };
-    CanBus_ReqRoute_T * p_route = CanBus_SearchRxTable(p_service->P_ROUTES, p_service->ROUTE_COUNT, p_rxFrame->CanId.Id);
+    CanBus_Service_T * p_service = p_can->P_STATE->p_Service;
+    if (p_service == NULL) { return; } /* disabled — no active protocol */
 
-    if (p_route != NULL)
-    {
-        if ((p_rxFrame->CanId.Id & p_route->ID_MASK) == p_route->ID_MATCH)
-        {
-            p_route->HANDLER(p_can->P_CONTEXT, p_rxFrame, &txFrame);
-        }
-    }
-    // else if (p_service->REQ_HANDLER != NULL) { p_service->REQ_HANDLER(p_can->P_CONTEXT, p_rxFrame, &txFrame); }
-    if (txFrame.DataLength > 0U) { HAL_CAN_WriteTxMessage(p_can->P_HAL, &txFrame); }
+    _CanBus_ProcRequestService(p_can, p_service->P_ROUTES, p_service->ROUTE_COUNT, p_rxFrame);
+    // if (p_service->REQ_HANDLER != NULL) { p_service->REQ_HANDLER(p_can->P_CONTEXT, p_rxFrame, &txFrame); }
 }
 
 /*
@@ -198,12 +187,13 @@ static inline void CanBus_ProcRequest(CanBus_T * p_can)
 static inline void CanBus_RxProcRequest_ISR(CanBus_T * p_can)
 {
     CAN_Frame_T * p_rx = CanBus_PollRx(p_can);
-    if (p_rx != NULL) { CanBus_ProcRequest(p_can); }
+    if (p_rx != NULL) { CanBus_ProcRequestService(p_can); }
 }
 
 static inline void CanBus_ProcBroadcastService(CanBus_T * p_can, uint32_t timer)
 {
     CanBus_Service_T * p_service = p_can->P_STATE->p_Service;
+    if (p_service == NULL) { return; } /* disabled — no active protocol */
     _CanBus_ProcBroadcastService(p_can, p_service->P_BROADCASTS, p_service->BROADCAST_COUNT, timer);
 }
 
@@ -215,5 +205,17 @@ static inline void CanBus_Enable(CanBus_T * p_can, CanBus_Service_T * p_service)
 static inline void CanBus_Disable(CanBus_T * p_can)
 {
     p_can->P_STATE->p_Service = NULL; // def empty to eliminate nullcheck
+}
+
+/*
+    Runtime protocol swap — select the active service by index from the configured table.
+    The active service is a single aligned pointer that the RX/broadcast paths reload each
+    pass, so a repoint takes effect on the next frame/tick (atomic store on Cortex-M).
+    TODO: on swap also reprogram HW acceptance filters from the new route table and rephase
+        broadcast timestamps to avoid a startup burst on the newly selected service.
+*/
+static inline void CanBus_SelectService(CanBus_T * p_can, uint8_t index)
+{
+    if (index < p_can->SERVICE_COUNT) { CanBus_Enable(p_can, &p_can->P_SERVICE_TABLE[index]); }
 }
 

@@ -105,7 +105,7 @@ static packet_size_t Call_Blocking(MotorController_T * p_dev, MotPacket_T * p_tx
 /******************************************************************************/
 static uint8_t ReadVar(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
 {
-    MotorController_BuildReadVar32(p_dev, (const MotPacket_VarReadFixedReq_T *)p_rx->Payload, (MotPacket_VarReadFixedResp_T *)p_tx->Payload);
+    MotorController_ReadVar(p_dev, (const MotPacket_VarReadFixedReq_T *)p_rx->Payload, (MotPacket_VarReadFixedResp_T *)p_tx->Payload);
 
     MotProtocol_BuildTxHeader(p_tx, &(Protocol_HeaderMeta_T){.Id = MOT_PACKET_FIXED_VAR_READ, .Length = sizeof(MotPacket_VarReadFixedResp_T) + sizeof(MotPacket_Header_T) });
     return p_tx->Header.Length;
@@ -116,7 +116,7 @@ static uint8_t ReadVar(MotorController_T * p_dev, MotPacket_T * p_tx, const MotP
 /******************************************************************************/
 static uint8_t WriteVar(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
 {
-    MotorController_BuildWriteVar32(p_dev, (const MotPacket_VarWriteFixedReq_T *)p_rx->Payload, (MotPacket_VarWriteFixedResp_T *)p_tx->Payload);
+    MotorController_WriteVar(p_dev, (const MotPacket_VarWriteFixedReq_T *)p_rx->Payload, (MotPacket_VarWriteFixedResp_T *)p_tx->Payload);
 
     MotProtocol_BuildTxHeader(p_tx, &(Protocol_HeaderMeta_T){.Id = MOT_PACKET_FIXED_VAR_WRITE, .Length = sizeof(MotPacket_VarWriteFixedResp_T) + sizeof(MotPacket_Header_T) });
     return p_tx->Header.Length;
@@ -137,7 +137,7 @@ static uint8_t WriteVar(MotorController_T * p_dev, MotPacket_T * p_tx, const Mot
 static packet_size_t Var16Read(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     uint8_t varCount = MotPacket_ParsePayloadLength(p_rxPacket) / sizeof(uint16_t);
-    MotorController_BuildReadVar16s(p_dev, (const MotPacket_VarReadReq_T *)p_rxPacket->Payload, (MotPacket_VarReadResp_T *)p_txPacket->Payload, varCount);
+    MotorController_ReadVar16s(p_dev, (const MotPacket_VarReadReq_T *)p_rxPacket->Payload, (MotPacket_VarReadResp_T *)p_txPacket->Payload, varCount);
 
     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR_READ, varCount * sizeof(uint16_t));
 }
@@ -148,7 +148,7 @@ static packet_size_t Var16Read(MotorController_T * p_dev, MotPacket_T * p_txPack
 static packet_size_t Var16Write(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     uint8_t varCount = MotPacket_ParsePayloadLength(p_rxPacket) / sizeof(uint16_t) / 2U;
-    MotorController_BuildWriteVar16s(p_dev, (const MotPacket_VarWriteReq_T *)p_rxPacket->Payload, (MotPacket_VarWriteResp_T *)p_txPacket->Payload, varCount);
+    MotorController_WriteVar16s(p_dev, (const MotPacket_VarWriteReq_T *)p_rxPacket->Payload, (MotPacket_VarWriteResp_T *)p_txPacket->Payload, varCount);
 
     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR_WRITE, varCount * sizeof(uint8_t));
 }

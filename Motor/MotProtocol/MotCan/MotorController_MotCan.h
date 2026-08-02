@@ -30,12 +30,14 @@
 */
 /******************************************************************************/
 #include "MotCan.h"
+
 #include "Motor/MotorController/MotorController.h"
 #include "Motor/MotorController/MotorController_MotProtocol.h"
 #include "Motor/MotorController/Traction/MotorController_Traction.h"
 #include "Motor/Motor/Motor_User.h"
 #include "Peripheral/CanBus/CanBus.h"
 #include "Peripheral/CanBus/CanBus_Service.h"
+
 
 #include <stdint.h>
 
@@ -87,10 +89,10 @@ static inline void BuildTelemetry2(MotorController_T * p_mc, CAN_Frame_T * p_tx)
 }
 
 
-static const CanBus_BroadcastEntry_T CAN_BROADCAST_TABLE[] =
+static const CanBus_BroadcastEntry_T MOT_CAN_BROADCAST_TABLE[] =
 {
-    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U, .BUILD = (CanBus_BuildData_T)BuildTelemetry1, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
-    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U, .BUILD = (CanBus_BuildData_T)BuildTelemetry2, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
+    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U, .BUILD = (CanBus_BuildBroadcast_T)BuildTelemetry1, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
+    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U, .BUILD = (CanBus_BuildBroadcast_T)BuildTelemetry2, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
 };
 
 
@@ -112,28 +114,40 @@ static inline void Req_Traction(MotorController_T * p_mc, const CAN_Frame_T * p_
     MotorController_Traction_SetThrottleBrake(p_mc, p_ctrl->Throttle, p_ctrl->Brake);
 }
 
+/*
+    Var access — read/write a single 32-bit var by MotVarId; reply on the request's own COB-ID.
+    Read:  req {MotVarId, Flags} (4B)        -> resp {Value}  (4B)
+    Write: req {MotVarId, Flags, Value} (8B) -> resp {Status} (1B)
+*/
 static inline void Req_VarRead(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 {
-    MotorController_BuildReadVar32(p_mc, (MotPacket_VarReadReq_T *)p_rx->Data, (const MotPacket_VarReadResp_T *)p_rx->Data);
+    p_tx->CanId = p_rx->CanId;
+    p_tx->DataLength = MotorController_ReadVar(p_mc, (const MotPacket_VarReadFixedReq_T *)p_rx->Data, (MotPacket_VarReadFixedResp_T *)p_tx->Data);
 }
 
-// static inline void MotCanService_RxCmdCallback(MotorController_T * p_context, uint32_t id, const uint8_t * p_data)
-
-const CanBus_ReqRoute_T MOT_CAN_ROUTES[] =
+static inline void Req_VarWrite(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 {
-    { MOT_CAN_RX_CONFIG_ID, 0xFFFFU, Req_VarRead },
-// MOT_CAN_RX_CONTROL_ID
-// MOT_CAN_TX_TELEMETRY1_ID
-// MOT_CAN_TX_TELEMETRY2_ID
-// MOT_CAN_RX_VAR_ID
-// MOT_CAN_RX_CONFIG_ID
+    p_tx->CanId = p_rx->CanId;
+    p_tx->DataLength = MotorController_WriteVar(p_mc, (const MotPacket_VarWriteFixedReq_T *)p_rx->Data, (MotPacket_VarWriteFixedResp_T *)p_tx->Data);
+}
+
+
+static const CanBus_ReqRoute_T MOT_CAN_ROUTES[] =
+{
+    { MOT_CAN_RX_CONTROL_ID,   0x7FFU, Req_Traction }, /* 0x001 throttle/brake — no reply */
+    { MOT_CAN_RX_VAR_READ_ID,  0x7FFU, Req_VarRead  }, /* 0x1A0 */
+    { MOT_CAN_RX_VAR_WRITE_ID, 0x7FFU, Req_VarWrite }, /* 0x1A1 */
+    /* Config-class vars are reachable through the same Var_Get/Set via the VAR ids above;
+       enable dedicated CONFIG ids here if the host addresses them separately (e.g. persist-on-write):
+    { MOT_CAN_RX_CONFIG_READ_ID,  0x7FFU, Req_VarRead  },
+    { MOT_CAN_RX_CONFIG_WRITE_ID, 0x7FFU, Req_VarWrite }, */
 };
 
 
-CanBus_Service_T MOT_CAN_SERVICE =
+static const CanBus_Service_T MOTOR_CONTROLLER_MOT_CAN_SERVICE =
 {
     .P_ROUTES = MOT_CAN_ROUTES,
     .ROUTE_COUNT = sizeof(MOT_CAN_ROUTES) / sizeof(MOT_CAN_ROUTES[0]),
-    .P_BROADCASTS = CAN_BROADCAST_TABLE,
-    .BROADCAST_COUNT = sizeof(CAN_BROADCAST_TABLE) / sizeof(CAN_BROADCAST_TABLE[0]),
+    .P_BROADCASTS = MOT_CAN_BROADCAST_TABLE,
+    .BROADCAST_COUNT = sizeof(MOT_CAN_BROADCAST_TABLE) / sizeof(MOT_CAN_BROADCAST_TABLE[0]),
 };

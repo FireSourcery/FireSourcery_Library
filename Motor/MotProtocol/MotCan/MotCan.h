@@ -40,10 +40,7 @@
         0x182 = 0x180 + node    Telemetry2 TX  (heat, faults, state)
 */
 /******************************************************************************/
-#include "Motor/MotorController/MotorController.h"
-#include "Motor/MotorController/Traction/MotorController_Traction.h"
-#include "Motor/Motor/Motor_User.h"
-#include "Peripheral/CanBus/CanBus.h"
+#include "Motor/MotProtocol/MotPacket.h"
 
 #include <stdint.h>
 
@@ -53,8 +50,10 @@
 #define MOT_CAN_TX_TELEMETRY1_ID     (0x181U)   /* speed, IPhase, VPhase, VBus */
 #define MOT_CAN_TX_TELEMETRY2_ID     (0x182U)   /* heat, fault flags, state */
 #define MOT_CAN_RX_CONTROL_ID        (0x001U)
-#define MOT_CAN_RX_VAR_ID            (0x1A0U)
-#define MOT_CAN_RX_CONFIG_ID         (0x1B0U)
+#define MOT_CAN_RX_VAR_READ_ID            (0x1A0U)
+#define MOT_CAN_RX_VAR_WRITE_ID           (0x1A1U)   /* distinct from read so both can route */
+#define MOT_CAN_RX_CONFIG_READ_ID         (0x1B0U)
+#define MOT_CAN_RX_CONFIG_WRITE_ID        (0x1B1U)
 
 /******************************************************************************/
 /*! Frame types */
@@ -87,36 +86,10 @@ typedef struct __attribute__((packed))
 }
 MotCan_StateControl_T;
 
-
-/******************************************************************************/
-/*!  */
-/******************************************************************************/
-// typedef struct __attribute__((packed))
-// {
-//     uint32_t Id;
-// }
-// MotCan_VarRead_T;
-
-// typedef struct __attribute__((packed))
-// {
-//     uint32_t Value;
-// }
-// MotCan_VarReadResp_T;
-
-// typedef struct __attribute__((packed))
-// {
-//     uint32_t Id;
-//     uint32_t Value;
-// }
-// MotCan_VarWrite_T;
-
-// typedef struct __attribute__((packed))
-// {
-//     uint16_t Status;
-// }
-// MotCan_VarWriteResp_T;
-
-
+typedef MotPacket_VarReadFixedReq_T MotCan_VarReadReq_T;
+typedef MotPacket_VarReadFixedResp_T MotCan_VarReadResp_T;
+typedef MotPacket_VarWriteFixedReq_T MotCan_VarWriteReq_T;
+typedef MotPacket_VarWriteFixedResp_T MotCan_VarWriteResp_T;
 
 /******************************************************************************/
 /*! TX broadcasts — call periodically (e.g. every 20 ms) */

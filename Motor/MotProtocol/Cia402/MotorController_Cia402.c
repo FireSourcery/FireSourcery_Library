@@ -53,65 +53,103 @@
     SDO response 0x580, our own TxPDOs 0x180/0x280/...), are ignored.
 */
 /******************************************************************************/
-static Cia402_Adapter_T * Cia402_Adapter(MotorController_T * p_mc) { /* return p_mc->P_MC->Cia402Adapter; */ }
-
-
-void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+/*
+    Per-COB-ID Rx route handlers — mapped directly into CIA402_ROUTES (CanBus_RouteHandler_T shape:
+    p_dev is the MotorController context). The route table fans out by COB-ID class; each handler
+    resolves its adapter/motor and validates the node id before acting.
+*/
+static Cia402_Adapter_T * Cia402_Adapter(MotorController_T * p_mc, uint8_t index)
 {
-    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc);
+    // if (index >= p_mc->MOTORS.LENGTH) { return NULL; }
+    return (Cia402_Adapter_T *)(p_mc->MOTORS.P_DEVS[0].P_MOTOR->AdapterBuffer);
+}
+
+/* Resolve the addressed adapter, or NULL when the frame is not for this node. */
+static Cia402_Adapter_T * Cia402_AdapterIfAddressed(MotorController_T * p_mc, const CAN_Frame_T * p_rx)
+{
+    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
+    return (CIA402_COB_NODE(p_rx->CanId.Id) == p_adapter->Config.NodeId) ? p_adapter : NULL;
+}
+
+/* 0x200 RxPDO1 — Controlword only */
+void MotorController_Cia402_HandleRxPdo1(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+{
+    (void)p_tx; /* no reply */
+    Cia402_Adapter_T * p_adapter = Cia402_AdapterIfAddressed(p_mc, p_rx);
+    if (p_adapter == NULL) { return; }
+    Motor_Cia402_HandleRxPdo_Cw(&p_mc->MOTORS.P_DEVS[0], p_adapter, (const Cia402_RxPdo_Control_T *)p_rx->Data);
+}
+
+/* 0x300 RxPDO2 — Controlword + setpoint, typed overlay per ActiveMode */
+void MotorController_Cia402_HandleRxPdo2(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+{
+    (void)p_tx; /* no reply */
+    Cia402_Adapter_T * p_adapter = Cia402_AdapterIfAddressed(p_mc, p_rx);
+    if (p_adapter == NULL) { return; }
     Motor_T * p_motor = &p_mc->MOTORS.P_DEVS[0];
-
-    if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return false; }
-
-    switch (CIA402_COB_FUNCTION(p_rx->CanId.Id))
+    switch (p_adapter->Input.ActiveMode)
     {
-        case CIA402_COB_RXPDO1_BASE: /* 0x200 — Controlword only */
-            Motor_Cia402_HandleRxPdo_Cw(p_motor, p_adapter, (const Cia402_RxPdo_Control_T *)p_rx->Data);
-            return false;
-
-        case CIA402_COB_RXPDO2_BASE: /* 0x300 — Controlword + setpoint, layout depends on mode */
-            switch (p_adapter->Input.ActiveMode)
-            {
-                case CIA402_MODE_PROFILE_TORQUE:
-                case CIA402_MODE_CYCLIC_SYNC_TORQUE:
-                    Motor_Cia402_HandleRxPdo_CwTorque(p_motor, p_adapter, (const Cia402_RxPdo_ControlTorque_T *)p_rx->Data);
-                    break;
-                case CIA402_MODE_VELOCITY:
-                case CIA402_MODE_PROFILE_VELOCITY:
-                case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
-                    Motor_Cia402_HandleRxPdo_CwVelocity(p_motor, p_adapter, (const Cia402_RxPdo_ControlVelocity_T *)p_rx->Data);
-                    break;
-                case CIA402_MODE_PROFILE_POSITION:
-                case CIA402_MODE_CYCLIC_SYNC_POSITION:
-                    Motor_Cia402_HandleRxPdo_CwPosition(p_motor, p_adapter, (const Cia402_RxPdo_ControlPosition_T *)p_rx->Data);
-                    break;
-                default:
-                    /* No setpoint mapping for current mode — fall back to Controlword-only */
-                    Motor_Cia402_HandleRxPdo_Cw(p_motor, p_adapter, (const Cia402_RxPdo_Control_T *)p_rx->Data);
-                    break;
-            }
-            return false;
-
-        case CIA402_COB_SDO_REQ_BASE: /* 0x600 — SDO download/upload request */
-            {
-                if (Motor_Cia402_HandleSdo(p_motor, p_adapter, (const Cia402_Sdo_T *)p_rx->Data, (Cia402_Sdo_T *)p_tx->Data) == true)
-                {
-                    p_tx->CanId.CanId = (CIA402_COB_SDO_RSP_BASE | p_adapter->Config.NodeId);
-                    p_tx->DataLength = 8U;
-                    return true;
-                }
-                return false;
-            }
-
+        case CIA402_MODE_PROFILE_TORQUE:
+        case CIA402_MODE_CYCLIC_SYNC_TORQUE:
+            Motor_Cia402_HandleRxPdo_CwTorque(p_motor, p_adapter, (const Cia402_RxPdo_ControlTorque_T *)p_rx->Data);
+            break;
+        case CIA402_MODE_VELOCITY:
+        case CIA402_MODE_PROFILE_VELOCITY:
+        case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
+            Motor_Cia402_HandleRxPdo_CwVelocity(p_motor, p_adapter, (const Cia402_RxPdo_ControlVelocity_T *)p_rx->Data);
+            break;
+        case CIA402_MODE_PROFILE_POSITION:
+        case CIA402_MODE_CYCLIC_SYNC_POSITION:
+            Motor_Cia402_HandleRxPdo_CwPosition(p_motor, p_adapter, (const Cia402_RxPdo_ControlPosition_T *)p_rx->Data);
+            break;
         default:
-            /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
-            return false;
+            /* No setpoint mapping for current mode — fall back to Controlword-only */
+            Motor_Cia402_HandleRxPdo_Cw(p_motor, p_adapter, (const Cia402_RxPdo_Control_T *)p_rx->Data);
+            break;
     }
 }
 
+/* 0x600 SDO download/upload request — fills p_tx; non-zero DataLength signals a reply to CanBus_ProcRequest */
+void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+{
+    Cia402_Adapter_T * p_adapter = Cia402_AdapterIfAddressed(p_mc, p_rx);
+    if (p_adapter == NULL) { return; }
+    if (Motor_Cia402_HandleSdo(&p_mc->MOTORS.P_DEVS[0], p_adapter, (const Cia402_Sdo_T *)p_rx->Data, (Cia402_Sdo_T *)p_tx->Data) == true)
+    {
+        p_tx->CanId.CanId = (CIA402_COB_SDO_RSP_BASE | p_adapter->Config.NodeId);
+        p_tx->DataLength = 8U;
+    }
+}
+
+/*
+    Outer dispatcher — one inbound CAN frame, switch on COB-ID
+
+    Frames not addressed to this node, or in unconsumed COB-ID classes
+    (NMT, SYNC, EMCY, our own TxPDOs, SDO response), are ignored.
+*/
+void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+{
+    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
+    Motor_T * p_motor = &p_mc->MOTORS.P_DEVS[0];
+
+    if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return; }
+
+    switch (CIA402_COB_FUNCTION(p_rx->CanId.Id))
+    {
+        case CIA402_COB_RXPDO1_BASE:  MotorController_Cia402_HandleRxPdo1(p_mc, p_rx, p_tx);       break;
+        case CIA402_COB_RXPDO2_BASE:  MotorController_Cia402_HandleRxPdo2(p_mc, p_rx, p_tx);       break;
+        case CIA402_COB_SDO_REQ_BASE: MotorController_Cia402_HandleSdo(p_mc, p_rx, p_tx);       break;
+        /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
+        default:            break;
+    }
+}
+
+/*
+
+*/
 void MotorController_Cia402_BuildTxPdo1(MotorController_T * p_mc, CAN_Frame_T * p_tx)
 {
-    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc);
+    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
     Motor_T * p_motor = &p_mc->MOTORS.P_DEVS[0];
 
     p_tx->CanId.CanId = CIA402_COB_TXPDO1_BASE | p_adapter->Config.NodeId;
@@ -121,7 +159,7 @@ void MotorController_Cia402_BuildTxPdo1(MotorController_T * p_mc, CAN_Frame_T * 
 
 void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * p_tx)
 {
-    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc);
+    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
     Motor_T * p_motor = &p_mc->MOTORS.P_DEVS[0];
 
     p_tx->CanId.CanId = CIA402_COB_TXPDO2_BASE | p_adapter->Config.NodeId;
@@ -153,18 +191,19 @@ void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * 
 
 
 /*
-    Map to the same handler for now
+    One route per consumed COB-ID class → its handler. ID_MASK 0x780 matches the function code
+    (upper 4 bits) for any node; each handler validates the node id against Config.NodeId.
 */
 const CanBus_ReqRoute_T CIA402_ROUTES[] =
 {
-    { CIA402_COB_RXPDO1_BASE | 0, 0x7FFU, MotorController_Cia402_HandleRxRequest },
-    { CIA402_COB_RXPDO2_BASE | 0, 0x7FFU, MotorController_Cia402_HandleRxRequest },
-    { CIA402_COB_SDO_REQ_BASE | 0, 0x7FFU, MotorController_Cia402_HandleRxRequest },
+    { CIA402_COB_RXPDO1_BASE,  CIA402_COB_FUNCTION_MASK, MotorController_Cia402_HandleRxPdo1 },
+    { CIA402_COB_RXPDO2_BASE,  CIA402_COB_FUNCTION_MASK, MotorController_Cia402_HandleRxPdo2 },
+    { CIA402_COB_SDO_REQ_BASE, CIA402_COB_FUNCTION_MASK, MotorController_Cia402_HandleSdo },
 };
 
 const CanBus_BroadcastEntry_T CIA402_BROADCASTS[] = {
-  { .ID = 0U, MotorController_Cia402_BuildTxPdo1, 1000U /* 1 ms */ },
-  { .ID = 0U, MotorController_Cia402_BuildTxPdo2, 1000U /* 1 ms */ },
+  { .ID = CIA402_COB_TXPDO1_BASE, MotorController_Cia402_BuildTxPdo1, 1000U /* 1 ms */, .P_STATE = &(CanBus_BroadcastState_T){ 0 } },
+  { .ID = CIA402_COB_TXPDO2_BASE, MotorController_Cia402_BuildTxPdo2, 1000U /* 1 ms */, .P_STATE = &(CanBus_BroadcastState_T){ 0 } },
   /* Heartbeat, etc. */
 };
 
@@ -176,41 +215,3 @@ CanBus_Service_T MOTOR_CONTROLLER_CIA402_SERVICE =
     .BROADCAST_COUNT = sizeof(CIA402_BROADCASTS) / sizeof(CIA402_BROADCASTS[0]),
 };
 
-/* Integration glue (application) */
-
-/* Protocol-side handlers — wrap the typed CiA 402 entry points into the driver's full-frame callback shape. */
-// static void OnSdoFrame(void * ctx, const CAN_Frame_T * f)
-// {
-//     Cia402_CanFrame_T rx = ToCia402(f), tx;
-//     if (Motor_Cia402_HandleCanRx(ctx, &Adapter, NodeId, &rx, &tx)) { CanBus_SendFrame(p_can, FromCia402(&tx)); }
-// }
-
-// static void OnRxPdoFrame(void * ctx, const CAN_Frame_T * f) { /* same shape */ }
-// static void OnRxPdoFrame2(void * ctx, const CAN_Frame_T * f) { /* same shape */ }
-
-// /* Driver-side route table — pure COB-ID class routing */
-// static const CanBus_ReqRoute_T ROUTES[] =
-// {
-//     { CIA402_COB_RXPDO1_BASE | NODE_ID, 0x7FFU, OnRxPdoFrame },
-//     { CIA402_COB_RXPDO2_BASE | NODE_ID, 0x7FFU, OnRxPdoFrame },
-//     { CIA402_COB_SDO_REQ_BASE | NODE_ID, 0x7FFU, OnSdoFrame },
-// };
-
-// /* TxPDO build adapters — wrap CiA 402 build into the driver's BuildFrame_T shape */
-// static void BuildTxPdo1(void * ctx, CAN_Frame_T * p_tx)
-// {
-//     // Cia402_CanFrame_T tx;
-//     //  Motor_Cia402_BuildTxPdo1(ctx, NodeId, &tx);
-//     // *f = FromCia402(&tx);
-// }
-
-// static const CanBus_FrameBroadcast_T BROADCASTS[] = {
-//     { BuildTxPdo1, 1000U /* 1 ms */ },
-//     /* Heartbeat, TxPDO2, etc. */
-// };
-
-// static CanBus_FrameBroadcastState_T BROADCAST_STATE[ARRAY_LEN(BROADCASTS)];
-
-// /* Hot loops */
-// void OnRx_ISR(const CAN_Frame_T * f) { CanBus_Service_Dispatch(p_can, f, ROUTES, ARRAY_LEN(ROUTES)); }
-// void OnTimer_1ms(void) { CanBus_Service_Tick(p_can, BROADCASTS, BROADCAST_STATE, ARRAY_LEN(BROADCASTS), 1000U); }

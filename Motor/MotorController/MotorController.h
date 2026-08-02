@@ -270,6 +270,7 @@ typedef const struct MotorController
 
     /* Motor Services Context */
     Motor_Table_T MOTORS; /* Motor Array Context */
+    uint8_t * P_MOTOR_ADAPTER_BUFFER; /* parallel for now */
 
     /* Monitor - Detection + response with full context */
     HeatMonitor_T HEAT_PCB;

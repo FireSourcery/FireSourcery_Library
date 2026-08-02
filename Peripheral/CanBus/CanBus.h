@@ -35,20 +35,21 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// #include "CanBus_Service.h"
-/*
-    hold the optional service handler
-*/
-struct CanBus_Service;
-typedef const struct CanBus_Service CanBus_Service_T;
-
 /******************************************************************************/
 /*!
     Wrap additional runtime state and interface to Services structs.
+
     CanBus layer start at higher level, include services layer.
     since register level hardware already handles transport
 */
 /******************************************************************************/
+/*
+    hold the optional service handler
+    alternatively,
+    _CanBus_ProcRequestService(CanBus_T * p_can, CanBus_Service_T * p_service, void *p_appContext, const CAN_Frame_T * p_rxFrame)
+*/
+struct CanBus_Service;
+typedef const struct CanBus_Service CanBus_Service_T;
 
 /******************************************************************************/
 /*! Message Buffer */

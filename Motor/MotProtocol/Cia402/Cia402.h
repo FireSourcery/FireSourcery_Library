@@ -224,7 +224,6 @@ Cia402_OpMode_T;
 #define CIA402_SUPPORTED_CSV                (1UL << 8)
 #define CIA402_SUPPORTED_CST                (1UL << 9)
 
-
 typedef enum Cia402_QuickStopOption
 {
     CIA402_QS_DISABLE                       = 0, /* Coast — disable drive function */
@@ -370,65 +369,6 @@ typedef enum Cia402_OdStatus
     CIA402_OD_ERR_GENERAL           = (int)0x08000000, /* General error */
 }
 Cia402_OdStatus_T;
-
-
-/******************************************************************************/
-/*
-    CAN packet parsing types (CiA 301 base)
-
-    SDO frame layout (8-byte CAN payload):
-      ┌────────┬─────────────┬──────────┬──────────────────────────┐
-      │ Byte 0 │ Byte 1..2   │ Byte 3   │ Byte 4..7                │
-      │ Cmd    │ Index (LE)  │ SubIdx   │ Data (LE, up to 4 bytes) │
-      └────────┴─────────────┴──────────┴──────────────────────────┘
-
-    PDO frame: 0..8 bytes of pre-mapped data — no header, layout is set
-    via the PDO mapping objects (0x1A00..0x1603) at startup.
-
-    COB-ID conventions for default connection set:
-      SDO request   : 0x600 + nodeId   (master → slave)
-      SDO response  : 0x580 + nodeId   (slave  → master)
-      RxPDO1        : 0x200 + nodeId
-      RxPDO2        : 0x300 + nodeId
-      TxPDO1        : 0x180 + nodeId
-      TxPDO2        : 0x280 + nodeId
-      EMCY          : 0x080 + nodeId
-*/
-/******************************************************************************/
-#define CIA402_COB_SDO_REQ_BASE     (0x600U)
-#define CIA402_COB_SDO_RSP_BASE     (0x580U)
-#define CIA402_COB_RXPDO1_BASE      (0x200U)
-#define CIA402_COB_RXPDO2_BASE      (0x300U)
-#define CIA402_COB_TXPDO1_BASE      (0x180U)
-#define CIA402_COB_TXPDO2_BASE      (0x280U)
-#define CIA402_COB_EMCY_BASE        (0x080U)
-// #define CIA402_COB_AXIS_OFFSET        (0x800U)
-
-#define CIA402_COB_FUNCTION_MASK    (0x780U) /* upper 4 bits */
-#define CIA402_COB_NODE_MASK        (0x07FU) /* lower 7 bits */
-
-#define CIA402_COB_FUNCTION(cob)    ((cob) & CIA402_COB_FUNCTION_MASK)
-#define CIA402_COB_NODE(cob)        ((cob) & CIA402_COB_NODE_MASK)
-
-typedef enum Cia402_CobFunctionCode
-{
-    CIA402_COB_SDO_REQ   = 0x600U,
-    CIA402_COB_SDO_RSP   = 0x580U,
-    CIA402_COB_RXPDO1    = 0x200U,
-    CIA402_COB_RXPDO2    = 0x300U,
-    CIA402_COB_TXPDO1    = 0x180U,
-    CIA402_COB_TXPDO2    = 0x280U,
-    CIA402_COB_EMCY      = 0x080U,
-}
-Cia402_CobFunctionCode_T;
-
-typedef struct Cia402_Cob
-{
-    uint16_t Node     : 7; /* lower 7 bits of COB-ID (node ID) */
-    uint16_t Function : 4; /* upper 4 bits of COB-ID (function code) */
-    uint16_t Reserved : 5; /* upper bits reserved, always 0 */
-}
-Cia402_Cob_T;
 
 
 /******************************************************************************/
@@ -651,6 +591,64 @@ Cia402_Pdo_T;
 
 /******************************************************************************/
 /*
+    CAN packet parsing types (CiA 301 base)
+
+    SDO frame layout (8-byte CAN payload):
+      ┌────────┬─────────────┬──────────┬──────────────────────────┐
+      │ Byte 0 │ Byte 1..2   │ Byte 3   │ Byte 4..7                │
+      │ Cmd    │ Index (LE)  │ SubIdx   │ Data (LE, up to 4 bytes) │
+      └────────┴─────────────┴──────────┴──────────────────────────┘
+
+    PDO frame: 0..8 bytes of pre-mapped data — no header, layout is set
+    via the PDO mapping objects (0x1A00..0x1603) at startup.
+
+    COB-ID conventions for default connection set:
+      SDO request   : 0x600 + nodeId   (master → slave)
+      SDO response  : 0x580 + nodeId   (slave  → master)
+      RxPDO1        : 0x200 + nodeId
+      RxPDO2        : 0x300 + nodeId
+      TxPDO1        : 0x180 + nodeId
+      TxPDO2        : 0x280 + nodeId
+      EMCY          : 0x080 + nodeId
+*/
+/******************************************************************************/
+#define CIA402_COB_SDO_REQ_BASE     (0x600U)
+#define CIA402_COB_SDO_RSP_BASE     (0x580U)
+#define CIA402_COB_RXPDO1_BASE      (0x200U)
+#define CIA402_COB_RXPDO2_BASE      (0x300U)
+#define CIA402_COB_TXPDO1_BASE      (0x180U)
+#define CIA402_COB_TXPDO2_BASE      (0x280U)
+#define CIA402_COB_EMCY_BASE        (0x080U)
+// #define CIA402_COB_AXIS_OFFSET        (0x800U)
+
+#define CIA402_COB_FUNCTION_MASK    (0x780U) /* upper 4 bits */
+#define CIA402_COB_NODE_MASK        (0x07FU) /* lower 7 bits */
+
+#define CIA402_COB_FUNCTION(cob)    ((cob) & CIA402_COB_FUNCTION_MASK)
+#define CIA402_COB_NODE(cob)        ((cob) & CIA402_COB_NODE_MASK)
+
+typedef enum Cia402_CobFunctionCode
+{
+    CIA402_COB_SDO_REQ   = 0x600U,
+    CIA402_COB_SDO_RSP   = 0x580U,
+    CIA402_COB_RXPDO1    = 0x200U,
+    CIA402_COB_RXPDO2    = 0x300U,
+    CIA402_COB_TXPDO1    = 0x180U,
+    CIA402_COB_TXPDO2    = 0x280U,
+    CIA402_COB_EMCY      = 0x080U,
+}
+Cia402_CobFunctionCode_T;
+
+typedef struct Cia402_Cob
+{
+    uint16_t Node     : 7; /* lower 7 bits of COB-ID (node ID) */
+    uint16_t Function : 4; /* upper 4 bits of COB-ID (function code) */
+    uint16_t Reserved : 5; /* upper bits reserved, always 0 */
+}
+Cia402_Cob_T;
+
+/******************************************************************************/
+/*
     Adapter context — one per CiA 402 axis.
 
     Holds:
@@ -748,7 +746,6 @@ typedef struct Cia402_OdMeta
     Cia402_OdType_T   Type;
     Cia402_OdAccess_T Access;
     uint8_t           Size; /* in bytes */
-    // uint16_t          AdapterOffset; /* offsetof(Motor_Cia402_T/Cia402_Adapter_T, ...) — 0xFFFF if not adapter-backed */
 }
 Cia402_OdMeta_T;
 
@@ -765,6 +762,15 @@ typedef struct Cia402_OdEntry
     Cia402_OdStatus_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
 }
 Cia402_OdEntry_T;
+
+typedef struct Cia402_OdAccessorEntry
+{
+    uint16_t Index;
+    uint8_t SubIndex;
+    int32_t(*Get)(const void *, const Cia402_Adapter_T *);
+    Cia402_OdStatus_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
+}
+Cia402_OdAccessorEntry_T;
 
 #define OD_ADAPTER(idx, sub, ty, acc, field) \
     { (idx), (sub), (ty), (acc), offsetof(Cia402_Adapter_T, field), NULL, NULL }

@@ -75,47 +75,45 @@ const Cia402_OdMeta_T CIA402_OD_META[] =
 };
 
 
-/*
-    Per-type expansion macros — each yields a compile-time const Cia402_OdInfo_T
-    literal. Size resolves via sizeof() on the wire type, so the entire switch
-    folds to a compare-and-load with no helper-function call.
-*/
-#define OD_I8(acc)   ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I8,  (acc), sizeof(int8_t)   })
-#define OD_U8(acc)   ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U8,  (acc), sizeof(uint8_t)  })
-#define OD_I16(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I16, (acc), sizeof(int16_t)  })
-#define OD_U16(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U16, (acc), sizeof(uint16_t) })
-#define OD_I32(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_I32, (acc), sizeof(int32_t)  })
-#define OD_U32(acc)  ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_U32, (acc), sizeof(uint32_t) })
-#define OD_ABSENT    ((const Cia402_OdInfo_T){ CIA402_OD_TYPE_NONE, CIA402_OD_ACCESS_NONE, 0U })
+/* switch mapped */
+Cia402_OdMeta_T * _TableIndex(uint16_t index, uint8_t subindex)
+{
+    switch (index)
+    {
+        case CIA402_OD_CONTROLWORD:             return &CIA402_OD_META[0U];
+        case CIA402_OD_STATUSWORD:              return &CIA402_OD_META[1U];
+        case CIA402_OD_QUICK_STOP_OPTION_CODE:  return &CIA402_OD_META[2U];
+        case CIA402_OD_SHUTDOWN_OPTION_CODE:    return &CIA402_OD_META[3U];
+        case CIA402_OD_DISABLE_OP_OPTION_CODE:  return &CIA402_OD_META[4U];
+        case CIA402_OD_HALT_OPTION_CODE:        return &CIA402_OD_META[5U];
+        case CIA402_OD_FAULT_REACTION_CODE:     return &CIA402_OD_META[6U];
+        case CIA402_OD_MODES_OF_OPERATION:      return &CIA402_OD_META[7U];
+        case CIA402_OD_MODES_OF_OPERATION_DISP: return &CIA402_OD_META[8U];
+        case CIA402_OD_POSITION_ACTUAL:         return &CIA402_OD_META[9U];
+        case CIA402_OD_VELOCITY_ACTUAL:         return &CIA402_OD_META[10U];
+        case CIA402_OD_TARGET_TORQUE:           return &CIA402_OD_META[11U];
+        case CIA402_OD_TORQUE_ACTUAL:           return &CIA402_OD_META[12U];
+        case CIA402_OD_CURRENT_ACTUAL:          return &CIA402_OD_META[13U];
+        case CIA402_OD_DC_LINK_VOLTAGE:         return &CIA402_OD_META[14U];
+        case CIA402_OD_TARGET_POSITION:         return &CIA402_OD_META[15U];
+        case CIA402_OD_TARGET_VELOCITY:         return &CIA402_OD_META[16U];
+        case CIA402_OD_QUICK_STOP_DECELERATION: return &CIA402_OD_META[17U];
+        case CIA402_OD_SUPPORTED_DRIVE_MODES:   return &CIA402_OD_META[18U];
+        default:                                return NULL;
+    }
+}
+
+static const Cia402_OdInfo_T OD_ABSENT = { CIA402_OD_TYPE_NONE, CIA402_OD_ACCESS_NONE, 0U };
 
 Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex)
 {
     if (subindex != 0U) { return OD_ABSENT; }
 
-    switch (index)
-    {
-        case CIA402_OD_CONTROLWORD:             return OD_U16(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_STATUSWORD:              return OD_U16(CIA402_OD_ACCESS_RO);
-        case CIA402_OD_QUICK_STOP_OPTION_CODE:  return OD_I16(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_SHUTDOWN_OPTION_CODE:    return OD_I16(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_DISABLE_OP_OPTION_CODE:  return OD_I16(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_HALT_OPTION_CODE:        return OD_I16(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_FAULT_REACTION_CODE:     return OD_I16(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_MODES_OF_OPERATION:      return OD_I8 (CIA402_OD_ACCESS_RW);
-        case CIA402_OD_MODES_OF_OPERATION_DISP: return OD_I8 (CIA402_OD_ACCESS_RO);
-        case CIA402_OD_POSITION_ACTUAL:         return OD_I32(CIA402_OD_ACCESS_RO);
-        case CIA402_OD_VELOCITY_ACTUAL:         return OD_I32(CIA402_OD_ACCESS_RO);
-        case CIA402_OD_TARGET_TORQUE:           return OD_I16(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_TORQUE_ACTUAL:           return OD_I16(CIA402_OD_ACCESS_RO);
-        case CIA402_OD_CURRENT_ACTUAL:          return OD_I16(CIA402_OD_ACCESS_RO);
-        case CIA402_OD_DC_LINK_VOLTAGE:         return OD_U32(CIA402_OD_ACCESS_RO);
-        case CIA402_OD_TARGET_POSITION:         return OD_I32(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_TARGET_VELOCITY:         return OD_I32(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_QUICK_STOP_DECELERATION: return OD_U32(CIA402_OD_ACCESS_RW);
-        case CIA402_OD_SUPPORTED_DRIVE_MODES:   return OD_U32(CIA402_OD_ACCESS_RO);
-        default:                                return OD_ABSENT;
-    }
+    Cia402_OdMeta_T * p_meta = _TableIndex(index, subindex);
+    if (p_meta == NULL) { return OD_ABSENT; }
+    return (Cia402_OdInfo_T) { .Type = p_meta->Type, .Access = p_meta->Access, .Size = p_meta->Size, };
 }
+
 
 
 /******************************************************************************/
@@ -128,6 +126,7 @@ Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex)
     SDO server entry point
 */
 /******************************************************************************/
+// uint8_t Cia402_Sdo_HandleRequest(const Cia402_OdInterface_T * p_od, const Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_rsp)
 uint8_t Cia402_Sdo_HandleRequest(const Cia402_OdInterface_T * p_od, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_rsp)
 {
     if (p_od == NULL || p_req == NULL || p_rsp == NULL) { return 0U; }

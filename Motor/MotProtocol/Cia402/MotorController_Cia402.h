@@ -35,18 +35,21 @@
 
 /******************************************************************************/
 /*
-    Outer dispatcher — one inbound CAN frame, switch on COB-ID
+    Rx route handlers — one per consumed COB-ID class, mapped directly into CIA402_ROUTES.
 
-    Returns true if a response should be transmitted (currently SDO only).
-    Frames not addressed to this node, or in unconsumed COB-ID classes
-    (NMT, SYNC, EMCY, our own TxPDOs, SDO response), are ignored.
+    Each has the CanBus_RouteHandler_T shape (p_dev is the MotorController context), resolves
+    its adapter, and validates the node id. Only the SDO handler fills p_tx (a non-zero
+    DataLength signals a reply); the RxPDO handlers never respond.
 
-    TxPDOs are produced periodically via the BuildTxPdoN counterparts —
-    they are not driven by Rx events.
+    Frames in unconsumed COB-ID classes (NMT, SYNC, EMCY, our own TxPDOs, SDO response) simply
+    have no route. TxPDOs are produced periodically via the BuildTxPdoN counterparts — they are
+    not driven by Rx events.
 */
 /******************************************************************************/
 
-extern void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
+extern void MotorController_Cia402_HandleRxPdo1(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
+extern void MotorController_Cia402_HandleRxPdo2(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
+extern void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
 
 extern void MotorController_Cia402_BuildTxPdo1(MotorController_T * p_mc, CAN_Frame_T * p_tx);
 extern void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * p_tx);
