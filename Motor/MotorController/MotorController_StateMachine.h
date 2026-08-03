@@ -234,10 +234,8 @@ typedef enum MotorController_LockId
     MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
     MOTOR_CONTROLLER_LOCK_REBOOT,
     MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE, /* Exit to Motor Cmd Mode. from lock only */
-    MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE,  /*  */
-    // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
-    // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
-    // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
+    MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE,  /* Enter Tuning Mode. idempotent, live gains retained on repeat */
+    MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_RESET, /* Discard live gains, reload from Nvm. from tuning only */
 }
 MotorController_LockId_T;
 

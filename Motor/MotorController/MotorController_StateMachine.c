@@ -430,28 +430,41 @@ static void MotorTuning_Proc(MotorController_T * p_dev) { (void)p_dev; }
 static State_T * MotorTuning_InputCmd(MotorController_T * p_dev, state_value_t cmd)
 {
     (void)p_dev; (void)cmd;
+    return NULL;
 }
 
-/* allow reset */
+/* Mode entry is idempotent. Reset is its own id, so a repeated 'ensure mode' does not discard the session */
 static State_T * MotorTuning_InputTuning(MotorController_T * p_dev, state_value_t lockId)
 {
+    MotorController_Context_T * p_mc = p_dev->P_MC;
+    State_T * p_nextState = NULL;
+    MotorController_LockOpStatus_T opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
+
     switch ((MotorController_LockId_T)lockId)
     {
-        case MOTOR_CONTROLLER_LOCK_ENTER: return &MC_STATE_LOCK;
-        case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE: return &MC_STATE_MOTOR_TUNING;
+        case MOTOR_CONTROLLER_LOCK_ENTER:               p_nextState = &MC_STATE_LOCK;           break; /* live gains retained in RAM Config for Nvm save */
+        case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE:                                           break; /* already in mode. no re-entry */
+        case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_RESET:  p_nextState = &MC_STATE_MOTOR_TUNING;   break; /* re-entry reloads Pids from Nvm */
         // case MOTOR_CONTROLLER_LOCK_EXIT: return
+        default: opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;                              break;
     }
-    return NULL;
+
+    p_mc->LockOpStatus = opStatus;
+    return p_nextState;
 }
 
 static State_T * MotorTuning_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
 {
-    switch (cmd)
+    State_T * p_nextState;
+
+    switch ((MotorController_StateCmd_T)cmd)
     {
         case MOTOR_CONTROLLER_STATE_CMD_E_STOP:  // fall through
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:
-            Motor_Table_ForEach(&p_dev->MOTORS, _Motor_ResetTuning);
-            return Common_InputStandby(p_dev);
+            /* Discard live tuning on accepted exit only. A rejected park (motor still running) must leave gains intact */
+            p_nextState = Common_InputStandby(p_dev);
+            if (p_nextState != NULL) { Motor_Table_ForEach(&p_dev->MOTORS, _Motor_ResetTuning); }
+            return p_nextState;
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     return NULL;
         default:    return NULL;
     }
@@ -507,6 +520,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
     MotorController_LockOpStatus_T opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
 
     /* From Top state only. no sub state active. */
+    /* handle e.g. Electrical calibration  */
     if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) /* Blcoks sub state inheritance  */
     {
         switch ((MotorController_LockId_T)lockId)

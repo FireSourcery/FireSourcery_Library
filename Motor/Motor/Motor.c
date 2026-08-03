@@ -118,6 +118,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
 }
 
 /* common reinit. without hw registers. reload flash. */
+/* Sensor update still require reboot */
 void Motor_Reinit(Motor_T * p_motor)
 {
     if (p_motor->P_NVM_CONFIG != NULL) { p_motor->P_MOTOR->Config = *p_motor->P_NVM_CONFIG; }
@@ -249,7 +250,6 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 
 /******************************************************************************/
 /*
-
 */
 /******************************************************************************/
 void Motor_ResetSpeedPid(Motor_Context_T * p_motor)
@@ -285,7 +285,6 @@ void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
     PID_SetKi_Fixed32(&p_state->PidSpeed, value);
 }
 
-// optionally switch on commutation mode
 void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
 {
     p_state->Config.PidI.Kp_Fixed32 = value;
@@ -299,6 +298,32 @@ void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
     PID_SetKi_Fixed32(&p_state->Foc.PidIq, value);
     PID_SetKi_Fixed32(&p_state->Foc.PidId, value);
 }
+
+// void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
+// {
+//     _PID_SetKp_Fixed16(&p_state->Config.PidSpeed, value);
+//     PID_SetKp_Fixed16(&p_state->PidSpeed, value);
+// }
+
+// void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
+// {
+//     _PID_SetKi_Fixed16(&p_state->Config.PidSpeed, value);
+//     PID_SetKi_Fixed16(&p_state->PidSpeed, value);
+// }
+
+// void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
+// {
+//     _PID_SetKp_Fixed16(&p_state->Config.PidI, value);
+//     PID_SetKp_Fixed16(&p_state->Foc.PidIq, value);
+//     PID_SetKp_Fixed16(&p_state->Foc.PidId, value);
+// }
+
+// void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
+// {
+//     _PID_SetKi_Fixed16(&p_state->Config.PidI, value);
+//     PID_SetKi_Fixed16(&p_state->Foc.PidIq, value);
+//     PID_SetKi_Fixed16(&p_state->Foc.PidId, value);
+// }
 
 /******************************************************************************/
 /*!
