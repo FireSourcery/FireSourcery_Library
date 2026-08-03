@@ -138,12 +138,23 @@ bool Motor_IsConfigValid(Motor_T * p_motor)
     // && _Motor_Config_IsValidVoltage(&p_context->Config, VBus_Fract16(p_motor->P_VBUS));
 }
 
-// void Motor_ValidateConfig(Motor_T * p_motor)
+void Motor_ValidateConfig(Motor_T * p_motor)
+{
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    // p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit = math_min(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, MOTOR_ELECTRICAL_CALIBRATION.FIELD_WEAKENING_LIMIT_PU);
+#else
+#endif
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+    // FOC_Sensorless_InitG(p_sensor->P_OBSERVER, _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating), (p_foc->Config.Electrical.Ld + p_foc->Config.Electrical.Lq) / 2);
+#endif
+}
+/* propagate kv config — re-derive FOC Psi from Kv */
+// void Motor_ResolvePsi(Motor_Context_T * p_motor)
 // {
-// #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-//     p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit = math_min(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, _Motor_GetFieldWeakeningIdLimit(p_motor));
-// #else
-// #endif
+//     FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_Calibration_GetVMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
+// // #ifdef MOTOR_PU_BASIS_ANGLE16
+// //     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_Calibration_GetVMaxVolts(),  p_motor->Config.SpeedRating.Kv);
+// // #endif
 // }
 
 /******************************************************************************/
@@ -165,16 +176,6 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
 }
-
-
-/* propagate kv config — re-derive FOC Psi from Kv */
-// void Motor_ResolvePsi(Motor_Context_T * p_motor)
-// {
-//     FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_Calibration_GetVMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
-// // #ifdef MOTOR_PU_BASIS_ANGLE16
-// //     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_Calibration_GetVMaxVolts(),  p_motor->Config.SpeedRating.Kv);
-// // #endif
-// }
 
 /******************************************************************************/
 /*

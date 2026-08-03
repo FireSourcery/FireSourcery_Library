@@ -84,11 +84,11 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
 */
 static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor)
 {
-#if defined(MOTOR_PU_BASIS_ANGLE16)
-    return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
-#else
+// #if defined(MOTOR_PU_BASIS_ANGLE16)
+//     return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
+// #else
     return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor);
-#endif
+// #endif
 }
 /// static inline void Motor_FOC_CaptureSpeed(Motor_T * p_motor)
 // {

@@ -1,6 +1,4 @@
-#pragma once
-
-/******************************************************************************/
+ /******************************************************************************/
 /*!
     @section LICENSE
 
@@ -196,14 +194,14 @@ void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * 
 */
 const CanBus_ReqRoute_T CIA402_ROUTES[] =
 {
-    { CIA402_COB_RXPDO1_BASE,  CIA402_COB_FUNCTION_MASK, MotorController_Cia402_HandleRxPdo1 },
-    { CIA402_COB_RXPDO2_BASE,  CIA402_COB_FUNCTION_MASK, MotorController_Cia402_HandleRxPdo2 },
-    { CIA402_COB_SDO_REQ_BASE, CIA402_COB_FUNCTION_MASK, MotorController_Cia402_HandleSdo },
+    { CIA402_COB_RXPDO1_BASE,  CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleRxPdo1 },
+    { CIA402_COB_RXPDO2_BASE,  CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleRxPdo2 },
+    { CIA402_COB_SDO_REQ_BASE, CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleSdo },
 };
 
 const CanBus_BroadcastEntry_T CIA402_BROADCASTS[] = {
-  { .ID = CIA402_COB_TXPDO1_BASE, MotorController_Cia402_BuildTxPdo1, 1000U /* 1 ms */, .P_STATE = &(CanBus_BroadcastState_T){ 0 } },
-  { .ID = CIA402_COB_TXPDO2_BASE, MotorController_Cia402_BuildTxPdo2, 1000U /* 1 ms */, .P_STATE = &(CanBus_BroadcastState_T){ 0 } },
+  { .ID = CIA402_COB_TXPDO1_BASE, (CanBus_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo1, 10U, .P_STATE = &(CanBus_BroadcastState_T){ 0 } },
+  { .ID = CIA402_COB_TXPDO2_BASE, (CanBus_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo2, 100U, .P_STATE = &(CanBus_BroadcastState_T){ 0 } },
   /* Heartbeat, etc. */
 };
 

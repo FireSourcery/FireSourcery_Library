@@ -39,14 +39,6 @@
 #include <stdbool.h>
 
 
-/* scale to rated max */
-  /* Limit of rated. as scalar [0:1.0F] [0:32768]. V/I Align_Fract16 < OpenLoopLimitRatio * V/I Rated */
-#ifndef MOTOR_OPEN_LOOP_CEILING
-#define MOTOR_OPEN_LOOP_CEILING FRACT16(0.1F)
-#endif
-
-// static inline uint16_t _Motor_GetOpenLoopScalarLimit(const Motor_Config_T * p_config) { return math_min(p_config->OpenLoopLimitRatio, MOTOR_OPEN_LOOP_CEILING); }
-static inline uint16_t _Motor_OpenLoopCeilingRate(const Motor_Config_T * p_config) { (void)p_config; return MOTOR_OPEN_LOOP_CEILING; }
 
 /******************************************************************************/
 /*

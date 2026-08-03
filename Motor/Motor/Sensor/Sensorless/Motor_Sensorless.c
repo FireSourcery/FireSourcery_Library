@@ -100,4 +100,14 @@ void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
     Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN);
 }
 
-// #endif
+
+// void  Motor_Sensorless_Init(Motor_T * p_motor)
+// {
+//     FOC_T * p_foc = &p_motor->P_MOTOR->Foc;
+//     Sensorless_Sensor_T * p_sensor = (Sensorless_Sensor_T *)p_motor->P_MOTOR->p_ActiveSensor;
+//     // Sensorless_Sensor_T * p_sensor = (Sensorless_Sensor_T *)p_motor->SENSOR_TABLE.SENSORLESS;
+//     FOC_SensorlessConfig_T * p_config = &p_sensor->P_OBSERVER->Config;
+//     // _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating)
+
+//     FOC_Sensorless_InitG(p_sensor->P_OBSERVER, p_sensor->BASE.P_STATE->SpeedFractRef.SpeedMax_Angle16, (p_foc->Config.Electrical.Ld + p_foc->Config.Electrical.Lq) / 2);
+// }

@@ -31,29 +31,22 @@
 /******************************************************************************/
 #include "Motor/Motor/Math/motor_electrical_math.h"
 #include "Math/Angle/angle_speed_math.h"
+
 #include "Motor/Motor/Motor_ControlFreq.h"
 #include "Motor/Motor/Phase_Input/Phase_Calibration.h"
 
 
-/*
-    PU encoding basis for ψ_pu, L_pu
-    RPM / RADS motor anchor — Fs-independent
-        ω_base = Kv·V·P · π/30
-        θ_increment = ω_pu · (ω_base / Fs)
-        ω_mech_pu = ω_elec_pu
 
-    ANGLE16 controller anchor — Fs-locked, motor independent
-        ω_base = π·Fs
-        θ_increment = ω_pu
-        accept int64 intermediary or direct-multiply (no Q15 scaling),
-            ω_angle16 * L_pu → v_pu without /32768 scaling => ~0.5% resolution loss
+typedef const struct Motor_ElectricalCalib
+{
+    volatile uint16_t SPEED_MAX_RADS; /* Optional Global Ref */
+    volatile uint16_t FIELD_WEAKENING_LIMIT_PU;
+    volatile uint16_t OPEN_LOOP_CEILING_RATIO;
+}
+Motor_ElectricalCalib_T;
 
-    optionally unify integrator and setpoint
-    selection used by for bemf and optionally setpoint ramp/pid
-*/
-#if !defined(MOTOR_PU_BASIS_RPM) && !defined(MOTOR_PU_BASIS_ANGLE16)
-#define MOTOR_PU_BASIS_RPM
-#endif
+extern Motor_ElectricalCalib_T MOTOR_ELECTRICAL_CALIBRATION;
+
 
 /******************************************************************************/
 /*
@@ -116,23 +109,13 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 
 
 
-//  keep pu base in electrical domain, erads, angle16,
-//  rpm as wrapper layer
-/* optionally collecitve */
-/* Seperate segment outside of config, resolvable at runtime */
-/* common for use. per motor pi gains absorb per motor max */
-// extern MOTOR_SPEED_CALIB_MAX_RADS;
-// as singleton struct
-
-// struct Motor_ElectricalCalib
-// {
-//     uint16_t SpeedMax_Rads;
-//     uint16_t FieldWeakeningLimit_Pu ;
-// } Motor_ElectricalCalib_T;
-
-// extern Motor_ElectricalCalib_T MOTOR_ELECTRICAL_CALIBRATION;
-
-// static inline uint16_t SpeedTypeMax_Rpm( ) { return }
+/*
+    optionally unify integrator and setpoint
+    selection used by for bemf and optionally setpoint ramp/pid
+*/
+// #if !defined(MOTOR_PU_BASIS_RPM) && !defined(MOTOR_PU_BASIS_ANGLE16)
+// #define MOTOR_PU_BASIS_RPM
+// #endif
 
 /*
     Alternative Storage
@@ -149,7 +132,6 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 //     uint16_t RadsPerV;
 // }
 // Motor_ElectricalSpeedRatingRads_T;
-
 
 /*
     Derived Parameters during initialization or from Host

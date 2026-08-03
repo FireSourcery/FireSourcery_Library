@@ -91,8 +91,8 @@ static inline void BuildTelemetry2(MotorController_T * p_mc, CAN_Frame_T * p_tx)
 
 static const CanBus_BroadcastEntry_T MOT_CAN_BROADCAST_TABLE[] =
 {
-    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U, .BUILD = (CanBus_BuildBroadcast_T)BuildTelemetry1, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
-    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U, .BUILD = (CanBus_BuildBroadcast_T)BuildTelemetry2, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
+    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U,     .BUILD = (CanBus_BuildBroadcast_T)BuildTelemetry1, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
+    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U,   .BUILD = (CanBus_BuildBroadcast_T)BuildTelemetry2, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
 };
 
 
@@ -134,9 +134,9 @@ static inline void Req_VarWrite(MotorController_T * p_mc, const CAN_Frame_T * p_
 
 static const CanBus_ReqRoute_T MOT_CAN_ROUTES[] =
 {
-    { MOT_CAN_RX_CONTROL_ID,   0x7FFU, Req_Traction }, /* 0x001 throttle/brake — no reply */
-    { MOT_CAN_RX_VAR_READ_ID,  0x7FFU, Req_VarRead  }, /* 0x1A0 */
-    { MOT_CAN_RX_VAR_WRITE_ID, 0x7FFU, Req_VarWrite }, /* 0x1A1 */
+    { MOT_CAN_RX_CONTROL_ID,   0x7FFU, (CanBus_RouteHandler_T)Req_Traction }, /* 0x001 throttle/brake — no reply */
+    { MOT_CAN_RX_VAR_READ_ID,  0x7FFU, (CanBus_RouteHandler_T)Req_VarRead  }, /* 0x1A0 */
+    { MOT_CAN_RX_VAR_WRITE_ID, 0x7FFU, (CanBus_RouteHandler_T)Req_VarWrite }, /* 0x1A1 */
     /* Config-class vars are reachable through the same Var_Get/Set via the VAR ids above;
        enable dedicated CONFIG ids here if the host addresses them separately (e.g. persist-on-write):
     { MOT_CAN_RX_CONFIG_READ_ID,  0x7FFU, Req_VarRead  },

@@ -120,6 +120,31 @@ static inline angle16_t foc_speed_of_emf(fract16_t Psi_pu, ufract16_t e_mag) { r
 
 
 
+/*
+    Ts · V_max / (Ls · I_max)
+    1 / (L_pu · Fs / ω_base)
+*/
+static inline accum32_t foc_g_pu_rpm(uint32_t polling_freq, uint32_t speed_max_rpm, uint32_t polePairs, uint32_t l_pu)
+{
+    return (uint64_t)FRACT16_PI * polePairs * speed_max_rpm * FRACT16_SCALE / ((uint64_t)30UL * polling_freq * l_pu);
+}
+
+static inline accum32_t foc_g_pu_rads(uint32_t polling_freq, uint32_t erads, uint32_t l_pu)
+{
+    return (uint64_t)erads * FRACT16_SCALE * FRACT16_SCALE / ((uint64_t)polling_freq * l_pu);
+}
+
+static inline accum32_t foc_g_pu_of_angle_speed(uint32_t angle_speed_max, uint32_t l_pu)
+{
+    return (uint64_t)angle_speed_max * FRACT16_SCALE * FRACT16_SCALE / (ANGLE16_PER_RADIAN * l_pu);
+}
+
+
+/* when ω_base is Fs·π */
+// static inline accum32_t foc_g_angle16(uint32_t l_pu)
+// {
+//     return (uint64_t)FRACT16_PI * FRACT16_SCALE / l_pu;
+// }
 
 
 /******************************************************************************/

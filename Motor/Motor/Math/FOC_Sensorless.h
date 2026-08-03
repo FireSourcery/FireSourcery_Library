@@ -66,11 +66,7 @@
 typedef struct FOC_SensorlessConfig
 {
     // FOC_Sensorless_Mode_T Mode;
-
-    // fract16_t Rs_pu;        /* Rs · I_max / V_max */
-    // fract16_t Ls_pu;        /* Ls · I_max · Fs / V_max  (multiplies Δi_pu → v_pu) */
-    // fract16_t Psi_pu;       /* π · Fs · ψ_f · 32768 / V_max  (psi_vfract16_per_angle16) */
-    // fract16_t G_pu;         /* 1 / Ls_pu — SMO integrator gain (precomputed) */
+    int32_t G_pu;          /* 1 / (L_pu · Fs/ω_base) — precompute for hot path */
 
     /* SMO tuning (unused in voltage-model mode). */
     fract16_t K_smo;        /* sliding gain — > peak EMF in pu */
@@ -96,7 +92,7 @@ FOC_SensorlessConfig_T;
 */
 #define FOC_SENSORLESS_CONFIG_DEFAULT(VBus, v_max, I, i_max) (FOC_SensorlessConfig_T)     \
 {                                                                                   \
-    .K_smo         = (fract16_t)FRACT16(.50F * VBus / v_max),                       \
+    .K_smo         = (fract16_t)FRACT16(.60F * VBus / v_max),                       \
     .SmoSat        = (fract16_t)FRACT16(.15F * I / i_max),          /* 15 % of IMax boundary layer */                       \
     .LpfCoef       = 998,                                           /* ~100 Hz LPF at 20 kHz */                             \
     .LockEmfMin    = (ufract16_t)FRACT16(.05F * VBus / v_max),      /* 5 % of VMax */                                        \
@@ -131,7 +127,7 @@ typedef struct FOC_Sensorless
 
     /* Angle tracker (PLL). AngleSpeed.Angle is θ̂; AngleSpeed.Delta is ω̂ (angle16/poll). */
     Angle_T AngleSpeed;
-    Angle_SpeedUnitRef_T SpeedUnitRef;
+    // Angle_SpeedUnitRef_T SpeedUnitRef;
 
     PID_T PllPid;
     fract16_t PllErr;                  /* last normalised PLL phase error */
@@ -139,7 +135,7 @@ typedef struct FOC_Sensorless
     /* Lock detector. */
     uint16_t LockCount;
 
-    accum32_t G_pu;      /* 1 / (L_pu · Fs/ω_base) */
+    // accum32_t G_pu;      /* 1 / (L_pu · Fs/ω_base) */
     FOC_SensorlessConfig_T Config;
 }
 FOC_Sensorless_T;
@@ -167,8 +163,8 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     // p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Valpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
     // p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Vbeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
     /* p_foc->Electrical.Rs < FRACT16_MAX */
-    p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Config.Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
-    p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Config.Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
+    p_obs->SmoIAlpha = smo_i(p_obs->Config.G_pu, p_foc->Config.Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
+    p_obs->SmoIBeta = smo_i(p_obs->Config.G_pu, p_foc->Config.Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
 
     /* 2. LPF to extract equivalent control / smooth measurement noise. */
     p_obs->EmfAlpha = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfAlpha, p_obs->SmoZAlpha);
@@ -178,9 +174,10 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     /* 3. PLL phase detector — speed-normalised so loop gain is |e|-invariant. */
     struct fract16_xy uv = Angle_UnitVector(&p_obs->AngleSpeed);  /* {x=cos, y=sin} */
     p_obs->PllErr = foc_pll_error_normalized(p_obs->Config.LockEmfMin, p_obs->EmfAlpha, p_obs->EmfBeta, uv.y, uv.x);
+    int16_t omega = PID_ProcPI(&p_obs->PllPid, p_obs->PllErr, 0);
 
     /* 4. PID loop filter → ω̂ in angle16/poll. setpoint=err, feedback=0: PID error = err, output = Kp·err + Ki·∫err. Positive err (θ̂ lags) → +ω̂. */
-    int16_t omega = PID_ProcPI(&p_obs->PllPid, 0, p_obs->PllErr);
+    // int16_t omega = PID_ProcPI(&p_obs->PllPid, 0, p_obs->PllErr);
 
     /* 5. Integrate ω̂ → θ̂ (free-wrap). */
     Angle_Integrate(&p_obs->AngleSpeed, (angle16_t)omega);
@@ -250,34 +247,19 @@ static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, FOC_SensorlessConfig_T
 }
 
 /*
-    Ts · V_max / (Ls · I_max)
-    1 / (L_pu · Fs/ω_base)
+    G_pu = Ts·V_max / (L·I_max) = 1 / (L·I_max·Fs/V_max)
+    1 / (L_pu · Fs / ω_base)
+    From
+    Ls_pu = L · ω_base · I_max / V_max
 */
-static void FOC_Sensorless_InitG(FOC_Sensorless_T * p_obs, uint32_t g)
+static void FOC_Sensorless_InitG(FOC_Sensorless_T * p_obs, uint32_t angle_speed_max, uint32_t lAvg_pu)
 {
-    // p_obs->G_pu = math_min(g, FRACT16_MAX);
-    p_obs->G_pu = g;
+    p_obs->Config.G_pu = foc_g_pu_of_angle_speed(angle_speed_max, lAvg_pu);
 }
 
-/* angle16 */
-// static void FOC_Sensorless_InitG(FOC_T * p_foc, FOC_Sensorless_T * p_obs)
+// static void FOC_Sensorless_InitG_Rads(FOC_Sensorless_T * p_obs, uint32_t erads, uint32_t lAvg_pu)
 // {
-//     // p_obs->G_pu = math_min(((uint64_t)FRACT16_PI * FRACT16_SCALE / L_avg), FRACT16_MAX);
-// }
-
-// static void FOC_Sensorless_InitG_ERads(FOC_Sensorless_T * p_obs, uint32_t polling_freq, uint32_t omega_base_e, uint32_t lAvg)
-// {
-//     p_obs->G_pu = math_min((uint64_t)omega_base_e * FRACT16_SCALE * FRACT16_SCALE / ((uint64_t)polling_freq * lAvg), FRACT16_MAX);
-// }
-
-// static void FOC_Sensorless_InitG_Rpm(FOC_Sensorless_T * p_obs, uint32_t lAvg, uint32_t speed_max_rpm, uint32_t polePairs)
-// {
-//     p_obs->G_pu = math_min((uint64_t)FRACT16_PI * polePairs * speed_max_rpm * FRACT16_SCALE / ((uint64_t)30UL * polling_freq * L_avg), FRACT16_MAX);
-// }
-
-// static void FOC_Sensorless_InitAngleUnits(FOC_Sensorless_T * p_obs, Angle_SpeedFractCalib_T * p_speed_calib)
-// {
-//     Angle_SpeedRef_Init_Rpm(&p_obs->SpeedFractRef, p_speed_calib->PollingFreq, p_speed_calib->SpeedMax_Rpm);
+//     p_obs->G_pu = foc_g_pu_rads(erads, lAvg_pu);
 // }
 
 
@@ -289,7 +271,6 @@ static void FOC_Sensorless_InitG(FOC_Sensorless_T * p_obs, uint32_t g)
 /******************************************************************************/
 static inline angle16_t  FOC_Sensorless_GetAngle(const FOC_Sensorless_T * p_obs) { return Angle_Value(&p_obs->AngleSpeed); }
 static inline angle16_t  FOC_Sensorless_GetDelta(const FOC_Sensorless_T * p_obs) { return Angle_Delta(&p_obs->AngleSpeed); }
-// static inline fract16_t  FOC_Sensorless_GetSpeed(const FOC_Sensorless_T * p_obs) { return Angle_ResolveSpeed_Fract16(&p_obs->AngleSpeed, &p_obs->SpeedFractRef); }
 static inline fract16_t  FOC_Sensorless_GetEmfAlpha(const FOC_Sensorless_T * p_obs) { return p_obs->EmfAlpha; }
 static inline fract16_t  FOC_Sensorless_GetEmfBeta(const FOC_Sensorless_T * p_obs) { return p_obs->EmfBeta; }
 static inline ufract16_t FOC_Sensorless_GetEmfMag(const FOC_Sensorless_T * p_obs) { return p_obs->EmfMag; }

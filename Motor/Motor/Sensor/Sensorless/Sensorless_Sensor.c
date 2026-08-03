@@ -82,8 +82,7 @@ static bool Sensorless_Sensor_VerifyCalibration(const Sensorless_Sensor_T * p_se
 static void Sensorless_Sensor_InitFrom(const Sensorless_Sensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
     // FOC_Sensorless_Init(&p_motor->FocSensorless, &p_motor->Config.SensorlessConfig);
-    // FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_rpm(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.PolePairs, (p_motor->Foc.Config.Electrical.Ld + p_motor->Foc.Config.Electrical.Lq) / 2));
-    // // FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_of_angle(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating), (p_motor->Config.ElectricalParams_Pu.Ld + p_motor->Config.ElectricalParams_Pu.Lq) / 2));
+    // FOC_Sensorless_InitG(p_sensor->P_OBSERVER, p_config->SpeedTypeMax_Angle16, p_sensor->P_NVM_CONFIG->LAvg_pu);
 }
 
 

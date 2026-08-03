@@ -65,6 +65,9 @@ typedef struct
 FOC_FieldWeakeningTuning_T;
 
 /* same shape for SI and PU  */
+/*
+
+*/
 typedef struct
 {
     uint32_t Ld;
@@ -296,7 +299,7 @@ static inline void FOC_MatchIVState_Base(FOC_T * p_foc)
 // {
 //     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
 //     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
-    // if (FOC_ProcVectorLimit(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
+//     if (_FOC_ProcVCircle(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
 // }
 
 
@@ -649,11 +652,7 @@ static inline bool FOC_Config_IsFwEnabled(const FOC_Config_T * p_config) { retur
 
 // }
 
-//     /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
-// static inline uint16_t FOC_GetLqInv(FOC_T * p_foc)
-// {
-//     return fract16_div(FRACT16_1, fract16_mul(p_foc->Config.Electrical.Lq, FRACT16_1_DIV_SQRT3));
-// }
+
 
 
 /******************************************************************************/

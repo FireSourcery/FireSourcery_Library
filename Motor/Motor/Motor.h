@@ -68,10 +68,9 @@
 #include <stdbool.h>
 #include <assert.h>
 
-// #include "_Motor_Config.h"
 /* Static Def */
 #include "Motor_ControlFreq.h"
-#include "Types/Motor_Electrical.h"
+#include "Motor_Electrical.h"
 
 
 /******************************************************************************/

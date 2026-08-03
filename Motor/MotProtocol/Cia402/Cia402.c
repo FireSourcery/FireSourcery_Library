@@ -36,8 +36,7 @@
 /******************************************************************************/
 #include "Cia402.h"
 
-
-
+#include <stddef.h>
 
 /******************************************************************************/
 /*
@@ -76,7 +75,7 @@ const Cia402_OdMeta_T CIA402_OD_META[] =
 
 
 /* switch mapped */
-Cia402_OdMeta_T * _TableIndex(uint16_t index, uint8_t subindex)
+const Cia402_OdMeta_T * _TableIndex(uint16_t index, uint8_t subindex)
 {
     switch (index)
     {
@@ -109,7 +108,7 @@ Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex)
 {
     if (subindex != 0U) { return OD_ABSENT; }
 
-    Cia402_OdMeta_T * p_meta = _TableIndex(index, subindex);
+    const Cia402_OdMeta_T * p_meta = _TableIndex(index, subindex);
     if (p_meta == NULL) { return OD_ABSENT; }
     return (Cia402_OdInfo_T) { .Type = p_meta->Type, .Access = p_meta->Access, .Size = p_meta->Size, };
 }

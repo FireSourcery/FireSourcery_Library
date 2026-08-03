@@ -185,6 +185,7 @@ static inline bool RotorSensor_VerifyCalibration(const RotorSensor_T * p_sensor)
 static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
     p_sensor->P_STATE->SpeedFractRef = ANGLE_SPEED_FRACT_REF(p_config->SpeedTypeMax_Angle16);
+    // p_sensor->P_STATE->SpeedFractRef = Angle_SpeedFractRef_FromRpm(p_config->PollingFreq, p_config->SpeedTypeMax_Rpm);
     p_sensor->P_VTABLE->INIT_UNITS_FROM(p_sensor, p_config);
 }
 

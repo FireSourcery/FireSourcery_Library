@@ -164,7 +164,7 @@ Cia402_OdStatus_T Motor_Cia402_ApplyOpMode(Motor_T * p_motor, Cia402_Adapter_T *
     switch (value)
     {
         case CIA402_MODE_PROFILE_POSITION:      /* not supported */ break;
-        case CIA402_MODE_VELOCITY:               Motor_SetFeedbackMode(p_motor->P_MOTOR, MOTOR_FEEDBACK_MODE_SPEED_CURRENT); break;
+        case CIA402_MODE_VELOCITY:               Motor_SetFeedbackMode(p_motor , MOTOR_FEEDBACK_MODE_SPEED_CURRENT); break;
         case CIA402_MODE_PROFILE_VELOCITY:      /* not supported */ break;
         case CIA402_MODE_PROFILE_TORQUE:        /* not supported */ break;
         case CIA402_MODE_HOMING:                /* not supported */ break;
