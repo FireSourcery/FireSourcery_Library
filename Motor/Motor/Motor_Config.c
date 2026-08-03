@@ -95,6 +95,14 @@ bool _Motor_Config_IsValidVoltage(const Motor_Config_T * p_config, uint16_t vBus
 
 */
 /******************************************************************************/
+void Motor_Config_ValidateOpenLoop(Motor_Config_T * p_config)
+{
+    p_config->IAlign_Fract16                    = math_min(p_config->IAlign_Fract16, _Motor_GetOpenLoopILimit(p_config)); /* or i motoring */
+    p_config->VAlign_Fract16                    = math_min(p_config->VAlign_Fract16, _Motor_GetOpenLoopVLimit(p_config)); /* or vbus norminal */
+    p_config->OpenLoopRampIFinal_Fract16        = math_min(p_config->OpenLoopRampIFinal_Fract16, _Motor_GetOpenLoopILimit(p_config));
+    p_config->OpenLoopRampSpeedFinal_Fract16    = math_min(p_config->OpenLoopRampSpeedFinal_Fract16, _Motor_SpeedRatedLimit(p_config) / 2);
+}
+
 void Motor_Config_Validate(Motor_Config_T * p_config)
 {
     p_config->SpeedRating.VSpeedAdjustment      = math_min(p_config->SpeedRating.VSpeedAdjustment, INT16_MAX);

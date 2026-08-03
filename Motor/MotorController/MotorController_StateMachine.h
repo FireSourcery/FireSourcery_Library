@@ -251,9 +251,9 @@ static inline MotorController_LockId_T MotorController_GetLockSubstateId(MotorCo
 }
 
 /* split completion status and processing/complete/inactive */
+// MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING, /* handle by state id instead */
 typedef enum MotorController_LockOpStatus
 {
-    // MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING, /* handle by state id instead */
     MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
     MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
     // MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,

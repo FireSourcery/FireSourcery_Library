@@ -31,6 +31,8 @@
 /******************************************************************************/
 #include "Motor/Motor/Phase_Input/Phase_Analog.h"
 #include "Motor/Motor/Phase_Input/Phase_Calibration.h"
+#include "Motor/Motor/Motor_Electrical.h"
+
 #include "Framework/BootRef/BootRef.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
@@ -105,6 +107,7 @@ extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm
 
 extern NvMemory_Status_T MotNvm_WritePhaseCalibration(const MotNvm_T * p_motNvm, const Phase_Calibration_T * p_source);
 extern NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_motNvm, const Phase_AnalogBoard_T * p_source);
+extern NvMemory_Status_T MotNvm_WriteMotorCalibration(const MotNvm_T * p_motNvm, const Motor_ElectricalCalib_T * p_source);
 
 
 // extern NvMemory_Status_T MotNvm_WriteConstRef(const MotNvm_T * p_motNvm);

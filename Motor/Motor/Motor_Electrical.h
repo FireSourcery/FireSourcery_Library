@@ -42,6 +42,7 @@ typedef const struct Motor_ElectricalCalib
     volatile uint16_t SPEED_MAX_RADS; /* Optional Global Ref */
     volatile uint16_t FIELD_WEAKENING_LIMIT_PU;
     volatile uint16_t OPEN_LOOP_CEILING_RATIO;
+    volatile uint16_t _RESV;
 }
 Motor_ElectricalCalib_T;
 

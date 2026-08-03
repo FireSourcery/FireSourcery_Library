@@ -123,6 +123,7 @@ static State_T * Init_Next(Motor_T * p_motor)
 
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT) /* wait for Speed and Heat sensors */
     {
+        Motor_ValidateConfig(p_motor); /* re-derive FOC Psi from Kv, limit field weakening */
         // if (Phase_Calibration_IsValid() == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
         if (Motor_IsConfigValid(p_motor) == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; }
 

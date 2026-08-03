@@ -73,9 +73,6 @@ MotorController_SystemCmd_T;
 // MotorController_GenericStatus_T;
 
 
-
-
-
 /******************************************************************************/
 /*
     Non StateMachine Checked

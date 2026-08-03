@@ -684,6 +684,7 @@ extern void Motor_Reset(Motor_Context_T * p_motor);
 extern void Motor_Reinit(Motor_T * p_motor);
 extern void Motor_InitUnits(Motor_Context_T * p_motor);
 extern bool Motor_IsConfigValid(Motor_T * p_motor);
+extern void Motor_ValidateConfig(Motor_T * p_motor);
 
 extern void Motor_ResetSpeedPid(Motor_Context_T * p_motor);
 extern void Motor_ResetIPid(Motor_Context_T * p_motor);

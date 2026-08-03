@@ -190,6 +190,11 @@ NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_motNvm, 
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_BOARD, (const void *)&p_source, sizeof(Phase_AnalogBoard_T));
 }
 
+NvMemory_Status_T MotNvm_WriteMotorCalibration(const MotNvm_T * p_motNvm, const Motor_ElectricalCalib_T * p_source)
+{
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ELECTRICAL_CALIBRATION, (const void *)p_source, sizeof(Motor_ElectricalCalib_T));
+}
+
 
 
 /******************************************************************************/
