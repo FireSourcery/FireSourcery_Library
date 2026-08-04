@@ -195,6 +195,16 @@ NvMemory_Status_T MotNvm_WriteMotorCalibration(const MotNvm_T * p_motNvm, const 
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ELECTRICAL_CALIBRATION, (const void *)p_source, sizeof(Motor_ElectricalCalib_T));
 }
 
+// NvMemory_Status_T MotNvm_WriteBoardRef(const MotNvm_T * p_motNvm, size_t id, const uint8_t* p_source)
+// {
+//     switch (id)
+//     {
+//         case 0U: return MotNvm_WritePhaseCalibration(p_motNvm, (const Phase_Calibration_T *)p_source);
+//         case 1U: return MotNvm_WriteMotorCalibration(p_motNvm, (const Motor_ElectricalCalib_T *)p_source);
+//         default: return NV_MEMORY_STATUS_ERROR_OTHER;
+//     }
+// }
+
 
 
 /******************************************************************************/

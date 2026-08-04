@@ -208,37 +208,37 @@ void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, in
     }
 }
 
-int _Motor_Var_PidTuning_Get_Fixed16(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
-{
-    const Motor_Context_T * p_state = p_motor->P_MOTOR;
-    int value = 0;
-    switch (varId)
-    {
-        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_state->PidSpeed);    break;
-        case MOTOR_VAR_PID_SPEED_KP:              value = PID_GetKp_Fixed16(&p_state->PidSpeed);    break;
-        case MOTOR_VAR_PID_SPEED_KI:              value = PID_GetKi_Fixed16(&p_state->PidSpeed);    break;
-        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_state->Foc.PidIq);   break;
-        case MOTOR_VAR_PID_CURRENT_KP:            value = PID_GetKp_Fixed16(&p_state->Foc.PidIq);   break;
-        case MOTOR_VAR_PID_CURRENT_KI:            value = PID_GetKi_Fixed16(&p_state->Foc.PidIq);   break;
-        default: break;
-    }
-    return value;
-}
+// int _Motor_Var_PidTuning_Get_Fixed16(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
+// {
+//     const Motor_Context_T * p_state = p_motor->P_MOTOR;
+//     int value = 0;
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_state->PidSpeed);    break;
+//         case MOTOR_VAR_PID_SPEED_KP:              value = PID_GetKp_Fixed16(&p_state->PidSpeed);    break;
+//         case MOTOR_VAR_PID_SPEED_KI:              value = PID_GetKi_Fixed16(&p_state->PidSpeed);    break;
+//         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_state->Foc.PidIq);   break;
+//         case MOTOR_VAR_PID_CURRENT_KP:            value = PID_GetKp_Fixed16(&p_state->Foc.PidIq);   break;
+//         case MOTOR_VAR_PID_CURRENT_KI:            value = PID_GetKi_Fixed16(&p_state->Foc.PidIq);   break;
+//         default: break;
+//     }
+//     return value;
+// }
 
-void _Motor_Var_PidTuning_Set_Fixed16(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
-{
-    Motor_Context_T * p_state = p_motor->P_MOTOR;
-    switch (varId)
-    {
-        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
-        case MOTOR_VAR_PID_SPEED_KP:          _Motor_Tuning_SetSpeedKp_Fixed16(p_state, varValue);    break;
-        case MOTOR_VAR_PID_SPEED_KI:          _Motor_Tuning_SetSpeedKi_Fixed16(p_state, varValue);    break;
-        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
-        case MOTOR_VAR_PID_CURRENT_KP:       _Motor_Tuning_SetIKp_Fixed16(p_state, varValue); break;
-        case MOTOR_VAR_PID_CURRENT_KI:       _Motor_Tuning_SetIKi_Fixed16(p_state, varValue); break;
-        default: break;
-    }
-}
+// void _Motor_Var_PidTuning_Set_Fixed16(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
+// {
+//     Motor_Context_T * p_state = p_motor->P_MOTOR;
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
+//         case MOTOR_VAR_PID_SPEED_KP:          _Motor_Tuning_SetSpeedKp_Fixed16(p_state, varValue);    break;
+//         case MOTOR_VAR_PID_SPEED_KI:          _Motor_Tuning_SetSpeedKi_Fixed16(p_state, varValue);    break;
+//         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
+//         case MOTOR_VAR_PID_CURRENT_KP:       _Motor_Tuning_SetIKp_Fixed16(p_state, varValue); break;
+//         case MOTOR_VAR_PID_CURRENT_KI:       _Motor_Tuning_SetIKi_Fixed16(p_state, varValue); break;
+//         default: break;
+//     }
+// }
 
 
 /******************************************************************************/
