@@ -119,7 +119,7 @@ typedef struct FOC
     /*
         Runtime V parameters directly visible in the FOC object, rather than passed per call.
     */
-    // ufract16_t Modulation;
+    // ufract16_t Modulation; M*VBus/Sqrt3
     interval_t VLimit;
     // fract16_t VqLimit; a single value encodes direction and magnitude. derives cw and ccw
     fract16_t VWindow;
@@ -174,8 +174,8 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
     OutputV
 */
 /* Feedback/Feedforward Control */
-static inline void FOC_SetVd(FOC_T * p_foc, fract16_t vd) { p_foc->Vd = vd; }
-static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
+// static inline void FOC_SetVd(FOC_T * p_foc, fract16_t vd) { p_foc->Vd = vd; }
+// static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 
 /* vPhaseLimit as modulation [0:1/sqrt3] */
 static inline bool _FOC_ProcVCircle(FOC_T * p_foc, ufract16_t vCircle, int32_t vdReq, int32_t vqReq)
@@ -316,12 +316,10 @@ static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, i
 /******************************************************************************/
 /*
     Cross-coupling decoupling feedforward, limit-first ordering.
-        Vd_ff = -omega_e * Lq * Iq
-        Vq_ff = +omega_e * Ld * Id + omega_e * psi_f
 */
 /******************************************************************************/
 /*
-    accept the wide multiply by default
+    accept the 1ms wide multiply by default
     Only M0 benefits from micro-optimizing.
     optionally select additional int64 multiply in fast loop
 */
@@ -658,7 +656,6 @@ static void FOC_InitPid(FOC_T * p_foc, const PID_Config_T * p_configI)
 
 static inline void FOC_Reset(FOC_T * p_foc)
 {
-
 
 }
 

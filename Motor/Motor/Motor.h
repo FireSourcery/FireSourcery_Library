@@ -284,7 +284,7 @@ typedef struct Motor_Context
     uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, state counter. Overflow 20Khz: 59 hours */
 
     /* Effectively Substates StateMachine Controlled */
-    Motor_Direction_T Direction;            /* Direction of applied/cmd V. Calibration correction applied on get/set access. DirectionMotoring. Applies to: Motoring/Generating Cmd Active Limits, Sensor Interpolation */
+    Motor_Direction_T Direction;            /* Direction of applied/cmd V. now shadoes FOC.VLimit */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
 
@@ -551,7 +551,7 @@ static inline fract16_t Motor_SpeedLimitCw(const Motor_Context_T * p_motor) { re
 /*
     Applied pair — the materialized [Cw:Ccw] as read back from the Ramp.
     interval_aligned/interval_opposed invert the direction resolve back to unsigned magnitudes:
-        I:      aligned with Direction => Motoring,          opposed => Generating
+        I:      aligned with Direction(Speed) => Motoring,          opposed => Generating
         Speed:  aligned with DirectionForward => Forward,    opposed => Reverse
 */
 static inline interval_t Motor_ILimits(const Motor_Context_T * p_motor) { return (interval_t) { .low = Motor_ILimitCw(p_motor), .high = Motor_ILimitCcw(p_motor) }; }

@@ -90,6 +90,12 @@ static void _Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
     // FOC_SetVAntiPlugging(p_foc, direction, vPhaseLimit);
 }
 
+/* if eliminating Motor_Context.Direction which shadows FOC.VLimit */
+// static Motor_Direction_T _Motor_GetDirectionBound(const Motor_T * p_dev)
+// {
+//     // return sign_of(p_dev->P_MOTOR->Foc.VLimit);
+// }
+
 static inline void _Motor_SetFeedbackMode_Cast(Motor_T * p_motor, state_value_t mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }
 static inline void _Motor_SetDirection_Cast(Motor_T * p_motor, state_value_t mode) { Motor_SetDirection(p_motor, Motor_Direction_Cast(mode)); }
 

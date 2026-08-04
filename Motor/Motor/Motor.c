@@ -147,9 +147,9 @@ void Motor_ValidateConfig(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
     p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit = math_min(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, MOTOR_ELECTRICAL_CALIBRATION.FIELD_WEAKENING_LIMIT_PU);
-#endif
     p_motor->P_MOTOR->Config.ILimitMotoring_Fract16 = math_min(p_motor->P_MOTOR->Config.ILimitMotoring_Fract16, fract16_vector_component(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, Phase_Calibration_GetIRatedPeak_Fract16()));
-    // todo add runtime current limit
+    // optionally add runtime current limit
+#endif
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
     /* G_pu = 1/(L_pu · Fs/ω_base) — the one observer gain derived from motor params rather than stored tuning. */
     FOC_Sensorless_InitG(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, _Motor_GetSpeedTypeMax_Angle(&p_context->Config.SpeedRating), (p_context->Foc.Config.Electrical.Ld + p_context->Foc.Config.Electrical.Lq) / 2);
