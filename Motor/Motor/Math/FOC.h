@@ -188,15 +188,13 @@ static inline bool _FOC_ProcVCircle(FOC_T * p_foc, ufract16_t vCircle, int32_t v
 
 static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vCircle)
 {
-    assert(abs(p_foc->Vd) <= vCircle); /* set by feedback output */
-    return fixed_sqrt((uint32_t)vCircle * vCircle - (int32_t)p_foc->Vd * p_foc->Vd);
+    return foc_vq_circle_limit(vCircle, p_foc->Vd);
 }
 
 static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
 {
     return _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
 }
-
 
 // static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 // {
@@ -240,7 +238,6 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     applied Vq must stay near omega_psi, not just on the same side
     useful to limit load angle, soften braking, or keep a no-plug brake inside a bounded slip window
 */
-// static inline interval_t _FOC_VBemfWindow(accum32_t omega_psi, int32_t window) { return interval_symmetric(omega_psi, window); }
 static inline interval_t FOC_VBemfWindow(const FOC_T * p_foc) { return interval_symmetric(p_foc->ElectricalSpeed.OmegaPsi, p_foc->VWindow); }
 static inline void FOC_SetVWindow(FOC_T * p_foc, int32_t window) { p_foc->VWindow = window; }
 
@@ -279,7 +276,10 @@ static inline void FOC_SetAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, f
 */
 static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
 {
+    ufract16_t vCircle = fract16_mul(vBus, FRACT16_1_DIV_2);
+    PID_CaptureOutputLimits(&p_foc->PidId, -(int32_t)vCircle, vCircle);  /* Vd inside the circle it is measured against, else no vq budget remains */
     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
+
     ufract16_t vqCircleLimit = foc_vq_circle_limit(fract16_mul(vBus, FRACT16_1_DIV_2), p_foc->Vd);
     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);
     PID_CaptureOutputLimits(&p_foc->PidIq, vqBand.low, vqBand.high);
@@ -292,15 +292,17 @@ static inline void FOC_MatchIVState_Base(FOC_T * p_foc)
     PID_SetOutputState(&p_foc->PidIq, p_foc->Vq);
 }
 
-/* Post-proc circle limit — windup correction after both PIDs run. */
-/* no sqrt during common case  */
-/* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
-// static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
-// {
-//     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
-//     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
-//     if (_FOC_ProcVCircle(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
-// }
+/*
+    Post-proc circle limit — windup correction after both PIDs run.
+    no sqrt during common case
+    the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited.
+*/
+static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
+{
+    fract16_t vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
+    fract16_t vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
+    if (_FOC_ProcVCircle(p_foc, vBus, vd, vq)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
+}
 
 
 /******************************************************************************/
@@ -380,13 +382,13 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idR
 #endif
 }
 
-// static inline void _FOC_SetIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
-// {
-//     p_foc->Vd = vd;
-//     p_foc->Vq = vq;
-//     PID_SetOutputState(&p_foc->PidId, vd);
-//     PID_SetOutputState(&p_foc->PidIq, vq);
-// }
+static inline void _FOC_SetIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
+{
+    p_foc->Vd = vd;
+    p_foc->Vq = vq;
+    PID_SetOutputState(&p_foc->PidId, vd);
+    PID_SetOutputState(&p_foc->PidIq, vq);
+}
 
 /* Seed integrators so the next ProcIFeedback reproduces (vd, vq) at the present current. */
 /* From an actively-driven state (loaded / field-weakening) and FOC_ProcVBemfClarkePark capture */
@@ -405,7 +407,7 @@ static inline void FOC_MatchIVState(FOC_T * p_foc)
 static inline void FOC_MatchIVSpeed(FOC_T * p_foc)
 {
     p_foc->Vd = 0;
-    p_foc->Vq = p_foc->ElectricalSpeed.OmegaPsi;    /* Caller handle FOC_CaptureSpeed */
+    p_foc->Vq = fract16_sat(p_foc->ElectricalSpeed.OmegaPsi);   /* Caller handle FOC_CaptureSpeed. OmegaPsi is accum32, exceeds fract16 above base speed */
     FOC_MatchIVState(p_foc);
 }
 
@@ -415,8 +417,30 @@ static inline void FOC_MatchIVSensor(FOC_T * p_foc)
     else { FOC_MatchIVState(p_foc); } /* FOC_ProcVBemfClarkePark */
 }
 
+static void FOC_ClearCaptureState(FOC_T * p_foc)
+{
+    p_foc->Id = 0;
+    p_foc->Iq = 0;
+}
 
+static void FOC_ClearOutputState(FOC_T * p_foc)
+{
+    p_foc->Vd = 0;
+    p_foc->Vq = 0;
+    p_foc->Va = 0;
+    p_foc->Vb = 0;
+    p_foc->Vc = 0;
+}
 
+static void FOC_ResetFeedbackState(FOC_T * p_foc)
+{
+    PID_Reset(&p_foc->PidIq);
+    PID_Reset(&p_foc->PidId);
+    p_foc->IdFw = 0;
+    p_foc->ElectricalSpeed.OmegaLd = 0;
+    p_foc->ElectricalSpeed.OmegaLq = 0;
+    p_foc->ElectricalSpeed.OmegaPsi = 0;
+}
 
 /******************************************************************************/
 /*!
@@ -538,19 +562,46 @@ static inline bool _FOC_IsGeneratingReq(int32_t speed, int16_t iqReq) { return (
     Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
     Id_fw = (Vs_max/ωe - λ_pm) / Ld
 
-    Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwLimit), 0].
-    Id_fw += Ki · (Vbus/2 - √(Vd² + Vq²))   (integrator, Id ≤ 0)
+    Voltage-feedback FW integrator. Id setpoint in [-(IdFwLimit), 0].
+    Id_fw += Ki · (Vfw - √(Vd² + Vq²))   (integrator, Id ≤ 0)
+
+    Vfw sits below the inner-loop circle radius rather than on it. FOC_ProcIFeedback caps
+    √(Vd² + Vq²) at the radius exactly, so an error measured against the radius itself is
+    non-negative by construction and the integrator can never leave 0. The margin is the
+    headroom that lets saturation register as a negative error.
 */
-static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
+#if !defined(FOC_FIELD_WEAKENING_V_MARGIN)
+#define FOC_FIELD_WEAKENING_V_MARGIN FRACT16(0.95F) /* fraction of the circle radius the FW loop regulates to */
+#endif
+
+/* Vfw — the magnitude the FW loop regulates √(Vd² + Vq²) to */
+static inline ufract16_t _FOC_VFieldWeakening(ufract16_t vBus) { return fract16_mul(fract16_mul(vBus, FRACT16_1_DIV_2), FOC_FIELD_WEAKENING_V_MARGIN); }
+
+/* Advance on the V held from the previous FOC_ProcIFeedback, and return this cycle's request. */
+static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, ufract16_t vBus)
 {
-    int32_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - FOC_GetVMagnitude(p_foc);
-    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->Config.FieldWeakening.IdGain), -p_foc->Config.FieldWeakening.IdLimit, 0);
+    int32_t error = _FOC_VFieldWeakening(vBus) - FOC_GetVMagnitude(p_foc);
+    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->Config.FieldWeakening.IdGain), -(int32_t)p_foc->Config.FieldWeakening.IdLimit, 0);
     return p_foc->IdFw;
 }
 
-static inline void FOC_DisableFieldWeakening(FOC_T * p_foc) { p_foc->Config.FieldWeakening.IdLimit = 0; }
-// static inline bool FOC_IsFieldWeakeningEnabled(FOC_T * p_foc) { return (p_foc->Config.FieldWeakening.IdLimit > 0); }
+/*
+    Seed IdFw from the V just matched at the freewheel→run edge — VBemf capture, or the
+    ωψ estimate when capture has not completed. Both carry ωψ, which is what decides
+    whether the resume point is above base speed, so the pre-load is real feedforward.
 
+    Id_fw = -(√(Vd² + Vq²) - Vfw) / (ωe·Ld)     the steady-state solution, in one step.
+
+    The integrator cannot serve this: its gain is per control cycle, so a transient error
+    of this size ramps IdFw to -IdLimit over the settling cycles no matter how much
+    weakening the operating point actually calls for. Caller handles FOC_CaptureSpeed.
+*/
+static inline void FOC_MatchIdFieldWeakening(FOC_T * p_foc, ufract16_t vBus)
+{
+    accum32_t excess = FOC_GetVMagnitude(p_foc) - _FOC_VFieldWeakening(vBus);
+    uint32_t omegaLd = math_abs(p_foc->ElectricalSpeed.OmegaLd); /* Id is demagnetizing either direction */
+    p_foc->IdFw = (omegaLd == 0U) ? 0 : math_clamp(-fract16_div(excess, omegaLd), -(int32_t)p_foc->Config.FieldWeakening.IdLimit, 0);
+}
 
 // static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)
 // {
@@ -604,34 +655,6 @@ static void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
     p_foc->Vq = 0;
     p_foc->Sine = 0;
     p_foc->Cosine = FRACT16_MAX;
-}
-
-static void FOC_ClearCaptureState(FOC_T * p_foc)
-{
-    p_foc->Id = 0;
-    p_foc->Iq = 0;
-    // FOC_CaptureSpeed(p_foc, 0);
-}
-
-static void FOC_ClearOutputState(FOC_T * p_foc)
-{
-    p_foc->Vd = 0;
-    p_foc->Vq = 0;
-    p_foc->Va = 0;
-    p_foc->Vb = 0;
-    p_foc->Vc = 0;
-}
-
-static inline void FOC_ResetFeedbackState(FOC_T * p_foc)
-{
-    PID_Reset(&p_foc->PidIq);
-    PID_Reset(&p_foc->PidId);
-    PID_CaptureOutputLimits(&p_foc->PidId, -math_abs(p_foc->VLimit.high), math_abs(p_foc->VLimit.high));
-    PID_CaptureOutputLimits(&p_foc->PidIq, p_foc->VLimit.low, p_foc->VLimit.high);
-    p_foc->IdFw = 0;
-    p_foc->ElectricalSpeed.OmegaLd = 0;
-    p_foc->ElectricalSpeed.OmegaLq = 0;
-    p_foc->ElectricalSpeed.OmegaPsi = 0;
 }
 
 static inline void FOC_Reset(FOC_T * p_foc)

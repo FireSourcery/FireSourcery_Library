@@ -194,6 +194,7 @@ static inline bool Motor_IsConfig(Motor_T * p_motor)
 /*
     for now exit calibration use MOTOR_STATE_INPUT_PHASE_OUTPUT - PHASE_VOUT_Z
     alternatively MOTOR_STATE_INPUT_STATE_START normalizes exit from calibration
+    StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_STATE_CMD, MOTOR_STATE_INPUT_STATE_START);
 */
 static State_T * _Motor_InputDisable(Motor_T * p_motor, state_value_t value)
 {
@@ -206,8 +207,6 @@ static void Motor_Disable(Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_PASSIVE, .NEXT = (State_Input_T)_Motor_InputDisable };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-
-    // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CONTROL_MODE, 0U);
 }
 
 static State_T * _Motor_InputEnable(Motor_T * p_motor, state_value_t value)
@@ -221,7 +220,6 @@ static void Motor_Enable(Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_DEACTIVATED, .NEXT = (State_Input_T)_Motor_InputEnable };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-    // { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_STATE_CMD, MOTOR_STATE_INPUT_STATE_START); }
 }
 
 // static void Motor_NormalizeToDisabled(Motor_T * p_motor)

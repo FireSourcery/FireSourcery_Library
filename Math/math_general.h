@@ -141,6 +141,14 @@ static inline interval_t interval_of_half_plane(sign_t sign, int32_t alignedMag,
 }
 
 
+/*
+    Inverse of interval_of_sign_pair — recover the unsigned magnitudes from a resolved interval.
+    interval_of_sign_pair(sign, interval_aligned(i, sign), interval_opposed(i, sign)) == i
+*/
+static inline int32_t interval_aligned(interval_t interval, sign_t sign) { return (sign == SIGN_NEGATIVE) ? -interval.low : interval.high; }
+static inline int32_t interval_opposed(interval_t interval, sign_t sign) { return (sign == SIGN_NEGATIVE) ? interval.high : -interval.low; }
+
+
 static inline int32_t interval_clamp(interval_t b, int32_t v) { return math_clamp(v, b.low, b.high); }
 static inline bool interval_contains(interval_t b, int32_t v) { return v >= b.low && v <= b.high; }
 static inline interval_t interval_intersect(interval_t a, interval_t b) { return (interval_t) { .low = math_max(a.low, b.low), .high = math_min(a.high, b.high) }; }

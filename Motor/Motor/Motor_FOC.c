@@ -39,7 +39,7 @@
 /*
     Current-mode angle control. Req Id/Iq to Vabc.
 */
-void Motor_FOC_AngleControl(Motor_Context_T * p_motor, fract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
+void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 {
     FOC_SetTheta(&p_motor->Foc, theta);
 #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)  /* update angle only for voutput, until divider from adc is set */
@@ -53,11 +53,19 @@ void Motor_FOC_AngleControl(Motor_Context_T * p_motor, fract16_t vBus, angle16_t
 
 
 /* Common state machine call for torque */
+/*
+    FW integrator advances on the V held from the previous cycle, then supplies this
+    cycle's idReq — one cycle of V→idReq latency, same as advancing it after AngleControl.
+
+    The first tick after resume reads the VBemf capture rather than an applied V. That is
+    only a one-tick perturbation because FOC_MatchIdFieldWeakening has already seeded IdFw
+    from that same capture; without the seed this ordering ramps from 0 over the settling
+    cycles instead.
+*/
 void _Motor_FOC_ProcTorqueReq(Motor_Context_T * p_context, ufract16_t vbus, fract16_t req)
 {
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
     fract16_t id = FOC_ProcIdFieldWeakening(&p_context->Foc, vbus);
-    // FOC_ProcIFeedback_FieldWeakening(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), Ramp_ProcNext(&p_context->TorqueRamp));
 #else
     fract16_t id = 0;
 #endif
@@ -72,7 +80,7 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 /* Common state machine call for align */
 /* id limits update with FOC_DECOUPLE_ENABLE. id limits set at direction only when FOC_DECOUPLE disabled */
 /* idReq input is userReq or preset IAlign. */
-void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq)
+void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t angle, fract16_t idReq)
 {
     Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_OpenLoopILimit(p_motor))), 0);
     // Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))), 0);
@@ -125,14 +133,18 @@ void Motor_FOC_MatchVOutput(Motor_Context_T * p_context)
 /* Id, Iq cleared on freewheel entry */
 /* vq == 0 from passive before bemf sample completes */
 /* Vabc is either 0 from clear on entry to PASSIVE or set by CaptureAngleVBemf */
-/* Outputlimits updated prior to calling */
-void Motor_FOC_MatchVFreewheel(Motor_Context_T * p_context)
+void Motor_FOC_MatchVFreewheel(Motor_Context_T * p_context, ufract16_t vbus)
 {
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
 #if defined(MOTOR_V_MATCH_SENSOR)
     FOC_MatchIVSensor(&p_context->Foc);
 #elif defined(MOTOR_V_MATCH_SPEED)
     FOC_MatchIVSpeed(&p_context->Foc);
+#endif
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    FOC_MatchIdFieldWeakening(&p_context->Foc, vbus); /* pre-load from the matched V, before the integrator takes over on applied V */
+#else
+    (void)vbus;
 #endif
 }
 

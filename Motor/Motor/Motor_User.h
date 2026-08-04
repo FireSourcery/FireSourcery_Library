@@ -113,15 +113,11 @@ static inline fract16_t Motor_GetISetpoint(const Motor_Context_T * p_motor) { re
 static inline fract16_t Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }
 // static inline bool Motor_IsSpeedRampEnabled(const Motor_Context_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
 
-/* quick derive view */
-static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? Motor_ILimitCcw(p_motor) : -Motor_ILimitCw(p_motor); }
-static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? -Motor_ILimitCw(p_motor) : Motor_ILimitCcw(p_motor); }
-static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? Motor_SpeedLimitCcw(p_motor) : (-Motor_SpeedLimitCw(p_motor)); }
-
-/* recalculate through derate */
-// static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return Motor_ILimitMotoring(p_motor); }
-// static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return Motor_ILimitGenerating(p_motor); }
-// static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return Motor_SpeedLimitForward(p_motor); }
+/* quick derive view - unsigned magnitudes of the applied pair. Inverse of the Motor_Set*Limits resolve. */
+static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return interval_aligned(Motor_ILimits(p_motor), (sign_t)p_motor->Direction); }
+static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return interval_opposed(Motor_ILimits(p_motor), (sign_t)p_motor->Direction); }
+static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return interval_aligned(Motor_SpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
+static inline ufract16_t Motor_User_SpeedLimitReverse(const Motor_Context_T * p_motor) { return interval_opposed(Motor_SpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
 
 /*
 

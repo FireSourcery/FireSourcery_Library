@@ -141,10 +141,16 @@ static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t
 }
 
 
+/*
+    q budget remaining after d has claimed its share of the circle.
+    Saturates to 0 rather than underflowing the unsigned subtraction when d has already
+    consumed the whole radius — the d-axis limit is not guaranteed to match this radius.
+*/
 static inline ufract16_t foc_vq_circle_limit(ufract16_t magnitude_limit, fract16_t d)
 {
-    assert(abs(d) <= magnitude_limit); /* set by feedback output */
-    return fixed_sqrt((uint32_t)magnitude_limit * magnitude_limit - (int32_t)d * d);
+    uint32_t limit_squared = (uint32_t)magnitude_limit * magnitude_limit;
+    uint32_t d_squared = (uint32_t)((int32_t)d * d);
+    return (d_squared < limit_squared) ? fixed_sqrt(limit_squared - d_squared) : 0U;
 }
 
 /******************************************************************************/

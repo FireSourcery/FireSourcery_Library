@@ -367,7 +367,7 @@ static void Run_Entry(Motor_T * p_motor)
     if (Phase_ReadVOut(&p_motor->PHASE) == PHASE_VOUT_Z) /* prev state is freewheel */
     {
         /* Vabc maybe 0 on entry, if capture vbemf did not complete */
-        Motor_FOC_MatchVFreewheel(p_context);
+        Motor_FOC_MatchVFreewheel(p_context, VBus_Fract16(p_motor->P_VBUS));
         Phase_ActivateT0(&p_motor->PHASE);
     }
     else  /* else previous state is run/intervention */
