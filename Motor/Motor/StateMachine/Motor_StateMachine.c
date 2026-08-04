@@ -323,15 +323,23 @@ static State_T * Passive_InputFeedbackMode(Motor_T * p_motor, state_value_t feed
 }
 
 
+/*
+    Accept a branch entry, same as OpenLoop_InputOpenLoop — a cmd that begins at a
+    substate (sensorless/encoder start-up chains) must reach its substate directly,
+    not just the OPEN_LOOP root. Traverse runs MOTOR_STATE_OPEN_LOOP.ENTRY first.
+*/
 static State_T * Passive_InputOpenLoop(Motor_T * p_motor, state_value_t statePtr)
 {
+    State_T * p_state = (State_T *)statePtr;
+
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) != 0U) { return NULL; }
-    // State_T * p_state = (State_T *)statePtr;
-    // if (p_state == NULL) { return &MOTOR_STATE_OPEN_LOOP; }
-    // if (p_state == &MOTOR_STATE_OPEN_LOOP) { return &MOTOR_STATE_OPEN_LOOP; }
-    // if (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP) { return p_state; }
+    if ((p_state != NULL) && (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP)) { return p_state; }
     return &MOTOR_STATE_OPEN_LOOP;
 }
+// State_T * p_state = (State_T *)statePtr;
+// if (p_state == NULL) { return &MOTOR_STATE_OPEN_LOOP; }
+// if (p_state == &MOTOR_STATE_OPEN_LOOP) { return &MOTOR_STATE_OPEN_LOOP; }
+// if (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP) { return p_state; }
 
 static const State_Input_T PASSIVE_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {

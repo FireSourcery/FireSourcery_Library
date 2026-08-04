@@ -160,20 +160,11 @@ ufract16_t fract16_vector_component(fract16_t x, ufract16_t mag_limit)
     return fixed_sqrt((int32_t)mag_limit * mag_limit - (int32_t)x * x);
 }
 
-// struct fract16_xy fract16_vector_scale(fract16_t x, fract16_t y, ufract16_t magnitude)
-// {
-//     if (magnitude < FRACT16_MAX)
-//     {
-//         return (struct fract16_xy) { .x = (fract16_t)fract16_mul(x, magnitude), .y = (fract16_t)fract16_mul(y, magnitude) };
-//     }
-// }
-
-void fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, ufract16_t magnitude)
+struct fract16_xy fract16_vector_scale(fract16_t x, fract16_t y, ufract16_t magnitude)
 {
     if (magnitude < FRACT16_MAX)
     {
-        *p_x = (fract16_t)fract16_mul(*p_x, magnitude); /* no saturation needed, magnitude < 1 */
-        *p_y = (fract16_t)fract16_mul(*p_y, magnitude);
+        return (struct fract16_xy) { .x = (fract16_t)fract16_mul(x, magnitude), .y = (fract16_t)fract16_mul(y, magnitude) };
     }
 }
 
@@ -199,16 +190,16 @@ ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit)
     @return max/|Vxy|
 */
 // struct fract16_xy
-void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit)
-{
-    fract16_vector_scale(p_x, p_y, fract16_vector_norm(*p_x, *p_y, mag_limit));
-}
+// void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit)
+// {
+//     fract16_vector_scale(p_x, p_y, fract16_vector_norm(*p_x, *p_y, mag_limit));
+// }
 
-// struct fract16_xy
-void fract16_vector_normalize(fract16_t * p_x, fract16_t * p_y)
-{
-    fract16_vector_limit(p_x, p_y, FRACT16_MAX);
-}
+// // struct fract16_xy
+// void fract16_vector_normalize(fract16_t * p_x, fract16_t * p_y)
+// {
+//     fract16_vector_limit(p_x, p_y, FRACT16_MAX);
+// }
 
 
 

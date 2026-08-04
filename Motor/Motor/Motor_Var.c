@@ -46,7 +46,7 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_SPEED:                       value = Motor_User_GetSpeed_Fract16(p_state);                break;
+        case MOTOR_VAR_SPEED:                       value = Motor_User_GetSpeed_Fract16(p_state);           break;
         case MOTOR_VAR_I_PHASE:                     value = Motor_GetIPhase_Fract16(p_state);               break;
         case MOTOR_VAR_V_PHASE:                     value = Motor_GetVPhase_Fract16(p_state);               break;
         case MOTOR_VAR_STATE:                       value = Motor_GetStateId(p_state);                      break;
@@ -56,10 +56,9 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
         case MOTOR_VAR_SPEED_REQ:                   value = Motor_GetSpeedSetpoint(p_state);                break;
         case MOTOR_VAR_TORQUE_I_REQ:                value = Motor_GetISetpoint(p_state);                    break;
         case MOTOR_VAR_TORQUE_V_REQ:                value = Motor_GetVSetpoint(p_state);                    break;
-
-        case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_User_GetVSpeed_Fract16(p_motor);     break;
-        case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_Fract16(p_state);     break;
-        case MOTOR_VAR_I_BUS:                       value = Motor_GetIBus_Fract16(p_motor);                break;
+        case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_User_GetVSpeed_Fract16(p_motor);          break;
+        case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_Fract16(p_state);      break;
+        case MOTOR_VAR_I_BUS:                       value = Motor_GetIBus_Fract16(p_motor);                 break;
         default: break;
     }
     return value;
@@ -209,39 +208,37 @@ void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, in
     }
 }
 
+int _Motor_Var_PidTuning_Get_Fixed16(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
+{
+    const Motor_Context_T * p_state = p_motor->P_MOTOR;
+    int value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_state->PidSpeed);    break;
+        case MOTOR_VAR_PID_SPEED_KP:              value = PID_GetKp_Fixed16(&p_state->PidSpeed);    break;
+        case MOTOR_VAR_PID_SPEED_KI:              value = PID_GetKi_Fixed16(&p_state->PidSpeed);    break;
+        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_state->Foc.PidIq);   break;
+        case MOTOR_VAR_PID_CURRENT_KP:            value = PID_GetKp_Fixed16(&p_state->Foc.PidIq);   break;
+        case MOTOR_VAR_PID_CURRENT_KI:            value = PID_GetKi_Fixed16(&p_state->Foc.PidIq);   break;
+        default: break;
+    }
+    return value;
+}
 
-// int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
-// {
-//     const Motor_Context_T * p_state = p_motor->P_MOTOR;
-//     int value = 0;
-//     switch (varId)
-//     {
-//         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_state->PidSpeed);    break;
-//         case MOTOR_VAR_PID_SPEED_KP:              value = PID_GetKp_Fixed16(&p_state->PidSpeed);    break;
-//         case MOTOR_VAR_PID_SPEED_KI:              value = PID_GetKi_Fixed16(&p_state->PidSpeed);    break;
-//         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_state->Foc.PidIq);   break;
-//         case MOTOR_VAR_PID_CURRENT_KP:            value = PID_GetKp_Fixed16(&p_state->Foc.PidIq);   break;
-//         case MOTOR_VAR_PID_CURRENT_KI:            value = PID_GetKi_Fixed16(&p_state->Foc.PidIq);   break;
-//         default: break;
-//     }
-//     return value;
-// }
-
-// /* Sets runtime only */
-// void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
-// {
-//     Motor_Context_T * p_state = p_motor->P_MOTOR;
-//     switch (varId)
-//     {
-//         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
-//         case MOTOR_VAR_PID_SPEED_KP:          _Motor_Tuning_SetSpeedKp(p_state, varValue);    break;
-//         case MOTOR_VAR_PID_SPEED_KI:          _Motor_Tuning_SetSpeedKi(p_state, varValue);    break;
-//         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
-//         case MOTOR_VAR_PID_CURRENT_KP:       _Motor_Tuning_SetIKp(p_state, varValue); break;
-//         case MOTOR_VAR_PID_CURRENT_KI:       _Motor_Tuning_SetIKi(p_state, varValue); break;
-//         default: break;
-//     }
-// }
+void _Motor_Var_PidTuning_Set_Fixed16(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
+{
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
+    switch (varId)
+    {
+        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
+        case MOTOR_VAR_PID_SPEED_KP:          _Motor_Tuning_SetSpeedKp_Fixed16(p_state, varValue);    break;
+        case MOTOR_VAR_PID_SPEED_KI:          _Motor_Tuning_SetSpeedKi_Fixed16(p_state, varValue);    break;
+        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
+        case MOTOR_VAR_PID_CURRENT_KP:       _Motor_Tuning_SetIKp_Fixed16(p_state, varValue); break;
+        case MOTOR_VAR_PID_CURRENT_KI:       _Motor_Tuning_SetIKi_Fixed16(p_state, varValue); break;
+        default: break;
+    }
+}
 
 
 /******************************************************************************/
@@ -297,9 +294,10 @@ int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T 
     return value;
 }
 
+
 /******************************************************************************/
 /*
-
+    Cross module
 */
 /******************************************************************************/
 static inline int Motor_FocConfig_GetSi(Motor_T * p_motor, FOC_ConfigId_T var)
@@ -409,8 +407,11 @@ int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typ
 
         case MOTOR_VAR_TYPE_FOC_OUT:                    return FOC_Var_Get(&p_motor->P_MOTOR->Foc, varId);
         case MOTOR_VAR_TYPE_FOC_CONFIG:                 return FOC_Config_Get(&p_motor->P_MOTOR->Foc.Config, varId);
-        // case MOTOR_VAR_TYPE_FOC_SENSORLESS:             return FOC_Sensorless_GetVar(&p_motor->P_MOTOR->FocSensorless, varId);
-        // case MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG:      return Sensorless_Sensor_ConfigId_Get(p_motor->P_MOTOR->p_ActiveSensor, varId);
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+        /* Read the table entry, not p_ActiveSensor — observer telemetry stays visible while tuning against another selected sensor. */
+        case MOTOR_VAR_TYPE_FOC_SENSORLESS:             return FOC_Sensorless_GetVar(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, varId);
+        case MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG:      return FOC_SensorlessConfig_Get(&p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER->Config, varId);
+#endif
         default: break;
     }
     return 0;

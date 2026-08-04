@@ -264,6 +264,14 @@ static inline void FOC_SetAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, f
     FOC_ProcInvClarkePark(p_foc);
 }
 
+/* Prep Align using input intensity */
+static void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
+{
+    p_foc->Vd = vd;
+    p_foc->Vq = 0;
+    p_foc->Sine = 0;
+    p_foc->Cosine = FRACT16_MAX;
+}
 
 /******************************************************************************/
 /*!
@@ -647,15 +655,6 @@ static void FOC_InitPid(FOC_T * p_foc, const PID_Config_T * p_configI)
 // {
 //     p_foc->VModulation = fract16_mul(modulation, FRACT16_1_DIV_SQRT3);
 // }
-
-/* Prep Align using input intensity */
-static void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
-{
-    p_foc->Vd = vd;
-    p_foc->Vq = 0;
-    p_foc->Sine = 0;
-    p_foc->Cosine = FRACT16_MAX;
-}
 
 static inline void FOC_Reset(FOC_T * p_foc)
 {

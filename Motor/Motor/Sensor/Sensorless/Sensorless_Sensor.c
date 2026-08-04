@@ -35,12 +35,12 @@
     Vtable methods
 */
 /******************************************************************************/
-/* PID/lifecycle init. Config is owned by FocSensorless and populated by
-   Motor.c::Init via FOC_Sensorless_Init(&FocSensorless, &Config.SensorlessConfig);
-   here we only (re)bind the PID and reset per-tick state. */
+/* Load tuning from NVM, bind the PLL PID, and clear per-tick state.
+   G_pu is not part of the stored tuning — it derives from the motor's
+   electrical params, so Motor_ValidateConfig fills it via FOC_Sensorless_InitG. */
 static void Sensorless_Sensor_Init(const Sensorless_Sensor_T * p_sensor)
 {
-    FOC_Sensorless_Init(p_sensor->P_OBSERVER, NULL);
+    FOC_Sensorless_Init(p_sensor->P_OBSERVER, p_sensor->P_NVM_CONFIG);
 }
 
 /* Idempotent publish — Step already mirrors observer state into the FOC_Sensorless
@@ -79,10 +79,13 @@ static bool Sensorless_Sensor_VerifyCalibration(const Sensorless_Sensor_T * p_se
     return (c->K_smo != 0) && (c->LpfCoef != 0);
 }
 
+/* No sensor-local unit state: the observer works entirely in the motor's per-unit
+   basis. SpeedFractRef — the only field CAPTURE_SPEED reads — is written by the
+   RotorSensor base before dispatching here, and the remaining scale factor (G_pu)
+   needs the FOC electrical params, so Motor_ValidateConfig owns it. */
 static void Sensorless_Sensor_InitFrom(const Sensorless_Sensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
-    // FOC_Sensorless_Init(&p_motor->FocSensorless, &p_motor->Config.SensorlessConfig);
-    // FOC_Sensorless_InitG(p_sensor->P_OBSERVER, p_config->SpeedTypeMax_Angle16, p_sensor->P_NVM_CONFIG->LAvg_pu);
+    (void)p_sensor; (void)p_config;
 }
 
 

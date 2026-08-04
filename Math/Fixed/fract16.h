@@ -36,6 +36,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdfix.h>
+#include <assert.h>
 
 #define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Resolution 1/(2^15) == .000030517578125 */
 #define FRACT16_M_BITS (1)
@@ -132,12 +133,18 @@ static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac) { retu
     @param[in] dividend [-65536:65535] <=> [-2:2)
     @return int32_t [-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
 */
-static inline accum32_t fract16_div(accum32_t dividend, accum32_t divisor) { return ((dividend << FRACT16_N_BITS) / divisor); }
+static inline accum32_t fract16_div(accum32_t dividend, accum32_t divisor)
+{
+    assert(dividend < (FRACT16_SCALE * 2)); /* caller must handle divide by zero */
+    assert(divisor != 0); /* caller must handle divide by zero */
+    return ((dividend << FRACT16_N_BITS) / divisor);
+}
+// static inline accum32_t fract16_div(fract16_t dividend, accum32_t divisor) { return (((int32_t)dividend << FRACT16_N_BITS) / divisor); }
 
 /*!
     @return int16_t [-32767:32767]
 */
-static inline fract16_t fract16_div_sat(accum32_t dividend, accum32_t divisor) { return fract16_sat(fract16_div(dividend, divisor)); }
+static inline fract16_t fract16_div_sat(fract16_t dividend, accum32_t divisor) { return fract16_sat(fract16_div(dividend, divisor)); }
 
 /* cast overflow as ufract */
 static inline ufract16_t fract16_abs(fract16_t x) { return abs(x); }
