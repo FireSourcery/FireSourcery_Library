@@ -52,6 +52,7 @@
 #define MOT_CAN_RX_CONTROL_ID        (0x001U)
 #define MOT_CAN_RX_VAR_READ_ID            (0x1A0U)
 #define MOT_CAN_RX_VAR_WRITE_ID           (0x1A1U)   /* distinct from read so both can route */
+
 #define MOT_CAN_RX_CONFIG_READ_ID         (0x1B0U)
 #define MOT_CAN_RX_CONFIG_WRITE_ID        (0x1B1U)
 
@@ -64,25 +65,25 @@
 */
 typedef struct __attribute__((packed))
 {
-    uint8_t Throttle;
-    uint8_t Brake;
-    uint8_t Resv[6];
+    uint16_t Throttle;
+    uint16_t Brake;
+    uint8_t Resv[4];
 }
 MotCan_TractionControl_T;
 
 typedef struct __attribute__((packed))
 {
-    uint8_t CmdValue;
+    uint16_t CmdValue;
     uint8_t FeedbackMode;
-    uint8_t Resv[6];
+    uint8_t Resv[5];
 }
 MotCan_MotorControl_T;
 
 typedef struct __attribute__((packed))
 {
-    uint8_t ClearFaults;
+    uint16_t ClearFaults;
     uint8_t StopAll;
-    uint8_t Resv[6];
+    uint8_t Resv[5];
 }
 MotCan_StateControl_T;
 

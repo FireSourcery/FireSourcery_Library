@@ -52,7 +52,7 @@
 // split as 2 array spans
 typedef const struct Motor_Table
 {
-    Motor_Context_T * const P_STATES; /* optionally */
+    // Motor_Context_T * const P_STATES; /* optionally */
     Motor_T * const P_DEVS;
     const size_t LENGTH;
 }

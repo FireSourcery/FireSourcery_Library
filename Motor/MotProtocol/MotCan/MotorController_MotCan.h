@@ -47,7 +47,7 @@
 */
 static inline void _BuildTelemetry1(MotorController_T * p_mc, MotCan_Telemetry1_T * p_data)
 {
-    const Motor_Context_T * p_motor = &p_mc->MOTORS.P_STATES[0U];
+    const Motor_Context_T * p_motor = p_mc->MOTORS.P_DEVS[0U].P_MOTOR;
 
     *p_data = (const MotCan_Telemetry1_T)
     {
@@ -55,6 +55,19 @@ static inline void _BuildTelemetry1(MotorController_T * p_mc, MotCan_Telemetry1_
         .IPhase = Motor_GetIPhase_UFract16(p_motor),
         .VPhase = Motor_GetVPhase_UFract16(p_motor),
         .VBus = VBus_Fract16(p_mc->P_VBUS),
+    };
+}
+
+static inline void _BuildTelemetry_Si(MotorController_T * p_mc, MotCan_Telemetry1_T * p_data)
+{
+    const Motor_Context_T * p_motor = p_mc->MOTORS.P_DEVS[0U].P_MOTOR;
+
+    *p_data = (const MotCan_Telemetry1_T)
+    {
+        .Speed = Motor_GetSpeed_Rpm(p_motor),
+        .IPhase = Motor_GetIPhase_Amps(p_motor),
+        .VPhase = Motor_GetVPhase_Volts(p_motor),
+        .VBus = VBus_Volts(p_mc->P_VBUS),
     };
 }
 
@@ -70,7 +83,7 @@ static inline void BuildTelemetry1(MotorController_T * p_mc, CAN_Frame_T * p_tx)
 */
 static inline void _BuildTelemetry2(MotorController_T * p_mc, MotCan_Telemetry2_T * p_data)
 {
-    const Motor_Context_T * p_motor = &p_mc->MOTORS.P_STATES[0U];
+    const Motor_Context_T * p_motor = p_mc->MOTORS.P_DEVS[0U].P_MOTOR;
 
     *p_data = (const MotCan_Telemetry2_T)
     {
