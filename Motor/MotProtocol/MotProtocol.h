@@ -71,12 +71,12 @@ MotProtocol_MemConfig_T;
 /*
 
 */
-typedef enum MotProtocol_DataModeConfig
-{
-    MOT_PROTOCOL_DATA_MODE_CONFIG_NONE = 0x00U,
-    MOT_PROTOCOL_DATA_MODE_CONFIG_ERASE = 0x01U, /* Erase first */
-}
-MotProtocol_DataModeConfig_T;
+// typedef enum MotProtocol_DataModeConfig
+// {
+//     MOT_PROTOCOL_DATA_MODE_CONFIG_NONE = 0x00U,
+//     MOT_PROTOCOL_DATA_MODE_CONFIG_ERASE = 0x01U, /* Erase first */
+// }
+// MotProtocol_DataModeConfig_T;
 
 // /* Maps to Protocol.SubStateIndex */
 // typedef enum MotProtocol_DataModeStateId

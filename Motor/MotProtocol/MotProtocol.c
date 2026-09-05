@@ -275,10 +275,10 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
     p_subState->DataModeSize    = p_req->SizeBytes;
     p_subState->DataIndex = 0U;
 
-    if(p_req->Config == MOT_PROTOCOL_DATA_MODE_CONFIG_ERASE)
-    {
-        flashStatus = Flash_Erase_Blocking(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
-    }
+    // if(p_req->Config == MOT_PROTOCOL_DATA_MODE_CONFIG_ERASE)
+    // {
+    //     flashStatus = Flash_Erase_Blocking(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
+    // }
 
     if(flashStatus == NV_MEMORY_STATUS_SUCCESS)
     {
@@ -381,11 +381,6 @@ Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_
 {
     const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
     Flash_Status_T flashStatus;
-
-    // MotProtocol_DataModeState_T * p_subState = p_reqContext->p_SubState;
-    // p_subState->DataModeAddress = p_req->AddressStart;
-    // p_subState->DataModeSize = p_req->SizeBytes;
-    // p_subState->DataIndex = 0U;
 
     flashStatus = Flash_Erase_Blocking(p_flash, p_req->AddressStart, p_req->SizeBytes);
 
