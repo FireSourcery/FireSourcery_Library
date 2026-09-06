@@ -72,7 +72,7 @@ static CalibrationBuffer_T * GetBuffer(Motor_T * p_motor) { return (CalibrationB
 static void Calibration_Entry(Motor_T * p_motor)
 {
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
-    *p_buffer = (CalibrationBuffer_T){ 0 };
+    // *p_buffer = (CalibrationBuffer_T){ 0 };
     p_buffer->Step = 0U;
     /* set once by outer calibration state. */
     Phase_ActivateV0(&p_motor->PHASE);

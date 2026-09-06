@@ -38,7 +38,10 @@
 #define MOTOR_LIBRARY_VERSION_FIX       0U
 #define MOTOR_LIBRARY_VERSION           ((MOTOR_LIBRARY_VERSION_OPT << 24U) | (MOTOR_LIBRARY_VERSION_MAJOR << 16U) | (MOTOR_LIBRARY_VERSION_MINOR << 8U) | (MOTOR_LIBRARY_VERSION_FIX))
 
-/* Precompile Flags */
+
+/*
+    Precompile Flags
+*/
 typedef union Version_Flags
 {
     struct
@@ -54,13 +57,14 @@ Version_Flags_T;
 
 static const Version_Flags_T MOTOR_VERSION_FLAGS =
 {
+    .FloatingPoint = 0U,
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
     .FieldWeakening = 1U,
 #endif
-#if defined(MOTOR_FOC_OPEN_LOOP_ENABLE)
+#if defined(MOTOR_OPEN_LOOP_RUN_ENABLE)
     .OpenLoop = 1U,
 #endif
-#if defined(MOTOR_FOC_ELECTRICAL_CALIBRATION_ENABLE)
+#if defined(MOTOR_CALIBRATION_ELECTRICAL_ENABLE)
     .ElectricalCalibration = 1U,
 #endif
 };

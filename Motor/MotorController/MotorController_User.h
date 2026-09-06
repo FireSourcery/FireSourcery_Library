@@ -112,6 +112,50 @@ static inline void MotorController_EnableRxWatchdog(MotorController_T * p_dev) {
 static inline void MotorController_DisableRxWatchdog(MotorController_T * p_dev) { _Socket_DisableRxWatchdog(MotorController_GetMainSocket(p_dev)->P_SOCKET_STATE); }
 static inline void MotorController_SetRxWatchdog(MotorController_T * p_dev, bool isEnable) { _Socket_SetRxWatchdogOnOff(MotorController_GetMainSocket(p_dev)->P_SOCKET_STATE, isEnable); }
 
+/*
+    Status Flags for User Interface
+    Combined boolean outputs for transport convenience
+*/
+// typedef union MotorController_StatusFlags
+// {
+//     struct
+//     {
+//         // uint16_t HeatWarning : 1U; // ILimit by Heat
+//         // uint16_t VSourceLow : 1U; // ILimit by VSourceLow
+//         // uint16_t SpeedLimit         : 1U;
+//         // uint16_t ILimit             : 1U;
+//         // uint16_t BuzzerEnable       : 1U;
+//         // derive from thermistor functions
+//         // uint16_t ILimitHeatMosfets  : 1U;
+//         // uint16_t ILimitHeatPcb      : 1U;
+//         // uint16_t ILimitHeatMotors   : 1U;
+//     };
+//     uint16_t Value;
+// }
+// MotorController_StatusFlags_T;
+
+// static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(MotorController_T * p_dev)
+// {
+//     return (MotorController_StatusFlags_T)
+//     {
+//         // .HeatWarning    = Monitor_GetStatus(p_dev->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
+//         //                   Monitor_GetStatus(p_dev->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
+//         // .HeatWarning    = p_dev->StateFlags.HeatWarning,
+//         // .VSourceLow     = p_dev->StateFlags.VSourceLow,
+//         // .BuzzerEnable   = p_dev->StateFlags.BuzzerEnable,
+//     };
+// }
+
+// static inline bool IsProtocolControlMode(MotorController_T * p_dev)
+// {
+//     switch (p_dev->P_MC->Config.InputMode)
+//     {
+//         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    return true;
+//         case MOTOR_CONTROLLER_INPUT_MODE_CAN:       return true;
+//         case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    return false;
+//         default: return false;
+//     }
+// }
 
 /******************************************************************************/
 /*

@@ -103,7 +103,7 @@ static packet_size_t Call_Blocking(MotorController_T * p_dev, MotPacket_T * p_tx
 /******************************************************************************/
 /*! Read Single Var */
 /******************************************************************************/
-static uint8_t ReadVar(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
+static packet_size_t ReadVar(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
 {
     MotorController_ReadVar(p_dev, (const MotPacket_VarReadFixedReq_T *)p_rx->Payload, (MotPacket_VarReadFixedResp_T *)p_tx->Payload);
 
@@ -114,7 +114,7 @@ static uint8_t ReadVar(MotorController_T * p_dev, MotPacket_T * p_tx, const MotP
 /******************************************************************************/
 /*! Write Single Var */
 /******************************************************************************/
-static uint8_t WriteVar(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
+static packet_size_t WriteVar(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
 {
     MotorController_WriteVar(p_dev, (const MotPacket_VarWriteFixedReq_T *)p_rx->Payload, (MotPacket_VarWriteFixedResp_T *)p_tx->Payload);
 
@@ -156,7 +156,7 @@ static packet_size_t Var16Write(MotorController_T * p_dev, MotPacket_T * p_txPac
 /******************************************************************************/
 /*! Read Var32s */
 /******************************************************************************/
-static uint8_t ReadVar32(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
+static packet_size_t ReadVar32(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
 {
     uint8_t varCount = MotPacket_Var32Read_ParseCount(p_rx);
     MotorController_ReadVar32s(p_dev, (const MotPacket_Var32ReadReq_T *)p_rx->Payload, (MotPacket_Var32ReadResp_T *)p_tx->Payload, varCount);
@@ -168,7 +168,7 @@ static uint8_t ReadVar32(MotorController_T * p_dev, MotPacket_T * p_tx, const Mo
 /******************************************************************************/
 /*! Write Var32s */
 /******************************************************************************/
-static uint8_t WriteVar32(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
+static packet_size_t WriteVar32(MotorController_T * p_dev, MotPacket_T * p_tx, const MotPacket_T * p_rx)
 {
     uint8_t varCount = MotPacket_Var32WriteReq_ParseCount(p_rx);
     MotorController_WriteVar32s(p_dev, (const MotPacket_Var32WriteReq_T *)p_rx->Payload, (MotPacket_Var32WriteResp_T *)p_tx->Payload, varCount);
@@ -182,10 +182,9 @@ static uint8_t WriteVar32(MotorController_T * p_dev, MotPacket_T * p_tx, const M
 /*! Mem */
 /******************************************************************************/
 /*
-    Multi variable StateMachine call
-    handle StateMachine check and address virtualization
     Use outer layer StateMachine check, simplifies handling of signature type.
     NvMemory access gated by a single MotorController_IsConfig check per request.
+    handle StateMachine check and address virtualization
 */
 static packet_size_t ReadMem_Blocking(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
@@ -258,16 +257,16 @@ static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_dev, Protocol
 
 const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH] =
 {
-    PROTOCOL_REQ(MOT_PACKET_PING,           Ping,               0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_STOP_ALL,       StopAll,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VERSION,        Version,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_CALL,           Call_Blocking,      0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VAR_READ,       Var16Read,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VAR_WRITE,      Var16Write,           0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VAR32_READ,     ReadVar32,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VAR32_WRITE,    WriteVar32,           0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_FIXED_VAR_READ,        ReadVar,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_FIXED_VAR_WRITE,       WriteVar,           0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_PING,               Ping,               0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_STOP_ALL,           StopAll,            0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VERSION,            Version,            0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_CALL,               Call_Blocking,      0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VAR_READ,           Var16Read,          0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VAR_WRITE,          Var16Write,         0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VAR32_READ,         ReadVar32,          0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VAR32_WRITE,        WriteVar32,         0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_FIXED_VAR_READ,     ReadVar,            0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_FIXED_VAR_WRITE,    WriteVar,           0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_MEM_READ,           ReadMem_Blocking,   0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_MEM_WRITE,          WriteMem_Blocking,  0U,     PROTOCOL_SYNC_DISABLE),
 #if defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)

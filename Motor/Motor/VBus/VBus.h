@@ -39,7 +39,7 @@
 */
 /******************************************************************************/
 #include "VBus_Config.h"
-#include "../Phase_Input/Phase_Calibration.h"
+#include "../Phase_Input/Phase_Calibration.h" /* optionally seperate */
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 
 #include "Math/Fixed/fract16.h"

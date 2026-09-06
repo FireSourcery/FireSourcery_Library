@@ -295,6 +295,7 @@ void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
     PID_SetKi_Fixed32(&p_state->Foc.PidId, value);
 }
 
+/*  */
 void _Motor_Tuning_SetSpeedKp_Fixed16(Motor_Context_T * p_state, uint32_t value)
 {
     _PID_SetKp_Fixed16(&p_state->Config.PidSpeed, value);

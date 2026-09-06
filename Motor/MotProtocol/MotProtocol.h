@@ -71,13 +71,6 @@ MotProtocol_MemConfig_T;
 /*
 
 */
-// typedef enum MotProtocol_DataModeConfig
-// {
-//     MOT_PROTOCOL_DATA_MODE_CONFIG_NONE = 0x00U,
-//     MOT_PROTOCOL_DATA_MODE_CONFIG_ERASE = 0x01U, /* Erase first */
-// }
-// MotProtocol_DataModeConfig_T;
-
 // /* Maps to Protocol.SubStateIndex */
 // typedef enum MotProtocol_DataModeStateId
 // {
@@ -86,6 +79,7 @@ MotProtocol_MemConfig_T;
 //     MOT_PROTOCOL_DATA_MODE_WRITE_ACTIVE,
 // }
 // MotProtocol_DataModeStateId_T;
+// typedef enum MotProtocol_DataModeStateId { IDLE, REQUESTING, RECEIVING, COMPLETE, ERROR } MotProtocol_DataModeStateId_T;
 
 
 /* For Stateful DataMode Read/Write */
@@ -99,19 +93,17 @@ typedef struct MotProtocol_DataModeState
 }
 MotProtocol_DataModeState_T;
 
-// typedef enum MotProtocol_DataModeStateId { IDLE, REQUESTING, RECEIVING, COMPLETE, ERROR } MotProtocol_DataModeStateId_T;
-
 // static inline void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState) { p_subState->StateIndex = 0U; }
-// extern void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState);
 
 extern const Packet_Format_T MOT_PROTOCOL_PACKET_CLASS;
+
 extern void MotProtocol_BuildTxHeader(MotPacket_T * p_packet, const Protocol_HeaderMeta_T * p_meta);
 
 extern Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_reqContext);
 extern Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * const p_flash, Protocol_ReqContext_T * p_reqContext);
 
-extern size_t MotProtocol_EraseFlash_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket);
-extern Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext);
+extern packet_size_t MotProtocol_EraseFlash_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket);
+// extern Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext);
 // extern packet_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket);
 // extern packet_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket);
 

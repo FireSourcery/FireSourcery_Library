@@ -76,7 +76,7 @@ static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_
 /******************************************************************************/
 /*
     when SpeedBase = Kv * V_Max
-    SpeedRated_pu = VNominal_pu,  SpeedRated_Rpm = Kv * VNominal
+    SpeedRated_pu = VNominal_pu, SpeedRated_Rpm = Kv * VNominal
     Speed_pu = V_pu = V_phase_pu * 2
     ke_pu = 1.0
     ψ_pu = .5
@@ -91,7 +91,7 @@ static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_
     vbus max with margin
     sets the fw speed limit
     ~20000 rpm base for pi feedback, shared common max
-    altneratively   pi use seperate base, 2x vnominal ~10000 base for pi feedback, ui use angle for invaraint ui
+    altneratively pid use seperate base 2x vnominal ~10000, ui use angle for invaraint ui
 */
 static inline uint16_t _Motor_GetSpeedTypeMax_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return Phase_Calibration_GetVMaxVolts() * p_config->Kv; }
 static inline uint16_t _Motor_GetSpeedTypeMax_Rads(const Motor_ElectricalSpeedRating_T * p_config) { return el_rads_of_mech_rpm(p_config->PolePairs, _Motor_GetSpeedTypeMax_Rpm(p_config)); }

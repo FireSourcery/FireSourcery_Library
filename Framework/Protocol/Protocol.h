@@ -171,7 +171,7 @@ typedef const struct Protocol_ReqSync
     uint32_t NACK_REPEAT    : 3U;   /* Common setting. Number of repeat TxPacket on Rx Nack, Tx Nack on RxPacket error */
     uint32_t TX_ACK_EXT     : 1U;   /* Use for All Stateful Ext Request  */
     uint32_t RX_ACK_EXT     : 1U;
-    uint32_t TX_ACK_ABORT   : 1U;   /* Use for All Stateful Ext Request  */
+    uint32_t TX_ACK_ABORT   : 1U;
 }
 Protocol_ReqSync_T;
 // typedef enum Protocol_SyncMode

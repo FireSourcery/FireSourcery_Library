@@ -32,6 +32,10 @@
 
 #include "RotorSensor.h"
 
+#if !defined(MOTOR_SENSOR_HALL_ENABLE) && !defined(MOTOR_SENSOR_ENCODER_DISABLE)
+#define MOTOR_SENSOR_HALL_ENABLE
+#endif
+
 #if !defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 #define MOTOR_SENSOR_SIN_COS_DISABLE
 #endif
@@ -76,9 +80,9 @@ RotorSensor_Id_T;
 typedef const struct RotorSensor_Table
 {
     const RotorSensor_T EMPTY;
-// #if defined(MOTOR_SENSOR_HALL_ENABLE)
+#if defined(MOTOR_SENSOR_HALL_ENABLE)
     const Hall_RotorSensor_T HALL;    // const Hall_T HALL;
-// #endif
+#endif
 #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
     const Encoder_RotorSensor_T ENCODER; // const Encoder_T ENCODER;
 #endif

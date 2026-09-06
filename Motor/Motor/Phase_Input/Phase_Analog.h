@@ -64,6 +64,11 @@
 static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_PER_ADCU; }
 static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_PER_ADCU * PHASE_ANALOG_I_POLARITY); }
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 #define PHASE_ANALOG_V_MAX_VOLTS(VRef_mV, R1, R2) ((((VRef_mV)*((R1) +(R2))) + ((R2)*1000U/2U)) / ((R2)*1000U))
 /* (VRef_mV/2 * 1/1000) / (R_shunt_uOhm * 1/1000000 * Gain) */
 #define PHASE_ANALOG_I_MAX_AMPS(VRef_mV, Shunt_uOhm, Gain) (((500U*(VRef_mV)) + ((Shunt_uOhm)*(Gain)/2U)) / ((Shunt_uOhm)*(Gain)))

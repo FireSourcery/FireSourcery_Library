@@ -451,8 +451,11 @@ int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, i
     if (p_motor == NULL) { return 0; }
     switch (typeId)
     {
+        // #if defined(MOTOR_SENSOR_HALL_ENABLE)
         case MOTOR_VAR_TYPE_HALL_STATE:     return Hall_VarId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId);
         case MOTOR_VAR_TYPE_HALL_CONFIG:    return _Hall_ConfigId_Get(&p_motor->SENSOR_TABLE.HALL.HALL.P_STATE->Config, varId);
+        case MOTOR_VAR_TYPE_HALL_CMD:       return 0;
+        // #endif
         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
         case MOTOR_VAR_TYPE_ENCODER_STATE:  return Encoder_ModeDT_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId);
         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return _Encoder_ConfigId_Get(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId);

@@ -272,7 +272,7 @@ Motor_Config_T;
 
 
 /*
-    Motor Runtime variable "state". Refered to as context for avoid naming collision with StateMachine State_T
+    Motor Run-time variable "state". Referred to as context to avoid naming collision with StateMachine State_T
     "Procedural composition over a passive aggregate." Cohesion of StateMachine NvmConfig
 */
 typedef struct Motor_Context
@@ -280,7 +280,7 @@ typedef struct Motor_Context
     /*
         State and SubStates
     */
-    StateMachine_Active_T StateMachine;
+    StateMachine_Active_T StateMachine;     /* Compile time mapped address */
     uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, state counter. Overflow 20Khz: 59 hours */
 
     /* Effectively Substates StateMachine Controlled */
@@ -327,7 +327,7 @@ typedef struct Motor_Context
     */
     Motor_Config_T Config;
 
-    uint8_t AdapterBuffer[MOTOR_ADAPTER_BUFFER_SIZE]; // per instance buffer, alternatively wrap outer context
+    uint8_t AdapterBuffer[MOTOR_ADAPTER_BUFFER_SIZE]; /* per instance buffer, alternatively wrap outer context */
     uint8_t CalibrationBuffer[MOTOR_CALIBRATION_BUFFER_SIZE]; /* Opaque buffer for one-shot calibration procedures. */
 
 #if defined(MOTOR_LOCAL_UNIT_CONVERSION_ENABLE)
@@ -371,14 +371,14 @@ Motor_Context_T;
 
 
 /*!
-    @brief Motor Const Handle - Compile time const configuration instance.
+    @brief Motor Compile-time const configuration instance.
     program, meta, unrelated to end user config.
-    Context for Thread and StateMachine.
+    Full Context for Thread and StateMachine.
 */
 typedef const struct Motor
 {
     Motor_Context_T * P_MOTOR;
-    const VBus_T * P_VBUS; /* Read-only */
+    const VBus_T * P_VBUS; /* Read-only. static instance. */
     Phase_VOut_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
     // RotorSensor_T SENSOR; /* Compile time default */
@@ -388,9 +388,10 @@ typedef const struct Motor
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */
     const Motor_Config_T * P_NVM_CONFIG;
     const FOC_Config_T * P_FOC_NVM_CONFIG; /* config for the FOC struct with a nested config field, without including a 3rd copy in Motor_Config */
-
+    /*  */
     HeatMonitor_T HEAT_MONITOR;
     Analog_Conversion_T HEAT_MONITOR_CONVERSION;
+
     /*
         System-scope arbitration handles. Pointers to LimitArray_Augments_T (cached aggregate) only — Motor reads derate state.
         Handle the combined system-wide state at the Motor layer. This way a single getter combines the local and system derate sources.

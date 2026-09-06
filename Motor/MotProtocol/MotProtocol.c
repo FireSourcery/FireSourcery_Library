@@ -389,7 +389,7 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
 //     return PROTOCOL_REQ_CODE_TX_CONTINUE;
 // }
 
-size_t MotProtocol_EraseFlash_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
+packet_size_t MotProtocol_EraseFlash_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)p_rxPacket->Payload;
     Flash_Status_T flashStatus = Flash_Erase_Blocking(p_flash, p_req->AddressStart, p_req->SizeBytes);

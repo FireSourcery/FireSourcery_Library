@@ -290,7 +290,6 @@ static inline bool MotorController_IsLockOpComplete(MotorController_T * p_dev)
 
 /* return union status */
 // 0 as success
-// if (MotorController_IsLockOpComplete(p_dev) == true)
 static inline int MotorController_GetLockOpStatus(MotorController_T * p_dev) { return p_dev->P_MC->LockOpStatus; }
 
 

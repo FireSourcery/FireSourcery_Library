@@ -110,7 +110,7 @@ typedef enum MotPacket_Id ENUM8_T
     /* Stateful Read/Write */
     MOT_PACKET_DATA_MODE_READ = 0xDAU,      /* Stateful NvMemory Read using Address */
     MOT_PACKET_DATA_MODE_WRITE = 0xDBU,     /* Stateful NvMemory Write using Address */
-    MOT_PACKET_DATA_MODE_ERASE = 0xDCU,     /* Stateful NvMemory Erase using Address */
+    MOT_PACKET_DATA_MODE_ERASE = 0xDCU,     /* Erase using Address */
     MOT_PACKET_DATA_MODE_DATA = 0xDDU,      /* Data Mode Data */
     MOT_PACKET_DATA_MODE_ABORT = MOT_PACKET_SYNC_ABORT,
 
