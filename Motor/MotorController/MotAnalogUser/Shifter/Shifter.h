@@ -29,10 +29,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if !defined(SHIFTER_PINS_AVAILABLE_FNR) && !defined(SHIFTER_PINS_AVAILABLE_FR) && !defined(SHIFTER_PINS_AVAILABLE_R)
-#define SHIFTER_PINS_AVAILABLE_FR
+#if !defined(SHIFTER_PINS_FR_FIXED) && !defined(SHIFTER_PINS_FR_OPTION) && !defined(SHIFTER_PINS_R_FIXED)
+#define SHIFTER_PINS_FR_OPTION
 #endif
-
 
 /******************************************************************************/
 /*
@@ -110,7 +109,9 @@ typedef struct Shifter_State
     UserDIn_State_T ForwardState;
     UserDIn_State_T ReverseState;
     UserDIn_State_T NeutralState;
-    // const Shifter_Direction_T * p_DecodeTable; /* if runtime switch to R only is needed */
+#if defined(SHIFTER_PINS_FR_OPTION)
+    const Shifter_Direction_T * p_DecodeTable; /* if runtime switch to R only is needed */
+#endif
     Shifter_Direction_T LastDirection;     /* For change-edge query */
     Shifter_Config_T Config;
 }
@@ -146,46 +147,27 @@ Shifter_T;
     Capture
 */
 /******************************************************************************/
-static inline Shifter_Direction_T _Shifter_Decode_R(Shifter_Pins_T pins)
-{
-#define _F SHIFTER_DIRECTION_FORWARD
-#define _R SHIFTER_DIRECTION_REVERSE
-    static const Shifter_Direction_T DECODE_TABLE[8] = { _F, _F, _R, _R, _F, _F, _R, _R };
-    return DECODE_TABLE[pins.Value];
-}
-
-static inline Shifter_Direction_T _Shifter_Decode_FR(Shifter_Pins_T pins)
-{
-#define _N SHIFTER_DIRECTION_NEUTRAL
-#define _F SHIFTER_DIRECTION_FORWARD
-#define _R SHIFTER_DIRECTION_REVERSE
-    static const Shifter_Direction_T DECODE_TABLE[8] = { _N, _R, _F, _N, _N, _N, _N, _N };
-    return DECODE_TABLE[pins.Value];
-}
+extern const Shifter_Direction_T DECODE_TABLE_FNR[8];
+extern const Shifter_Direction_T DECODE_TABLE_R_ONLY[8];
 
 static inline Shifter_Direction_T Shifter_Decode(Shifter_T * p_shifter, Shifter_Pins_T pins)
 {
+#if defined(SHIFTER_PINS_FR_OPTION)
+    return p_shifter->P_STATE->p_DecodeTable[pins.Value];
+#elif defined(SHIFTER_PINS_FR_FIXED)
     (void)p_shifter; /* in case decode table is fully static */
-
-#if defined(SHIFTER_PINS_AVAILABLE_FNR) || defined(SHIFTER_PINS_AVAILABLE_FR)
-// && !RUN_TIME_SELECTABLE
-    return _Shifter_Decode_FR(pins);
-// RUN_TIME_SELECTABLE
-// return p_shifter->P_STATE->p_DecodeTable[pins.Value];
-#elif defined(SHIFTER_PINS_AVAILABLE_R)
-   return _Shifter_Decode_R(pins);
+    return DECODE_TABLE_FNR[pins.Value];
+#elif defined(SHIFTER_PINS_R_FIXED)
+    (void)p_shifter; /* in case decode table is fully static */
+    return DECODE_TABLE_R_ONLY[pins.Value];
 #endif
-
-
 }
 
 static inline void Shifter_Poll(Shifter_T * p_shifter)
 {
     UserDIn_Modal_PollEdgeValue(&p_shifter->REVERSE_DIN);
-#if defined(SHIFTER_PINS_AVAILABLE_FNR) || defined(SHIFTER_PINS_AVAILABLE_FR)
+#if defined(SHIFTER_PINS_FR_OPTION) || defined(SHIFTER_PINS_FR_FIXED)
     UserDIn_Modal_PollEdgeValue(&p_shifter->FORWARD_DIN);
-#endif
-#if defined(SHIFTER_PINS_AVAILABLE_FNR)
     UserDIn_Modal_PollEdgeValue(&p_shifter->NEUTRAL_DIN);
 #endif
 }
@@ -195,10 +177,8 @@ static inline Shifter_Pins_T Shifter_GetPins(Shifter_T * p_shifter)
     Shifter_Pins_T pins =
     {
         .Reverse = UserDIn_GetState(&p_shifter->REVERSE_DIN),
-#if defined(SHIFTER_PINS_AVAILABLE_FNR) || defined(SHIFTER_PINS_AVAILABLE_FR)
+#if defined(SHIFTER_PINS_FR_OPTION) || defined(SHIFTER_PINS_FR_FIXED)
         .Forward = UserDIn_GetState(&p_shifter->FORWARD_DIN),
-#endif
-#if defined(SHIFTER_PINS_AVAILABLE_FNR)
         .Neutral = UserDIn_GetState(&p_shifter->NEUTRAL_DIN),
 #endif
     };

@@ -28,25 +28,25 @@
     not asserted (its asymmetric semantic); FNR/FR default to NEUTRAL.
 */
 /******************************************************************************/
-// #define _N SHIFTER_DIRECTION_NEUTRAL
-// #define _F SHIFTER_DIRECTION_FORWARD
-// #define _R SHIFTER_DIRECTION_REVERSE
+#define _N SHIFTER_DIRECTION_NEUTRAL
+#define _F SHIFTER_DIRECTION_FORWARD
+#define _R SHIFTER_DIRECTION_REVERSE
 
-// static const Shifter_Direction_T DECODE_TABLE_FNR[8]    = { _N, _F, _R, _N, _N, _N, _N, _N };
-// static const Shifter_Direction_T DECODE_TABLE_R_ONLY[8] = { _F, _F, _R, _R, _F, _F, _R, _R };
+const Shifter_Direction_T DECODE_TABLE_FNR[8]    = { _N, _R, _F, _N, _N, _N, _N, _N };
+const Shifter_Direction_T DECODE_TABLE_R_ONLY[8] = { _F, _R, _F, _R, _F, _R, _F, _R };
 
-// /******************************************************************************/
-// /*
-//     Apply — the Config.PinMode mask is the SKU. It gates Init (only wired
-//     pins are touched, and only when their HAL is non-NULL) and selects the
-//     decode table. The Forward bit is the discriminator: R-only (no Forward
-//     pin) defaults to Forward; FNR/FR share a table.
-// */
-// /******************************************************************************/
-// static inline const Shifter_Direction_T * SelectDecodeTable(Shifter_Pins_T pins)
-// {
-//     return pins.Forward ? DECODE_TABLE_FNR : DECODE_TABLE_R_ONLY;
-// }
+/******************************************************************************/
+/*
+    Apply — the Config.PinMode mask is the SKU. It gates Init (only wired
+    pins are touched, and only when their HAL is non-NULL) and selects the
+    decode table. The Forward bit is the discriminator: R-only (no Forward
+    pin) defaults to Forward; FNR/FR share a table.
+*/
+/******************************************************************************/
+static inline const Shifter_Direction_T * SelectDecodeTable(Shifter_Pins_T pins)
+{
+    return pins.Forward ? DECODE_TABLE_FNR : DECODE_TABLE_R_ONLY;
+}
 
 /******************************************************************************/
 /*
@@ -69,13 +69,12 @@ void Shifter_SetPinMode(const Shifter_T * p_shifter, Shifter_PinMode_T mode)
 {
     Shifter_Pins_T pins = { .Value = (uint8_t)mode };
     p_shifter->P_STATE->Config.PinMode = pins;
-    // p_shifter->P_STATE->p_DecodeTable = SelectDecodeTable(pins);
-
-    if (pins.Reverse) { UserDIn_Init(&p_shifter->REVERSE_DIN); }
-#if defined(SHIFTER_PINS_AVAILABLE_FNR) || defined(SHIFTER_PINS_AVAILABLE_FR)
-    if (pins.Forward) { UserDIn_Init(&p_shifter->FORWARD_DIN); }
+#if defined(SHIFTER_PINS_FR_OPTION)
+    p_shifter->P_STATE->p_DecodeTable = SelectDecodeTable(pins);
 #endif
-#if defined(SHIFTER_PINS_AVAILABLE_FNR)
+    if (pins.Reverse) { UserDIn_Init(&p_shifter->REVERSE_DIN); }
+#if defined(SHIFTER_PINS_FR_FIXED) || defined(SHIFTER_PINS_FR_OPTION)
+    if (pins.Forward) { UserDIn_Init(&p_shifter->FORWARD_DIN); }
     if (pins.Neutral) { UserDIn_Init(&p_shifter->NEUTRAL_DIN); }
 #endif
 }
