@@ -186,12 +186,12 @@ Protocol_ReqCode_T MotProtocol_DataModeReadInit(void * p_app, Protocol_ReqContex
 {
     MotProtocol_DataModeState_T * p_subState = p_reqContext->p_SubState;
     const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
+    MotPacket_T * p_txPacket = p_reqContext->p_TxPacket;
     Protocol_ReqCode_T reqCode;
 
     p_subState->DataModeAddress = p_req->AddressStart;
     p_subState->DataModeSize    = p_req->SizeBytes;
     p_subState->DataIndex = 0U;
-    MotPacket_T * p_txPacket = p_reqContext->p_TxPacket;
     ((MotPacket_DataModeResp_T *)p_txPacket->Payload)->Status = MOT_STATUS_SUCCESS;
     *p_reqContext->p_TxSize = MotPacket_BuildHeader(p_txPacket, MOT_PACKET_DATA_MODE_READ, sizeof(MotPacket_DataModeResp_T));
     *p_reqContext->p_SubStateIndex = 1U;
@@ -268,6 +268,7 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
 {
     MotProtocol_DataModeState_T * p_subState = p_reqContext->p_SubState;
     const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
+    MotPacket_T * p_txPacket = p_reqContext->p_TxPacket;
     Protocol_ReqCode_T reqCode;
     Flash_Status_T flashStatus = NV_MEMORY_STATUS_SUCCESS;
 
@@ -285,7 +286,6 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
         flashStatus = Flash_SetContinueWrite(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
     }
 
-    MotPacket_T * p_txPacket = p_reqContext->p_TxPacket;
     ((MotPacket_DataModeResp_T *)p_txPacket->Payload)->Status = flashStatus;
     *p_reqContext->p_TxSize = MotPacket_BuildHeader(p_txPacket, MOT_PACKET_DATA_MODE_WRITE, sizeof(MotPacket_DataModeResp_T));
     *p_reqContext->p_SubStateIndex = 1U;
@@ -377,17 +377,25 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
 /******************************************************************************/
 /*! Erase */
 /******************************************************************************/
-Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)
+// Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)
+// {
+//     const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
+//     MotPacket_T * p_txPacket = p_reqContext->p_TxPacket;
+
+//     Flash_Status_T flashStatus = Flash_Erase_Blocking(p_flash, p_req->AddressStart, p_req->SizeBytes);
+
+//     ((MotPacket_DataModeResp_T *)p_txPacket->Payload)->Status = flashStatus;
+//     *p_reqContext->p_TxSize = MotPacket_BuildHeader(p_txPacket, MOT_PACKET_DATA_MODE_ERASE, sizeof(MotPacket_DataModeResp_T));
+//     return PROTOCOL_REQ_CODE_TX_CONTINUE;
+// }
+
+size_t MotProtocol_EraseFlash_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
-    const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
-    Flash_Status_T flashStatus;
+    const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)p_rxPacket->Payload;
+    Flash_Status_T flashStatus = Flash_Erase_Blocking(p_flash, p_req->AddressStart, p_req->SizeBytes);
 
-    flashStatus = Flash_Erase_Blocking(p_flash, p_req->AddressStart, p_req->SizeBytes);
-
-    MotPacket_T * p_txPacket = p_reqContext->p_TxPacket;
     ((MotPacket_DataModeResp_T *)p_txPacket->Payload)->Status = flashStatus;
-    *p_reqContext->p_TxSize = MotPacket_BuildHeader(p_txPacket, MOT_PACKET_DATA_MODE_ERASE, sizeof(MotPacket_DataModeResp_T));
-    return PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+   return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_DATA_MODE_ERASE, sizeof(MotPacket_DataModeResp_T));
 }
 
 
