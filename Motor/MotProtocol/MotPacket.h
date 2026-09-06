@@ -98,8 +98,8 @@ typedef enum MotPacket_Id ENUM8_T
         Read/Write by VarId - Field-like Access:
         Real-Time Variable, NvMemory Config, Call functions passing 1 argument
     */
-    MOT_PACKET_VAR_READ = 0xB3U,        /* Up to 16 uint16_t values */
-    MOT_PACKET_VAR_WRITE = 0xB4U,       /* Up to 8 uint16_t values */
+    MOT_PACKET_VAR16_READ = 0xB3U,        /* Up to 16 uint16_t values */
+    MOT_PACKET_VAR16_WRITE = 0xB4U,       /* Up to 8 uint16_t values */
     MOT_PACKET_VAR32_READ = 0xB5U,      /* Up to 8 uint32_t values */
     MOT_PACKET_VAR32_WRITE = 0xB6U,     /* Up to 4 uint32_t values */
 
@@ -268,11 +268,11 @@ typedef struct MOT_PACKET_PACKED MotPacket_VarWriteFixedResp { uint8_t Status; }
     Vars 16
 */
 /******************************************************************************/
-typedef struct MOT_PACKET_PACKED MotPacket_VarReadReq { uint16_t MotVarIds[16U]; } MotPacket_VarReadReq_T;
-typedef struct MOT_PACKET_PACKED MotPacket_VarReadResp { uint16_t Value16[16U]; } MotPacket_VarReadResp_T;
+typedef struct MOT_PACKET_PACKED MotPacket_Var16ReadReq { uint16_t MotVarIds[16U]; } MotPacket_Var16ReadReq_T;
+typedef struct MOT_PACKET_PACKED MotPacket_Var16ReadResp { uint16_t Value16[16U]; } MotPacket_Var16ReadResp_T;
 
-typedef struct MOT_PACKET_PACKED MotPacket_VarWriteReq { struct { uint16_t MotVarId; uint16_t Value16; } Pairs[8U]; }  MotPacket_VarWriteReq_T;
-typedef struct MOT_PACKET_PACKED MotPacket_VarWriteResp { uint8_t VarStatus[8U]; }                                     MotPacket_VarWriteResp_T;
+typedef struct MOT_PACKET_PACKED MotPacket_Var16WriteReq { struct { uint16_t MotVarId; uint16_t Value16; } Pairs[8U]; }  MotPacket_Var16WriteReq_T;
+typedef struct MOT_PACKET_PACKED MotPacket_Var16WriteResp { uint8_t VarStatus[8U]; }                                     MotPacket_Var16WriteResp_T;
 
 /******************************************************************************/
 /*!

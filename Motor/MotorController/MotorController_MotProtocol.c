@@ -137,9 +137,9 @@ static packet_size_t WriteVar(MotorController_T * p_dev, MotPacket_T * p_tx, con
 static packet_size_t Var16Read(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     uint8_t varCount = MotPacket_ParsePayloadLength(p_rxPacket) / sizeof(uint16_t);
-    MotorController_ReadVar16s(p_dev, (const MotPacket_VarReadReq_T *)p_rxPacket->Payload, (MotPacket_VarReadResp_T *)p_txPacket->Payload, varCount);
+    MotorController_ReadVar16s(p_dev, (const MotPacket_Var16ReadReq_T *)p_rxPacket->Payload, (MotPacket_Var16ReadResp_T *)p_txPacket->Payload, varCount);
 
-    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR_READ, varCount * sizeof(uint16_t));
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR16_READ, varCount * sizeof(uint16_t));
 }
 
 /******************************************************************************/
@@ -148,9 +148,9 @@ static packet_size_t Var16Read(MotorController_T * p_dev, MotPacket_T * p_txPack
 static packet_size_t Var16Write(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     uint8_t varCount = MotPacket_ParsePayloadLength(p_rxPacket) / sizeof(uint16_t) / 2U;
-    MotorController_WriteVar16s(p_dev, (const MotPacket_VarWriteReq_T *)p_rxPacket->Payload, (MotPacket_VarWriteResp_T *)p_txPacket->Payload, varCount);
+    MotorController_WriteVar16s(p_dev, (const MotPacket_Var16WriteReq_T *)p_rxPacket->Payload, (MotPacket_Var16WriteResp_T *)p_txPacket->Payload, varCount);
 
-    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR_WRITE, varCount * sizeof(uint8_t));
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR16_WRITE, varCount * sizeof(uint8_t));
 }
 
 /******************************************************************************/
@@ -261,8 +261,8 @@ const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MO
     PROTOCOL_REQ(MOT_PACKET_STOP_ALL,           StopAll,            0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_VERSION,            Version,            0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_CALL,               Call_Blocking,      0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VAR_READ,           Var16Read,          0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VAR_WRITE,          Var16Write,         0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VAR16_READ,           Var16Read,          0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VAR16_WRITE,          Var16Write,         0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_VAR32_READ,         ReadVar32,          0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_VAR32_WRITE,        WriteVar32,         0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_FIXED_VAR_READ,     ReadVar,            0U,     PROTOCOL_SYNC_DISABLE),

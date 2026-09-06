@@ -52,25 +52,25 @@ static inline packet_size_t MotorController_WriteVar(MotorController_T * p_dev, 
     return sizeof(MotPacket_VarWriteFixedResp_T);
 }
 
-static packet_size_t MotorController_ReadVar32s(MotorController_T * p_dev, const MotPacket_Var32ReadReq_T * p_rx, MotPacket_Var32ReadResp_T * p_tx, uint8_t varCount)
+static packet_size_t MotorController_ReadVar32s(MotorController_T * p_dev, const MotPacket_Var32ReadReq_T * p_rx, MotPacket_Var32ReadResp_T * p_tx, uint8_t count)
 {
-    for (uint8_t index = 0U; index < varCount; index++) { p_tx->Values[index] = MotorController_Var_Get(p_dev, (MotVarId_T)p_rx->Read[index].MotVarId); }
-    return varCount * sizeof(uint32_t);
+    for (uint8_t index = 0U; index < count; index++) { p_tx->Values[index] = MotorController_Var_Get(p_dev, (MotVarId_T)p_rx->Read[index].MotVarId); }
+    return count * sizeof(uint32_t);
 }
 
-static packet_size_t MotorController_WriteVar32s(MotorController_T * p_dev, const MotPacket_Var32WriteReq_T * p_rx, MotPacket_Var32WriteResp_T * p_tx, uint8_t varCount)
+static packet_size_t MotorController_WriteVar32s(MotorController_T * p_dev, const MotPacket_Var32WriteReq_T * p_rx, MotPacket_Var32WriteResp_T * p_tx, uint8_t count)
 {
-    for (uint8_t index = 0U; index < varCount; index++) { p_tx->VarStatus[index] = MotorController_Var_Set(p_dev, (MotVarId_T)p_rx->Write[index].MotVarId, p_rx->Write[index].Value); }
-    return varCount * sizeof(uint8_t);
+    for (uint8_t index = 0U; index < count; index++) { p_tx->VarStatus[index] = MotorController_Var_Set(p_dev, (MotVarId_T)p_rx->Write[index].MotVarId, p_rx->Write[index].Value); }
+    return count * sizeof(uint8_t);
 }
 
-static packet_size_t MotorController_ReadVar16s(MotorController_T * p_dev, const MotPacket_VarReadReq_T * p_rx, MotPacket_VarReadResp_T * p_tx, uint8_t count)
+static packet_size_t MotorController_ReadVar16s(MotorController_T * p_dev, const MotPacket_Var16ReadReq_T * p_rx, MotPacket_Var16ReadResp_T * p_tx, uint8_t count)
 {
     for (uint8_t index = 0U; index < count; index++) { p_tx->Value16[index] = (uint16_t)MotorController_Var_Get(p_dev, (MotVarId_T)p_rx->MotVarIds[index]); }
     return count * sizeof(uint16_t);
 }
 
-static packet_size_t MotorController_WriteVar16s(MotorController_T * p_dev, const MotPacket_VarWriteReq_T * p_rx, MotPacket_VarWriteResp_T * p_tx, uint8_t count)
+static packet_size_t MotorController_WriteVar16s(MotorController_T * p_dev, const MotPacket_Var16WriteReq_T * p_rx, MotPacket_Var16WriteResp_T * p_tx, uint8_t count)
 {
     for (uint8_t index = 0U; index < count; index++) { p_tx->VarStatus[index] = MotorController_Var_Set(p_dev, (MotVarId_T)p_rx->Pairs[index].MotVarId, p_rx->Pairs[index].Value16); }
     return count * sizeof(uint8_t);
