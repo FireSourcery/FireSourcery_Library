@@ -85,11 +85,11 @@
 // // c23
 // // #define Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) ((typeof(focFunction) *)(_Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction)))
 
-// #define Motor_CommutationModeFn(p_motor, focSet, sixStepSet) \
-//     _Generic((focSet), \
-//         Motor_Set_T:    (Motor_Set_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)), \
-//         Motor_Get_T:    (Motor_Get_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),  \
-//         Motor_Proc_T:   (Motor_Proc_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet))   \
+// #define Motor_CommutationModeFn(p_motor, focSet, sixStepSet)
+//     _Generic((focSet),
+//         Motor_Set_T:    (Motor_Set_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),
+//         Motor_Get_T:    (Motor_Get_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),
+//         Motor_Proc_T:   (Motor_Proc_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet))
 //     )
 
 // #define Motor_CommutationModeFn_Call(p_motor, focSet, sixStepSet, ...) ((Motor_CommutationModeFn(p_motor, focSet, sixStepSet))(p_motor __VA_OPT__(,) __VA_ARGS__))

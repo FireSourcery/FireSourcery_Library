@@ -108,8 +108,8 @@ FOC_SensorlessConfig_T;
     },                                                                              \
 }
 
-// .StaLambda     = (fract16_t)FRACT16(.50F),                      /* STA √|σ| gain — re-tune per motor */                 \
-// .StaAlphaDt    = (fract16_t)FRACT16(.01F),                      /* STA integrator gain × dt */                          \
+// .StaLambda     = (fract16_t)FRACT16(.50F),                      /* STA √|σ| gain — re-tune per motor */
+// .StaAlphaDt    = (fract16_t)FRACT16(.01F),                      /* STA integrator gain × dt */
 
 typedef struct FOC_Sensorless
 {

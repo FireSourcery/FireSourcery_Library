@@ -97,6 +97,8 @@ int32_t Encoder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarI
         case ENCODER_VAR_RPM:             value = Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder);     break;
         // case ENCODER_VAR_DELTA_T_SPEED:   value = Encoder_DeltaT_GetRotationalSpeed_RPM(p_encoder);     break;
         // case ENCODER_VAR_DELTA_D_SPEED:   value = Encoder_DeltaD_GetRotationalSpeed_RPM(p_encoder);     break;
+        case ENCODER_VAR_DELTA_T_SPEED:   break; /* not yet implemented */
+        case ENCODER_VAR_DELTA_D_SPEED:   break; /* not yet implemented */
     }
     return value;
 }

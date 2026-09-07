@@ -186,7 +186,7 @@ static bool ProcTxNackRxRepeat(const Socket_T * p_socket, Socket_State_T * p_sta
     if ((*p_nackCounter < nackRepeatMax) || (nackRepeatMax == 0U))
     {
         TxSync(p_socket, p_state, nackRepeatId);
-        *p_nackCounter++;
+        (*p_nackCounter)++;
         isFinal = false;
     }
     else

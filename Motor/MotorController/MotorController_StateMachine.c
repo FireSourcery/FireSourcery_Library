@@ -103,7 +103,7 @@ void MotorController_PollFaultFlags(MotorController_T * p_dev)
     p_mc->FaultFlags.VAccsLimit = RangeMonitor_IsAnyFault(p_dev->V_ACCESSORIES.P_STATE);
     p_mc->FaultFlags.VAnalogLimit = RangeMonitor_IsAnyFault(p_dev->V_ANALOG.P_STATE);
     p_mc->FaultFlags.PcbOverheat = (Monitor_GetStatus(p_dev->HEAT_PCB.P_STATE) == MONITOR_STATUS_FAULT);
-    p_mc->FaultFlags.MosfetsOverheat = (HeatMonitor_Group_GetStatus(&p_dev->HEAT_MOSFETS) == MONITOR_STATUS_FAULT);
+    p_mc->FaultFlags.MosfetsOverheat = (HeatMonitor_Group_GetStatus(&p_dev->HEAT_MOSFETS) == HEAT_MONITOR_STATUS_FAULT_OVERHEAT);
 }
 
 /* Non-Fault states: apply set/clear, transition to Fault if any flags remain */
@@ -391,6 +391,7 @@ static State_T * MotorCmd_Input(MotorController_T * p_dev, state_value_t cmd)
     // Motor_ApplyUserDirection(Motor_Table_At(&p_dev->MOTORS, p_input->MotorId), p_input->Direction);
     // Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));
     // Motor_ApplyControlState(p_motor, (Phase_VOutMode_T)varValue);
+    return NULL;
 }
 
 static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
@@ -563,6 +564,9 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
 
             /* Generic select or call motor function */
             // case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  StartCalibrateSensor(p_dev);    break;
+            case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR: break; /* reserved, not yet implemented */
+
+            case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_RESET: break; /* not applicable outside Tuning state */
 
             /* No return */
             case MOTOR_CONTROLLER_LOCK_REBOOT:
@@ -616,8 +620,6 @@ const State_T MC_STATE_LOCK =
 /******************************************************************************/
 static void Fault_Entry(MotorController_T * p_dev)
 {
-    MotorController_Context_T * p_mc = p_dev->P_MC;
-
     Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit); /* exit on fault and exit lock. or implement input id */
 

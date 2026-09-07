@@ -360,6 +360,8 @@ int32_t _Encoder_ConfigId_Get(const Encoder_Config_T * p_encoder, Encoder_Config
         case ENCODER_CONFIG_INTERPOLATE_ANGLE_SCALAR:          value = 0;    break;
         case ENCODER_CONFIG_INDEX_ZERO_REF:                    value = Encoder_GetIndexZeroRef(p_encoder);             break;
         // case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                value = p_encoder->IndexAngleRef;                  break;
+        case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                break; /* write-only command */
+        case ENCODER_CONFIG_RUN_HOMING:                        break; /* write-only command */
     }
     return value;
 }
@@ -376,6 +378,8 @@ void _Encoder_ConfigId_Set(Encoder_Config_T * p_encoder, Encoder_ConfigId_T varI
 
         case ENCODER_CONFIG_INDEX_ZERO_REF:                    Encoder_SetIndexZeroRef(p_encoder, varValue);              break;
         // case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                Motor_Encoder_CalibrateHomeOffset(p_motor);                  break;
+        case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                break; /* not yet implemented */
+        case ENCODER_CONFIG_RUN_HOMING:                        break; /* not yet implemented */
     }
 }
 

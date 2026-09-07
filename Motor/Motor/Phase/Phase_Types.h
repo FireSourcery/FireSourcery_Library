@@ -213,7 +213,7 @@ static inline Phase_Bitmask_T Phase_BitmaskOfThreshold(Phase_Triplet_T values, i
 /* -(int32_t)bool apply  */
 static inline Phase_Triplet_T _Phase_Mask(Phase_Bitmask_T bits, uint16_t value)
 {
-    return (Phase_Triplet_T) { value & -(int32_t)bits.A, value & -(int32_t)bits.B, value & -(int32_t)bits.C, };
+    return (Phase_Triplet_T) { .A = value & -(int32_t)bits.A, .B = value & -(int32_t)bits.B, .C = value & -(int32_t)bits.C };
 }
 
 static inline Phase_Triplet_T Phase_Aligned(Phase_Id_T id, uint16_t value)

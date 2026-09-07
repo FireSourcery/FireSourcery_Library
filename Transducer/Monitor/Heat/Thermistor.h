@@ -99,7 +99,7 @@ typedef struct Thermistor_Coeffs
 }
 Thermistor_Coeffs_T;
 
-#define THERMISTOR_COEFF_ALLOC_ZERO() (&(Thermistor_Coeffs_T){0})
+#define THERMISTOR_COEFF_ALLOC_ZERO() (&(Thermistor_Coeffs_T){})
 
 /*
     PTC / linear silicon sensor characterization (e.g. KTY84).

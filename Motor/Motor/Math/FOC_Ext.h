@@ -54,7 +54,7 @@ static inline bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc
     }
 }
 
-static inline bool _FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
+static inline void _FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
 {
     FOC_ProcClarkePark(p_foc, p_iabc->Values.A, p_iabc->Values.B, p_iabc->Values.C);
 }

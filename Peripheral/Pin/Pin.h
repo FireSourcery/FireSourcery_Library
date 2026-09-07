@@ -52,8 +52,8 @@ typedef const struct Pin
 }
 Pin_T;
 
-#define PIN_INIT(p_Hal, Id) (Pin_T) { .P_HAL_PIN = p_Hal, .ID = PIN_ID_INIT(Id), .IS_INVERT = false } /* Default to not inverted */
-#define PIN_INIT_INVERT(p_Hal, Id, IsInvert) (Pin_T) { .P_HAL_PIN = p_Hal, .ID = PIN_ID_INIT(Id), .IS_INVERT = IsInvert, }
+#define PIN_INIT(p_Hal, Id) { .P_HAL_PIN = p_Hal, .ID = PIN_ID_INIT(Id), .IS_INVERT = false } /* Default to not inverted */
+#define PIN_INIT_INVERT(p_Hal, Id, IsInvert) { .P_HAL_PIN = p_Hal, .ID = PIN_ID_INIT(Id), .IS_INVERT = IsInvert, }
 
 // {p_Hal, PIN_ID_INIT(Id)}
 
@@ -104,12 +104,12 @@ static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { retur
 // typedef Pin_T FastPin_T; /* Same Struct */
 // static inline bool FastPin_Input_ReadPhysical(const FastPin_T * p_pin) { return HAL_FastPin_ReadInput(p_pin->P_HAL_PIN, p_pin->ID); }
 
-// #define PinT_Read(p_pin) \
-//     _Generic((p_pin), \
-//         Pin_T *: Pin_Input_Read, \
-//         FastPin_T *: HAL_FastPin_ReadInput, \
-//         HAL_Pin_T *: HAL_Pin_ReadInput, \
-//         default: Pin_Input_ReadPhysical \
+// #define PinT_Read(p_pin)
+//     _Generic((p_pin),
+//         Pin_T *: Pin_Input_Read,
+//         FastPin_T *: HAL_FastPin_ReadInput,
+//         HAL_Pin_T *: HAL_Pin_ReadInput,
+//         default: Pin_Input_ReadPhysical
 //     )(p_pin)
 
 /******************************************************************************/

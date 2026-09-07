@@ -50,12 +50,12 @@ static inline Hall_T * GetHall(Motor_T * p_motor) { return &p_motor->SENSOR_TABL
     Sequence: 6 vectors at 60deg electrical; conventional Align -> Settle -> Read.
     Align runs every tick (current PID closes loop); timer paces vector advance.
 */
-static_assert(HALL_SENSORS_VIRTUAL_A     == PHASE_ID_A);
-static_assert(HALL_SENSORS_VIRTUAL_INV_C == PHASE_ID_INV_C);
-static_assert(HALL_SENSORS_VIRTUAL_B     == PHASE_ID_B);
-static_assert(HALL_SENSORS_VIRTUAL_INV_A == PHASE_ID_INV_A);
-static_assert(HALL_SENSORS_VIRTUAL_C     == PHASE_ID_C);
-static_assert(HALL_SENSORS_VIRTUAL_INV_B == PHASE_ID_INV_B);
+static_assert((int)HALL_SENSORS_VIRTUAL_A     == (int)PHASE_ID_A);
+static_assert((int)HALL_SENSORS_VIRTUAL_INV_C == (int)PHASE_ID_INV_C);
+static_assert((int)HALL_SENSORS_VIRTUAL_B     == (int)PHASE_ID_B);
+static_assert((int)HALL_SENSORS_VIRTUAL_INV_A == (int)PHASE_ID_INV_A);
+static_assert((int)HALL_SENSORS_VIRTUAL_C     == (int)PHASE_ID_C);
+static_assert((int)HALL_SENSORS_VIRTUAL_INV_B == (int)PHASE_ID_INV_B);
 
 #define CAL_STEP_COUNT    (6U)
 

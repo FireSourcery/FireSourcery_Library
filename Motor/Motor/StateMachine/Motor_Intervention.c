@@ -78,9 +78,8 @@ static void TorqueZero_Proc(Motor_T * p_motor)
 
 static State_T * TorqueZero_Next(Motor_T * p_motor)
 {
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
-    // if (Motor_IsSpeedFreewheelLimitRange(p_context)) { return &MOTOR_STATE_PASSIVE; }
-    // if (p_context->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_RAMP_SAFE; }
+    // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
+    // if (p_motor->P_MOTOR->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_RAMP_SAFE; }
     return NULL;
 }
 

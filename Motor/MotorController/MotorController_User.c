@@ -41,8 +41,6 @@
 /******************************************************************************/
 int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_SystemCmd_T id, int value)
 {
-    MotorController_Context_T * p_mc = p_dev->P_MC;
-
     int status = 0; // MotorController_GenericStatus_T
     bool isSuccess = true;
 
@@ -85,7 +83,7 @@ int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_Sys
 /* effective on motor async transition only */
 bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction)
 {
-    if (MotorController_GetDirection(p_dev) != direction) { Blinky_Blink(&p_dev->BUZZER, 500U); return false; }
+    if ((sign_t)MotorController_GetDirection(p_dev) != direction) { Blinky_Blink(&p_dev->BUZZER, 500U); return false; }
     return true;
 }
 

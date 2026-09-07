@@ -53,13 +53,6 @@ static inline void HAL_ResetClock()
         .outDiv3 = 0x0U,                          /* DIV3 clock divider: divided by 1 */
         .busClkPrescaler = 0x0U,                  /* bus clock optional prescaler */
     };
-    const osc_config_t oscConfig_BOARD_BootClockRUN =
-    {
-        .freq = 0U,                               /* Oscillator frequency: 0Hz */
-        .workMode = 0,                            /* Use external clock */
-        .enableMode = 0,                          /* Disable external reference clock */
-    };
-
     /* Set the system clock dividers in SIM to safe value. */
     CLOCK_SetSimSafeDivs();
     /* Set ICS to FEI mode. */

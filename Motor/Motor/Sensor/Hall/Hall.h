@@ -164,7 +164,7 @@ typedef const struct Hall
 }
 Hall_T;
 
-#define HALL_STATE_ALLOC() (&(Hall_State_T){0})
+#define HALL_STATE_ALLOC() (&(Hall_State_T){})
 
 /*  */
 #define HALL_INIT(PinA, PinB, PinC, p_State, p_Config) (Hall_T) \

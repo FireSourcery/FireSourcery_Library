@@ -110,7 +110,7 @@ typedef const struct UserDIn
 }
 UserDIn_T;
 
-#define USER_DIN_STATE_ALLOC() (&(UserDIn_State_T){0})
+#define USER_DIN_STATE_ALLOC() (&(UserDIn_State_T){})
 
 #define USER_DIN_INIT(Pin, p_State, p_Timer, DebounceTime) (UserDIn_T) \
     { .PIN = Pin, .P_STATE = (p_State), .P_TIMER = (p_Timer), .DEBOUNCE_TIME = (DebounceTime), }

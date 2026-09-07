@@ -40,7 +40,6 @@ static void Encoder_RotorSensor_Init(const Encoder_RotorSensor_T * p_sensor)
 
 static void Encoder_RotorSensor_CaptureAngle(const Encoder_RotorSensor_T * p_sensor)
 {
-    RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
     // p_state->AngleSpeed.Angle = Encoder_GetAngle(&p_sensor->ENCODER) + Encoder_ModeDT_InterpolateAngle(p_sensor);
     // p_state->AngleSpeed.Angle = Encoder_ModeDT_InterpolateAngle(p_sensor); to electrical
 

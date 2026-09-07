@@ -145,6 +145,7 @@ bool Motor_IsConfigValid(Motor_T * p_motor)
 void Motor_ValidateConfig(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
+    (void)p_context;
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
     p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit = math_min(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, MOTOR_ELECTRICAL_CALIBRATION.FIELD_WEAKENING_LIMIT_PU);
     p_motor->P_MOTOR->Config.ILimitMotoring_Fract16 = math_min(p_motor->P_MOTOR->Config.ILimitMotoring_Fract16, fract16_vector_component(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, Phase_Calibration_GetIRatedPeak_Fract16()));

@@ -190,19 +190,19 @@ Socket_T;
                 p_ReqTable, ReqCount, p_PacketClassTable, PacketClassCount, p_XcvrTable, XcvrCount, p_Timer)
 
 
-// #define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubStateBuffer, p_SpecsTable, SpecsCount, p_Xcvrs, XcvrCount, p_Timer, p_Config)    \
-// { \
-//     .P_RX_PACKET_BUFFER     = p_RxBuffer,                    \
-//     .P_TX_PACKET_BUFFER     = p_TxBuffer,                    \
-//     .PACKET_BUFFER_LENGTH   = PacketBufferLength,            \
-//     .P_APP_CONTEXT          = p_AppInterface,                \
-//     .P_REQ_STATE_BUFFER     = p_SubStateBuffer,              \
-//     .P_SPECS_TABLE          = p_SpecsTable,                  \
-//     .SPECS_COUNT            = SpecsCount,                    \
-//     .P_TIMER                = p_Timer,                       \
-//     .P_CONFIG               = p_Config,                      \
-//     .P_XCVR_TABLE           = p_Xcvrs,                       \
-//     .XCVR_COUNT             = XcvrCount,                     \
+// #define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubStateBuffer, p_SpecsTable, SpecsCount, p_Xcvrs, XcvrCount, p_Timer, p_Config)
+// {
+//     .P_RX_PACKET_BUFFER     = p_RxBuffer,
+//     .P_TX_PACKET_BUFFER     = p_TxBuffer,
+//     .PACKET_BUFFER_LENGTH   = PacketBufferLength,
+//     .P_APP_CONTEXT          = p_AppInterface,
+//     .P_REQ_STATE_BUFFER     = p_SubStateBuffer,
+//     .P_SPECS_TABLE          = p_SpecsTable,
+//     .SPECS_COUNT            = SpecsCount,
+//     .P_TIMER                = p_Timer,
+//     .P_CONFIG               = p_Config,
+//     .P_XCVR_TABLE           = p_Xcvrs,
+//     .XCVR_COUNT             = XcvrCount,
 // }
 
 static inline Protocol_RxCode_T _Socket_GetRxStatus(const Socket_State_T * p_socket) { return p_socket->RxStatus; }

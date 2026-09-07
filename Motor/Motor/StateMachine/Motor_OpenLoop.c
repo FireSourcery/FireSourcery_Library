@@ -144,7 +144,6 @@ static void Run_Entry(Motor_T * p_motor)
 
 static void Run_Proc(Motor_T * p_motor)
 {
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_ProcOpenLoop(p_motor);
 }
 
@@ -174,7 +173,6 @@ static void StartUp_Entry(Motor_T * p_motor)
 
 static void StartUp_Proc(Motor_T * p_motor)
 {
-    Motor_Context_T * p_state = p_motor->P_MOTOR;
     Motor_FOC_ProcStartUpAlign(p_motor);
 }
 

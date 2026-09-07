@@ -536,6 +536,7 @@ void MotorController_Traction_VarId_Set(MotorController_T * p_mc, Traction_VarId
         case TRACTION_VAR_THROTTLE:    MotorController_Traction_SetThrottle(p_mc, (uint16_t)value);      break;
         case TRACTION_VAR_BRAKE:       MotorController_Traction_SetBrake(p_mc, (uint16_t)value);         break;
         case TRACTION_VAR_STATE_ID:    break; /* read only */
+        case TRACTION_VAR_COMMAND:     break; /* read only, derived from throttle/brake */
     }
 }
 

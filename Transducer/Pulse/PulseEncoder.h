@@ -71,7 +71,7 @@ PulseEncoder_T;
 #define PULSE_ENCODER_INIT_FROM(p_TimerHal, TimerFreq, SampleFreq, p_State) \
     PULSE_ENCODER_INIT(PULSE_TIMER_INIT(p_TimerHal, TimerFreq, SampleFreq, &((p_State)->Timer)), p_State)
 
-// #define PULSE_ENCODER_INIT_FROM(p_TimerHal, TimerFreq, SampleFreq, p_State, extended, extendedFreq) \
+// #define PULSE_ENCODER_INIT_FROM(p_TimerHal, TimerFreq, SampleFreq, p_State, extended, extendedFreq)
 // {
 //     .TIMER = PULSE_TIMER_INIT_EXTENDED
 //     (

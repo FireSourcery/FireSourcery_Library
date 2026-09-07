@@ -58,6 +58,7 @@ int MotorController_Var_Output_Get(MotorController_T * p_dev, MotorController_Va
         case MOT_VAR_SYSTEM_SUB_STATE:          value = _MotorController_GetSubStateId(p_dev->P_MC);          break;
         case MOT_VAR_SYSTEM_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_dev->P_MC).Value;     break;
         // case MOT_VAR_SYSTEM_STATUS_FLAGS:       value = MotorController_GetStatusFlags(p_dev).Value;               break;
+        case MOT_VAR_SYSTEM_STATUS_FLAGS: break; /* not yet implemented */
         case MOT_VAR_SYSTEM_DIRECTION:          value = MotorController_GetDirection(p_dev);                        break;
     }
     return value;
@@ -85,14 +86,15 @@ int MotorController_Var_OutputDebug_Get(MotorController_T * p_dev, MotorControll
 {
     int value = 0;
     // #ifndef NDEBUG
-    Motor_T * p_motor = &p_dev->MOTORS.P_DEVS[0];
-    Motor_Context_T * p_motorState = p_motor[0].P_MOTOR;
     switch (id)
     {
         case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC->ControlLoopProfile;            break;
         // case MOT_VAR_DEBUG0: value = Angle_Value(&p_motorState->OpenLoopAngle) - Angle_Value(&p_motorState->FocSensorless.AngleSpeed);             break;
         // case MOT_VAR_DEBUG1: value = Angle_Delta(&p_motorState->OpenLoopAngle);             break;
         // case MOT_VAR_DEBUG2: value = Angle_Delta(&p_motorState->FocSensorless.AngleSpeed);      break;
+        case MOT_VAR_DEBUG0: value = 0;             break;
+        case MOT_VAR_DEBUG1: value = 0;             break;
+        case MOT_VAR_DEBUG2: value = 0;             break;
         case MOT_VAR_DEBUG3: value = 0;             break;
         case MOT_VAR_DEBUG4: value = 0;             break;
         case MOT_VAR_DEBUG5: value = 0;             break;
@@ -121,6 +123,7 @@ int MotorController_Config_Get(MotorController_T * p_dev, MotorController_Var_Co
         case MOT_VAR_BOOT_REF_BLINK:        value = p_state->BootRef.Blink;        break;
         // case MOT_VAR_BOOT_REF_PROTOCOL_INDEX:    value = p_state->BootRef.ProtocolIndex;    break;
         // case MOT_VAR_BUZZER_FLAGS_ENABLE:        value = p_state->Config.BuzzerFlags;                       break;
+        case MOT_VAR_BUZZER_FLAGS_ENABLE: break; /* not yet implemented */
     }
     return value;
 }
@@ -136,6 +139,7 @@ void MotorController_Config_Set(MotorController_T * p_dev, MotorController_Var_C
         case MOT_VAR_BOOT_REF_BEEP:         p_state->BootRef.Beep = value;         break;
         case MOT_VAR_BOOT_REF_BLINK:        p_state->BootRef.Blink = value;        break;
         // case MOT_VAR_BUZZER_FLAGS_ENABLE:    p_state->Config.BuzzerFlags. = (MotorController_BuzzerFlags_T)value;        break;
+        case MOT_VAR_BUZZER_FLAGS_ENABLE: break; /* not yet implemented */
     }
 }
 

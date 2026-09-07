@@ -43,11 +43,11 @@ typedef HAL_Flash_T HAL_EEPROM_T; /* Flash/EEPROM use same controller */
 #define HAL_EEPROM_UNIT_WRITE_SIZE      0U
 
 static inline void HAL_EEPROM_ClearErrorFlags(HAL_EEPROM_T * p_hal) { (void)p_hal; }
-static inline bool HAL_EEPROM_ReadErrorFlags(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
-static inline bool HAL_EEPROM_ReadErrorProtectionFlag(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
-static inline bool HAL_EEPROM_ReadCompleteFlag(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
+static inline bool HAL_EEPROM_ReadErrorFlags(const HAL_EEPROM_T * p_hal) { (void)p_hal; return false; }
+static inline bool HAL_EEPROM_ReadErrorProtectionFlag(const HAL_EEPROM_T * p_hal) { (void)p_hal; return false; }
+static inline bool HAL_EEPROM_ReadCompleteFlag(const HAL_EEPROM_T * p_hal) { (void)p_hal; return true; }
 static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_hal, uintptr_t destAddress, const uint8_t * p_data) { (void)p_hal; (void)destAddress; (void)p_data; }
-static inline bool HAL_EEPROM_ReadIsFirstTime(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
+static inline bool HAL_EEPROM_ReadIsFirstTime(const HAL_EEPROM_T * p_hal) { (void)p_hal; return false; }
 static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) { (void)p_hal; }
 
 #elif   defined(KE02Z4_SERIES)
@@ -62,7 +62,7 @@ static inline bool HAL_EEPROM_ReadErrorFlags(const HAL_EEPROM_T * p_hal) { retur
 static inline bool HAL_EEPROM_ReadErrorProtectionFlag(const HAL_EEPROM_T * p_hal) { return HAL_Flash_ReadErrorProtectionFlag(p_hal); }
 static inline bool HAL_EEPROM_ReadCompleteFlag(const HAL_EEPROM_T * p_hal) { return HAL_Flash_ReadCompleteFlag(p_hal); }
 static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_hal, uintptr_t destAddress, const uint8_t * p_data) { HAL_Flash_StartCmdWritePage(p_hal, p_dest, p_data); }
-static inline bool HAL_EEPROM_ReadIsFirstTime(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
+static inline bool HAL_EEPROM_ReadIsFirstTime(const HAL_EEPROM_T * p_hal) { (void)p_hal; return false; }
 static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) { (void)p_hal; }
 #endif
 

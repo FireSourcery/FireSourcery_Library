@@ -51,17 +51,17 @@ Serial_T;
     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
 }
 
-// #define SERIAL_ALLOC_FROM(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
-// {                                                                               \
-//     .P_HAL_SERIAL = p_Hal,                                                      \
-//     .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, RING_STATE_ALLOC()),         \
-//     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, RING_STATE_ALLOC()),         \
+// #define SERIAL_ALLOC_FROM(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)
+// {
+//     .P_HAL_SERIAL = p_Hal,
+//     .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, RING_STATE_ALLOC()),
+//     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, RING_STATE_ALLOC()),
 // }
-// #define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
-// {                                                                               \
-//     .P_HAL_SERIAL = p_Hal,                                                      \
-//     .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),         \
-//     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
+// #define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)
+// {
+//     .P_HAL_SERIAL = p_Hal,
+//     .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),
+//     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),
 // }
 
 #define SERIAL_ALLOC(p_Hal, TxBufferSize, RxBufferSize)    \

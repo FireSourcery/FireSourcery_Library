@@ -657,8 +657,8 @@ static inline void Motor_MatchSpeedTorqueState(Motor_Context_T * p_motor, int16_
     Ccw: [0:value]
     Cw: [value:0]
 */
-static inline int32_t _Motor_MotoringOnly(const Motor_Context_T * p_motor, int32_t value) { return (p_motor->Direction == math_sign(value)) * value; }
-static inline int32_t _Motor_GeneratingOnly(const Motor_Context_T * p_motor, int32_t value) { return (p_motor->Direction != math_sign(value)) * value; }
+static inline int32_t _Motor_MotoringOnly(const Motor_Context_T * p_motor, int32_t value) { return (p_motor->Direction == (Motor_Direction_T)math_sign(value)) * value; }
+static inline int32_t _Motor_GeneratingOnly(const Motor_Context_T * p_motor, int32_t value) { return (p_motor->Direction != (Motor_Direction_T)math_sign(value)) * value; }
 
 static inline Motor_Direction_T Motor_GetDirectionForward(const Motor_Context_T * p_motor) { return p_motor->Config.DirectionForward; }
 static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_Context_T * p_motor) { return (p_motor->Config.DirectionForward * -1); }
@@ -706,13 +706,12 @@ extern void Motor_InitUnits(Motor_Context_T * p_motor);
 extern bool Motor_IsConfigValid(Motor_T * p_motor);
 extern void Motor_ValidateConfig(Motor_T * p_motor);
 
-extern void Motor_ResetSpeedPid(Motor_Context_T * p_motor);
-extern void Motor_ResetIPid(Motor_Context_T * p_motor);
-extern void _Motor_ResetTuning(Motor_T * p_motor);
-
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 
+extern void Motor_ResetSpeedPid(Motor_Context_T * p_motor);
+extern void Motor_ResetIPid(Motor_Context_T * p_motor);
+extern void _Motor_ResetTuning(Motor_T * p_motor);
 /* Maintain consistency between runtime and Nvm */
 extern void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value);
 extern void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value);

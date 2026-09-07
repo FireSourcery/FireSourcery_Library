@@ -91,9 +91,6 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_dev)
 /******************************************************************************/
 static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev)
 {
-    MotorController_Context_T * p_mc = p_dev->P_MC;
-    HeatMonitor_Status_T status;
-
 // #ifndef NDEBUG
     // if (MotorController_IsFault(p_dev) == true) { return; }
 // #endif
@@ -288,7 +285,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 */
 static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_dev)
 {
-    MotorController_Context_T * p_mc = p_dev->P_MC;
     _MotorController_VBus_Thread(p_dev);
 #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
     // _Blinky_Toggle(&p_mc->Meter);

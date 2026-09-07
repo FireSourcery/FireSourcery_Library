@@ -57,7 +57,7 @@ extern void Motor_Config_ValidateFw(Motor_Config_T * p_config, bool isFwEnabled)
     Config Field Id
     Preferably in dependency order. Simplify propagate write.
 */
-/******************************************************************************
+/******************************************************************************/
 /* direct field map or  */
 typedef enum Motor_Var_ConfigCalibration
 {

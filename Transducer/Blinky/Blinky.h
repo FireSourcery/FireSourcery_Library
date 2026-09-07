@@ -61,7 +61,7 @@ Blinky_T;
 
 #define BLINKY_INIT_FROM(p_PinHal, PinId, p_State, p_TimerBase, TimerBaseFreq) BLINKY_INIT(PIN_INIT(p_PinHal, PinId), p_State, TIMER_T_INIT(p_TimerBase, TimerBaseFreq, &((p_State)->TimerState)))
 
-#define BLINKY_INIT_ALLOC_FROM(p_PinHal, PinId, p_TimerBase, TimerBaseFreq) BLINKY_INIT_FROM(p_PinHal, PinId, &(Blinky_State_T){0}, p_TimerBase, TimerBaseFreq)
+#define BLINKY_INIT_ALLOC_FROM(p_PinHal, PinId, p_TimerBase, TimerBaseFreq) BLINKY_INIT_FROM(p_PinHal, PinId, &(Blinky_State_T){}, p_TimerBase, TimerBaseFreq)
 
 
 static inline void Blinky_Disable(const Blinky_T * p_blinky) { p_blinky->TIMER.P_STATE->Mode = TIMER_MODE_DISABLED; }

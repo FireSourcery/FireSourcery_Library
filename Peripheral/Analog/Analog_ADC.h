@@ -93,7 +93,7 @@ typedef union Analog_ConversionState
 }
 Analog_ConversionState_T;
 
-#define ANALOG_CONVERSION_STATE_ALLOC() (&(Analog_ConversionState_T){0})
+#define ANALOG_CONVERSION_STATE_ALLOC() (&(Analog_ConversionState_T){})
 
 /* AdcChannel */
 typedef const struct Analog_ConversionChannel
@@ -112,7 +112,7 @@ Analog_ConversionChannel_T;
 #define ANALOG_CONVERSION_CHANNEL_INIT(ChannelId, PinId, p_State, p_Context, CaptureFn) (Analog_ConversionChannel_T) \
     { .ID = ChannelId, .PIN = PinId , .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = p_State, }
 
-// #define ANALOG_CONVERSION_CHANNEL_INIT_ALLOC(ChannelId, PinId, p_Context, CaptureFn, ...) (Analog_ConversionChannel_T) \
+// #define ANALOG_CONVERSION_CHANNEL_INIT_ALLOC(ChannelId, PinId, p_Context, CaptureFn, ...) (Analog_ConversionChannel_T)
 //     { .ID = ChannelId, .PIN = PinId , .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = ANALOG_CONVERSION_STATE_ALLOC(), }
 
 
@@ -197,7 +197,7 @@ typedef struct Analog_ADC_State
 }
 Analog_ADC_State_T;
 
-#define ANALOG_ADC_STATE_ALLOC() (&(Analog_ADC_State_T){0})
+#define ANALOG_ADC_STATE_ALLOC() (&(Analog_ADC_State_T){})
 
 
 /******************************************************************************/

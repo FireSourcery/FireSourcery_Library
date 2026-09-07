@@ -169,7 +169,7 @@ static inline CAN_Frame_T * CanBus_PollRx(CanBus_T * p_can)
 */
 static inline void CanBus_RxData_ISR(CanBus_T * p_can)
 {
-    CAN_Frame_T * p_rx = CanBus_PollRx(p_can);
+    (void)CanBus_PollRx(p_can);
     // CAN_Frame_T txBuffer = { 0U };
     // if (p_rx != NULL)
     // {

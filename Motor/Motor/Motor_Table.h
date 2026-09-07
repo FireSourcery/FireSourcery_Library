@@ -124,11 +124,11 @@ typedef bool(*Motor_Test_T)(Motor_T * p_motor);
 typedef bool(*Motor_TryProc_T)(Motor_T * p_motor);
 typedef bool(*Motor_TrySet_T)(Motor_T * p_motor, int value);
 
-// #define Motor_CastSetter(p_motor, setter) \
-//     _Generic((setter), \
-//         Motor_Set_T:            (Motor_Set_T)(setter), \
-//         Motor_SetCmdValue_T:    (Motor_SetCmdValue_T)(setter ),  \
-//         Motor_Proc_T:           (Motor_Proc_T)(setter )   \
+// #define Motor_CastSetter(p_motor, setter)
+//     _Generic((setter),
+//         Motor_Set_T:            (Motor_Set_T)(setter),
+//         Motor_SetCmdValue_T:    (Motor_SetCmdValue_T)(setter ),
+//         Motor_Proc_T:           (Motor_Proc_T)(setter )
 //     )(p_motor, )
 
 // #define Motor_SetWith(p_motor, setter, value, ...) ((Motor_CastSetter(p_motor, focSet))(p_motor, value __VA_OPT__(,) __VA_ARGS__))

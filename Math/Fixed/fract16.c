@@ -162,10 +162,8 @@ ufract16_t fract16_vector_component(fract16_t x, ufract16_t mag_limit)
 
 struct fract16_xy fract16_vector_scale(fract16_t x, fract16_t y, ufract16_t magnitude)
 {
-    if (magnitude < FRACT16_MAX)
-    {
-        return (struct fract16_xy) { .x = (fract16_t)fract16_mul(x, magnitude), .y = (fract16_t)fract16_mul(y, magnitude) };
-    }
+    ufract16_t scale = math_min(magnitude, FRACT16_MAX);
+    return (struct fract16_xy) { .x = (fract16_t)fract16_mul(x, scale), .y = (fract16_t)fract16_mul(y, scale) };
 }
 
 /*!

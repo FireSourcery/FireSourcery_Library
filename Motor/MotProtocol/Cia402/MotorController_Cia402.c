@@ -128,7 +128,6 @@ void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN_Frame_
 void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 {
     Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
-    Motor_T * p_motor = &p_mc->MOTORS.P_DEVS[0];
 
     if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return; }
 

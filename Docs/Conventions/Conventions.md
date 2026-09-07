@@ -2,21 +2,16 @@
 
 
 
-_Data or _Payload suffix = no behavioral invariants, any field writeable.
-// "_Data" suffix — signals "this is a passive data container, not a stateful object"
-// "_Input" suffix — this module reads from it, another module writes to it
-// "_Output" suffix — this module writes to it, another module reads from it
 
 
-Module_T             — Primary stateful object (has behavioral functions)
-
-Module_State_T       — mutable runtime.
+Module_T             — Primary stateful object (has behavioral functions) OR Full descriptor context
+Module_Context_T     — mutable runtime.
      naming collision with State_T. alternatively:
         runtime - runtime mutable, contract with config, too qualitive
         object - has invariant interface
 
 Module_State_T       — switch() to determine processing. either as StateMachine module State_T or enum id
-Stage - Substate
+    Stage - Substate
 
 Module_Status_T      — Enum return
 Module_Flags_T       — Bitfield status/control
@@ -30,11 +25,13 @@ Module_Input_T       — Data written by external, read by module
 Module_Output_T      — Data written by module, read by external
 Module_Packet_T      — Wire/serialization format
 
-
-
 Suffix	Meaning	Lifetime	Who writes
 _Calib	User-facing units	Persistent (NVM)	User/host tool
 _Ref	Derived/precomputed	Computed at init	Init function
+_Data or _Payload suffix = no behavioral invariants, any field writeable.
+// "_Data" suffix — signals "this is a passive data container, not a stateful object"
+// "_Input" suffix — this module reads from it, another module writes to it
+// "_Output" suffix — this module writes to it, another module reads from it
 
 Composite modules.
 Containers indicate storage RAM / NVM / static descriptor optimizable
@@ -44,7 +41,6 @@ _T descriptor
 
 Internal details use Module_*
 Outer abstractions get the shorten name.
-
 
 {Vocabulary, Surface, Facet, Constituent}
 

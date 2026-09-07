@@ -205,6 +205,7 @@ static State_T * Deactivated_InputOpenLoop(Motor_T * p_motor, state_value_t stat
 {
     (void)state;
     // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_OPEN_LOOP; } else { return NULL; }
+    return NULL;
 }
 
 /* Calibration go directly to SubState */

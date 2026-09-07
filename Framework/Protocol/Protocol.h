@@ -208,7 +208,7 @@ Protocol_Req_T;
 #define PROTOCOL_REQ(Id, ProcReqResp, ProcExt, ReqSync, ...) (Protocol_Req_T) \
     { .ID = (packet_id_t)Id, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSync, __VA_ARGS__ }
 
-// #define PROTOCOL_REQ_EXT(Id, ProcReqResp, ProcExt, ReqSyncExt) \
+// #define PROTOCOL_REQ_EXT(Id, ProcReqResp, ProcExt, ReqSyncExt)
 //     { .ID = (packet_id_t)Id, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSyncExt, }
 
 /* Fast reverse map */
