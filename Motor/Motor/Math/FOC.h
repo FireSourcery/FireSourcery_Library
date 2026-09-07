@@ -120,9 +120,8 @@ typedef struct FOC
         Runtime V parameters directly visible in the FOC object, rather than passed per call.
     */
     // ufract16_t Modulation; M*VBus/Sqrt3
-    interval_t VLimit;
-    // fract16_t VqLimit; a single value encodes direction and magnitude. derives cw and ccw
-    fract16_t VWindow;
+    interval_t VLimit; /* asymmetric limits */
+    fract16_t VWindow; /* pluggin window approach */
 
     FOC_ElectricalSpeed_T ElectricalSpeed; /*  Cache on speed loop for feedforward and decoupling */
     fract16_t IdFw;   /* field weakening d-axis integrator state */
@@ -760,20 +759,6 @@ static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int valu
         default: break;
     }
 }
-
-
-
-/* Optional runtime tuning */
-// static int Foc_Var_SetTuning(FOC_T * p_foc,  PID varId, int value)
-// {
-//     int value = 0;
-//     switch (varId)
-//     {
-
-//     }
-//     return value;
-// }
-
 
 
 /*

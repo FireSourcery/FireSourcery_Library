@@ -91,9 +91,9 @@ static void _Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 }
 
 /* if eliminating Motor_Context.Direction which shadows FOC.VLimit */
-// static Motor_Direction_T _Motor_GetDirectionBound(const Motor_T * p_dev)
+// static Motor_Direction_T _Motor_GetDirectionApplied(const Motor_T * p_dev)
 // {
-//     // return sign_of(p_dev->P_MOTOR->Foc.VLimit);
+//     return sign_of(p_dev->P_MOTOR->Foc.VLimit);
 // }
 
 static inline void _Motor_SetFeedbackMode_Cast(Motor_T * p_motor, state_value_t mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }

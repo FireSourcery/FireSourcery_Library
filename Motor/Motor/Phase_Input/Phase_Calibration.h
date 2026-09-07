@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
+#include "../Math/motor_electrical_math.h"
 
 
 /******************************************************************************/
@@ -119,7 +120,12 @@ static inline uint16_t Phase_R_MilliOhmsOfFract16(accum32_t fract16)
 }
 
 /* speedBase_rads = 1 / tauBase_Seconds */
-// static inline uint32_t _Phase_L_Fract16OfSi(uint32_t speedBase_rads, uint16_t microHenries)
-// {
-//     return l_pu_rads_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), speedBase_rads, microHenries, 1000000UL);
-// }
+static inline accum32_t _Phase_L_Fract16OfMicroHenries(uint32_t speedBase_rads, uint16_t microHenries)
+{
+    return l_pu_rads_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), speedBase_rads, microHenries, 1000000UL);
+}
+
+static inline accum32_t _Phase_L_DigitalOfMicroHenries(uint32_t fs, uint16_t microHenries)
+{
+    return l_pu_of_h(fs, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), microHenries, 1000000UL);
+}

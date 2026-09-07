@@ -399,6 +399,7 @@ void Motor_SetSpeedLimitReverse(Motor_Context_T * p_motor, uint16_t reverse_ufra
     Motor_SetSpeedLimits(p_motor, interval_aligned(Motor_SpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward), reverse_ufract16);
 }
 
+/* or set active direction only */
 void Motor_SetSpeedLimit(Motor_Context_T * p_motor, uint16_t speed_ufract16)
 {
     Motor_SetSpeedLimits(p_motor, speed_ufract16, speed_ufract16);

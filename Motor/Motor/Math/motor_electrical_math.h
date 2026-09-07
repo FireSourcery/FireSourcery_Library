@@ -306,7 +306,6 @@ static inline uint32_t rs_mohm_of_pu(uint16_t v_base_V, uint16_t i_base_A, uint3
 */
 /******************************************************************************/
 // #define MOTOR_PSI_PU(V_Base, Speed_Base_RadPerSecond, Psi_Webers) ((float)Psi_Webers * Speed_Base_RadPerSecond / (V_Base))
-// #define MOTOR_PSI_PU_INT(V_Base, Speed_Base_RadPerSecond, Psi_Webers, SI_Scale) ((uint64_t)Psi_Webers * Speed_Base_RadPerSecond * FRACT16_SCALE / ((uint64_t)V_Base * SI_Scale))
 #define MOTOR_PSI_PU(V_Base, Speed_Base_RadPerSecond, Psi_Webers, SI_Scale) ((uint64_t)Psi_Webers * Speed_Base_RadPerSecond * FRACT16_SCALE / ((uint64_t)V_Base * SI_Scale))
 #define MOTOR_PSI_PU_RPM(V_Base, Speed_Base_RPM, polePairs, Psi_Webers, SI_Scale) ((uint64_t)Psi_Webers * Speed_Base_RPM * polePairs * FRACT16_PI / (30UL * V_Base * SI_Scale))
 
@@ -326,7 +325,6 @@ static inline uint32_t psi_uwb_of_pu_mrads(uint16_t v_base_V, uint32_t omega_bas
 */
 /******************************************************************************/
 // #define MOTOR_L_PU(V_Base, I_Base, Speed_Base_Radians, L_Henries) (L_Henries * I_Base * (Speed_Base_Radians) * MOTOR_PU_SCALE / (V_Base))
-// #define MOTOR_L_PU_INT(V_Base, I_Base, Speed_Base_Radians, L_Henries, SI_Scale) MOTOR_L_PU(V_Base, I_Base, Speed_Base_Radians, L_Henries) / SI_Scale
 #define MOTOR_L_PU(V_Base, I_Base, Speed_Base_Radians, L_Henries, SI_Scale) ((uint64_t)L_Henries * I_Base * (Speed_Base_Radians) * FRACT16_SCALE / ((uint64_t)V_Base * SI_Scale))
 #define MOTOR_L_PU_RPM(V_Base, I_Base, Speed_Base_RPM, polePairs, L_Henries, SI_Scale) ((uint64_t)L_Henries * I_Base * (Speed_Base_RPM) * polePairs * FRACT16_PI / (30UL * V_Base * SI_Scale))
 
@@ -577,7 +575,7 @@ static inline uint32_t l_pu_of_hfi(uint32_t fs_hz, uint32_t fhfi_Hz, ufract16_t 
     2048 37500 erpm, 625,  9375 RPM at 4 pole pairs
     1024 18750 erpm, 8 pole pairs 2344 rpm
 
-    ( π·Fs/k to extend precision, k=2, 4..):
+    (π·Fs/k to extend precision, k=2, 4..):
         ψ_du  = ψ · π · Fs / V_base / k
         L_du  = L · π · I_base · Fs / V_base / k
 
@@ -602,7 +600,6 @@ static inline uint32_t l_pu_of_hfi(uint32_t fs_hz, uint32_t fhfi_Hz, ufract16_t 
     L_q15 = L_si · π·Fs · I_base / (V_base · k_L) · 32768
     n_ψ = log2(k_ψ)
     n_L = log2(k_L)
-
 */
 
 /*
