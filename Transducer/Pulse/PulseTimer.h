@@ -128,9 +128,8 @@ static inline uint32_t PulseTimer_CaptureDeltaT(PulseTimer_T * p_timer)
 /* ticks since last pulse, accumulating on overflow */
 static inline uint32_t PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer)
 {
-    PulseTimer_State_T * p_state = p_timer->P_STATE;
-    p_state->SampleTh = HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (p_state->SampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
-    return p_state->SampleTh;
+    p_timer->P_STATE->SampleTh = HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (p_timer->P_STATE->SampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
+    return p_timer->P_STATE->SampleTh;
 }
 
 /* T spanning M pulses in the sample window. Returns 0 while accumulating. */
@@ -138,8 +137,7 @@ static inline uint32_t PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer)
 /* PulsePeriod * count */
 static inline uint32_t PulseTimer_CaptureSampleTk(PulseTimer_T * p_timer)
 {
-    PulseTimer_State_T * p_state = p_timer->P_STATE;
-    uint32_t prev = p_state->SampleTh;
+    uint32_t prev = p_timer->P_STATE->SampleTh;
     return p_timer->SAMPLE_TIME + prev - PulseTimer_CaptureSampleTh(p_timer);
 }
 
@@ -154,6 +152,7 @@ static inline uint32_t PulseTimer_CaptureSampleTk_Freq(PulseTimer_T * p_timer)
 static inline bool PulseTimer_IsStop(PulseTimer_T * p_timer) { return (p_timer->P_STATE->DeltaT >= PULSE_TIMER_MAX); }
 
 
+// store Time difference, in case of clear Overflow race
 // static inline uint32_t PulseTimer_CaptureDeltaT(PulseTimer_T * p_timer)
 // {
 //     uint32_t time = HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);

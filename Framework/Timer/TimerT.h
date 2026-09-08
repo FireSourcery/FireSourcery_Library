@@ -104,6 +104,12 @@ static inline void TimerT_StartOneShot(TimerT_T * p_timer, uint32_t period) { _T
 static inline void TimerT_StartCounterN(TimerT_T * p_timer, uint32_t period, uint32_t shots) { _TimerT_StartCountN(&p_timer->BASE, p_timer->P_STATE, period, shots); }
 static inline void TimerT_RestartOneShot(TimerT_T * p_timer) { _TimerT_RestartOneShot(&p_timer->BASE, p_timer->P_STATE); }
 
+/*
+    Polling with modal mode only
+*/
+// static inline bool TimerT_IsActive(TimerT_T * p_timer) { return _TimerT_IsActive(p_timer->P_STATE); }
+// static inline bool TimerT_IsStopped(TimerT_T * p_timer) { return _TimerT_IsStopped(p_timer->P_STATE); }
+
 /******************************************************************************/
 /* Context unit conversions (compile-time optimized) */
 /******************************************************************************/

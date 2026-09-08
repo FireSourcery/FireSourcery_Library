@@ -55,12 +55,67 @@ typedef struct Packet_RxParserState
     uint32_t RxTimeStart;
     Protocol_HeaderMeta_T RxMeta;   /* Rx Parse Packet Meta */
 
-    // // alternatively seperate parser state. copy header copies 1 extra field.
-    // packet_size_t RxIndex;          /* Index into P_RX_PACKET_BUFFER, number of bytes received */
-    // packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */
+    // alternatively seperate parser state. copy header copies 1 extra field.
     // packet_size_t Length;           /* Total packet length */
+    // packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */
 }
 Packet_RxParserState_T;
+
+
+
+
+/*  */
+/* directly mapped to count */
+static inline Protocol_RxState_T _Packet_RxStateOf(const Packet_Format_T * p_specs, size_t rxCount)
+{
+    if (rxCount == 0U) { return PROTOCOL_RX_STATE_WAIT_BYTE_1; }
+    else if (rxCount < p_specs->RX_LENGTH_MIN) { return PROTOCOL_RX_STATE_WAIT_LENGTH; }
+    // else if (rxCount < p_state->RxMeta.Length) { return PROTOCOL_RX_STATE_WAIT_PACKET; }
+    else if (rxCount < p_specs->RX_LENGTH_MAX) { return PROTOCOL_RX_STATE_WAIT_PACKET; }
+    else { return PROTOCOL_RX_STATE_WAIT_BYTE_1; } /* Invalid length, reset */
+}
+
+static inline Protocol_RxCode_T _Packet_ProcRxParser(const Packet_Format_T * p_specs, const uint8_t * p_rxBuffer, packet_size_t * p_rxIndex, Protocol_HeaderMeta_T * p_rxMeta)
+{
+    Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
+    switch (_Packet_RxStateOf(p_specs, *p_rxIndex))
+    {
+        case PROTOCOL_RX_STATE_WAIT_BYTE_1:
+            if (*p_rxIndex > 0U)
+            {
+                if ((p_rxBuffer[0U] == p_specs->RX_START_ID) || (p_specs->RX_START_ID == 0x00U)) { p_rxMeta->Length = 0U; }
+                else { *p_rxIndex = 0U; }                // reset and keep waiting
+            }
+            break;
+        case PROTOCOL_RX_STATE_WAIT_LENGTH:   if (*p_rxIndex >= p_specs->RX_LENGTH_MIN) { rxStatus = p_specs->PARSE_RX_FRAMING(p_rxBuffer, *p_rxIndex, p_rxMeta); }  break;
+        case PROTOCOL_RX_STATE_WAIT_PACKET:   if (*p_rxIndex >= p_rxMeta->Length) { rxStatus = p_specs->PARSE_RX_HEADER(p_rxBuffer, p_rxMeta); } break; // PACKET_COMPLETE or ERROR_DATA
+        case PROTOCOL_RX_STATE_INACTIVE:    break;
+        default: break;
+    }
+    if (rxStatus != PROTOCOL_RX_CODE_AWAIT_PACKET) { *p_rxIndex = 0U; } //   p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+    return rxStatus;
+}
+
+
+
+// /*!
+//     Reset framing state for a new packet (start byte already consumed).
+// */
+// static inline void Packet_RxBegin(Packet_RxState_T * p_rx)
+// {
+//     p_rx->RxIndex = 1U;
+//     p_rx->RxMeta.Length = 0U;
+//     p_rx->RxMeta.Id = 0U;
+// }
+
+// /*!
+//     Validate start byte against format spec.
+// */
+// static inline bool Packet_IsStartByte(const Packet_Format_T * p_specs, uint8_t byte)
+// {
+//     return (byte == p_specs->RX_START_ID) || (p_specs->RX_START_ID == 0x00U);
+// }
+
 
 // static inline Protocol_RxCode_T Packet_ProcRxState(const Packet_Format_T * p_specs, const uint8_t * p_rxBuffer, Packet_RxParserState_T * p_state)
 // {
@@ -131,66 +186,3 @@ Packet_RxParserState_T;
 
 //     return rxStatus;
 // }
-
-
-
-/*  */
-/* directly mapped to count */
-static inline Protocol_RxState_T _Packet_RxStateOf(const Packet_Format_T * p_specs, size_t rxCount)
-{
-    if (rxCount == 0U) { return PROTOCOL_RX_STATE_WAIT_BYTE_1; }
-    else if (rxCount < p_specs->RX_LENGTH_MIN) { return PROTOCOL_RX_STATE_WAIT_LENGTH; }
-    // else if (rxCount < p_state->RxMeta.Length) { return PROTOCOL_RX_STATE_WAIT_PACKET; }
-    else if (rxCount < p_specs->RX_LENGTH_MAX) { return PROTOCOL_RX_STATE_WAIT_PACKET; }
-    else { return PROTOCOL_RX_STATE_WAIT_BYTE_1; } /* Invalid length, reset */
-}
-
-static inline Protocol_RxCode_T _Packet_ProcRxParser(const Packet_Format_T * p_specs, const uint8_t * p_rxBuffer, packet_size_t * p_rxIndex, Protocol_HeaderMeta_T * p_rxMeta)
-{
-    Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
-    switch (_Packet_RxStateOf(p_specs, *p_rxIndex))
-    {
-        case PROTOCOL_RX_STATE_WAIT_BYTE_1:
-            if (*p_rxIndex > 0U)
-            {
-                if ((p_rxBuffer[0U] == p_specs->RX_START_ID) || (p_specs->RX_START_ID == 0x00U)) { p_rxMeta->Length = 0U; }
-                else { *p_rxIndex = 0U; }                // reset and keep waiting
-            }
-            break;
-        case PROTOCOL_RX_STATE_WAIT_LENGTH:   if (*p_rxIndex >= p_specs->RX_LENGTH_MIN) { rxStatus = p_specs->PARSE_RX_FRAMING(p_rxBuffer, *p_rxIndex, p_rxMeta); }  break;
-        case PROTOCOL_RX_STATE_WAIT_PACKET:   if (*p_rxIndex >= p_rxMeta->Length) { rxStatus = p_specs->PARSE_RX_HEADER(p_rxBuffer, p_rxMeta); } break; // PACKET_COMPLETE or ERROR_DATA
-        case PROTOCOL_RX_STATE_INACTIVE:    break;
-        default: break;
-    }
-    if (rxStatus != PROTOCOL_RX_CODE_AWAIT_PACKET) { *p_rxIndex = 0U; } //   p_state->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
-    return rxStatus;
-}
-
-
-
-
-
-
-
-
-
-
-
-// /*!
-//     Reset framing state for a new packet (start byte already consumed).
-// */
-// static inline void Packet_RxBegin(Packet_RxState_T * p_rx)
-// {
-//     p_rx->RxIndex = 1U;
-//     p_rx->RxMeta.Length = 0U;
-//     p_rx->RxMeta.Id = 0U;
-// }
-
-// /*!
-//     Validate start byte against format spec.
-// */
-// static inline bool Packet_IsStartByte(const Packet_Format_T * p_specs, uint8_t byte)
-// {
-//     return (byte == p_specs->RX_START_ID) || (p_specs->RX_START_ID == 0x00U);
-// }
-

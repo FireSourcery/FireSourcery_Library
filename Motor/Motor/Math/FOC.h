@@ -287,7 +287,7 @@ static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus, int16_
     PID_CaptureOutputLimits(&p_foc->PidId, -(int32_t)vCircle, vCircle);  /* Vd inside the circle it is measured against, else no vq budget remains */
     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
 
-    ufract16_t vqCircleLimit = foc_vq_circle_limit(fract16_mul(vBus, FRACT16_1_DIV_2), p_foc->Vd);
+    ufract16_t vqCircleLimit = foc_vq_circle_limit(vCircle, p_foc->Vd);
     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);
     PID_CaptureOutputLimits(&p_foc->PidIq, vqBand.low, vqBand.high);
     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
@@ -320,7 +320,7 @@ static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, i
 /*
     accept the 1ms wide multiply by default
     Only M0 benefits from micro-optimizing.
-    optionally select additional int64 multiply in fast loop
+    optionally select/drop additional int64 multiply in fast loop
 */
 #if !defined(FOC_DECOUPLE_FF_SAT16)
 static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)

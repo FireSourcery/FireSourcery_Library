@@ -59,6 +59,9 @@ typedef const struct PulseEncoder
 {
     const PulseTimer_T TIMER;         /* PulseTimer const; its P_STATE points into P_STATE->Timer */
     PulseEncoder_State_T * P_STATE;
+
+    /* alternatively map as 2 part context */
+    // AngleCounter_T * P_STATE;
     // const uint32_t POLLING_FREQ;   /* Control loop frequency [Hz] for angle delta conversion */
 }
 PulseEncoder_T;
@@ -128,7 +131,7 @@ static inline void PulseEncoder_CaptureFreq(PulseEncoder_T * p_encoder)
 }
 
 
-static inline void PulseEncoder_InitFrom(PulseEncoder_T * p_encoder, const AngleCounter_Config_T * p_config)
+static inline void PulseEncoder_InitAngleCounter(PulseEncoder_T * p_encoder, const AngleCounter_Config_T * p_config)
 {
     PulseTimer_Init(&p_encoder->TIMER);
     AngleCounter_InitFrom(&p_encoder->P_STATE->Counter, p_config);

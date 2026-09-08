@@ -30,7 +30,6 @@
 */
 /******************************************************************************/
 #include "HAL_Serial.h"
-#include "Config.h"
 #include "Framework/Ring/Ring.h"
 
 #include <stdint.h>
@@ -171,6 +170,6 @@ extern size_t Serial_RecvMax(Serial_T * p_serial, uint8_t * p_destBuffer, size_t
 extern bool Serial_SendN(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 extern bool Serial_RecvN(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
 
-extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
-extern size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
+// extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
+// extern size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
 

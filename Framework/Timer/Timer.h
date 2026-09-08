@@ -104,17 +104,6 @@ Timer_State_T;
 static inline uint32_t _Timer_Elapsed(uint32_t time_prev, uint32_t time) { return (time - time_prev); }
 static inline bool _Timer_IsElapsed(uint32_t period, uint32_t time_prev, uint32_t time) { return (_Timer_Elapsed(time_prev, time) >= period); }
 
-static inline void Timer_SetPeriod(Timer_State_T * p_state, uint32_t ticks) { p_state->Period = ticks; }
-
-/*
-    Polling with modal mode only
-*/
-static inline Timer_Mode_T Timer_GetMode(const Timer_State_T * p_state) { return p_state->Mode; }
-static inline bool Timer_IsActive(const Timer_State_T * p_timer) { return (p_timer->Mode > TIMER_MODE_STOPPED) && (p_timer->Period > 0U); }
-static inline bool Timer_IsStopped(const Timer_State_T * p_state) { return (p_state->Period == 0UL) || (p_state->Mode == TIMER_MODE_STOPPED); }
-// static inline bool Timer_IsPeriodic(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_PERIODIC); }
-// static inline bool Timer_IsOneShot(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_ONE_SHOT); }
-
 
 /******************************************************************************/
 /*

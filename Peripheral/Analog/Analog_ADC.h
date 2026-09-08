@@ -205,7 +205,7 @@ Analog_ADC_State_T;
     ADC Peripheral Control
         - Context Per Thread
         - Wraps HAL_ADC with State, callback context
-    ADConverter_T
+    ADConverter_T ADC_Module_T
 */
 /******************************************************************************/
 typedef const struct Analog_ADC

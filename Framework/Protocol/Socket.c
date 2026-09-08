@@ -90,7 +90,7 @@ void Socket_Init(Socket_T * p_socket)
 //     Packet_RxParserState_T * p_parser = &p_state->RxParserState;
 
 //     XcvrRx(p_socket, p_state);
-//     rxStatus = Packet_ProcRxState(p_state->p_Specs, p_socket->P_RX_PACKET_BUFFER, p_parser);
+//     rxStatus = _Packet_ProcRxParser(p_state->p_Specs, p_socket->P_RX_PACKET_BUFFER, p_parser);
 
 //     if (p_parser->RxState == PROTOCOL_RX_STATE_WAIT_LENGTH || p_parser->RxState == PROTOCOL_RX_STATE_WAIT_PACKET)
 //     {

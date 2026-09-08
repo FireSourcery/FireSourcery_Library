@@ -313,9 +313,7 @@ static inline uint8_t HAL_CAN_MapRxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t
 /******************************************************************************/
 /* Foreground buffer auto-locks on first register read */
 static inline bool HAL_CAN_LockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)p_hal; (void)hwIndex; return true; }
-static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK; }
-// /* Cleared on Read */
-// static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; }
+static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; }
 
 
 /******************************************************************************/

@@ -38,10 +38,10 @@
 */
 typedef bool    (*Xcvr_TxByte_T)    (void * p_xcvr, uint8_t txChar);
 typedef bool    (*Xcvr_RxByte_T)    (void * p_xcvr, uint8_t * p_rxChar);
-typedef size_t  (*Xcvr_TxMax_T)     (void * p_xcvr, const uint8_t * p_srcBuffer, size_t bufferSize);
-typedef size_t  (*Xcvr_RxMax_T)     (void * p_xcvr, uint8_t * p_destBuffer, size_t bufferSize);
 typedef bool    (*Xcvr_TxN_T)       (void * p_xcvr, const uint8_t * p_src, size_t length);
 typedef bool    (*Xcvr_RxN_T)       (void * p_xcvr, uint8_t * p_dest, size_t length);
+typedef size_t  (*Xcvr_TxMax_T)     (void * p_xcvr, const uint8_t * p_srcBuffer, size_t bufferSize);
+typedef size_t  (*Xcvr_RxMax_T)     (void * p_xcvr, uint8_t * p_destBuffer, size_t bufferSize);
 typedef size_t  (*Xcvr_GetCount_T)  (void * p_xcvr);
 typedef bool    (*Xcvr_SetConfig_T) (void * p_xcvr, uint32_t value);
 
@@ -57,6 +57,10 @@ typedef const struct Xcvr_VTable
     Xcvr_GetCount_T     GET_RX_FULL_COUNT;
     Xcvr_SetConfig_T    INIT_BAUD_RATE;
     // Xcvr_SetConfig_T    COMPARE_BAUD_RATE;
+
+    /* alternatively merge with serial */
+    // RingT_T RX_RING;
+    // RingT_T TX_RING;
 }
 Xcvr_VTable_T;
 

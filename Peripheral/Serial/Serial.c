@@ -66,56 +66,7 @@ static inline void ReleaseCriticalTx(Serial_T * p_serial) { _EXIT_CRITICAL((void
 static inline bool AcquireCriticalRx(Serial_T * p_serial) { _ENTER_CRITICAL(HAL_Serial_DisableRxInterrupt(p_serial->P_HAL_SERIAL); return true, SERIAL_ENTER_CRITICAL(p_serial)); }
 static inline void ReleaseCriticalRx(Serial_T * p_serial) { _EXIT_CRITICAL(HAL_Serial_EnableRxInterrupt(p_serial->P_HAL_SERIAL), SERIAL_EXIT_CRITICAL(p_serial)); }
 
-/*
 
-*/
-static inline bool Hal_SendChar(Serial_T * p_serial, const uint8_t txchar)
-{
-    bool isNotFull = (HAL_Serial_ReadTxEmptyCount(p_serial->P_HAL_SERIAL) > 0U);
-    if (isNotFull == true) { HAL_Serial_WriteTxChar(p_serial->P_HAL_SERIAL, txchar); }
-    return isNotFull;
-    // return (HAL_Serial_ReadTxEmptyCount(p_serial->P_HAL_SERIAL) > 0U) ? ({ HAL_Serial_WriteTxChar(p_serial->P_HAL_SERIAL, txchar); true; }) : false;
-}
-
-/*
-
-*/
-static inline bool Hal_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
-{
-    bool isNotEmpty = (HAL_Serial_ReadRxFullCount(p_serial->P_HAL_SERIAL) > 0U);
-    if(isNotEmpty == true) { *p_rxChar = HAL_Serial_ReadRxChar(p_serial->P_HAL_SERIAL); }
-    return isNotEmpty;
-}
-
-static inline uint8_t Hal_GetLoopCount(size_t length)
-{
-#ifdef SERIAL_HW_FIFO_DISABLE
-    (void)length;
-    return 1U;
-#else
-    return length;
-#endif
-}
-
-static inline size_t Hal_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
-{
-    size_t charCount;
-    for(charCount = 0U; charCount < Hal_GetLoopCount(length); charCount++)
-    {
-        if(Hal_SendChar(p_serial, p_srcBuffer[charCount]) == false) { break; }
-    }
-    return charCount;
-}
-
-static inline size_t Hal_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
-{
-    size_t charCount;
-    for(charCount = 0U; charCount < Hal_GetLoopCount(length); charCount++)
-    {
-        if(Hal_RecvChar(p_serial, &p_destBuffer[charCount]) == false) { break; }
-    }
-    return charCount;
-}
 
 /******************************************************************************/
 /*!
@@ -271,15 +222,15 @@ bool Serial_RecvN(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
     return status;
 }
 
-bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
-{
-    return Serial_SendN(p_serial, p_srcBuffer, length);
-}
+// bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
+// {
+//     return Serial_SendN(p_serial, p_srcBuffer, length);
+// }
 
-size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
-{
-    return Serial_RecvMax(p_serial, p_destBuffer, length);
-}
+// size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
+// {
+//     return Serial_RecvMax(p_serial, p_destBuffer, length);
+// }
 
 void Serial_FlushBuffers(Serial_T * p_serial)
 {
@@ -292,33 +243,33 @@ void Serial_FlushBuffers(Serial_T * p_serial)
 */
 
 
-// char Serial_GetChar(Serial_T * p_serial)
-// {
-//     char rxChar = 0xFFU;
-//     if (Serial_RecvByte(p_serial, (uint8_t *)&rxChar) == false) { rxChar = 0xFFU; }
-//     return rxChar;
-// }
+char Serial_GetChar(Serial_T * p_serial)
+{
+    char rxChar = 0xFFU;
+    if (Serial_RecvByte(p_serial, (uint8_t *)&rxChar) == false) { rxChar = 0xFFU; }
+    return rxChar;
+}
 
-// bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)
-// {
-//     bool status = false;
+bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
+{
+    bool status = false;
 
-//     const uint8_t * p_char = p_srcBuffer;
+    const uint8_t * p_char = p_srcBuffer;
 
-//     if(AcquireCriticalTx(p_serial) == true)
-//     {
-//         while(*p_char != '\0')
-//         {
-//             status = Ring_Enqueue(p_serial->TX_RING.P_STATE, p_char);
-//             if(status == false) { break; }
-//             p_char++;
-//         }
-//         if(p_char != p_srcBuffer) { HAL_Serial_EnableTxInterrupt(p_serial->P_HAL_SERIAL); }
-//         ReleaseCriticalTx(p_serial);
-//     }
+    if(AcquireCriticalTx(p_serial) == true)
+    {
+        while((*p_char != '\0') && (p_char < p_srcBuffer + length))
+        {
+            status = Ring_Enqueue(p_serial->TX_RING.P_STATE, p_char);
+            if(status == false) { break; }
+            p_char++;
+        }
+        if(p_char != p_srcBuffer) { HAL_Serial_EnableTxInterrupt(p_serial->P_HAL_SERIAL); }
+        ReleaseCriticalTx(p_serial);
+    }
 
-//     return status;
-// }
+    return status;
+}
 
 // polling via hw fifo buffer
 // void Serial_PollRxData(Serial_T * p_serial)

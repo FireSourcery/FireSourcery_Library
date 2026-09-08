@@ -30,8 +30,6 @@
 #ifndef RING_UTILITY_H
 #define RING_UTILITY_H
 
-#include "Config.h"
-
 #include "Type/Array/void_array.h"
 
 #if defined(RING_LOCAL_CRITICAL_ENABLE)
@@ -50,25 +48,33 @@
 
 */
 /******************************************************************************/
-// #ifndef RING_ALIGNED
-// #define RING_ALIGNED __attribute__((aligned(sizeof(intptr_t)))) /* Align to register size */
-// #endif
+#if      defined(RING_INDEX_POW2_COUNTER)       /*! Power 2 length only. Mask on each access */
+#elif    defined(RING_INDEX_POW2_WRAP)          /*! Power 2 length only. Mask once on update index. -1 capacity */
+#elif    defined(RING_INDEX_LENGTH_COMPARE)     /*! Flexible: any buffer size */
+#else
+#define RING_INDEX_POW2_COUNTER
+#warning "Ring Buffer: No index mode defined. Defaulting to RING_INDEX_POW2_COUNTER"
+#endif
 
 #if defined(RING_INDEX_POW2_COUNTER) || defined(RING_INDEX_POW2_WRAP)
-#define RING_INDEX_IS_POW2 TRUE
+#define RING_INDEX_IS_POW2 true
 #define _RING_POW2_DEF(code, ...) code
 #define _RING_NON_POW2_DEF(code)
-// #define _RING_POW2_DEF_INIT(code) code,
 #else
 #define _RING_POW2_DEF(code, ...) __VA_ARGS__
 #define _RING_NON_POW2_DEF(code) code
 #endif
 
+/* Critical at Ring module level */
 #if defined(RING_LOCAL_CRITICAL_ENABLE)
 #define _RING_LOCAL_CRITICAL_DEF(code, ...) code
 #else
 #define _RING_LOCAL_CRITICAL_DEF(code, ...) __VA_ARGS__
 #endif
+
+// #ifndef RING_ALIGNED
+// #define RING_ALIGNED __attribute__((aligned(sizeof(intptr_t)))) /* Align to register size */
+// #endif
 
 // Usage
 

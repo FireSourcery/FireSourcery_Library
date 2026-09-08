@@ -84,39 +84,6 @@ typedef enum Protocol_RxCode
     PROTOCOL_RX_CODE_ABORT,
 }
 Protocol_RxCode_T;
-// typedef enum Protocol_RxCode
-// {
-//     // Success codes
-//     PROTOCOL_RX_CODE_AWAIT_PACKET = 0x00,  /* Continue receiving */
-//     PROTOCOL_RX_CODE_PACKET_COMPLETE = 0x01,  /* Complete packet received */
-//     PROTOCOL_RX_CODE_PACKET_FRAGMENT = 0x02,  /* Fragment received, more expected */
-
-//     // Sync/Control codes
-//     PROTOCOL_RX_CODE_ACK = 0x10,
-//     PROTOCOL_RX_CODE_NACK = 0x11,
-//     PROTOCOL_RX_CODE_ABORT = 0x12,
-//     PROTOCOL_RX_CODE_RESET = 0x13,  /* Protocol reset requested */
-//     PROTOCOL_RX_CODE_HEARTBEAT = 0x14,  /* Keep-alive packet */
-
-//     // Error codes - Header/Meta
-//     PROTOCOL_RX_CODE_ERROR_TIMEOUT = 0x20,
-//     PROTOCOL_RX_CODE_ERROR_INVALID_ID = 0x21,  /* Unknown packet ID */
-//     PROTOCOL_RX_CODE_ERROR_INVALID_LENGTH = 0x22, /* Invalid length field */
-//     PROTOCOL_RX_CODE_ERROR_HEADER_CRC = 0x23,  /* Header checksum error */
-//     PROTOCOL_RX_CODE_ERROR_START_MARKER = 0x24,  /* Missing start delimiter */
-//     PROTOCOL_RX_CODE_ERROR_SEQUENCE = 0x25,  /* Sequence number error */
-
-//     // Error codes - Data/Payload
-//     PROTOCOL_RX_CODE_ERROR_DATA_CRC = 0x30,  /* Payload checksum error */
-//     PROTOCOL_RX_CODE_ERROR_DATA_LENGTH = 0x31,  /* Payload length mismatch */
-//     PROTOCOL_RX_CODE_ERROR_DATA_FORMAT = 0x32,  /* Invalid data format */
-//     PROTOCOL_RX_CODE_ERROR_BUFFER_FULL = 0x33,  /* Receive buffer overflow */
-
-//     // System errors
-//     PROTOCOL_RX_CODE_ERROR_SYSTEM = 0xF0,  /* Generic system error */
-//     PROTOCOL_RX_CODE_ERROR_NOT_READY = 0xF1,  /* System not ready */
-//     PROTOCOL_RX_CODE_ERROR_BUSY = 0xF2,  /* System busy */
-// } Protocol_RxCode_T;
 
 
 /* Framing */
@@ -246,6 +213,7 @@ typedef enum Protocol_TxSyncId
     // PROTOCOL_TX_RESP, alternatively update and map
 }
 Protocol_TxSyncId_T;
+
 // typedef enum Protocol_TxType
 // {
 //     PROTOCOL_TX_TYPE_DATA,              /* Regular data packet */
@@ -274,14 +242,6 @@ Packet_Context_T;
 // Protocol_ReqContext_T;
 
 
-// typedef const struct Packet_Context
-// {
-//     const Packet_Format_T * P_FORMAT;
-//     uint8_t * P_BUFFER;
-//     Protocol_HeaderMeta_T * P_META;
-// }
-// Packet_Context_T;
-
 // typedef const struct
 // {
 //     const Packet_Format_T * P_FORMAT;
@@ -302,8 +262,6 @@ Packet_Context_T;
 //     const Packet_ParseRxComplete_T  PARSE_RX_HEADER;   // Phase 2: checksum + fields extraction
 // }
 // Protocol_RxContext_T;
-
-
 
 
 
@@ -401,3 +359,36 @@ Packet_Context_T;
 //     return p_meta->Length;
 // }
 
+// typedef enum Protocol_RxCode
+// {
+//     // Success codes
+//     PROTOCOL_RX_CODE_AWAIT_PACKET = 0x00,  /* Continue receiving */
+//     PROTOCOL_RX_CODE_PACKET_COMPLETE = 0x01,  /* Complete packet received */
+//     PROTOCOL_RX_CODE_PACKET_FRAGMENT = 0x02,  /* Fragment received, more expected */
+
+//     // Sync/Control codes
+//     PROTOCOL_RX_CODE_ACK = 0x10,
+//     PROTOCOL_RX_CODE_NACK = 0x11,
+//     PROTOCOL_RX_CODE_ABORT = 0x12,
+//     PROTOCOL_RX_CODE_RESET = 0x13,  /* Protocol reset requested */
+//     PROTOCOL_RX_CODE_HEARTBEAT = 0x14,  /* Keep-alive packet */
+
+//     // Error codes - Header/Meta
+//     PROTOCOL_RX_CODE_ERROR_TIMEOUT = 0x20,
+//     PROTOCOL_RX_CODE_ERROR_INVALID_ID = 0x21,  /* Unknown packet ID */
+//     PROTOCOL_RX_CODE_ERROR_INVALID_LENGTH = 0x22, /* Invalid length field */
+//     PROTOCOL_RX_CODE_ERROR_HEADER_CRC = 0x23,  /* Header checksum error */
+//     PROTOCOL_RX_CODE_ERROR_START_MARKER = 0x24,  /* Missing start delimiter */
+//     PROTOCOL_RX_CODE_ERROR_SEQUENCE = 0x25,  /* Sequence number error */
+
+//     // Error codes - Data/Payload
+//     PROTOCOL_RX_CODE_ERROR_DATA_CRC = 0x30,  /* Payload checksum error */
+//     PROTOCOL_RX_CODE_ERROR_DATA_LENGTH = 0x31,  /* Payload length mismatch */
+//     PROTOCOL_RX_CODE_ERROR_DATA_FORMAT = 0x32,  /* Invalid data format */
+//     PROTOCOL_RX_CODE_ERROR_BUFFER_FULL = 0x33,  /* Receive buffer overflow */
+
+//     // System errors
+//     PROTOCOL_RX_CODE_ERROR_SYSTEM = 0xF0,  /* Generic system error */
+//     PROTOCOL_RX_CODE_ERROR_NOT_READY = 0xF1,  /* System not ready */
+//     PROTOCOL_RX_CODE_ERROR_BUSY = 0xF2,  /* System busy */
+// } Protocol_RxCode_T;

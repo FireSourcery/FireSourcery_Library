@@ -219,6 +219,15 @@ static inline bool _TimerT_Modal_Poll(const Timer_Base_T * p_base, Timer_State_T
     return isElapsed;
 }
 
+/*
+    Polling with modal mode only
+*/
+static inline Timer_Mode_T Timer_GetMode(const Timer_State_T * p_state) { return p_state->Mode; }
+static inline bool Timer_IsActive(const Timer_State_T * p_timer) { return (p_timer->Mode > TIMER_MODE_STOPPED) && (p_timer->Period > 0U); }
+static inline bool Timer_IsStopped(const Timer_State_T * p_state) { return (p_state->Period == 0UL) || (p_state->Mode == TIMER_MODE_STOPPED); }
+// static inline bool Timer_IsPeriodic(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_PERIODIC); }
+// static inline bool Timer_IsOneShot(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_ONE_SHOT); }
+
 /******************************************************************************/
 /*
     General/Modal
@@ -240,7 +249,6 @@ static inline void _TimerT_InitPeriodic(const Timer_Base_T * p_base, Timer_State
 static inline void _TimerT_InitOneShot(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t ticks) { p_state->Mode = TIMER_MODE_ONE_SHOT; _TimerT_OneShot_Init(p_base, p_state, ticks); }
 static inline void _TimerT_InitCounter(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Mode = TIMER_MODE_PERIODIC_COUNTER; _TimerT_Counter_Init(p_base, p_state, period); }
 static inline void _TimerT_InitCountN(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Mode = TIMER_MODE_ONE_SHOT_COUNTER; _TimerT_CountN_Init(p_base, p_state, period); }
-
 
 static inline void _TimerT_Start(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { if (p_state->Mode != TIMER_MODE_DISABLED) { __TimerT_Start(p_base, p_state, period); } }
 static inline void _TimerT_Stop(Timer_State_T * p_state) { if (p_state->Mode != TIMER_MODE_DISABLED) { p_state->Mode = TIMER_MODE_STOPPED; p_state->Period = 0U; } }
@@ -287,7 +295,6 @@ static inline void _TimerT_StartCountN(const Timer_Base_T * p_base, Timer_State_
     _TimerT_StartMode(p_base, p_state, TIMER_MODE_ONE_SHOT_COUNTER, period);
     p_state->Counter = shots;
 }
-
 
 /*
     Unit Conversions

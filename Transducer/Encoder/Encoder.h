@@ -29,9 +29,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-
-// Your code here
-
 #include "HAL_Encoder.h"
 #include "Peripheral/Pin/Pin.h"
 

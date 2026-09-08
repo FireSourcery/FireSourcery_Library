@@ -54,7 +54,7 @@ typedef const struct Array
 {
     const union { void * P_BUFFER; _Array_Cast CAST; };
     size_t LENGTH;    // Length of the p_array
-    void * P_AUGMENTS; // P_HEADER/P_STATE
+    // void * P_AUGMENTS; // P_HEADER/P_STATE
 }
 Array_T;
 
@@ -65,7 +65,7 @@ typedef const struct
 }
 Array_Span_T;
 
-typedef const struct Array
+typedef const struct
 {
     const union { void * P_BUFFER; _Array_Cast CAST; };
     size_t LENGTH;    // Length of the p_array

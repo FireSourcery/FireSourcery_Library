@@ -31,6 +31,7 @@
 #ifndef HAL_SERIAL_H
 #define HAL_SERIAL_H
 
+#include <stddef.h>
 
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Serial.h)
@@ -52,5 +53,54 @@
 // static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_hal, uint32_t baudRate) {}
 // static inline void HAL_Serial_Init(HAL_Serial_T * p_hal) {}
 // static inline void HAL_Serial_Deinit(HAL_Serial_T * p_hal) {}
+/*
+
+*/
+static inline bool HAL_UART_SendChar(HAL_Serial_T * p_hal, const uint8_t txchar)
+{
+    bool isNotFull = (HAL_Serial_ReadTxEmptyCount(p_hal) > 0U);
+    if (isNotFull == true) { HAL_Serial_WriteTxChar(p_hal, txchar); }
+    return isNotFull;
+}
+
+/*
+
+*/
+static inline bool HAL_UART_RecvChar(HAL_Serial_T * p_hal, uint8_t * p_rxChar)
+{
+    bool isNotEmpty = (HAL_Serial_ReadRxFullCount(p_hal) > 0U);
+    if (isNotEmpty == true) { *p_rxChar = HAL_Serial_ReadRxChar(p_hal); }
+    return isNotEmpty;
+}
+
+static inline uint8_t HAL_UART_GetLoopCount(size_t length)
+{
+#ifdef SERIAL_HW_FIFO_DISABLE
+    (void)length;
+    return 1U;
+#else
+    return length;
+#endif
+}
+
+static inline size_t HAL_UART_Send(HAL_Serial_T * p_hal, const uint8_t * p_srcBuffer, size_t length)
+{
+    size_t charCount;
+    for (charCount = 0U; charCount < HAL_UART_GetLoopCount(length); charCount++)
+    {
+        if (HAL_UART_SendChar(p_hal, p_srcBuffer[charCount]) == false) { break; }
+    }
+    return charCount;
+}
+
+static inline size_t HAL_UART_Recv(HAL_Serial_T * p_hal, uint8_t * p_destBuffer, size_t length)
+{
+    size_t charCount;
+    for (charCount = 0U; charCount < HAL_UART_GetLoopCount(length); charCount++)
+    {
+        if (HAL_UART_RecvChar(p_hal, &p_destBuffer[charCount]) == false) { break; }
+    }
+    return charCount;
+}
 
 #endif

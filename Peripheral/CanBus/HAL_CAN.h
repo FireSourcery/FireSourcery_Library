@@ -197,8 +197,8 @@ static inline size_t HAL_CAN_ReadRx(HAL_CAN_T * p_can, can_id_t * p_rxId, uint8_
     if (HAL_CAN_ReadRxFullFlag(p_can))
     {
         *p_rxId = HAL_CAN_ReadRxId(p_can);
-        HAL_CAN_ReadRxData(p_can, p_rxData);
         length = HAL_CAN_ReadRxLength(p_can);
+        HAL_CAN_ReadRxData(p_can, p_rxData);
         HAL_CAN_ClearRxFullFlag(p_can);
     }
     return length;
