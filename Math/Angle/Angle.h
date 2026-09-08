@@ -178,16 +178,15 @@ static inline void Angle_SetLimits(Angle_T * p_angle, angle16_t lower, angle16_t
 */
 static inline void Angle_SetLimitWindow(Angle_T * p_angle, uangle16_t width_angle16)
 {
-    int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
     if (p_angle->Delta >= 0)
     {
-        p_angle->LimitUpper = p_angle->Angle + width_shifted;
+        p_angle->LimitUpper = p_angle->Angle + ((int32_t)width_angle16 << ANGLE32_SHIFT);
         p_angle->LimitLower = p_angle->Angle;
     }
     else
     {
         p_angle->LimitUpper = p_angle->Angle;
-        p_angle->LimitLower = p_angle->Angle - width_shifted;
+        p_angle->LimitLower = p_angle->Angle - ((int32_t)width_angle16 << ANGLE32_SHIFT);
     }
 }
 

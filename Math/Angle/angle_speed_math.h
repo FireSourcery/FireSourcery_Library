@@ -151,18 +151,12 @@ static inline int32_t angle_of_rpm(uint32_t Fs, int32_t rpm) { return angle_spee
 static inline int32_t rpm_of_angle(uint32_t Fs, int16_t angle16) { return angle_freq_of(Fs * SECONDS_PER_MINUTE, angle16); }
 
 
-/* ANGLE16_OF_RPM() * PolePairs */
-static inline int32_t el_angle_of_mech_rpm(uint32_t Fs, uint8_t polePairs, int16_t rpm) { return angle_of_rpm(Fs, (int32_t)rpm * polePairs); }
-static inline int32_t mech_rpm_of_el_angle(uint32_t Fs, uint8_t polePairs, int16_t angle16) { return rpm_of_angle(Fs, angle16) / polePairs; }
-
-
 /*
     Cycles Per Second
 */
 /* rps [0:POLLING_FREQ/2] */
 static inline int32_t angle_of_rps(uint32_t Fs, int16_t rps) { return angle_speed_of(Fs, rps); }
 static inline int32_t rps_of_angle(uint32_t Fs, int16_t angle16) { return angle16 * (int32_t)RPS_PER_ANGLE_SPEED(Fs) / FRACT16_SCALE; }
-// static inline int32_t rps_of_angle(uint32_t Fs, int16_t angle16) { return _angle_freq_of(Fs, angle16); }
 
 
 /******************************************************************************/
@@ -190,12 +184,14 @@ static inline int16_t rpm_fract16_of_angle(uint32_t fs, uint32_t base_rpm, int16
 
 /*
     angle16_of_speed_pu_rads
+    optional include rads scaling
+    static inline int16_t angle_of_rads_fract16(uint32_t fs, uint32_t base_rads, rads_scale, int16_t rads_pu)
 */
 /* delta = ω_pu_fract16 · (ω_base / (π · Fs)) */
 static inline int16_t angle_of_rads_fract16(uint32_t fs, uint32_t base_rads, int16_t pu_fract16)
 {
     return ((int64_t)pu_fract16 * base_rads * FRACT16_SCALE) / ((int64_t)FRACT16_PI * fs);
-    // return ((int64_t)pu_fract16 * base_rads) / ((int64_t)FRACT16_PI * fs / FRACT16_SCALE);
+    // return (pu_fract16 * base_rads) / ((int64_t)FRACT16_PI * fs / FRACT16_SCALE);
 }
 
 /* ω_pu_fract16 = delta · π · Fs / ω_base */
@@ -204,10 +200,6 @@ static inline int32_t rads_fract16_of_angle(uint32_t fs, uint32_t base_rads, int
     return (int64_t)delta * FRACT16_PI * fs / (base_rads * FRACT16_SCALE);
 }
 
-/*
-    optional include rads scaling
-    // static inline int16_t angle_of_rads_fract16(uint32_t fs, uint32_t base_rads, rads_scale, int16_t rads_pu)
-*/
 
 /******************************************************************************/
 /*
@@ -222,6 +214,14 @@ static inline uint32_t rpm_of_rads(uint32_t rads, uint32_t scale) { return (uint
 static inline uint32_t mrads_of_rpm(uint32_t rpm) { return rads_of_rpm(rpm, 1000U); }
 static inline uint32_t rpm_of_mrads(uint32_t mrads) { return rpm_of_rads(mrads, 1000U); }
 
+/******************************************************************************/
+/*!
+    @brief  Electrical angle and mechanical RPM conversions for motors.
+*/
+/******************************************************************************/
+/* ANGLE16_OF_RPM() * PolePairs */
+static inline int32_t el_angle_of_mech_rpm(uint32_t Fs, uint8_t polePairs, int16_t rpm) { return angle_of_rpm(Fs, (int32_t)rpm * polePairs); }
+static inline int32_t mech_rpm_of_el_angle(uint32_t Fs, uint8_t polePairs, int16_t angle16) { return rpm_of_angle(Fs, angle16) / polePairs; }
 
 static inline uint32_t el_rads_of_mech_rpm(uint8_t pole_pairs, uint32_t mech_rpm) { return rads_of_rpm(mech_rpm, pole_pairs); }
 static inline uint32_t mech_rpm_of_el_rads(uint8_t pole_pairs, uint32_t el_rads) { return rpm_of_rads(el_rads, pole_pairs); }

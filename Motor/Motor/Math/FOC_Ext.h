@@ -119,10 +119,10 @@ static inline void FOC_Electrical_SetPsi_Kv(FOC_Electrical_T * p_electrical, uin
 // {
 //     return (FOC_Electrical_T)
 //     {
-//         .Ld = l_pu_of_h(MOTOR_CONTROL_FREQ, vBase, iBase, p_electrical->Ld, 1000000UL),
-//         .Lq = l_pu_of_h(MOTOR_CONTROL_FREQ, vBase, iBase, p_electrical->Lq, 1000000UL),
+//         .Ld = l_pu_tick_of_h(MOTOR_CONTROL_FREQ, vBase, iBase, p_electrical->Ld, 1000000UL),
+//         .Lq = l_pu_tick_of_h(MOTOR_CONTROL_FREQ, vBase, iBase, p_electrical->Lq, 1000000UL),
 //         .Rs = rs_pu_of_mohm(vBase, iBase, p_electrical->Rs),
-//         .Psi = psi_pu_of_wb(MOTOR_CONTROL_FREQ, vBase, p_electrical->Psi, 1000000UL),
+//         .Psi = psi_pu_tick_of_wb(MOTOR_CONTROL_FREQ, vBase, p_electrical->Psi, 1000000UL),
 //     };
 // }
 

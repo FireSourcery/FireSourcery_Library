@@ -163,7 +163,7 @@ static void ProcRs(ElectricalCalibration_T * p_params, fract16_t vd, fract16_t i
         int32_t id_avg = (int32_t)(p_params->IdAccum / p_params->AccumN);
 
         /* Rs = Vd/Id — PU derived directly from the PU averages; SI from their mV/mA equivalents, independently. */
-        p_params->Results.Rs = rs_pu_of_vd_id(vd_avg, id_avg);
+        p_params->Results.Rs = rs_pu_of_vi(vd_avg, id_avg);
         p_params->ResultsSi.Rs = rs_mohm_of_vi((uint64_t)vd_avg * p_params->VBase / 32768UL, (uint64_t)id_avg * p_params->IBase / 32768UL);
 
         /* Precompute steady-state Vd bias so Ld step averages to Id_bias. */

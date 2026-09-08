@@ -49,18 +49,20 @@
         θ̇      = ω_pu · ω_base                            [definition of ω_pu]
         θ_step = θ̇ · Δt = ω_pu · (ω_base / Fs)            [per-tick step]
 
-    Precompute (ω_base · Δt) once in angle16/tick so the hot path is a single
-    multiply with no division. Numerically:
+    Precompute (ω_base · Δt) once in [angle16/tick]
+    so the hot path is a single multiply with no division. Numerically:
 
-        OmegaBase_dT = (ω_base / Fs) · (65536 / 2π)
-                     = ω_base_RPM · 65536 / (60 · Fs)
+        Δθ_base = (ω_base / Fs) · (65536 / 2π) = ω_base · 32768 / (π · Fs)
+                = ω_base_rpm · 65536 / (60 · Fs)
 
     Inverse stores Fs / ω_base (Q32) for the angle → ω_pu direction.
+    ANGLE_PER_REVOLUTION / FRACT16_MAX == 2
+    ω_pu = el_delta · [π · Fs / ω_base = 32768 / ω_base_angle]
 */
 /******************************************************************************/
 typedef struct Angle_SpeedUnitRef
 {
-    angle16_t SpeedMax_Angle16;    /* Δθ_base, (ω_base · Δt) in angle16/tick — angle step at ω_pu = 1.0 */
+    angle16_t SpeedMax_Angle16;     /* SpeedBase_PuTick, Δθ_base — angle step at ω_pu = 1.0 */
     uint32_t InvSpeedMax_Fract32;   /* Fs / ω_base (Q32) — inverse for angle → ω_pu */
     // uint32_t PollingFreq; /* keep for per second conversions if needed */
 }
@@ -77,19 +79,8 @@ static void Angle_SpeedRef_Init(Angle_SpeedUnitRef_T * p_ref, angle16_t maxAngle
 static void Angle_SpeedRef_Init_Rpm(Angle_SpeedUnitRef_T * p_ref, uint32_t pollingFreq, uint32_t maxRpm) { *p_ref = ANGLE_SPEED_FRACT_REF_FROM_RPM(pollingFreq, maxRpm); }
 
 /*
-    Precomputed unit conversions — operate on shifted (Q16.16) delta.
-    All hot-path consumers keep Delta in shifted form; the helpers below
-    read/write from that representation directly.
+    Hot-path consumers — operate on precomputed unit conversions
 */
-static inline angle16_t angle_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleSpeedMax); }
-static inline angle32_t angle32_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return (int32_t)speed_fract16 * angleSpeedMax << 1; }
-static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, angle16_t angle16) { return ((int32_t)angle16 * angleSpeedMaxInv_fract32) >> 16U; }
-/*
-    ANGLE_PER_REVOLUTION / FRACT16_MAX == 2
-    ω_pu = el_delta · [π · Fs / ω_base = 32768 / ω_base_angle]
-*/
-static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, angle16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleSpeedMax; }
-
 static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, const Angle_SpeedUnitRef_T * p_ref, accum32_t speed_fract16)
 {
     p_angle->Delta = (int32_t)speed_fract16 * p_ref->SpeedMax_Angle16 << 1;
@@ -101,7 +92,9 @@ static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, const An
     return Angle_IntegrateStep(p_angle);
 }
 
+// static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, angle16_t angle16) { return ((int32_t)angle16 * angleSpeedMaxInv_fract32) >> 16U; }
 static inline fract16_t Angle_ResolveSpeed_Fract16(const Angle_T * p_angle, const Angle_SpeedUnitRef_T * p_ref)
 {
-    return speed_fract16_of_angle(p_ref->InvSpeedMax_Fract32, p_angle->Delta >> ANGLE32_SHIFT);
+    // return speed_fract16_of_angle(p_ref->InvSpeedMax_Fract32, p_angle->Delta >> ANGLE32_SHIFT);
+    return  ((int32_t)p_ref->InvSpeedMax_Fract32 * (int32_t)Angle_Delta(p_angle)) >> 16U;
 }
