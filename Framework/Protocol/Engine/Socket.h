@@ -116,16 +116,18 @@ typedef const struct Socket
 {
     Socket_State_T * P_SOCKET_STATE;
 
-    /* Buffers. Meta + contiguous frame, so a handler receives a payload pointer into it. */
-    Packet_Context_T * P_RX_PACKET;
-    Packet_Context_T * P_TX_PACKET;
-    uint8_t PACKET_BUFFER_LENGTH;               /* Must be >= every bound format's LENGTH_MAX */
+    // /* Buffers. Meta + contiguous frame, so a handler receives a payload pointer into it. */
+    // Packet_Context_T * P_RX_PACKET;
+    // Packet_Context_T * P_TX_PACKET;
+    // uint8_t PACKET_BUFFER_LENGTH;               /* Must be >= every bound format's LENGTH_MAX */
 
-    /* The request service. Id -> handler, plus the storage handlers run against. */
-    const Protocol_Req_T * P_REQ_TABLE;
-    uint8_t REQ_TABLE_LENGTH;
-    void * P_APP_CONTEXT;                       /* Passed to every handler */
-    void * P_REQ_CONTEXT;                       /* Handler sub-state. Sized for the largest handler */
+    // /* The request service. Id -> handler, plus the storage handlers run against. */
+    // const Protocol_Req_T * P_REQ_TABLE;
+    // uint8_t REQ_TABLE_LENGTH;
+    // void * P_APP_CONTEXT;                       /* Passed to every handler */
+    // void * P_REQ_CONTEXT;                       /* Handler sub-state. Sized for the largest handler */
+
+    Protocol_Link_T PROTOCOL;
 
     /* Selectable bindings. Arrays of pointers - neither need be contiguous. */
     const Xcvr_T * const * P_XCVR_TABLE;
@@ -133,8 +135,7 @@ typedef const struct Socket
     const Packet_Format_T * const * P_FORMAT_TABLE;
     uint8_t FORMAT_COUNT;
 
-    const Socket_Config_T * P_NVM_CONFIG;
-    const volatile uint32_t * P_TIMER;
+    const Socket_Config_T * P_NVM_CONFIG;   /* Initial config. The clock lives in PROTOCOL.P_TIMER. */
 }
 Socket_T;
 
@@ -170,7 +171,7 @@ static inline void Socket_Disable(const Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
-    Protocol_Reset(&p_state->Protocol, *p_socket->P_TIMER);
+    Protocol_Reset(&p_state->Protocol, *p_socket->PROTOCOL.P_TIMER);
     p_state->IsEnabled = false;
 }
 
@@ -184,7 +185,7 @@ static inline bool Socket_Enable(const Socket_T * p_socket)
     if ((p_state->p_Xcvr == NULL) || (p_state->p_Format == NULL)) { return false; }
 
     Xcvr_ConfigBaudRate(p_state->p_Xcvr, p_state->Config.BaudRate);
-    Protocol_Reset(&p_state->Protocol, *p_socket->P_TIMER);
+    Protocol_Reset(&p_state->Protocol, *p_socket->PROTOCOL.P_TIMER);
     p_state->IsEnabled = true;
     return true;
 }
@@ -219,7 +220,7 @@ static inline bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
     if (formatId >= p_socket->FORMAT_COUNT) { return false; }
     if (Socket_IsBusy(p_socket) == true)    { return false; }
     /* The parser clamps its target to LENGTH_MAX, so the buffer must cover it. */
-    if (p_socket->P_FORMAT_TABLE[formatId]->LENGTH_MAX > p_socket->PACKET_BUFFER_LENGTH) { return false; }
+    if (p_socket->P_FORMAT_TABLE[formatId]->LENGTH_MAX > p_socket->PROTOCOL.PACKET_BUFFER_LENGTH) { return false; }
 
     p_state->Config.FormatId = formatId;
     p_state->p_Format = p_socket->P_FORMAT_TABLE[formatId];
@@ -251,7 +252,7 @@ static inline void Socket_Init(const Socket_T * p_socket)
     p_state->IsEnabled = false;
     p_state->p_Xcvr = NULL;
     p_state->p_Format = NULL;
-    Protocol_Reset(&p_state->Protocol, *p_socket->P_TIMER);
+    Protocol_Reset(&p_state->Protocol, *p_socket->PROTOCOL.P_TIMER);
 
     /* Select before enabling, so an out of range stored id leaves the socket down rather than bound to nothing. */
     (void)Socket_SetXcvr(p_socket, p_state->Config.XcvrId);
@@ -281,21 +282,5 @@ static inline void Socket_Proc(const Socket_T * p_socket)
 
     if (p_state->IsEnabled == false) { return; }
 
-    Protocol_Link_T link =
-    {
-        .P_XCVR                 = p_state->p_Xcvr,
-        .P_FORMAT               = p_state->p_Format,
-        .P_RX_PACKET            = p_socket->P_RX_PACKET,
-        .P_TX_PACKET            = p_socket->P_TX_PACKET,
-        .PACKET_BUFFER_LENGTH   = p_socket->PACKET_BUFFER_LENGTH,
-        .P_TIMER                = p_socket->P_TIMER,
-        .RX_TIMEOUT             = p_state->Config.RxTimeout,
-    };
-
-    Protocol_Proc
-    (
-        &link, &p_state->Protocol,
-        p_socket->P_REQ_TABLE, p_socket->REQ_TABLE_LENGTH, p_socket->P_APP_CONTEXT, p_socket->P_REQ_CONTEXT,
-        p_state->Config.ReqTimeout
-    );
+    Protocol_Proc(&p_socket->PROTOCOL, p_state->p_Xcvr, p_state->p_Format, &p_state->Protocol);
 }

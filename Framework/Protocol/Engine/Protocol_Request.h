@@ -65,11 +65,11 @@
 /*! What a handler tells the engine to do next. */
 typedef enum Protocol_ReqCode
 {
-    PROTOCOL_REQ_RESPOND,   /* Response staged. Transmit it, the sequence continues. */
+    PROTOCOL_REQ_DONE,      /* Final. Transmit any staged response, then close. */
     PROTOCOL_REQ_AWAIT,     /* No response. Wait for the next packet. */
+    PROTOCOL_REQ_RESPOND,   /* Response staged. Transmit it, the sequence continues. */
     PROTOCOL_REQ_ACCEPT,    /* Rx validated. Ack it, no response. */
     PROTOCOL_REQ_REJECT,    /* Rx rejected. Nack it, no response. */
-    PROTOCOL_REQ_DONE,      /* Final. Transmit any staged response, then close. */
     PROTOCOL_REQ_ABORT,     /* Terminate without a response. */
 }
 Protocol_ReqCode_T;
@@ -151,49 +151,17 @@ typedef struct Protocol_ReqState
 }
 Protocol_ReqState_T;
 
-static inline void Protocol_Req_Reset(Protocol_ReqState_T * p_state)
-{
-    p_state->StateId = PROTOCOL_REQ_IDLE;
-    p_state->p_ReqActive = NULL;
-    p_state->Step = 0U;
-}
-
-static inline bool Protocol_Req_IsActive(const Protocol_ReqState_T * p_state) { return (p_state->StateId == PROTOCOL_REQ_ACTIVE); }
-
-/*! Zeroed when nothing is bound, so an unbound socket acks nothing. */
-static inline Protocol_AckPolicy_T Protocol_Req_AckPolicy(const Protocol_ReqState_T * p_state)
-{
-    return (p_state->p_ReqActive != NULL) ? p_state->p_ReqActive->ACK : (Protocol_AckPolicy_T)PROTOCOL_ACK_NONE;
-}
 
 /******************************************************************************/
 /*!
     Proc
 */
 /******************************************************************************/
-
-/*! @return pointer to Req, NULL when the id has no handler */
-static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+static inline void Protocol_Req_Reset(Protocol_ReqState_T * p_state)
 {
-    const Protocol_Req_T * p_req = NULL;
-    for (uint8_t iReq = 0U; iReq < tableLength; iReq++) { if (p_reqTable[iReq].ID == id) { p_req = &p_reqTable[iReq]; break; } }
-    return p_req;
-}
-
-/*!
-    @brief  Bind the handler for an incoming id.
-
-            Separate from Proc because the ack policy that decides whether this very frame
-            gets acked is a property of the handler - so binding must precede the ack, and
-            invocation must follow it.
-
-    @return false when the id has no handler.
-*/
-static inline bool Protocol_Req_Select(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
-{
-    p_state->p_ReqActive = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
+    p_state->StateId = PROTOCOL_REQ_IDLE;
+    p_state->p_ReqActive = NULL;
     p_state->Step = 0U;
-    return (p_state->p_ReqActive != NULL);
 }
 
 /*!
@@ -219,6 +187,50 @@ static inline Protocol_ReqCode_T Protocol_Req_Proc(Protocol_ReqState_T * p_state
 
     return reqCode;
 }
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+/*! @return pointer to Req, NULL when the id has no handler */
+static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+{
+    const Protocol_Req_T * p_req = NULL;
+    for (uint8_t iReq = 0U; iReq < tableLength; iReq++) { if (p_reqTable[iReq].ID == id) { p_req = &p_reqTable[iReq]; break; } }
+    return p_req;
+}
+
+/*!
+    @brief  Bind the handler for an incoming id.
+
+            Separate from Proc because the ack policy that decides whether this very frame
+            gets acked is a property of the handler - so binding must precede the ack, and
+            invocation must follow it.
+
+    @return false when the id has no handler.
+*/
+static inline bool Protocol_Req_Select(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+{
+    p_state->p_ReqActive = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
+    p_state->Step = 0U;
+    return (p_state->p_ReqActive != NULL);
+}
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+static inline bool Protocol_Req_IsActive(const Protocol_ReqState_T * p_state) { return (p_state->StateId == PROTOCOL_REQ_ACTIVE); }
+
+/*! Zeroed when nothing is bound, so an unbound socket acks nothing. */
+static inline Protocol_AckPolicy_T Protocol_Req_AckPolicy(const Protocol_ReqState_T * p_state)
+{
+    return (p_state->p_ReqActive != NULL) ? p_state->p_ReqActive->ACK : (Protocol_AckPolicy_T)PROTOCOL_ACK_NONE;
+}
+
+
 
 
 /******************************************************************************/

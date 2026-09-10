@@ -117,11 +117,6 @@ typedef enum Protocol_SyncEvent
 }
 Protocol_SyncEvent_T;
 
-static inline void Protocol_Sync_Reset(Protocol_SyncState_T * p_state)
-{
-    p_state->StateId = PROTOCOL_SYNC_OPEN;
-    p_state->RetransmitCount = 0U;
-}
 
 
 /******************************************************************************/
@@ -129,6 +124,17 @@ static inline void Protocol_Sync_Reset(Protocol_SyncState_T * p_state)
     Proc
 */
 /******************************************************************************/
+static inline void Protocol_Sync_Reset(Protocol_SyncState_T * p_state)
+{
+    p_state->StateId = PROTOCOL_SYNC_OPEN;
+    p_state->RetransmitCount = 0U;
+}
+
+static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state)
+{
+    p_state->StateId = PROTOCOL_SYNC_AWAIT_ACK;
+}
+
 /*
     Retransmit while the budget lasts, otherwise abandon. Shared by the nack and deadline
     paths, which differ only in what triggered them.
@@ -192,18 +198,16 @@ static inline Protocol_SyncEvent_T Protocol_Sync_OnTimeout(Protocol_SyncState_T 
     return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK) ? Protocol_Sync_Retry(p_state, policy) : PROTOCOL_SYNC_EVENT_FAILED;
 }
 
-/*!
-    @brief  Arm the handshake after a response has been transmitted.
-            A retransmission re-arms without clearing the retry budget.
+/*
+    After a response is transmitted the caller picks the destination directly:
 
-    @param  isAckExpected  the one bit this layer needs. Which policy bit it came from -
-                           RX_ACK_OPEN or RX_ACK_STEP - is the caller's to decide.
+        Protocol_ExpectAck      one frame outstanding, retry budget intact
+        Protocol_Sync_Reset     nothing outstanding, budget cleared
+
+    Which one is a reading of the bound handler's RX_ACK bit, and only the caller knows
+    whether the OPEN or the STEP bit applies.
 */
-static inline void Protocol_Sync_OnTx(Protocol_SyncState_T * p_state, bool isAckExpected)
-{
-    p_state->StateId = (isAckExpected == true) ? PROTOCOL_SYNC_AWAIT_ACK : PROTOCOL_SYNC_OPEN;
-    if (p_state->StateId == PROTOCOL_SYNC_OPEN) { p_state->RetransmitCount = 0U; }
-}
+
 
 
 static inline bool Protocol_Sync_IsAwaitingAck(const Protocol_SyncState_T * p_state) { return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK); }
