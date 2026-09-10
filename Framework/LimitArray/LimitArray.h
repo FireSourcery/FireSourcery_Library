@@ -192,23 +192,8 @@ static bool _LimitArray_TestClearEntry(LimitArray_Augments_T * p_state, limit_t 
 //     LimitArray_Augments_T State;
 //     limit_t Values[]; /* Flexible array member for contiguous storage with augments. Caller handles allocation and indexing. */
 // }
-// LimitArray_T;
+// LimitArray_Context_T;
 
-// #define _LIMIT_ARRAY_SIZE(Length) (sizeof(LimitArray_Augments_T) + (sizeof(limit_t) * (Length)))
-// #define _LIMIT_ARRAY_ALLOC(Length) (LimitArray_T *)_BUFFER_ALLOC(sizeof(LimitArray_Augments_T) + (sizeof(limit_t) * (Length)))
-
-// /* Caller def uint8[_LIMIT_ARRAY_SIZE(Length)] */
-// typedef __attribute__((aligned(sizeof(uintptr_t)))) uint8_t LimitArray_Alloc_T[];
-
-// /*
-//     alternative to macro def
-//     struct
-//     {
-//         ...
-//         LimitArray_Alloc_T[_LIMIT_ARRAY_SIZE(Length)] LimitArray;
-//     }
-// */
-// LimitArray_T * LimitArray_Cast(LimitArray_Alloc_T * p_alloc) { return (LimitArray_T *)p_alloc; }
 
 /******************************************************************************/
 /*

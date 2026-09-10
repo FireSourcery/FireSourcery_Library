@@ -43,7 +43,7 @@
 /******************************************************************************/
 #ifndef ACCUMULATOR_FLOAT
 typedef int16_t accumulator_io_t;       /* user-scale value */
-typedef int32_t accumulator_state_t;      /* internal state. include additional scaling for fixed-point representation */
+typedef int32_t accumulator_state_t;    /* internal state. include additional scaling for fixed-point representation */
 /*
     Accumulator Max [INT32_MAX/2] => Accumulator + Input < INT32_MAX
     value range [-INT16_MAX:INT16_MAX]  => 2 * range << 15
@@ -89,10 +89,10 @@ static inline accumulator_state_t accumulator(accumulator_state_t coeff, accumul
 }
 
 /*! y[n] = y[n-1] + clamp(K · u[n], LimitLower - y[n-1], LimitUpper - y[n-1]) — clamp at input. */
-// static inline accumulator_state_t accumulator_in(accumulator_state_t coeff, accumulator_state_t min, accumulator_state_t max, accumulator_state_t state, accumulator_state_t input)
-// {
-//     return state + math_clamp(coeff * input, min - state, max - state);
-// }
+static inline accumulator_state_t accumulator_in(accumulator_state_t coeff, accumulator_state_t min, accumulator_state_t max, accumulator_state_t state, accumulator_state_t input)
+{
+    return state + math_clamp(coeff * input, min - state, max - state);
+}
 
 /******************************************************************************/
 /*
@@ -136,22 +136,10 @@ static inline accumulator_io_t Accumulator_Step(Accumulator_T * p_accum, accumul
     return Accumulator_Output(p_accum);
 }
 
-// static inline accumulator_io_t Accumulator_AddSat(Accumulator_T * p_accum, accumulator_io_t input)
-// {
-//     p_accum->Accumulator += math_clamp(p_accum->Coefficient * input, p_accum->LimitLower - p_accum->Accumulator, p_accum->LimitUpper - p_accum->Accumulator);
-//     return Accumulator_Output(p_accum);
-// }
-
-// static inline accumulator_state_t accumulator_ramp(accumulator_state_t rate, accumulator_state_t min, accumulator_state_t max, accumulator_state_t state, accumulator_state_t target)
-// {
-//      return state + math_clamp(target - output, -(int32_t)ramp_rate, (int32_t)ramp_rate);
-//     return ramp_next(rate, state, math_clamp(target, min, max));
-// }
-
 /*  Bounded step toward an explicit target; Coefficient acts as max step magnitude. */
 // accumulator_io_t Accumulator_Ramp(Accumulator_T * p_accum, accumulator_io_t target)
 // {
-//     p_accum->Accumulator = ramp_target(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, _ACCUM_STATE(target));
+//     p_accum->Accumulator = ramp_target(p_accum->Coefficient, p_accum->Accumulator, _ACCUM_STATE(target));
 //     return Accumulator_Output(p_accum);
 // }
 

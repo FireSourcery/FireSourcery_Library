@@ -30,8 +30,7 @@
 */
 /******************************************************************************/
 #include "Type/accessor.h"
-
-
+#include "Type/void_pointer.h"
 
 /*
     Field Accessor
@@ -41,19 +40,11 @@
     - Handles 1/2/4 byte fields, zero-extends to int32_t for getter, truncates from int32_t for setter
 */
 
-/* Field Descriptor */
-typedef const struct Field
-{
-    size_t SIZE;
-    size_t OFFSET;
-}
-Field_T;
-
-#define FIELD(Type, Member) ((Field_T){ .SIZE = sizeof(((Type *)0)->Member), .OFFSET = offsetof(Type, Member) })
-
 static inline int get_field(const void * p_context, size_t size, size_t offset)
 {
     const uint8_t * p_base = (const uint8_t *)p_context + offset;
+    // return pointer_as_value(size, (const uint8_t *)p_context + offset);
+
     int value;
     switch (size)
     {
@@ -64,6 +55,12 @@ static inline int get_field(const void * p_context, size_t size, size_t offset)
     }
     return value;
 }
+
+// static inline int try_get_field(const void * p_context, size_t context_size, size_t value_size, size_t offset)
+// {
+//     if (offset + value_size > context_size) { return 0; }
+//     return get_field(p_context, value_size, offset);
+// }
 
 static inline void set_field(void * p_context, size_t size, size_t offset, int value)
 {
@@ -76,6 +73,16 @@ static inline void set_field(void * p_context, size_t size, size_t offset, int v
         default:                                        break;
     }
 }
+
+/* Field Descriptor */
+typedef const struct Field
+{
+    size_t SIZE;
+    size_t OFFSET;
+}
+Field_T;
+
+#define FIELD(Type, Member) ((Field_T){ .SIZE = sizeof(((Type *)0)->Member), .OFFSET = offsetof(Type, Member) })
 
 /*
     Read a field from a struct by descriptor.
@@ -106,39 +113,46 @@ VField_T;
     Grouped Implementation
     Single layer of wraping with generically typed function pointers
 */
-typedef const struct VField_Table
+// typedef const struct VField_Table
+// {
+//     VField_T * P_VARS;
+//     size_t COUNT;
+// }
+// VField_Table_T;
+
+typedef const struct
 {
     VField_T * P_VARS;
     size_t COUNT;
-    // proc_t ON_SET;
-    // test_t TEST_SET;
+    proc_t ON_SET;
+    test_t TEST_SET;
 }
-VField_Table_T;
+VarAccess_T;
 
-// static inline int _VarAccess_GetAt(VField_Table_T * p_varAccess, void * p_context, int varId) { return p_varAccess->P_VARS[varId].GET(p_context); }
+static inline int _VarAccess_Get(VarAccess_T * p_varAccess, void * p_context, int varId) { return p_varAccess->P_VARS[varId].GET(p_context); }
+static inline void _VarAccess_Set(VarAccess_T * p_varAccess, void * p_context, int varId, int value) { p_varAccess->P_VARS[varId].SET(p_context, value); }
+
+static inline bool VarAccess_TrySet(VarAccess_T * p_varAccess, void * p_context, int varId, int value)
+ {
+    if ((p_varAccess->TEST_SET != NULL) && (p_varAccess->TEST_SET(p_context) == false)) { return false; }
+    p_varAccess->P_VARS[varId].SET(p_context, value);
+    if (p_varAccess->ON_SET != NULL) { p_varAccess->ON_SET(p_context); }
+    return true;
+}
 
 /*
     compatibility with sub modules using switch()
     includes/circumvents handling function pointers with different signatures
 */
-typedef const struct Accessor
-{
-    get_field_t GET_FIELD;
-    set_field_t SET_FIELD;
-}
-Accessor_T;
+// typedef const struct Accessor
+// {
+//     get_field_t GET_FIELD;
+//     set_field_t SET_FIELD;
+// }
+// Accessor_T;
 
-typedef struct VarAccess
-{
-    int Id;
-    int(*Get)(const void * p_context);
-    void (*Set)(void * p_context, int value);
-    void (*TestSet)(void * p_context);
-    void (*PropagateSet)(void * p_context);
-}
-VarAccess_T;
 
-static inline int Accessor_Get(Accessor_T * p_this, void * p_context, int id) { return p_this->GET_FIELD(p_context, id); }
-static inline void Accessor_Set(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
-// static inline int Accessor_SetWithGuard(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
+// static inline int Accessor_Get(Accessor_T * p_this, void * p_context, int id) { return p_this->GET_FIELD(p_context, id); }
+// static inline void Accessor_Set(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
+// // static inline int Accessor_SetWithGuard(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
 

@@ -73,6 +73,7 @@
 /*
     complete setpoint object: { shape, bound, output, target }
     Implementation by shifted accumulator.
+    Bounded step toward an explicit target. Coefficient acts as max step magnitude.
         output state can be set directly.
         Index based implementation need inverse function
 */
@@ -105,10 +106,8 @@ static inline void Ramp_SetTarget(Ramp_T * p_ramp, accumulator_io_t target) { p_
 static inline accumulator_io_t Ramp_GetLimitLower(const Ramp_T * p_ramp){ return Accumulator_LimitLower(&p_ramp->Accumulator); }
 static inline accumulator_io_t Ramp_GetLimitUpper(const Ramp_T * p_ramp){ return Accumulator_LimitUpper(&p_ramp->Accumulator); }
 
-
 /*
     Limits applied on input
-    SetTargetWindow
     re-clamps the stored target alongside the accumulator.
     Ramp_ProcNext gradually moves output to target, with saturation on every step.
 */

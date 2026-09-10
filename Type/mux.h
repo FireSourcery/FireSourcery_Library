@@ -9,7 +9,7 @@
 */
 typedef const void entry_t;
 typedef const entry_t * const entry_table_t;
-// typedef const entry_t * const mux_t; entry_t ** pp_entry
+// typedef const entry_t * const mux_t;
 
 
 static inline entry_t * mux_from(entry_table_t * pp_table, size_t length, size_t index) { return (index < length) ? pp_table[index] : NULL; }

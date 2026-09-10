@@ -1,7 +1,36 @@
-#ifndef VOID_ARRAY_H
-#define VOID_ARRAY_H
+#pragma once
 
-#include "../accessor.h"
+/******************************************************************************/
+/*!
+    @section LICENSE
+
+    Copyright (C) 2026 FireSourcery
+
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   void_array.h
+    @author FireSourcery
+    @brief  [Brief description of the file]
+*/
+/******************************************************************************/
+#include "Type/accessor.h"
+#include "Type/void_pointer.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -18,83 +47,24 @@
     @brief Void Array / Sized Array - Generic by type
         let compiler to optimize away [size_t][type]
         alternatively _Generic select on literal type,
-            Macro arguments lose type constraints
+        Macro arguments lose type constraints
 */
 /******************************************************************************/
-
-/*
-    value operations should inline with type
-*/
-/*!
-   generic switch copy / memcpy
-*/
-/* less function call when 'type' is not compile time const */
-/* same as memcpy when type is compile time literal */
-static inline void void_copy(void * p_dest, const void * p_src, size_t size)
-{
-    switch (size)
-    {
-        case sizeof(uint8_t) : *((uint8_t  *)p_dest) = *((const uint8_t  *)p_src); break;
-        case sizeof(uint16_t): *((uint16_t *)p_dest) = *((const uint16_t *)p_src); break;
-        case sizeof(uint32_t): *((uint32_t *)p_dest) = *((const uint32_t *)p_src); break;
-#if (REGISTER_SIZE_64)
-        case sizeof(uint64_t) : *((uint64_t *)p_dest) = *((const uint64_t *)p_src); break;
-#endif
-        default: memcpy(p_dest, p_src, size); break;
-    }
-}
-
-/* Copy as type */
-static inline void void_pointer_assign(size_t type, void * p_unit, const void * p_value) { void_copy(p_unit, p_value, type); }
-
-/*
-    Scalar value path
-*/
-/* value sign extension */
-static inline value_t void_pointer_as_value(size_t type, const void * p_unit)
-{
-    value_t value = 0;
-    switch (type)
-    {
-        case sizeof(int8_t):  value = *((const int8_t *)p_unit);  break;
-        case sizeof(int16_t): value = *((const int16_t *)p_unit); break;
-        case sizeof(int32_t): value = *((const int32_t *)p_unit); break;
-#if (REGISTER_SIZE_64)
-        case sizeof(int64_t): value = *((const int64_t *)p_unit); break;
-#endif
-        default: break;
-    }
-    return value;
-}
-
-/* value version signiture clamp with type */
-/* preserves endianess */
-static inline void void_pointer_assign_as_value(size_t type, void * p_unit, value_t value)
-{
-    switch (type)
-    {
-        case sizeof(int8_t):  *((int8_t *)p_unit)  = (int8_t)value;  break;
-        case sizeof(int16_t): *((int16_t *)p_unit) = (int16_t)value; break;
-        case sizeof(int32_t): *((int32_t *)p_unit) = (int32_t)value; break;
-#if (REGISTER_SIZE_64)
-        case sizeof(int64_t): *((int64_t *)p_unit) = (int64_t)value; break;
-#endif
-        default: break;
-    }
-}
 
 
 /*!
     @param type size of the element type
 */
 static inline void * void_array_at(size_t type, const void * p_buffer, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
+static inline void void_array_assign_at(size_t type, void * p_buffer, size_t index, const void * p_value) { pointer_assign(type, void_array_at(type, p_buffer, index), p_value); }
 
 /*
     array
     single unit at index by value
 */
-static inline value_t void_array_get(size_t type, const void * p_buffer, size_t index) { return void_pointer_as_value(type, void_array_at(type, p_buffer, index)); }
-static inline void void_array_set(size_t type, void * p_buffer, size_t index, value_t value) { void_pointer_assign_as_value(type, void_array_at(type, p_buffer, index), value); }
+static inline value_t void_array_get(size_t type, const void * p_buffer, size_t index) { return pointer_value_as(type, void_array_at(type, p_buffer, index)); }
+static inline void void_array_set(size_t type, void * p_buffer, size_t index, value_t value) { pointer_assign_value_as(type, void_array_at(type, p_buffer, index), value); }
+
 
 /*
     multiple units by pointer
@@ -117,7 +87,7 @@ static inline void void_array_foreach(size_t type, void * p_buffer, size_t lengt
     for (size_t index = 0U; index < length; index++) { unit_op(void_array_at(type, p_buffer, index)); }
 }
 
-#define array_foreach(p_buffer, length, op) void_array_foreach(sizeof(*(p_buffer)), (void *)p_buffer, length, (proc_t)op)
+#define ARRAY_FOREACH(p_buffer, length, op) void_array_foreach(sizeof(*(p_buffer)), (void *)p_buffer, length, (proc_t)op)
 
 /*!
     applies to every element
@@ -194,7 +164,7 @@ static inline bool void_array_is_any_value(size_t type, const void * p_buffer, s
     return is_any;
 }
 
-#define array_foreach_call(p_buffer, length, function, ...) \
+#define ARRAY_FOREACH_CALL(p_buffer, length, function, ...) \
     _Generic((function), \
         proc_t:   void_array_foreach,        \
         set_t:    void_array_foreach_set,    \
@@ -247,8 +217,8 @@ static inline void * void_array_max(size_t type, const void * p_buffer, size_t l
     return (void *)p_max;
 }
 
-static inline value_t void_array_min_value(size_t type, const void * p_buffer, size_t length) { return void_pointer_as_value(type, void_array_min(type, p_buffer, length)); }
-static inline value_t void_array_max_value(size_t type, const void * p_buffer, size_t length) { return void_pointer_as_value(type, void_array_max(type, p_buffer, length)); }
+static inline value_t void_array_min_value(size_t type, const void * p_buffer, size_t length) { return pointer_value_as(type, void_array_min(type, p_buffer, length)); }
+static inline value_t void_array_max_value(size_t type, const void * p_buffer, size_t length) { return pointer_value_as(type, void_array_max(type, p_buffer, length)); }
 
 struct range { value_t min; value_t max; };
 
@@ -263,7 +233,7 @@ struct range { value_t min; value_t max; };
 //         if (memcmp(p_unit, p_min, type) < 0) { p_min = p_unit; }
 //         else if (memcmp(p_unit, p_max, type) > 0) { p_max = p_unit; }
 //     }
-//     return (struct range){ .min = void_pointer_as_value(type, p_min), .max = void_pointer_as_value(type, p_max) };
+//     return (struct range){ .min = pointer_value_as(type, p_min), .max = pointer_value_as(type, p_max) };
 // }
 
 
@@ -292,5 +262,3 @@ static inline void * void_array_max_with(size_t type, void * p_buffer, size_t le
     }
     return p_max;
 }
-
-#endif // VOID_ARRAY_H

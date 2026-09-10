@@ -31,274 +31,239 @@
 /******************************************************************************/
 #include "_RingT.h"
 
-// #if defined(RING_LOCAL_CRITICAL_ENABLE)
-// #include "System/Critical/Critical.h"
-// #endif
-
-// #include <stdint.h>
-// #include <stdbool.h>
-// #include <stddef.h>
-// #include <string.h>
-// #include <assert.h>
-
 
 /******************************************************************************/
-/* Level 5 — typed wrapper (user-facing, Correct-Pairing guarantee) */
+/* Level 3 — typed wrapper (user-facing, Correct-Pairing guarantee) */
 /******************************************************************************/
 /*
-    3 forms to consider:
-    RingT_At(size_t stride, Span_T span, const Ring_State_T * p_state, size_t index)
-
-    RingT as Augmented Array without stride size:
-    RingT_At(size_t stride, RingT_T array, size_t index)
-
-    RingT as complete handle with stride size:
-    RingT_At(RingT_T ring, size_t index)
-
     Type-erased storage takes stride from the caller, not from its own state.
     Container types whose storage is mechanically byte-addressable (ring buffers, pools, queues of untyped bytes) should accept stride as a parameter rather than storing it as a field.
 
     When a typed call-site is wanted, provide a declaration macro (kfifo-style) that pairs a typed buffer pointer with the container's shape descriptor.
         Operation macros derive sizeof(*typed_ptr) at the call site — compile-time literal, zero runtime cost, identical source to the "typed handle" form without its storage overhead.
     Cited: Linux kernel DECLARE_KFIFO; Stroustrup, The C++ Programming Language 4e §25.3.4.1; Stepanov, Elements of Programming §7.
-
-    RingT_At(size_t stride, RingT_T array, size_t index) is selected as the final API form. This keeps stride as a generic parameter.
-    A generic container should carry information about its shape, not about the types it transports.
 */
 
 typedef const struct RingT
 {
-    Ring_Span_T SPAN;
-    Ring_State_T * P_STATE; /* optionally include uint8_t Buffer[]; */
+    Ring_Type_T TYPE;
+    Ring_State_T * P_STATE; /* State allocation includes its flexible Buffer[] */
 }
 RingT_T;
 
-// typedef const union RingT
+/* Caller validates that p_State was allocated for (UnitSize, Length) */
+#define RING_T_INIT(UnitSize, Length, p_State) { .TYPE = RING_TYPE_INIT(UnitSize, Length), .P_STATE = (p_State), }
+#define RING_T_ALLOC(UnitSize, Length) RING_T_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
+
+/*
+    The (TYPE, P_STATE) argument pair every RingT_ operation takes, drawn from one RingT_T.
+    This is the Correct-Pairing guarantee in practice: a descriptor and a state taken from
+    different rings is a silent corruption the type system cannot catch, and sourcing both
+    from a single RingT_T makes it unrepresentable.
+
+        RingT_PushBack(RING_T_ARGS(p_serial->TX_RING), &txChar);
+*/
+#define RING_T_ARGS(ring) (ring).TYPE, (ring).P_STATE
+
+/******************************************************************************/
+/*!
+    Status Operations - Compile-Time Optimized
+*/
+/******************************************************************************/
+/*
+    Counter representation (the only one _RingT.h implements).
+    Cursors are free-running, so Tail - Head is the exact occupancy and no slot is
+    reserved for empty detection. Max usable capacity is the full LENGTH.
+*/
+static inline size_t RingT_GetCapacity(Ring_Type_T type, const Ring_State_T * p_ring) { (void)p_ring; return type.LENGTH; }
+static inline size_t RingT_GetFullCount(Ring_Type_T type, const Ring_State_T * p_ring) { (void)type; return p_ring->Tail - p_ring->Head; }
+
+static inline size_t RingT_GetEmptyCount(Ring_Type_T type, const Ring_State_T * p_ring) { return RingT_GetCapacity(type, p_ring) - RingT_GetFullCount(type, p_ring); }
+
+static inline bool RingT_IsFull(Ring_Type_T type, const Ring_State_T * p_ring) { return RingT_GetFullCount(type, p_ring) == RingT_GetCapacity(type, p_ring); }
+
+static inline bool RingT_IsEmpty(Ring_Type_T type, const Ring_State_T * p_ring) { (void)type; return (p_ring->Tail == p_ring->Head); }
+
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+static inline void RingT_Clear(Ring_Type_T type, Ring_State_T * p_ring) { (void)type; p_ring->Head = 0U; p_ring->Tail = 0U; }
+
+/******************************************************************************/
+/*!
+    Boundary-Checked Operations - Compile-Time Optimized
+*/
+/******************************************************************************/
+static inline bool RingT_PushBack(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)   { if (RingT_IsFull(type, p_ring)) { return false; } else { _RingT_PushBack(type, p_ring, p_unit); return true; } }
+static inline bool RingT_PopFront(Ring_Type_T type, Ring_State_T * p_ring, void * p_result)       { if (RingT_IsEmpty(type, p_ring)) { return false; } else { _RingT_PopFront(type, p_ring, p_result); return true; } }
+static inline bool RingT_PushFront(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)  { if (RingT_IsFull(type, p_ring)) { return false; } else { _RingT_PushFront(type, p_ring, p_unit); return true; } }
+static inline bool RingT_PopBack(Ring_Type_T type, Ring_State_T * p_ring, void * p_result)        { if (RingT_IsEmpty(type, p_ring)) { return false; } else { _RingT_PopBack(type, p_ring, p_result); return true; } }
+static inline bool RingT_RemoveFront(Ring_Type_T type, Ring_State_T * p_ring, size_t count)       { if (count > RingT_GetFullCount(type, p_ring)) { return false; } else { _RingT_RemoveFront(type, p_ring, count); return true; } }
+static inline bool RingT_RemoveBack(Ring_Type_T type, Ring_State_T * p_ring, size_t count)        { if (count > RingT_GetFullCount(type, p_ring)) { return false; } else { _RingT_RemoveBack(type, p_ring, count); return true; } }
+/*
+    returns the popped pointer
+    concurrent push/pop may overwrite contents
+*/
+// inline void * _Ring_PopFront(Ring_State_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopFront(p_ring)) : NULL; }
+// inline void * _Ring_PopBack(Ring_State_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopBack(p_ring)) : NULL; }
+
+/******************************************************************************/
+/*!
+    Peek Operations - Compile-Time Optimized
+*/
+/******************************************************************************/
+static inline bool RingT_PeekAt(Ring_Type_T type, const Ring_State_T * p_ring, size_t index, void * p_result)   { if (index >= RingT_GetFullCount(type, p_ring)) { return false; } else { _RingT_PeekAt(type, p_ring, index, p_result); return true; } }
+static inline bool RingT_PeekFront(Ring_Type_T type, const Ring_State_T * p_ring, void * p_result)              { if (RingT_IsEmpty(type, p_ring)) { return false; } else { _RingT_PeekHead(type, p_ring, p_result); return true; } }
+
+
+/******************************************************************************/
+/*!
+    Pointer Access Operations - Compile-Time Optimized
+*/
+/******************************************************************************/
+static inline void * RingT_At(Ring_Type_T type, const Ring_State_T * p_ring, size_t index) { return (index >= RingT_GetFullCount(type, p_ring)) ? NULL : _RingT_At(type, p_ring, index); }
+static inline void * RingT_Front(Ring_Type_T type, const Ring_State_T * p_ring) { return RingT_IsEmpty(type, p_ring) ? NULL : _RingT_Front(type, p_ring); }
+static inline void * RingT_Back(Ring_Type_T type, const Ring_State_T * p_ring)  { return RingT_IsEmpty(type, p_ring) ? NULL :_RingT_Back(type, p_ring); }
+
+
+/******************************************************************************/
+/*!
+    Overwrite Operations
+
+    Full-policy: evict instead of reject. The counterpart to the reject policy above,
+    for latest-data-wins buffers (telemetry, scope traces) where a stalled consumer
+    must not stall the producer.
+
+    SINGLE CONTEXT ONLY. Eviction makes the producer advance Head, which breaks the
+    single-writer-per-cursor invariant the lock-free SPSC contract depends on.
+    Never call these on a ring shared across an ISR boundary.
+
+    Cited: boost::circular_buffer::push_back; std::ring_span (P0059) overwrite semantics.
+*/
+/******************************************************************************/
+/*! @return true if a unit was evicted to make room */
+static inline bool RingT_PushBackOverwrite(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)
+{
+    bool isEvict = RingT_IsFull(type, p_ring);
+    if (isEvict) { _RingT_RemoveFront(type, p_ring, 1U); }
+    _RingT_PushBack(type, p_ring, p_unit);
+    return isEvict;
+}
+
+/*! @return true if a unit was evicted to make room */
+static inline bool RingT_PushFrontOverwrite(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)
+{
+    bool isEvict = RingT_IsFull(type, p_ring);
+    if (isEvict) { _RingT_RemoveBack(type, p_ring, 1U); }
+    _RingT_PushFront(type, p_ring, p_unit);
+    return isEvict;
+}
+
+/*!
+    Always accepts the whole array. Only the last [Capacity] units can survive,
+    so a count above Capacity discards the leading source units rather than the ring.
+    @return units lost - evicted from the ring plus source units skipped
+*/
+static inline size_t RingT_PushBackOverwriteArray(Ring_Type_T type, Ring_State_T * p_ring, const void * p_array, size_t count)
+{
+    size_t capacity = RingT_GetCapacity(type, p_ring);
+    size_t keep = (count < capacity) ? count : capacity;    /* units of p_array that fit */
+    size_t skip = count - keep;                             /* leading source units the ring cannot hold */
+    size_t empty = RingT_GetEmptyCount(type, p_ring);
+    size_t evict = (keep > empty) ? keep - empty : 0U;
+
+    _RingT_RemoveFront(type, p_ring, evict);
+    _RingT_PlaceBackWrap(type, p_ring, void_array_at(type.TYPE_SIZE, p_array, skip), keep);
+    _RingT_AddBack(type, p_ring, keep);
+    return skip + evict;
+}
+
+
+/******************************************************************************/
+/*!
+    Contiguous Segment Access - zero copy
+
+    Occupied units and free units each occupy at most two contiguous segments of the
+    array. These hand back the segments directly so a DMA engine or driver can read
+    from / write into the ring with no intermediate buffer.
+
+        ArraySpanT_T span = RingT_FrontSpan(TYPE, p_ring);        // claim
+        DMA_Send(span.P_BUFFER, ArraySpan_Size(span));
+        RingT_RemoveFront(TYPE, p_ring, span.LENGTH);            // finish
+
+    The second segment is empty (LENGTH 0) whenever the run does not wrap, so a caller
+    that handles both unconditionally is always correct.
+
+    The spans are only valid until the ring is next modified.
+
+    Cited: boost::circular_buffer array_one()/array_two(); kfifo_dma_in_prepare();
+    Zephyr ring_buf_put_claim()/get_claim().
+*/
+/******************************************************************************/
+/* Occupied units, to read out. Front then its wrapped remainder. */
+static inline ArraySpanT_T RingT_FrontSpan(Ring_Type_T type, const Ring_State_T * p_ring)     { return _RingT_SpanOf(type, p_ring, p_ring->Head, RingT_GetFullCount(type, p_ring)); }
+static inline ArraySpanT_T RingT_FrontSpanWrap(Ring_Type_T type, const Ring_State_T * p_ring) { return _RingT_SpanWrapOf(type, p_ring, p_ring->Head, RingT_GetFullCount(type, p_ring)); }
+
+/* Free units, to write into. Back then its wrapped remainder. */
+static inline ArraySpanT_T RingT_BackSpan(Ring_Type_T type, const Ring_State_T * p_ring)      { return _RingT_SpanOf(type, p_ring, p_ring->Tail, RingT_GetEmptyCount(type, p_ring)); }
+static inline ArraySpanT_T RingT_BackSpanWrap(Ring_Type_T type, const Ring_State_T * p_ring)  { return _RingT_SpanWrapOf(type, p_ring, p_ring->Tail, RingT_GetEmptyCount(type, p_ring)); }
+
+
+/******************************************************************************/
+/*!
+    Advanced Operations - Compile-Time Optimized
+*/
+/******************************************************************************/
+// static inline void * RingT_Seek(Ring_Type_T type, Ring_State_T * p_ring, size_t index)
 // {
-//     struct { void * P_BUFFER; size_t LENGTH; Ring_State_T * P_STATE; };
-//     Array_T ARRAY;
-// }
-// RingT_T;
-
-static inline void * RingT_At(size_t stride, RingT_T * p_ring, size_t index) { return ring_array_at(stride, p_ring->SPAN.P_BUFFER, p_ring->SPAN.LENGTH, p_ring->P_STATE->Head + index); }
-
-static inline bool RingT_PushBack(size_t stride, RingT_T ring, const void * p_unit) {}
-
-
-// #define _RING_BUFFER_ALLOC(BytesSize) ((uintptr_t[(BytesSize) / sizeof(uintptr_t)]){}) /* guarantees align and no ascii fill */
-// #define RING_STATE_ALLOC(UnitSize, Length) ((Ring_State_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_State_T) + ((UnitSize) * (Length)))))
-// #define RING_T_ALLOC(UnitSize, Length) RING_T_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
-
-
-
-
-
-
-// /******************************************************************************/
-// /*!
-//     Protected
-// */
-// /******************************************************************************/
-// static inline void RingT_Clear(Ring_Type_T type, Ring_T * p_ring) { (void)type; p_ring->Head = 0U; p_ring->Tail = 0U; }
-
-// /******************************************************************************/
-// /*!
-//     Status Operations - Compile-Time Optimized
-// */
-// /******************************************************************************/
-// static inline size_t RingT_GetCapacity(Ring_Type_T type, const Ring_T * p_ring)
-// {
-//     (void)p_ring;
-// #if defined(RING_INDEX_POW2_COUNTER)
-//     return type.LENGTH;  /* Full capacity usable */
-// #else
-//     return type.LENGTH - 1U;  /* One slot reserved for empty detection */
-// #endif
+//     if (index >= RingT_GetFullCount(type, p_ring)) { return NULL; }
+//    return _RingT_Seek(type, p_ring);
 // }
 
-// /*
-//     RING_INDEX_POW2_COUNTER
-//     Max usable capacity is length
+/******************************************************************************/
+/*!
+    Batch Operations - Compile-Time Optimized
+*/
+/******************************************************************************/
+static inline bool RingT_PeekFrontArray(Ring_Type_T type, const Ring_State_T * p_ring, void * p_array, size_t count)
+{
+    if (count > RingT_GetFullCount(type, p_ring)) { return false; }
+    _RingT_PeekFrontWrap(type, p_ring, p_array, count);
+    return true;
+}
 
-//     RING_INDEX_POW2_WRAP, RING_INDEX_LENGTH_COMPARE
-//     Empty space detection method. Tail always points to empty space. Max usable capacity is length - 1
-// */
-// static inline size_t RingT_GetFullCount(Ring_Type_T type, const Ring_T * p_ring)
-// {
-// #if defined(RING_INDEX_POW2_COUNTER)
-//     (void)type; return p_ring->Tail - p_ring->Head;
-// #else
-//     size_t head = _RingT_ArrayIndexOf(type, p_ring->Head);
-//     size_t tail = _RingT_ArrayIndexOf(type, p_ring->Tail);
-//     return (tail >= head) ? (tail - head) : (type.LENGTH - head + tail);
-// #endif
-// }
+static inline bool RingT_PopFrontArray(Ring_Type_T type, Ring_State_T * p_ring, void * p_array, size_t count)
+{
+    if (RingT_PeekFrontArray(type, p_ring, p_array, count) == false) { return false; }
+    _RingT_RemoveFront(type, p_ring, count);
+    return true;
+}
 
-// static inline size_t RingT_GetEmptyCount(Ring_Type_T type, const Ring_T * p_ring)
-// {
-//     return RingT_GetCapacity(type, p_ring) - RingT_GetFullCount(type, p_ring);
-// }
+static inline bool RingT_PushBackArray(Ring_Type_T type, Ring_State_T * p_ring, const void * p_array, size_t count)
+{
+    if (count > RingT_GetEmptyCount(type, p_ring)) { return false; }
+    _RingT_PlaceBackWrap(type, p_ring, p_array, count);
+    _RingT_AddBack(type, p_ring, count);
+    return true;
+}
 
-// static inline bool RingT_IsFull(Ring_Type_T type, const Ring_T * p_ring) { return RingT_GetFullCount(type, p_ring) == RingT_GetCapacity(type, p_ring); }
+static inline size_t RingT_PushBackMax(Ring_Type_T type, Ring_State_T * p_ring, const void * p_array, size_t maxCount)
+{
+    size_t emptyCount = RingT_GetEmptyCount(type, p_ring);
+    size_t pushCount = (maxCount < emptyCount) ? maxCount : emptyCount;
+    _RingT_PlaceBackWrap(type, p_ring, p_array, pushCount);
+    _RingT_AddBack(type, p_ring, pushCount);
+    return pushCount;
+}
 
-// static inline bool RingT_IsEmpty(Ring_Type_T type, const Ring_T * p_ring) { return (p_ring->Tail == p_ring->Head); }
-
-
-// /******************************************************************************/
-// /*!
-//     Boundary-Checked Operations - Compile-Time Optimized
-// */
-// /******************************************************************************/
-// static inline bool RingT_PushBack(Ring_Type_T type, Ring_T * p_ring, const void * p_unit)   { return (RingT_IsFull(type, p_ring) ? false : ({ _RingT_PushBack(type, p_ring, p_unit); true; })); }
-// static inline bool RingT_PopFront(Ring_Type_T type, Ring_T * p_ring, void * p_result)       { return (RingT_IsEmpty(type, p_ring) ? false : ({ _RingT_PopFront(type, p_ring, p_result); true; })); }
-// static inline bool RingT_PushFront(Ring_Type_T type, Ring_T * p_ring, const void * p_unit)  { return (RingT_IsFull(type, p_ring) ? false : ({ _RingT_PushFront(type, p_ring, p_unit); true; })); }
-// static inline bool RingT_PopBack(Ring_Type_T type, Ring_T * p_ring, void * p_result)        { return (RingT_IsEmpty(type, p_ring) ? false : ({ _RingT_PopBack(type, p_ring, p_result); true; })); }
-// static inline bool RingT_RemoveFront(Ring_Type_T type, Ring_T * p_ring, size_t count)       { return (count > RingT_GetFullCount(type, p_ring) ? false : ({ _RingT_RemoveFront(type, p_ring, count); true; })); }
-// static inline bool RingT_RemoveBack(Ring_Type_T type, Ring_T * p_ring, size_t count)        { return (count > RingT_GetFullCount(type, p_ring) ? false : ({ _RingT_RemoveBack(type, p_ring, count); true; })); }
-
-// /*
-//     returns the popped pointer
-//     concurrent push/pop may overwrite contents
-// */
-// // inline void * _Ring_PopFront(Ring_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopFront(p_ring)) : NULL; }
-// // inline void * _Ring_PopBack(Ring_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopBack(p_ring)) : NULL; }
-
-// /******************************************************************************/
-// /*!
-//     Pointer Access Operations - Compile-Time Optimized
-// */
-// /******************************************************************************/
-// static inline void * RingT_Front(Ring_Type_T type, const Ring_T * p_ring) { return RingT_IsEmpty(type, p_ring) ? NULL : _RingT_Head(type, p_ring); }
-// static inline void * RingT_Back(Ring_Type_T type, const Ring_T * p_ring) { return RingT_IsEmpty(type, p_ring) ? NULL : _RingT_PtrOf(type, p_ring, _RingT_IndexDecOf(type, p_ring->Tail, 1U)); }
-// static inline void * RingT_At(Ring_Type_T type, const Ring_T * p_ring, size_t index) { return (index >= RingT_GetFullCount(type, p_ring)) ? NULL : _RingT_At(type, p_ring, index); }
-
-// // /******************************************************************************/
-// // /*!
-// //     Peek Operations - Compile-Time Optimized
-// // */
-// // /******************************************************************************/
-// // static inline bool RingT_PeekFront(Ring_Type_T type, const Ring_T * p_ring, void * p_result)
-// // {
-// //     if (_RingT_IsEmpty(type, p_ring)) return false;
-// //     _RingT_PeekHead(type, p_ring, p_result);
-// //     return true;
-// // }
-
-// // static inline bool RingT_PeekBack(Ring_Type_T type, const Ring_T * p_ring, void * p_result)
-// // {
-// //     if (_RingT_IsEmpty(type, p_ring)) return false;
-// //     _RingT_Copy(type, p_result, _RingT_PtrOf(type, p_ring, _RingT_IndexDecOf(type, p_ring->Tail, 1U)));
-// //     return true;
-// // }
-
-// // static inline bool RingT_PeekAt(Ring_Type_T type, const Ring_T * p_ring, size_t index, void * p_result)
-// // {
-// //     if (index >= _RingT_GetFullCount(type, p_ring)) return false;
-// //     _RingT_GetAt(type, p_ring, index, p_result);
-// //     return true;
-// // }
-
-// // /******************************************************************************/
-// // /*!
-// //     Advanced Operations - Compile-Time Optimized
-// // */
-// // /******************************************************************************/
-// // static inline void * RingT_Seek(Ring_Type_T type, Ring_T * p_ring, size_t index)
-// // {
-// //     if (index >= RingT_GetFullCount(type, p_ring)) return NULL;
-// //     _RingT_RemoveFront(type, p_ring, index);
-// //     return _RingT_Head(type, p_ring);
-// // }
-
-
-// /******************************************************************************/
-// /*!
-//     Batch Operations - Compile-Time Optimized
-// */
-// /******************************************************************************/
-// // static inline size_t RingT_PushBackArray(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
-// static inline size_t RingT_PushBackMax(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
-// {
-//     size_t emptyCount = RingT_GetEmptyCount(type, p_ring);
-//     size_t pushCount = (count <= emptyCount) ? count : emptyCount;
-//     _RingT_PushBackEach(type, p_ring, p_array, pushCount);
-//     return pushCount;
-// }
-
-// static inline bool RingT_PushBackAll(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
-// {
-//     return (count <= Ring_GetEmptyCount(p_ring)) ? ({ _RingT_PushBackEach(type, p_ring, p_array, count); true; }) : false;
-// }
-
-// // static inline size_t _RingT_PopFrontArray(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t count)
-// // {
-// //     size_t fullCount = RingT_GetFullCount(type, p_ring);
-// //     size_t readCount = (count <= fullCount) ? count : fullCount;
-// //     uint8_t * p_dest = (uint8_t *)p_array;
-
-// //     for (size_t i = 0U; i < readCount; i++)
-// //     {
-// //         _RingT_PopFront(type, p_ring, p_dest);
-// //         p_dest += type.UNIT_SIZE;
-// //     }
-// //     return readCount;
-// // }
-
-// // static inline size_t _RingT_PushFrontArray(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
-// // {
-// //     size_t emptyCount = RingT_GetEmptyCount(type, p_ring);
-// //     size_t writeCount = (count <= emptyCount) ? count : emptyCount;
-// //     const uint8_t * p_src = (const uint8_t *)p_array;
-
-// //     for (size_t i = 0U; i < writeCount; i++)
-// //     {
-// //         _RingT_PushFront(type, p_ring, p_src);
-// //         p_src += type.UNIT_SIZE;
-// //     }
-// //     return writeCount;
-// // }
-
-// // static inline size_t _RingT_PopBackArray(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t count)
-// // {
-// //     size_t fullCount = RingT_GetFullCount(type, p_ring);
-// //     size_t readCount = (count <= fullCount) ? count : fullCount;
-// //     uint8_t * p_dest = (uint8_t *)p_array;
-
-// //     for (size_t i = 0U; i < readCount; i++)
-// //     {
-// //         _RingT_PopBack(type, p_ring, p_dest);
-// //         p_dest += type.UNIT_SIZE;
-// //     }
-// //     return readCount;
-// // }
-
-// // static inline size_t _RingT_PushBackMax(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t maxCount)
-// // {
-// //     size_t emptyCount = RingT_GetEmptyCount(type, p_ring);
-// //     size_t writeCount = (maxCount <= emptyCount) ? maxCount : emptyCount;
-// //     const uint8_t * p_src = (const uint8_t *)p_array;
-
-// //     for (size_t i = 0U; i < writeCount; i++)
-// //     {
-// //         _RingT_PushBack(type, p_ring, p_src);
-// //         p_src += type.UNIT_SIZE;
-// //     }
-// //     return writeCount;
-// // }
-
-// // static inline size_t _RingT_PopFrontMax(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t maxCount)
-// // {
-// //     size_t fullCount = RingT_GetFullCount(type, p_ring);
-// //     size_t readCount = (maxCount <= fullCount) ? maxCount : fullCount;
-// //     uint8_t * p_dest = (uint8_t *)p_array;
-
-// //     for (size_t i = 0U; i < readCount; i++)
-// //     {
-// //         _RingT_PopFront(type, p_ring, p_dest);
-// //         p_dest += type.UNIT_SIZE;
-// //     }
-// //     return readCount;
-// // }
-
-
-
+static inline size_t RingT_PopFrontMax(Ring_Type_T type, Ring_State_T * p_ring, void * p_array, size_t maxCount)
+{
+    size_t fullCount = RingT_GetFullCount(type, p_ring);
+    size_t popCount = (maxCount < fullCount) ? maxCount : fullCount;
+    _RingT_PeekFrontWrap(type, p_ring, p_array, popCount);
+    _RingT_RemoveFront(type, p_ring, popCount);
+    return popCount;
+}

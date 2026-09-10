@@ -58,60 +58,6 @@ void Socket_Init(Socket_T * p_socket)
     }
 }
 
-/******************************************************************************/
-/*
-    Proc
-*/
-/******************************************************************************/
-// static inline void XcvrRx(const Socket_T * p_socket, Socket_State_T * p_state)
-// {
-//     Packet_RxParserState_T * p_parser = &p_state->RxParserState;
-//     switch (p_parser->RxState)
-//     {
-//         case PROTOCOL_RX_STATE_WAIT_BYTE_1:
-//             assert(p_parser->RxIndex == 0);
-//             p_parser->RxIndex += Xcvr_RxMax(p_state->p_Xcvr, &p_socket->P_RX_PACKET_BUFFER[0U], 1U);
-//             break;
-//         case PROTOCOL_RX_STATE_WAIT_LENGTH:  // Min determines length by id or length field
-//             p_parser->RxIndex += Xcvr_RxMax(p_state->p_Xcvr, &p_socket->P_RX_PACKET_BUFFER[p_parser->RxIndex], p_state->p_Specs->RX_LENGTH_MIN - p_parser->RxIndex);
-//             break;
-//         case PROTOCOL_RX_STATE_WAIT_PACKET:
-//             p_parser->RxIndex += Xcvr_RxMax(p_state->p_Xcvr, &p_socket->P_RX_PACKET_BUFFER[p_parser->RxIndex], p_parser->RxMeta.Length - p_parser->RxIndex);
-//             break;
-//         case PROTOCOL_RX_STATE_INACTIVE:
-//             break;
-//         default: break;
-//     }
-// }
-
-// static inline Protocol_RxCode_T _ProcRxState(const Socket_T * p_socket, Socket_State_T * p_state)
-// {
-//     Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
-//     Packet_RxParserState_T * p_parser = &p_state->RxParserState;
-
-//     XcvrRx(p_socket, p_state);
-//     rxStatus = _Packet_ProcRxParser(p_state->p_Specs, p_socket->P_RX_PACKET_BUFFER, p_parser);
-
-//     if (p_parser->RxState == PROTOCOL_RX_STATE_WAIT_LENGTH || p_parser->RxState == PROTOCOL_RX_STATE_WAIT_PACKET)
-//     {
-//         if (*p_socket->P_TIMER - p_state->RxTimeStart > p_state->p_Specs->RX_TIMEOUT)
-//         {
-//             p_parser->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
-//             rxStatus = PROTOCOL_RX_CODE_ERROR_TIMEOUT;
-//         }
-//     }
-
-//     switch (rxStatus)
-//     {
-//         case PROTOCOL_RX_CODE_ERROR_TIMEOUT:    TxSync(p_socket, p_state, PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT);            break;
-//         case PROTOCOL_RX_CODE_ERROR_META:       TxSync(p_socket, p_state, PROTOCOL_TX_SYNC_NACK_PACKET_META);           break;
-//         case PROTOCOL_RX_CODE_ERROR_DATA:       TxSync(p_socket, p_state, PROTOCOL_TX_SYNC_NACK_PACKET_DATA);           break;
-//         case PROTOCOL_RX_CODE_NACK:             TxSync(p_socket, p_state, PROTOCOL_TX_SYNC_NACK_REQ);                   break;
-//         default: break;
-//     }
-
-//     return rxStatus;
-// }
 
 /******************************************************************************/
 /*
@@ -309,9 +255,6 @@ static inline Protocol_RxCode_T ProcRxState(const Socket_T * p_socket, Socket_St
     PROTOCOL_RX_CODE_ERROR_META,
     PROTOCOL_RX_CODE_ERROR_DATA,
 */
-
-
-
 
 static inline Protocol_ReqCode_T ProcReqState(const Socket_T * p_socket, Socket_State_T * p_state, Protocol_RxCode_T rxCode)
 {
@@ -693,3 +636,4 @@ void Socket_ConfigId_Set(const Socket_T * p_socket, Socket_ConfigId_T id, int va
 //                }
 //        //    }
 //}
+

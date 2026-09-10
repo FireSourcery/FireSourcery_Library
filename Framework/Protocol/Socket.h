@@ -31,6 +31,30 @@
 /******************************************************************************/
 #include "Protocol.h"
 
+//todo
+typedef enum Protocol_RxState
+{
+    PROTOCOL_RX_STATE_INACTIVE,
+    PROTOCOL_RX_STATE_WAIT_BYTE_1, /* SYNC */
+    PROTOCOL_RX_STATE_WAIT_LENGTH, /* HEADER */
+    PROTOCOL_RX_STATE_WAIT_PACKET, /* DATA */
+}
+Protocol_RxState_T;
+
+typedef struct Packet_RxParserState
+{
+    Protocol_RxState_T RxState;
+    packet_size_t RxIndex;          /* Index into P_RX_PACKET_BUFFER, number of bytes received */
+    uint32_t RxTimeStart;
+    // Protocol_HeaderMeta_T RxMeta;   /* Rx Parse Packet Meta */
+
+    // alternatively seperate parser state. copy header copies 1 extra field.
+    // packet_size_t Length;           /* Total packet length */
+    // packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */
+}
+Packet_RxParserState_T;
+
+
 /******************************************************************************/
 /*!
     Protocol_Socket
@@ -101,14 +125,13 @@ typedef struct Socket_State
 }
 Socket_State_T;
 
-#define SOCKET_STATE_ALLOC() (&(Socket_State_T){0})
+#define SOCKET_STATE_ALLOC() (&(Socket_State_T){})
 
 
 /*
     Combine:
         Xcvr_T, or selection
         Protocol handler, or selection
-
 */
 typedef const struct Socket
 {
@@ -123,20 +146,10 @@ typedef const struct Socket
     void * P_APP_CONTEXT;                   /* User app context for packet processing */
     void * P_REQ_STATE_BUFFER;              /* Session layer. Child protocol control variables, must be largest enough to hold substate context referred by specs */
 
-    // contigous def pass directly to req handlers
-// pass to handlers
-// Packet_Context_T  RX_PACKET_CONTEXT;
-// Packet_Context_T  TX_PACKET_CONTEXT;
-// const struct Protocol_ReqContext
-// {
-//     void * p_RxPacket;
-//     Protocol_HeaderMeta_T * p_RxMeta;
-//     void * p_TxPacket;
-//     Protocol_HeaderMeta_T * p_TxMeta;  // handler sets Id + Length
-//     void * p_SubState;
-//     uint32_t * p_SubStateIndex;
-// };
 
+    // alternatively fixed or default init
+    // const Packet_Format_T * P_PACKET_FORMAT;
+    // const Xcvr_T * P_XCVR;
 
     const Socket_Config_T * P_NVM_CONFIG;   /* Initial Config */
 
@@ -150,13 +163,10 @@ typedef const struct Socket
     uint8_t REQ_TABLE_LENGTH;
     // REQ_TIMEOUT
 
-    // alternatively fixed or default init
-    // const Packet_Format_T * P_PACKET_CLASS;
+    /*  */
     const Packet_Format_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
     uint8_t PACKET_CLASS_COUNT;
 
-    /*  */
-    // const Xcvr_T * P_XCVR;
     const Xcvr_T * const * P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
     uint8_t XCVR_COUNT; /* number of Xcvr in table */
 
@@ -190,33 +200,9 @@ Socket_T;
                 p_ReqTable, ReqCount, p_PacketClassTable, PacketClassCount, p_XcvrTable, XcvrCount, p_Timer)
 
 
-// #define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubStateBuffer, p_SpecsTable, SpecsCount, p_Xcvrs, XcvrCount, p_Timer, p_Config)
-// {
-//     .P_RX_PACKET_BUFFER     = p_RxBuffer,
-//     .P_TX_PACKET_BUFFER     = p_TxBuffer,
-//     .PACKET_BUFFER_LENGTH   = PacketBufferLength,
-//     .P_APP_CONTEXT          = p_AppInterface,
-//     .P_REQ_STATE_BUFFER     = p_SubStateBuffer,
-//     .P_SPECS_TABLE          = p_SpecsTable,
-//     .SPECS_COUNT            = SpecsCount,
-//     .P_TIMER                = p_Timer,
-//     .P_CONFIG               = p_Config,
-//     .P_XCVR_TABLE           = p_Xcvrs,
-//     .XCVR_COUNT             = XcvrCount,
-// }
 
 static inline Protocol_RxCode_T _Socket_GetRxStatus(const Socket_State_T * p_socket) { return p_socket->RxStatus; }
 static inline Protocol_ReqCode_T _Socket_GetReqStatus(const Socket_State_T * p_socket) { return p_socket->ReqStatus; }
-
-static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_socket->IsRxWatchdogEnable = true; } }
-static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
-static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
-
-/*
-    User must reboot. Does propagate set. Current settings remain active until reboot.
-*/
-static inline void _Socket_EnableOnInit(Socket_State_T * p_socket) { p_socket->Config.IsEnableOnInit = true; }
-static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->Config.IsEnableOnInit = false; }
 
 /*
     Watchdog
@@ -230,11 +216,21 @@ static inline bool Socket_IsRxLost(const Socket_T * p_socket)
     return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->P_TIMER - p_state->ReqTimeStart > p_state->Config.WatchdogTimeout));
 }
 
-/* optionally  */
-// static inline bool Socket_IsRxLost(const Socket_T * p_socket)
+// static inline bool _Socket_IsRxLost(const Socket_T * p_socket)
 // {
 //     return (*p_socket->P_TIMER - p_socket->P_SOCKET_STATE->ReqTimeStart > p_socket->P_SOCKET_STATE->Config.WatchdogTimeout);
 // }
+
+static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_socket->IsRxWatchdogEnable = true; } }
+static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
+static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
+
+/*
+    User must reboot. Does propagate set. Current settings remain active until reboot.
+*/
+static inline void _Socket_EnableOnInit(Socket_State_T * p_socket) { p_socket->Config.IsEnableOnInit = true; }
+static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->Config.IsEnableOnInit = false; }
+
 
 /*
     Extern

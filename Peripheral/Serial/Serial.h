@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "HAL_Serial.h"
-#include "Framework/Ring/Ring.h"
+#include "Framework/Ring/RingT.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -43,25 +43,22 @@ typedef const struct Serial
 }
 Serial_T;
 
-#define SERIAL_INIT(p_Hal, p_TxRingState, TxBufferSize, p_RxRingState, RxBufferSize)  \
+
+
+/*
+    Serial rings are byte rings: the unit is what HAL_Serial_ReadRxChar returns.
+    Buffer sizes are in bytes and must each be a power of 2 (RING_TYPE_INIT static_asserts).
+
+    SERIAL_INIT  caller supplies the two Ring_State_T allocations
+    SERIAL_ALLOC allocates them inline - file scope only, the compound literals
+                 inside RING_STATE_ALLOC need static storage duration
+*/
+#define SERIAL_INIT(p_Hal, p_TxState, TxBufferSize, p_RxState, RxBufferSize)    \
 {                                                                               \
     .P_HAL_SERIAL = p_Hal,                                                      \
-    .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),         \
-    .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
+    .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, p_TxState),           \
+    .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxState),           \
 }
-
-// #define SERIAL_ALLOC_FROM(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)
-// {
-//     .P_HAL_SERIAL = p_Hal,
-//     .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, RING_STATE_ALLOC()),
-//     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, RING_STATE_ALLOC()),
-// }
-// #define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)
-// {
-//     .P_HAL_SERIAL = p_Hal,
-//     .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),
-//     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),
-// }
 
 #define SERIAL_ALLOC(p_Hal, TxBufferSize, RxBufferSize)    \
 {                                                          \
@@ -69,7 +66,6 @@ Serial_T;
     .TX_RING = RING_T_ALLOC(sizeof(uint8_t), TxBufferSize),     \
     .RX_RING = RING_T_ALLOC(sizeof(uint8_t), RxBufferSize),     \
 }
-
 
 /******************************************************************************/
 /*!
@@ -85,8 +81,8 @@ static inline void Serial_RxData_ISR(Serial_T * p_serial)
 
     while (HAL_Serial_ReadRxFullCount(p_serial->P_HAL_SERIAL) > 0U) /* Rx until hw buffer is empty */
     {
-        // if (RingT_IsFull(p_serial->RX_RING.TYPE, p_serial->RX_RING.P_STATE))
-        if (Ring_IsFull(p_serial->RX_RING.P_STATE) == true) /* Rx until software buffer is full */
+        /* Space must be checked before the hw read: a char read out of the hw fifo cannot be put back */
+        if (RingT_IsFull(RING_T_ARGS(p_serial->RX_RING)) == true) /* Rx until software buffer is full */
         {
             /* if buffer stays full, disable irq to prevent blocking lower priority threads. user must restart rx irq */
             HAL_Serial_DisableRxInterrupt(p_serial->P_HAL_SERIAL);
@@ -95,7 +91,7 @@ static inline void Serial_RxData_ISR(Serial_T * p_serial)
         else
         {
             rxChar = HAL_Serial_ReadRxChar(p_serial->P_HAL_SERIAL);
-            Ring_Enqueue(p_serial->RX_RING.P_STATE, &rxChar);
+            _RingT_PushBack(RING_T_ARGS(p_serial->RX_RING), (void *)&rxChar); /* unchecked: space established above */
         }
     }
 }
@@ -110,14 +106,14 @@ static inline void Serial_TxData_ISR(Serial_T * p_serial)
 
     while (HAL_Serial_ReadTxEmptyCount(p_serial->P_HAL_SERIAL) > 0U) /* Tx until hw buffer is full */
     {
-        if (Ring_IsEmpty(p_serial->TX_RING.P_STATE) == true) /* Tx until software buffer is empty */
+        /* Pop reports the empty case, so the hw write is reached only with a char in hand */
+        if (RingT_PopFront(RING_T_ARGS(p_serial->TX_RING), (void *)&txChar) == false) /* Tx until software buffer is empty */
         {
             HAL_Serial_DisableTxInterrupt(p_serial->P_HAL_SERIAL);
             break;
         }
         else
         {
-            Ring_Dequeue(p_serial->TX_RING.P_STATE, &txChar);
             HAL_Serial_WriteTxChar(p_serial->P_HAL_SERIAL, txChar);
         }
     }
@@ -127,7 +123,7 @@ static inline bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
 {
     bool isOverrun = false;
     /* Continue waiting for buffer read, before restarting interrupts, if buffer is full */
-    if ((HAL_Serial_ReadRxOverrun(p_serial->P_HAL_SERIAL) == true) && (Ring_IsFull(p_serial->RX_RING.P_STATE) == false))
+    if ((HAL_Serial_ReadRxOverrun(p_serial->P_HAL_SERIAL) == true) && (RingT_IsFull(RING_T_ARGS(p_serial->RX_RING)) == false))
     {
         HAL_Serial_ClearRxErrors(p_serial->P_HAL_SERIAL);
         HAL_Serial_EnableRxInterrupt(p_serial->P_HAL_SERIAL);
@@ -142,8 +138,8 @@ static inline bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
     Query
 */
 /******************************************************************************/
-static inline size_t Serial_GetRxFullCount(const Serial_T * p_serial)   { return Ring_GetFullCount(p_serial->RX_RING.P_STATE); }
-static inline size_t Serial_GetTxEmptyCount(const Serial_T * p_serial)  { return Ring_GetEmptyCount(p_serial->TX_RING.P_STATE); }
+static inline size_t Serial_GetRxFullCount(const Serial_T * p_serial)   { return RingT_GetFullCount(RING_T_ARGS(p_serial->RX_RING)); }
+static inline size_t Serial_GetTxEmptyCount(const Serial_T * p_serial)  { return RingT_GetEmptyCount(RING_T_ARGS(p_serial->TX_RING)); }
 static inline void Serial_EnableTxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableTxInterrupt(p_serial->P_HAL_SERIAL); }
 static inline void Serial_DisableTxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableTxInterrupt(p_serial->P_HAL_SERIAL); }
 static inline void Serial_EnableRxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableRxInterrupt(p_serial->P_HAL_SERIAL); }
@@ -152,7 +148,7 @@ static inline void Serial_DisableRxIsr(const Serial_T * p_serial)       { HAL_Se
 /* Check for Overrun */
 // static inline bool Serial_IsRxOverrun(const Serial_T * p_serial)
 // {
-//     return ((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) || (Ring_IsFull(&p_serial->RX_RING) == true));
+//     return ((HAL_Serial_ReadRxOverrun(p_serial->P_HAL_SERIAL) == true) || (RingT_IsFull(RING_T_ARGS(p_serial->RX_RING)) == true));
 // }
 
 /******************************************************************************/
@@ -169,6 +165,9 @@ extern size_t Serial_SendMax(Serial_T * p_serial, const uint8_t * p_srcBuffer, s
 extern size_t Serial_RecvMax(Serial_T * p_serial, uint8_t * p_destBuffer, size_t bufferSize);
 extern bool Serial_SendN(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 extern bool Serial_RecvN(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
+extern void Serial_FlushBuffers(Serial_T * p_serial);
+// extern char Serial_GetChar(Serial_T * p_serial);
+// extern bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 
 // extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 // extern size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
