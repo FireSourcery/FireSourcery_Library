@@ -130,6 +130,32 @@ typedef const struct Socket
 }
 Socket_T;
 
+
+/******************************************************************************/
+/*!
+    Proc
+*/
+/******************************************************************************/
+/*!
+    @brief  One non-blocking pass. Single threaded.
+            Cadence is the caller's: the engine reads the clock but never waits on it.
+
+    The link is written out here, at the only place that needs it. Each field comes from its
+    own source - selection from state, buffers from the instance, the deadline from config -
+    so a builder would only hide where they came from. The request table, its context and its
+    deadline pass individually; they are already fields of Socket_T and repackaging them
+    would be the same data in a second shape.
+*/
+static inline void Socket_Proc(const Socket_T * p_socket)
+{
+    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
+
+    if (p_state->IsEnabled == false) { return; }
+
+    Protocol_Proc(&p_socket->PROTOCOL, p_state->p_Xcvr, p_state->p_Format, &p_state->Protocol);
+}
+
+
 /******************************************************************************/
 /*!
     Query
@@ -194,7 +220,6 @@ static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->
     rather than bound to nothing.
 */
 /******************************************************************************/
-extern void Socket_Proc(const Socket_T * p_socket);
 extern void Socket_Init(const Socket_T * p_socket);
 extern bool Socket_Enable(const Socket_T * p_socket);
 extern void Socket_Disable(const Socket_T * p_socket);

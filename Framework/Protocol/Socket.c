@@ -31,29 +31,6 @@
 #include "Socket.h"
 #include <string.h>
 
-/******************************************************************************/
-/*!
-    Proc
-*/
-/******************************************************************************/
-/*!
-    @brief  One non-blocking pass. Single threaded.
-            Cadence is the caller's: the engine reads the clock but never waits on it.
-
-    The link is written out here, at the only place that needs it. Each field comes from its
-    own source - selection from state, buffers from the instance, the deadline from config -
-    so a builder would only hide where they came from. The request table, its context and its
-    deadline pass individually; they are already fields of Socket_T and repackaging them
-    would be the same data in a second shape.
-*/
-void Socket_Proc(const Socket_T * p_socket)
-{
-    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-
-    if (p_state->IsEnabled == false) { return; }
-
-    Protocol_Proc(&p_socket->PROTOCOL, p_state->p_Xcvr, p_state->p_Format, &p_state->Protocol);
-}
 
 /******************************************************************************/
 /*!
