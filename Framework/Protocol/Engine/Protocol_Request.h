@@ -122,7 +122,7 @@ Protocol_Req_T;
     The request service. Id -> handler, and nothing about framing.
 
     No format pointer: which bytes delimit a frame is settled before an id exists, so a
-    table that maps ids to handlers cannot need it. The format belongs to Protocol_Link_T,
+    table that maps ids to handlers cannot need it. The format belongs to Protocol_Base_T,
     which is also what lets one table serve two framings.
 */
 // typedef const struct Protocol_ReqService

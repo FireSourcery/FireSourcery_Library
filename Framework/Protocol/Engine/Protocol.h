@@ -79,7 +79,7 @@ typedef const struct Protocol_Link
     const uint32_t RX_TIMEOUT;              /* Frame deadline */
     const uint32_t REQ_TIMEOUT;             /* Exchange deadline */
 }
-Protocol_Link_T;
+Protocol_Base_T;
 
 typedef struct Protocol_State
 {
@@ -230,7 +230,7 @@ static inline bool Protocol_ProcRxDeadline(Protocol_State_T * p_state, uint32_t 
     Binding precedes the ack because the ack policy is the handler's; invocation follows it
     because "received" and "processed" are different claims.
 */
-static inline void Protocol_StartRequest(const Protocol_Link_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
+static inline void Protocol_StartRequest(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
 {
     if (Protocol_CaptureReq(&p_state->Req, p_link->P_REQ_TABLE, p_link->REQ_TABLE_LENGTH, p_link->P_RX_PACKET->Meta.Id) == false)
     {
@@ -245,8 +245,10 @@ static inline void Protocol_StartRequest(const Protocol_Link_T * p_link, Protoco
     if (policy.ACK_REQ) { Protocol_TxControl(p_xcvr, p_format, PACKET_CLASS_ACK); }
 }
 
-static inline void Protocol_ProcRequest(const Protocol_Link_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
+static inline void Protocol_ProcRequest(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format, Packet_FrameFormat_T * p_framing)
 {
+    if (p_framing == NULL) { return; }
+
     Protocol_AckPolicy_T policy = Protocol_ReqAckPolicy(&p_state->Req);
 
     Packet_Xfer_T xfer =
@@ -257,7 +259,7 @@ static inline void Protocol_ProcRequest(const Protocol_Link_T * p_link, Protocol
         .p_Step     = &p_state->Req.Step,
     };
 
-    switch (Protocol_ProcReq(&p_state->Req, p_link->P_APP_CONTEXT, &xfer, p_link->P_RX_PACKET->Packet, p_link->P_TX_PACKET->Packet))
+    switch (Protocol_ProcReq(&p_state->Req, p_link->P_APP_CONTEXT, &xfer, &p_link->P_RX_PACKET->Packet[p_framing->HEADER_LENGTH], &p_link->P_TX_PACKET->Packet[p_framing->HEADER_LENGTH]))
     {
         /* Act on the handler's verdict. The only place a request's output reaches the wire. */
         case PROTOCOL_REQ_RESPOND:
@@ -279,7 +281,7 @@ static inline void Protocol_ProcRequest(const Protocol_Link_T * p_link, Protocol
     }
 }
 
-static inline void Protocol_ProcRequestTimeout(const Protocol_Link_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
+static inline void Protocol_ProcRequestTimeout(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
 {
     uint32_t timerNow = *p_link->P_TIMER;
     if (Protocol_IsReqSyncActive(p_state) && _Protocol_IsElapsed(timerNow, p_state->ReqTimeStart, p_link->REQ_TIMEOUT))
@@ -304,7 +306,7 @@ static inline void Protocol_ProcRequestTimeout(const Protocol_Link_T * p_link, P
 /*
     One resolved frame, through the handshake and into the handler.
 */
-static inline Protocol_SyncEvent_T Protocol_ProcFrame(const Protocol_Link_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
+static inline Protocol_SyncEvent_T Protocol_ProcFrame(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
 {
     Protocol_SyncEvent_T syncEvent = Protocol_ProcSyncRx(&p_state->Sync, Protocol_ReqAckPolicy(&p_state->Req), Packet_ClassOf(p_format, p_link->P_RX_PACKET->Meta.Id));
     uint32_t timerNow = *p_link->P_TIMER;
@@ -362,17 +364,18 @@ static inline Protocol_SyncEvent_T Protocol_ProcFrame(const Protocol_Link_T * p_
     @param  p_format the selected framing. Both travel as arguments rather than in p_link
                      because the socket may swap either between passes.
 */
-static inline void Protocol_Proc(const Protocol_Link_T * p_link, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format, Protocol_State_T * p_state)
+static inline void Protocol_Proc(const Protocol_Base_T * p_link, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format, Protocol_State_T * p_state)
 {
     uint32_t timerNow = *p_link->P_TIMER;
     Protocol_SyncEvent_T syncEvent = PROTOCOL_SYNC_EVENT_NONE;
+    Packet_FrameFormat_T * p_framing = NULL;
 
     /* 1. Transport + framing */
     switch (Protocol_CaptureRx(p_xcvr, p_format, &p_state->RxParser, p_link->P_RX_PACKET->Packet))
     {
         /* 2. Classify, handshake, dispatch */
         case PACKET_RX_COMPLETE:
-            Packet_ParseRxHeader(p_format, &p_link->P_RX_PACKET->Meta, p_link->P_RX_PACKET->Packet);
+            p_framing = Packet_ParseRxHeader(p_format, &p_link->P_RX_PACKET->Meta, p_link->P_RX_PACKET->Packet);
             syncEvent = Protocol_ProcFrame(p_link, p_state, p_xcvr, p_format);
             p_state->Stat.Frames++;
             break;
@@ -402,7 +405,7 @@ static inline void Protocol_Proc(const Protocol_Link_T * p_link, const Xcvr_T * 
 
     /* Protocol_IsReqActive checked on Proc */
     if (syncEvent == PROTOCOL_SYNC_EVENT_REQUEST) { Protocol_StartRequest(p_link, p_state, p_xcvr, p_format); }
-    if (syncEvent == PROTOCOL_SYNC_EVENT_REQUEST || syncEvent == PROTOCOL_SYNC_EVENT_RESUME) { Protocol_ProcRequest(p_link, p_state, p_xcvr, p_format); }
+    if (syncEvent == PROTOCOL_SYNC_EVENT_REQUEST || syncEvent == PROTOCOL_SYNC_EVENT_RESUME) { Protocol_ProcRequest(p_link, p_state, p_xcvr, p_format, p_framing); }
 
     /* 4. Exchange deadline, spanning Sync and Request both */
     Protocol_ProcRequestTimeout(p_link, p_state, p_xcvr, p_format);

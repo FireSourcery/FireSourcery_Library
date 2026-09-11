@@ -102,7 +102,7 @@ typedef struct Packet_RxParser
                                 /* alternatively overload Length */
     // Packet_FrameFormat_T * p_FrameFormat; /* determine optional length field */
     /* Result. Valid from PACKET_RX_COMPLETE until the next frame overwrites it. */
-    packet_size_t Length;       /* Total frame length. 0 while unknown. */
+    packet_size_t FrameLength;       /* Total frame length. 0 while unknown. */
 }
 Packet_RxParser_T;
 
@@ -124,17 +124,6 @@ Packet_RxParser_T;
 //     else { return (p_parser->Index < p_format->LENGTH_MIN) ? p_format->LENGTH_MIN : p_parser->Index + 1U; }
 // }
 
-/*!
-    Rewind for the next frame. Retains Id and Length, which the caller still needs after a
-    frame resolves.
-*/
-static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
-{
-    p_parser->StateId = PACKET_RX_STATE_START;
-    p_parser->Index = 0U;
-    p_parser->NextIndex = 1U;
-    p_parser->Length = 0U;
-}
 
 
 // static inline Packet_RxState_T Packet_RxStateOf(const Packet_RxParser_T * p_parser)
@@ -156,6 +145,19 @@ static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
 // }
 
 /*!
+    Rewind for the next frame. Retains Id and Length, which the caller still needs after a
+    frame resolves.
+*/
+static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
+{
+    p_parser->StateId = PACKET_RX_STATE_START;
+    p_parser->Index = 0U;
+    p_parser->NextIndex = 1U;
+    p_parser->FrameLength = 0U;
+}
+
+
+/*!
     Feed p_buffer, Packet_RxParser_T.Index holds valid length
 */
 static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, const Packet_Format_T * p_format, const uint8_t * p_buffer)
@@ -165,34 +167,49 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
     switch (p_parser->StateId)
     {
         case PACKET_RX_STATE_START:
-            /* Anything but the delimiter is dropped, a byte at a time. START_ID of 0 accepts every byte. */
+            /*
+                Anything but the delimiter is dropped, a byte at a time. START_ID of 0 accepts every byte.
+
+                The reject branch rescans from the front. Index-- would not: the buffer does not slide,
+                so RxN refills at &p_buffer[Index] and p_buffer[0] is retested against fresh data
+                forever - one stray byte would desync the port permanently.
+
+                The accept and reject branches set NextIndex separately. A single trailing
+                NextIndex = LENGTH_MIN cannot serve both: bulk-reading LENGTH_MIN while scanning
+                inside it needs the delimiter shifted to the front (memmove / memchr, and a non-const
+                p_buffer). Scanning a byte at a time costs one extra RxN per frame on a clean line,
+                where the delimiter is already byte 0.
+            */
             if (p_parser->Index >= p_format->START_ID_LENGTH)
             {
                 if ((p_buffer[0U] == p_format->START_ID) || (p_format->START_ID == 0x00U))
                 {
                     p_parser->StateId = PACKET_RX_STATE_HEADER;
-                    p_parser->Length = 0U;
+                    p_parser->FrameLength = 0U;
+                    p_parser->NextIndex = p_format->LENGTH_MIN;
                 }
                 else
                 {
-                    // p_parser->Index = 0U;
-                    // p_parser->NextIndex = 1U;
-                    p_parser->Index--; /* discard the last byte and retry. for LENGTH_MIN handling */
+                    p_parser->Index = 0U;                                   /* rescan from the front */
+                    p_parser->NextIndex = p_format->START_ID_LENGTH;
                 }
             }
-            p_parser->NextIndex = p_format->LENGTH_MIN;
+            else
+            {
+                p_parser->NextIndex = p_format->START_ID_LENGTH;
+            }
             break;
 
         case PACKET_RX_STATE_HEADER: /* Wait for Length */
-            p_parser->Length = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
+            p_parser->FrameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
 
-            if (p_parser->Length > 0U) { p_parser->NextIndex = p_parser->Length; } /* PacketLength is known. */
+            if (p_parser->FrameLength > 0U) { p_parser->NextIndex = p_parser->FrameLength; } /* PacketLength is known. */
             else { p_parser->NextIndex = p_parser->Index + 1U; }  /* PacketLength is unknown. p_format->LENGTH_MIN already reached */
 
             /* Check Length through Target */
             /* (RxIndex == nextRxIndex) => (RxSize == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
             if (p_parser->NextIndex > p_format->LENGTH_MAX || p_parser->NextIndex < p_parser->Index) { rxCode = PACKET_RX_ERROR_FRAME; }
-            else if (p_parser->NextIndex == p_parser->Length) { p_parser->StateId = PACKET_RX_STATE_PAYLOAD; } /* p_parser->Target != 0U  */
+            else if (p_parser->NextIndex == p_parser->FrameLength) { p_parser->StateId = PACKET_RX_STATE_PAYLOAD; } /* p_parser->Target != 0U  */
 
             // /* Declined to answer. Grow the header by a byte, until it can no longer become a frame. */
             // if (p_parser->Length == 0U)
@@ -220,13 +237,22 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
             // assert(p_parser->Index == p_parser->Length); /* Ensure the whole payload has been received */
             /* The whole frame is present, so this always resolves. */
             /* Frame is complete. caller parse remaining meta with PARSE_RX_HEADER */
-            rxCode = (p_format->IS_RX_VALID(p_buffer, p_parser->Length) == true) ? PACKET_RX_COMPLETE : PACKET_RX_ERROR_DATA;
+            rxCode = (p_format->IS_RX_VALID(p_buffer, p_parser->FrameLength) == true) ? PACKET_RX_COMPLETE : PACKET_RX_ERROR_DATA;
             break;
 
         default:
             break;
     }
+    /*
+        Continue CaptureRx during ReqExt processing
+        Buffers may be overwritten after Req returns. (No repeat process on same Rx)
+        Req ensure packet data is processed, or copied
+        Rx can queue out of sequence. Invalid Rx sequence until timeout buffer flush
 
+        Alternatively, pause CaptureRx during ReqExt processing
+        Incoming packet bytes wait in queue. Cannot miss packets (unless overflow)
+        Cannot check for Abort without user signal, persistent wait process
+    */
     /* Rewind. Index must clear with the state, or the next frame builds from a stale offset. */
     if (rxCode != PACKET_RX_AWAIT) { Packet_ResetRx(p_parser); }
 

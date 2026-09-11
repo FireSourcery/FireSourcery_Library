@@ -195,10 +195,10 @@ Packet_Format_T;
     Extract Fields
 */
 /* Packet_RxCode_T rxCode == COMPLETE */
-static inline packet_size_t Packet_ParseRxHeader(Packet_Format_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_header)
+static inline Packet_FrameFormat_T * Packet_ParseRxHeader(Packet_Format_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_header)
 {
-    Packet_FrameFormat_T * p_framing = p_codec->PARSE_RX_HEADER(p_meta, p_header);
-    return p_framing->HEADER_LENGTH + p_framing->TRAILER_LENGTH + ((p_framing->BODY_LENGTH == 0U) ? p_meta->Length : p_framing->BODY_LENGTH);
+    return p_codec->PARSE_RX_HEADER(p_meta, p_header);
+    // return p_framing->HEADER_LENGTH + p_framing->TRAILER_LENGTH + ((p_framing->BODY_LENGTH == 0U) ? p_meta->Length : p_framing->BODY_LENGTH);
 }
 
 static inline packet_size_t Packet_BuildTxHeader(Packet_Format_T * p_codec, const Packet_Meta_T * p_meta, uint8_t * p_header)

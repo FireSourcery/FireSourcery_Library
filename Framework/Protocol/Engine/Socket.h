@@ -51,7 +51,7 @@
 
         Socket_T        const, per instance   buffers, tables, timer
         Socket_State_T  mutable               selection, config, engine state
-        Protocol_Link_T view, per pass        the transport binding in effect
+        Protocol_Base_T view, per pass        the transport binding in effect
 
     Selection is admitted only while the socket is idle. Swapping a format mid-exchange
     would leave a staged response built to one header shape and acked against another, so
@@ -116,18 +116,7 @@ typedef const struct Socket
 {
     Socket_State_T * P_SOCKET_STATE;
 
-    // /* Buffers. Meta + contiguous frame, so a handler receives a payload pointer into it. */
-    // Packet_Context_T * P_RX_PACKET;
-    // Packet_Context_T * P_TX_PACKET;
-    // uint8_t PACKET_BUFFER_LENGTH;               /* Must be >= every bound format's LENGTH_MAX */
-
-    // /* The request service. Id -> handler, plus the storage handlers run against. */
-    // const Protocol_Req_T * P_REQ_TABLE;
-    // uint8_t REQ_TABLE_LENGTH;
-    // void * P_APP_CONTEXT;                       /* Passed to every handler */
-    // void * P_REQ_CONTEXT;                       /* Handler sub-state. Sized for the largest handler */
-
-    Protocol_Link_T PROTOCOL;
+    Protocol_Base_T PROTOCOL;
 
     /* Selectable bindings. Arrays of pointers - neither need be contiguous. */
     const Xcvr_T * const * P_XCVR_TABLE;
@@ -161,6 +150,33 @@ static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
     if (Packet_IsRxWaiting(&p_state->Protocol.RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
     return SOCKET_STATUS_IDLE;
 }
+
+// /*
+//     Watchdog
+// */
+// /*!
+//     @return true if WatchdogTimeout reached, a successful Req has not occurred
+// */
+// static inline bool Socket_IsRxLost(const Socket_T * p_socket)
+// {
+//     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
+//     return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->P_TIMER - p_state->ReqTimeStart > p_state->Config.WatchdogTimeout));
+// }
+
+// // static inline bool _Socket_IsRxLost(const Socket_T * p_socket)
+// // {
+// //     return (*p_socket->P_TIMER - p_socket->P_SOCKET_STATE->ReqTimeStart > p_socket->P_SOCKET_STATE->Config.WatchdogTimeout);
+// // }
+
+// static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_socket->IsRxWatchdogEnable = true; } }
+// static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
+// static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
+
+// /*
+//     User must reboot. Does propagate set. Current settings remain active until reboot.
+// */
+// static inline void _Socket_EnableOnInit(Socket_State_T * p_socket) { p_socket->Config.IsEnableOnInit = true; }
+// static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->Config.IsEnableOnInit = false; }
 
 /******************************************************************************/
 /*!
@@ -207,7 +223,7 @@ static inline bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId)
 
     p_state->Config.XcvrId = xcvrId;
     p_state->p_Xcvr = p_socket->P_XCVR_TABLE[xcvrId];
-    Packet_FlushRxParser(&p_state->Protocol.RxParser);      /* bytes from the old port are not this frame */
+    Packet_ResetRx(&p_state->Protocol.RxParser);      /* bytes from the old port are not this frame */
 
     if (p_state->IsEnabled == true) { Xcvr_ConfigBaudRate(p_state->p_Xcvr, p_state->Config.BaudRate); }
     return true;
@@ -224,7 +240,7 @@ static inline bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
 
     p_state->Config.FormatId = formatId;
     p_state->p_Format = p_socket->P_FORMAT_TABLE[formatId];
-    Packet_FlushRxParser(&p_state->Protocol.RxParser);      /* a partial frame has no meaning in the new shape */
+    Packet_ResetRx(&p_state->Protocol.RxParser);      /* a partial frame has no meaning in the new shape */
     return true;
 }
 
@@ -284,3 +300,16 @@ static inline void Socket_Proc(const Socket_T * p_socket)
 
     Protocol_Proc(&p_socket->PROTOCOL, p_state->p_Xcvr, p_state->p_Format, &p_state->Protocol);
 }
+
+typedef enum Socket_ConfigId
+{
+    SOCKET_CONFIG_XCVR_ID,
+    SOCKET_CONFIG_SPECS_ID,
+    SOCKET_CONFIG_WATCHDOG_TIME,
+    SOCKET_CONFIG_BAUD_RATE, // On boot
+    SOCKET_CONFIG_IS_ENABLED,
+}
+Socket_ConfigId_T;
+
+extern int Socket_ConfigId_Get(const Socket_T * p_socket, Socket_ConfigId_T id);
+extern void Socket_ConfigId_Set(const Socket_T * p_socket, Socket_ConfigId_T id, int value);
