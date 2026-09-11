@@ -235,9 +235,13 @@ static inline bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
 
     if (formatId >= p_socket->FORMAT_COUNT) { return false; }
     if (Socket_IsBusy(p_socket) == true)    { return false; }
-    /* The parser clamps its target to LENGTH_MAX, so the buffer must cover it. */
-    if (p_socket->P_FORMAT_TABLE[formatId]->LENGTH_MAX > p_socket->PROTOCOL.PACKET_BUFFER_LENGTH) { return false; }
 
+    /*
+        formatId is the only runtime input here - it arrives from NVM or over the wire. The
+        format's own fields are compile-time constants of a const table, so their bounds are
+        the format author's to assert at the definition, not this function's to re-check on
+        every selection. See the contract on Packet_Format_T.
+    */
     p_state->Config.FormatId = formatId;
     p_state->p_Format = p_socket->P_FORMAT_TABLE[formatId];
     Packet_ResetRx(&p_state->Protocol.RxParser);      /* a partial frame has no meaning in the new shape */

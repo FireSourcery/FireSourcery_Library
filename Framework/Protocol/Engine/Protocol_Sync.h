@@ -61,8 +61,12 @@
 /*!
     Ack Policy - configured per handler.
 
-    A request's opening exchange and its continuation steps are configured separately, so a
-    handler can ack the request but not each chunk, or the reverse.
+    One pair of bits, applied to every frame of the exchange alike. The opening request and
+    its continuation steps are no longer configured separately: Protocol_CaptureReq returns
+    early once ACTIVE, so the composition has no isStep to select on. PROTOCOL_ACK_EVERY_STEP
+    is therefore an alias of PROTOCOL_ACK_ON_REQ, kept only so call sites read as intended.
+    Restoring the distinction means restoring the OPEN / STEP bit pairs below and the isStep
+    local in Protocol_ProcRequest.
 */
 /******************************************************************************/
 typedef struct Protocol_AckPolicy
@@ -79,12 +83,12 @@ typedef struct Protocol_AckPolicy
 Protocol_AckPolicy_T;
 
 #define PROTOCOL_ACK_NONE       { 0U }
-#define PROTOCOL_ACK_ON_REQ     { .TX_ACK_OPEN = 1U, .RX_ACK_OPEN = 1U, .RETRANSMIT_MAX = 3U }
-#define PROTOCOL_ACK_EVERY_STEP { .TX_ACK_OPEN = 1U, .RX_ACK_OPEN = 1U, .TX_ACK_STEP = 1U, .RX_ACK_STEP = 1U, .RETRANSMIT_MAX = 3U }
+#define PROTOCOL_ACK_ON_REQ     { .ACK_REQ = 1U, .EXPECT_ACK_RESP = 1U, .RETRANSMIT_MAX = 3U }
+#define PROTOCOL_ACK_EVERY_STEP { .ACK_REQ = 1U, .EXPECT_ACK_RESP = 1U, .RETRANSMIT_MAX = 3U }
 
 /*
-    The OPEN / STEP selection is made where isStep is known, in the composition. Neither bit
-    pair is read here.
+    Neither bit is read here. The composition applies ACK_REQ on arrival and EXPECT_ACK_RESP
+    after a response reaches the wire.
 */
 
 /*!
@@ -164,8 +168,10 @@ static inline Protocol_SyncEvent_T Protocol_ResolveNackCount(Protocol_SyncState_
     return PROTOCOL_SYNC_EVENT_RETRANSMIT;
 }
 
+/* policy is unread - kept for symmetry with Protocol_ResolveNackCount, which does consult it. */
 static inline Protocol_SyncEvent_T Protocol_ResolveAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
 {
+    (void)policy;
     Protocol_ResetSync(p_state);
     return PROTOCOL_SYNC_EVENT_RESUME;
 }

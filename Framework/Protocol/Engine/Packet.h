@@ -113,6 +113,17 @@ Packet_Context_T;
     Frame/header variants
     Frame Encoding/Decoding
     layout is a view with the buffer's lifetime
+
+    Returned by PARSE_RX_HEADER and BUILD_TX_HEADER, and held by the engine across the handler
+    call, so it must point at storage that outlives the call - a static const per shape, never
+    a compound literal in the callback's own frame.
+
+    CONTRACT, currently unenforced: the engine offsets BOTH payload pointers by the HEADER_LENGTH
+    that PARSE_RX_HEADER reported, because the handler must write its payload before
+    BUILD_TX_HEADER can run and so its header length is not yet knowable. A format whose response
+    header differs in length from its request header will therefore place the Tx payload at the
+    wrong offset. Either keep the two equal, or add a query that yields the Tx frame format from
+    Meta.Id alone and offset by that.
 */
 typedef const struct Packet_FrameFormat
 {
@@ -132,8 +143,8 @@ Packet_FrameFormat_T;
     PARSE_RX_LENGTH   Phase 1. Total frame length, or 0 while not yet determinable.
                 Called once at LENGTH_MIN, then per additional byte for formats whose length
                 is not at a fixed offset. Free to inspect the Id to pick a frame shape.
-    ID_OF       Called once, on a validated frame.
     IS_RX_VALID    Phase 2. Checksum / CRC over the complete frame.
+    PARSE_RX_HEADER Phase 2. The only source of Meta.Id, and so of the frame's class.
 */
 typedef packet_size_t (*Packet_ParseRxLength_T)(const void * p_buffer, packet_size_t rxCount);
 typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_size_t length);
@@ -164,6 +175,29 @@ typedef Packet_FrameFormat_T * (*Packet_BuildTxHeader_T)(const Packet_Meta_T * p
 
     Per Framing set.
     Different sync, delimiter, escaping or CRC → separate ops.
+
+    Author's contract - every field below is a compile-time constant of a const table, so these
+    are invariants to assert where the format is defined, not conditions for the engine to
+    re-test on every selection. Nothing in the engine re-checks them.
+
+        START_ID_LENGTH <= LENGTH_MIN <= LENGTH_MAX <= the socket's PACKET_BUFFER_LENGTH
+            The parser sets its read target from START_ID_LENGTH and LENGTH_MIN without a bound
+            of its own; only a target derived from PARSE_RX_LENGTH is clamped to LENGTH_MAX.
+
+        START_ID_LENGTH is 0 or 1
+            Only p_buffer[0] is tested, so a multi-byte sync is not implemented. 0 means no
+            delimiter and pairs with START_ID == 0 - a 0 length against a real START_ID leaves
+            the reject branch asking for no bytes, and the capture loop cannot advance.
+
+        a zero-payload frame fits PACKET_CONTROL_LENGTH_MAX
+            Protocol_TxControl builds acks and nacks on a stack array of that size.
+
+    Assert these on the constants that initialise the format, not on the struct: in C a const
+    object is not a constant expression, so static_assert(fmt.LENGTH_MAX <= N) will not compile.
+
+        #define MOT_PACKET_LENGTH_MAX   40U
+        static_assert(MOT_PACKET_LENGTH_MAX <= PACKET_BUFFER_LENGTH, "frame exceeds buffer");
+        static const Packet_Format_T MOT_FORMAT = { .LENGTH_MAX = MOT_PACKET_LENGTH_MAX, ... };
 */
 /******************************************************************************/
 typedef const struct Packet_Format
@@ -238,7 +272,7 @@ static inline Packet_ClassId_T Packet_ClassOf(const Packet_Format_T * p_format, 
 /*
     Default selection
 */
-static uint16_t _Packet_Checksum(const uint8_t * p_src, size_t size)
+static inline uint16_t _Packet_Checksum(const uint8_t * p_src, size_t size)
 {
     uint16_t checksum = 0U;
     for (size_t index = 0U; index < size; index++) { checksum += p_src[index]; }

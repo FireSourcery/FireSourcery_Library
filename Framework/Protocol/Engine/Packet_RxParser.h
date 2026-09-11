@@ -101,8 +101,13 @@ typedef struct Packet_RxParser
     packet_size_t NextIndex;    /* NextIndex. Bytes wanted before the next Packet_ProcRxParser. Never exceeds LENGTH_MAX. */
                                 /* alternatively overload Length */
     // Packet_FrameFormat_T * p_FrameFormat; /* determine optional length field */
-    /* Result. Valid from PACKET_RX_COMPLETE until the next frame overwrites it. */
-    packet_size_t FrameLength;       /* Total frame length. 0 while unknown. */
+    /*
+        Total frame length. 0 while unknown, and 0 again the moment a frame resolves - the
+        rewind clears it. Read it during the parse, not after: a caller that needs the length
+        of a COMPLETE frame recovers it from PARSE_RX_HEADER, which is the only source that
+        survives the rewind.
+    */
+    packet_size_t FrameLength;
 }
 Packet_RxParser_T;
 
@@ -145,8 +150,8 @@ Packet_RxParser_T;
 // }
 
 /*!
-    Rewind for the next frame. Retains Id and Length, which the caller still needs after a
-    frame resolves.
+    Rewind for the next frame. Clears the result along with the progress - nothing survives,
+    so a caller that still needs the resolved frame must read it before the next Proc.
 */
 static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
 {
@@ -168,48 +173,37 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
     {
         case PACKET_RX_STATE_START:
             /*
-                Anything but the delimiter is dropped, a byte at a time. START_ID of 0 accepts every byte.
+                The delimiter must be at the front. Anything else is discarded and the scan
+                restarts there - not Index--, which does not slide the buffer, so RxN would
+                refill past a rejected p_buffer[0] and retest it against fresh data forever.
 
-                The reject branch rescans from the front. Index-- would not: the buffer does not slide,
-                so RxN refills at &p_buffer[Index] and p_buffer[0] is retested against fresh data
-                forever - one stray byte would desync the port permanently.
-
-                The accept and reject branches set NextIndex separately. A single trailing
-                NextIndex = LENGTH_MIN cannot serve both: bulk-reading LENGTH_MIN while scanning
-                inside it needs the delimiter shifted to the front (memmove / memchr, and a non-const
-                p_buffer). Scanning a byte at a time costs one extra RxN per frame on a clean line,
-                where the delimiter is already byte 0.
+                Scanning a byte at a time is what keeps the reject branch from losing bytes.
+                Bulk-reading LENGTH_MIN and searching inside it would need the delimiter
+                shifted to the front (memmove, and a non-const p_buffer); on a clean line the
+                delimiter is already byte 0, so this costs one extra RxN per frame.
             */
-            if (p_parser->Index >= p_format->START_ID_LENGTH)
+            if (p_parser->Index < p_format->START_ID_LENGTH) { p_parser->NextIndex = p_format->START_ID_LENGTH; }
+            else if ((p_format->START_ID == 0x00U) || (p_buffer[0U] == p_format->START_ID))
             {
-                if ((p_buffer[0U] == p_format->START_ID) || (p_format->START_ID == 0x00U))
-                {
-                    p_parser->StateId = PACKET_RX_STATE_HEADER;
-                    p_parser->FrameLength = 0U;
-                    p_parser->NextIndex = p_format->LENGTH_MIN;
-                }
-                else
-                {
-                    p_parser->Index = 0U;                                   /* rescan from the front */
-                    p_parser->NextIndex = p_format->START_ID_LENGTH;
-                }
+                p_parser->StateId = PACKET_RX_STATE_HEADER;
+                p_parser->FrameLength = 0U;
+                p_parser->NextIndex = p_format->LENGTH_MIN;
             }
             else
             {
+                p_parser->Index = 0U;                                       /* discard, rescan from the front */
                 p_parser->NextIndex = p_format->START_ID_LENGTH;
             }
             break;
 
         case PACKET_RX_STATE_HEADER: /* Wait for Length */
+            /* 0 = not yet determinable. Grow the header a byte at a time until the format answers. */
             p_parser->FrameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
+            p_parser->NextIndex = (p_parser->FrameLength > 0U) ? p_parser->FrameLength : (packet_size_t)(p_parser->Index + 1U);
 
-            if (p_parser->FrameLength > 0U) { p_parser->NextIndex = p_parser->FrameLength; } /* PacketLength is known. */
-            else { p_parser->NextIndex = p_parser->Index + 1U; }  /* PacketLength is unknown. p_format->LENGTH_MIN already reached */
-
-            /* Check Length through Target */
-            /* (RxIndex == nextRxIndex) => (RxSize == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
-            if (p_parser->NextIndex > p_format->LENGTH_MAX || p_parser->NextIndex < p_parser->Index) { rxCode = PACKET_RX_ERROR_FRAME; }
-            else if (p_parser->NextIndex == p_parser->FrameLength) { p_parser->StateId = PACKET_RX_STATE_PAYLOAD; } /* p_parser->Target != 0U  */
+            /* One bound covers both: a length that overruns the buffer, and one that undercuts what is already held. */
+            if ((p_parser->NextIndex > p_format->LENGTH_MAX) || (p_parser->NextIndex < p_parser->Index)) { rxCode = PACKET_RX_ERROR_FRAME; }
+            else if (p_parser->FrameLength > 0U) { p_parser->StateId = PACKET_RX_STATE_PAYLOAD; }
 
             // /* Declined to answer. Grow the header by a byte, until it can no longer become a frame. */
             // if (p_parser->Length == 0U)
@@ -265,7 +259,7 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
 */
 static inline packet_size_t Packet_RxRemaining(const Packet_RxParser_T * p_parser)
 {
-    return (p_parser->Index < p_parser->NextIndex) ? (p_parser->NextIndex - p_parser->Index) : 0U;
+    return (p_parser->Index < p_parser->NextIndex) ? (packet_size_t)(p_parser->NextIndex - p_parser->Index) : (packet_size_t)0U;
 }
 
 /*! true once a delimiter has been accepted and the frame is still incomplete. */

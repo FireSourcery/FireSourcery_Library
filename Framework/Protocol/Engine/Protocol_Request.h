@@ -229,14 +229,19 @@ static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state,
 
     switch (p_state->StateId)
     {
-        case PROTOCOL_REQ_STATE_IDLE:
-            return PROTOCOL_REQ_DONE;
-
         case PROTOCOL_REQ_STATE_ACTIVE:
             reqCode = p_state->p_ReqActive->PROC(p_app, p_xfer, p_rxPayload, p_txPayload);
             if ((reqCode == PROTOCOL_REQ_DONE) || (reqCode == PROTOCOL_REQ_ABORT)) { Protocol_ResetReq(p_state); }
-            return reqCode;
+            break;
+
+        /* Bound but not ACTIVE cannot arise - ResetReq clears both together. */
+        case PROTOCOL_REQ_STATE_IDLE:
+        default:
+            reqCode = PROTOCOL_REQ_DONE;
+            break;
     }
+
+    return reqCode;
 }
 
 
