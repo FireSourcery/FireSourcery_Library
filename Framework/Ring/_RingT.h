@@ -129,10 +129,10 @@ Ring_State_T;
 
 /* Round up: plain division truncates, which would short the Buffer whenever BytesSize is not a multiple of the word size */
 #define _RING_BUFFER_ALLOC(BytesSize) ((uintptr_t[((BytesSize) + sizeof(uintptr_t) - 1U) / sizeof(uintptr_t)]){}) /* guarantees align and no ascii fill */
-#define RING_STATE_ALLOC(UnitSize, Length) ((Ring_State_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_State_T) + ((UnitSize) * (Length)))))
+// #define RING_STATE_ALLOC(UnitSize, Length) ((Ring_State_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_State_T) + ((UnitSize) * (Length)))))
 
 #define RING_STATE_ALLOC(UnitSize, Length) \
-    (&(union { Ring_State_T State; uintptr_t Words[(sizeof(Ring_State_T) + ((UnitSize) * (Length)) + sizeof(uintptr_t) - 1U) / sizeof(uintptr_t)]; }){0}.State)
+    (&(union { Ring_State_T State; uintptr_t Words[(sizeof(Ring_State_T) + ((UnitSize) * (Length)) + sizeof(uintptr_t) - 1U) / sizeof(uintptr_t)]; }){ }.State)
 
 static inline size_t _RingT_ArrayIndexOf(Ring_Type_T type, size_t index) { return array_index_of_counter(type.LENGTH, index); }
 static inline size_t _RingT_IndexOnAccess(Ring_Type_T type, size_t index) { return ring_index_on_access(type.LENGTH, index); }

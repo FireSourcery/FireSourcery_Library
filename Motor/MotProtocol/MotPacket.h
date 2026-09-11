@@ -29,6 +29,8 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "Framework/Protocol/Packet.h"   /* packet_id_t, packet_size_t */
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -187,6 +189,29 @@ MotPacket_T;
 // }
 // MotPacket_T;
 
+
+/*
+    Two frame shapes share one format:
+
+        sync    4 bytes, MotPacket_Sync_T,   1-byte XOR check, no payload
+        data    8-byte MotPacket_Header_T,   16-bit sum check, variable payload
+
+    Which one applies is a function of the Id alone - MotPacket_ParseLength answers it for Rx,
+    MotPacket_IsSyncId for Tx. Packet_Meta_T.Length is the PAYLOAD length in both, so a sync
+    frame carries 0 and the data frame carries Header.Length - sizeof(MotPacket_Header_T).
+    The engine checks that against the length the parser collected before any handler runs.
+*/
+extern const Packet_Format_T MOT_PROTOCOL_PACKET_CLASS;
+
+/* Codec - bound into MOT_PROTOCOL_PACKET_CLASS, not called directly. */
+extern packet_size_t MotProtocol_ParseRxLength(const void * p_buffer, packet_size_t rxCount);
+extern bool MotProtocol_IsRxValid(const void * p_buffer, packet_size_t length);
+extern Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const void * p_buffer);
+extern Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, void * p_buffer);
+
+
+
+
 /******************************************************************************/
 /*! Common */
 /******************************************************************************/
@@ -342,6 +367,16 @@ typedef struct MOT_PACKET_PACKED MotPacket_DataMode { uint8_t ByteData[MOT_PACKE
     Extern
 */
 /******************************************************************************/
+/*
+    Defined in MotPacket.c and bound into the format as PARSE_RX_LENGTH. Declared here because
+    without a prototype the call site sees an implicit int return, which truncates nothing here
+    but is a diagnostic in C23 and a silent conversion in older modes.
+*/
+extern packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_t rxCount);
+extern packet_id_t MotPacket_ParseId(const MotPacket_T * p_rxPacket, packet_size_t rxCount);
+
 extern uint16_t MotPacket_Checksum(const MotPacket_T * p_packet, size_t totalSize);
 extern uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId);
 extern uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength);
+
+

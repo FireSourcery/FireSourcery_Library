@@ -105,6 +105,7 @@ typedef struct Socket_State
     Protocol_State_T Protocol;  /* Parser + sync + request + counters */
 
     bool IsEnabled;
+    bool IsRxWatchdogEnable;    /* Link-liveness watchdog, armed at runtime */
 }
 Socket_State_T;
 
@@ -153,25 +154,29 @@ static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
 }
 
 /*
-    Watchdog
+    Watchdog - link liveness, a third deadline at a different scale.
+
+    RX_TIMEOUT bounds a frame and REQ_TIMEOUT bounds an exchange; both are transport
+    concerns and both live in the engine. This one asks whether the host is still there at
+    all, which only the application can act on - MotorController raises FaultFlags.RxLost
+    from it. Hence config here rather than in Protocol_Base_T.
+
+    It reads Protocol.ReqTimeStart, which advances only on a frame the engine actually
+    delivered, so line noise cannot feed it.
 */
-// /*!
-//     @return true if WatchdogTimeout reached, a successful Req has not occurred
-// */
-// static inline bool Socket_IsRxLost(const Socket_T * p_socket)
-// {
-//     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-//     return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->P_TIMER - p_state->ReqTimeStart > p_state->Config.WatchdogTimeout));
-// }
+/*!
+    @return true if WatchdogTimeout reached, a successful Req has not occurred
+*/
+static inline bool Socket_IsRxLost(const Socket_T * p_socket)
+{
+    const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
+    return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->PROTOCOL.P_TIMER - p_state->Protocol.ReqTimeStart > p_state->Config.WatchdogTimeout));
+}
 
-// // static inline bool _Socket_IsRxLost(const Socket_T * p_socket)
-// // {
-// //     return (*p_socket->P_TIMER - p_socket->P_SOCKET_STATE->ReqTimeStart > p_socket->P_SOCKET_STATE->Config.WatchdogTimeout);
-// // }
-
-// static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_socket->IsRxWatchdogEnable = true; } }
-// static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
-// static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
+/*! Arming a disabled socket would fault immediately, since nothing can feed ReqTimeStart. */
+static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->IsEnabled == true) { p_socket->IsRxWatchdogEnable = true; } }
+static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
+static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
 
 /*
     User must reboot. Does propagate set. Current settings remain active until reboot.
@@ -182,27 +187,21 @@ static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->
 
 /******************************************************************************/
 /*!
-    Proc
+    Lifecycle and selection - defined in Socket.c
+
+    Selection is admitted only while the socket is idle; both setters refuse while busy.
+    Socket_Init selects before enabling, so an out of range stored id leaves the socket down
+    rather than bound to nothing.
 */
 /******************************************************************************/
-/*!
-    @brief  One non-blocking pass. Single threaded.
-            Cadence is the caller's: the engine reads the clock but never waits on it.
+extern void Socket_Proc(const Socket_T * p_socket);
+extern void Socket_Init(const Socket_T * p_socket);
+extern bool Socket_Enable(const Socket_T * p_socket);
+extern void Socket_Disable(const Socket_T * p_socket);
+extern bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId);
+extern bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId);
+extern bool Socket_SetBaudRate(const Socket_T * p_socket, uint32_t baudRate);
 
-    The link is written out here, at the only place that needs it. Each field comes from its
-    own source - selection from state, buffers from the instance, the deadline from config -
-    so a builder would only hide where they came from. The request table, its context and its
-    deadline pass individually; they are already fields of Socket_T and repackaging them
-    would be the same data in a second shape.
-*/
-static inline void Socket_Proc(const Socket_T * p_socket)
-{
-    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-
-    if (p_state->IsEnabled == false) { return; }
-
-    Protocol_Proc(&p_socket->PROTOCOL, p_state->p_Xcvr, p_state->p_Format, &p_state->Protocol);
-}
 
 typedef enum Socket_ConfigId
 {

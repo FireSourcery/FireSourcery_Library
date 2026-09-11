@@ -1,5 +1,3 @@
-#pragma once
-
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -33,13 +31,36 @@
 #include "Socket.h"
 #include <string.h>
 
+/******************************************************************************/
+/*!
+    Proc
+*/
+/******************************************************************************/
+/*!
+    @brief  One non-blocking pass. Single threaded.
+            Cadence is the caller's: the engine reads the clock but never waits on it.
+
+    The link is written out here, at the only place that needs it. Each field comes from its
+    own source - selection from state, buffers from the instance, the deadline from config -
+    so a builder would only hide where they came from. The request table, its context and its
+    deadline pass individually; they are already fields of Socket_T and repackaging them
+    would be the same data in a second shape.
+*/
+void Socket_Proc(const Socket_T * p_socket)
+{
+    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
+
+    if (p_state->IsEnabled == false) { return; }
+
+    Protocol_Proc(&p_socket->PROTOCOL, p_state->p_Xcvr, p_state->p_Format, &p_state->Protocol);
+}
 
 /******************************************************************************/
 /*!
     Lifecycle
 */
 /******************************************************************************/
-static inline void Socket_Disable(const Socket_T * p_socket)
+void Socket_Disable(const Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -50,7 +71,7 @@ static inline void Socket_Disable(const Socket_T * p_socket)
 /*!
     @return false when no binding is selected. An enabled socket always has both.
 */
-static inline bool Socket_Enable(const Socket_T * p_socket)
+bool Socket_Enable(const Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -70,7 +91,7 @@ static inline bool Socket_Enable(const Socket_T * p_socket)
     Xcvr swap orphans the bytes already in the frame buffer. Disable first to force it.
 */
 /******************************************************************************/
-static inline bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId)
+bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -85,7 +106,7 @@ static inline bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId)
     return true;
 }
 
-static inline bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
+bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -104,7 +125,7 @@ static inline bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
     return true;
 }
 
-static inline bool Socket_SetBaudRate(const Socket_T * p_socket, uint32_t baudRate)
+bool Socket_SetBaudRate(const Socket_T * p_socket, uint32_t baudRate)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -119,7 +140,7 @@ static inline bool Socket_SetBaudRate(const Socket_T * p_socket, uint32_t baudRa
     Init
 */
 /******************************************************************************/
-static inline void Socket_Init(const Socket_T * p_socket)
+void Socket_Init(const Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 

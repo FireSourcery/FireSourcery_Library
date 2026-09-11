@@ -124,11 +124,15 @@ Packet_Context_T;
     call, so it must point at storage that outlives the call - a static const per shape, never
     a compound literal in the callback's own frame.
 
-    CONTRACT, currently unenforced: the engine offsets BOTH payload pointers by the HEADER_LENGTH
-    that PARSE_RX_HEADER reported, because the handler must write its payload before
-    BUILD_TX_HEADER can run and so its header length is not yet knowable. A format whose response
-    header differs in length from its request header will therefore place the Tx payload at the
-    wrong offset. Either keep the two equal, or add a query that yields the Tx frame format from
+    The engine offsets the Rx payload by the HEADER_LENGTH of the frame that just arrived, and
+    the Tx payload by the HEADER_LENGTH of the frame that OPENED the exchange - held in
+    Protocol_State_T.p_ReqFraming. The two are not the same on a continuation, where the
+    arriving frame is an ack and need not share the data frame's header length.
+
+    CONTRACT, still unenforced: a format whose RESPONSE header differs in length from its
+    REQUEST header places the Tx payload at the request's offset, because the handler must
+    write its payload before BUILD_TX_HEADER can run and so the response header length is not
+    yet knowable. Keep the two equal, or add a query yielding the Tx frame format from
     Meta.Id alone and offset by that.
 */
 typedef const struct Packet_FrameFormat

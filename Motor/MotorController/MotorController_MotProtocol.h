@@ -34,7 +34,16 @@
 #include "Motor/MotProtocol/MotProtocol.h"
 #include "Motor/MotorController/MotorController_Var.h"
 
+/*
+    Must track the initialiser in the .c: the flash loader adds two rows, and a length short
+    of the initialiser is a compile error rather than a silent truncation - but only because
+    the array is declared with this bound in both places.
+*/
+#if defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+#define MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH (14U)
+#else
 #define MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH (12U)
+#endif
 
 extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH];
 

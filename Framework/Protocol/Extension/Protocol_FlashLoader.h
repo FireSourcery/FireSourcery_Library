@@ -4,151 +4,206 @@
 /*!
     @file   Protocol_FlashLoader.h
     @author FireSourcery
-    @brief  Stateful bulk transfer - Read and Write - on the REQ / RESP handler pair.
+    @brief  Flash bound to the generic DataMode transfer.
+
+    A binding, not an implementation. The transfer logic - staging, cursor, chunking, status
+    replies - lives once in Protocol_DataMode.h; this file only says what OPEN, READ and
+    WRITE mean for a Flash_T. Register Protocol_DataMode_Read / Protocol_DataMode_Write in
+    the request table and pass a PROTOCOL_FLASH_LOADER interface as the handler context.
+
+    Nothing here is a handler, so there is no second copy of the staging to keep in step.
 */
 /******************************************************************************/
 #include "Protocol_DataMode.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 
-
-
+#include <string.h>
 
 /******************************************************************************/
 /*!
-    Stage bodies
+    Ops - Flash_T against Protocol_DataMode_Ops_T
+
+    Flash_Status_T maps onto the generic status directly: NV_MEMORY_STATUS_SUCCESS is 0,
+    which is PROTOCOL_DATA_MODE_STATUS_OK, and every other value is a fault the reply
+    carries back verbatim.
 */
 /******************************************************************************/
-/*! Set up a transfer and answer with the result, in the pass that received the request. */
-static inline Protocol_ReqCode_T Protocol_DataMode_ProcOpen(Flash_T * p_app, Protocol_DataMode_State_T * p_state, Packet_Xfer_T * p_xfer, const Protocol_DataMode_Req_T * p_req, Protocol_DataMode_Resp_T * p_resp)
+/*!
+    Arm a write, or validate a read range.
+
+    Config selects the operation the transfer is about to perform - a read needs no
+    preparation, a write arms the controller's continue-write cursor.
+*/
+static inline uint16_t Protocol_FlashLoader_Open(void * p_app, uintptr_t address, size_t size, uint32_t config)
 {
-    Protocol_DataModeReq_Setup(p_state, p_xfer->p_RxMeta, p_req);
+    (void)config;
+    return (uint16_t)Flash_SetContinueWrite((Flash_T *)p_app, address, size);
+}
 
-    p_resp->Status = p_app->P_OPS->OPEN(p_app->P_MODULE, p_state->Address, p_state->Size, p_req->Config);
+/*! Flash is memory mapped for reads, so a chunk is a copy. */
+static inline uint16_t Protocol_FlashLoader_Read(void * p_app, uintptr_t address, size_t size, void * p_dest)
+{
+    (void)p_app;
+    memcpy(p_dest, (const void *)address, size);
+    return PROTOCOL_DATA_MODE_STATUS_OK;
+}
 
-    p_xfer->p_TxMeta->Id = p_state->ReqId;
-    p_xfer->p_TxMeta->Length = sizeof(Protocol_DataMode_Resp_T);
+/*!
+    Writes continue from the cursor armed by Open.
 
-    return (p_resp->Status == PROTOCOL_DATA_MODE_STATUS_OK) ? PROTOCOL_REQ_RESPOND : PROTOCOL_REQ_DONE;
+    The address is therefore redundant here and is asserted rather than used - the controller
+    owns the position, and a mismatch would mean the transfer and the driver disagree about
+    where the next chunk belongs.
+*/
+static inline uint16_t Protocol_FlashLoader_Write(void * p_app, uintptr_t address, const void * p_src, size_t size)
+{
+    (void)address;
+    return (uint16_t)Flash_ContinueWrite_Blocking((Flash_T *)p_app, p_src, size);
+}
+
+static const Protocol_DataMode_Ops_T PROTOCOL_FLASH_LOADER_OPS =
+{
+    .OPEN   = Protocol_FlashLoader_Open,
+    .READ   = Protocol_FlashLoader_Read,
+    .WRITE  = Protocol_FlashLoader_Write,
+};
+
+/******************************************************************************/
+/*!
+    Interface
+
+    Cheap enough to build where it is needed - four pointers - which keeps the Flash instance
+    a runtime value rather than forcing a file-scope constant into the integration layer.
+
+    @param  p_Flash     the Flash_T this transfer moves bytes through
+    @param  DataId      packet id carrying a raw chunk in either direction
+    @param  ChunkMax    payload capacity of the format this socket speaks
+*/
+/******************************************************************************/
+#define PROTOCOL_FLASH_LOADER(p_Flash, DataId, ChunkMax)     \
+(Protocol_DataModeInterface_T)                               \
+{                                                            \
+    .P_OPS      = &PROTOCOL_FLASH_LOADER_OPS,                \
+    .P_MODULE   = (p_Flash),                                 \
+    .DATA_ID    = (packet_id_t)(DataId),                     \
+    .CHUNK_MAX  = (packet_size_t)(ChunkMax),                 \
 }
 
 
-// static inline Protocol_ReqCode_T Protocol_DataMode_Reply(void * p_app, Packet_Xfer_T * p_xfer, const Protocol_DataMode_Req_T * p_req, Protocol_DataMode_Resp_T * p_resp)
+/*
+    A bound handler is re-entered for EVERY frame that arrives while the exchange is open,
+    including the ack that paces it. Step alone cannot tell those apart, so a handler that is
+    also ack-paced has to read the class of the arriving frame from its Id.
+*/
+static inline bool IsRxAck(const Packet_Xfer_T * p_xfer) { return (p_xfer->p_RxMeta->Id == MOT_PACKET_SYNC_ACK); }
+
+// /******************************************************************************/
+// /*! Stateful Read Data - ack-paced. RESPOND a chunk, wait for the ack, RESPOND the next. */
+// /******************************************************************************/
+// Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 // {
-//     p_resp->Status = PROTOCOL_DATA_MODE_STATUS_OK;
-//     return PROTOCOL_REQ_RESPOND;
+//     MotProtocol_DataModeState_T * p_subState = (MotProtocol_DataModeState_T *)p_xfer->p_Substate;
+//     (void)p_app;
+
+//     switch (*p_xfer->p_Step)
+//     {
+//         case 0U: /* the opening request carries address and size */
+//         {
+//             const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)p_rxPayload;
+
+//             p_subState->DataModeAddress = p_req->AddressStart;
+//             p_subState->DataModeSize    = p_req->SizeBytes;
+//             p_subState->DataIndex       = 0U;
+
+//             ((MotPacket_DataModeResp_T *)p_txPayload)->Status = MOT_STATUS_SUCCESS;
+//             p_xfer->p_TxMeta->Id     = MOT_PACKET_DATA_MODE_READ;
+//             p_xfer->p_TxMeta->Length = sizeof(MotPacket_DataModeResp_T);
+//             *p_xfer->p_Step = 1U;
+//             return PROTOCOL_REQ_RESPOND;
+//         }
+
+//         case 1U: /* one chunk per ack, then a closing status frame */
+//             if (p_subState->DataIndex < p_subState->DataModeSize)
+//             {
+//                 packet_size_t readSize = (packet_size_t)(p_subState->DataModeSize - p_subState->DataIndex);
+//                 if (readSize > MOT_DATA_MODE_CHUNK_MAX) { readSize = MOT_DATA_MODE_CHUNK_MAX; }
+
+//                 memcpy(p_txPayload, (const uint8_t *)(p_subState->DataModeAddress + p_subState->DataIndex), readSize);
+//                 p_subState->DataIndex += readSize;
+
+//                 p_xfer->p_TxMeta->Id     = MOT_PACKET_DATA_MODE_DATA;
+//                 p_xfer->p_TxMeta->Length = readSize;
+//                 return PROTOCOL_REQ_RESPOND;
+//             }
+
+//             ((MotPacket_DataModeResp_T *)p_txPayload)->Status = MOT_STATUS_SUCCESS;
+//             p_xfer->p_TxMeta->Id     = MOT_PACKET_DATA_MODE_READ;
+//             p_xfer->p_TxMeta->Length = sizeof(MotPacket_DataModeResp_T);
+//             return PROTOCOL_REQ_DONE;
+
+//         default:
+//             return PROTOCOL_REQ_ABORT;
+//     }
 // }
 
-/*! Stage a status reply from an explicit value, rather than from sub-state. */
-static inline Protocol_ReqCode_T Protocol_DataMode_Reply(const Protocol_DataMode_State_T * p_state, Packet_Xfer_T * p_xfer, void * p_txPayload, uint16_t status, Protocol_ReqCode_T onOk)
-{
-    ((Protocol_DataMode_Resp_T *)p_txPayload)->Status = status;
-    p_xfer->p_TxMeta->Id = p_state->ReqId;
-    p_xfer->p_TxMeta->Length = sizeof(Protocol_DataMode_Resp_T);
+// /******************************************************************************/
+// /*! Stateful Write Data - data-paced. ACCEPT or REJECT each arriving chunk. */
+// /******************************************************************************/
+// Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
+// {
+//     MotProtocol_DataModeState_T * p_subState = (MotProtocol_DataModeState_T *)p_xfer->p_Substate;
+//     Flash_Status_T flashStatus;
 
-    return (status == PROTOCOL_DATA_MODE_STATUS_OK) ? onOk : PROTOCOL_REQ_DONE;
-}
+//     switch (*p_xfer->p_Step)
+//     {
+//         case 0U: /* the opening request arms the flash write */
+//         {
+//             const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)p_rxPayload;
 
-/*! Move one inbound chunk into memory and advance. Shared by the DATA and CLOSE stages. */
-// static inline uint16_t Protocol_DataMode_ProcWriteChunk(Flash_T * p_app, Packet_Xfer_T * p_xfer,  const uint8_t * p_data)
-static inline uint16_t Protocol_DataMode_ProcWriteChunk(Flash_T * p_app, Protocol_DataMode_State_T * p_state, const Packet_Meta_T * p_meta, const uint8_t * p_data)
-{
-    uint16_t status = p_app->P_OPS->WRITE(p_app->P_MODULE, p_state->Address + p_state->Index, p_data, p_meta->Length);
+//             p_subState->DataModeAddress = p_req->AddressStart;
+//             p_subState->DataModeSize    = p_req->SizeBytes;
+//             p_subState->DataIndex       = 0U;
 
-    if (status == PROTOCOL_DATA_MODE_STATUS_OK) { p_state->Index += p_meta->Length; }
+//             flashStatus = Flash_SetContinueWrite(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
 
-    return status;
-}
+//             ((MotPacket_DataModeResp_T *)p_txPayload)->Status = flashStatus;
+//             p_xfer->p_TxMeta->Id     = MOT_PACKET_DATA_MODE_WRITE;
+//             p_xfer->p_TxMeta->Length = sizeof(MotPacket_DataModeResp_T);
 
-/*! Stage one outbound chunk and advance. */
-static inline uint16_t Protocol_DataMode_ProcReadChunk(Flash_T * p_app, Protocol_DataMode_State_T * p_state, Packet_Xfer_T * p_xfer, uint8_t * p_data)
-{
-    packet_size_t chunk = math_min(p_state->Size - p_state->Index, p_app->CHUNK_MAX);
-    uint16_t status = p_app->P_OPS->READ(p_app->P_MODULE, p_state->Address + p_state->Index, chunk, p_data);
+//             if (flashStatus != NV_MEMORY_STATUS_SUCCESS) { return PROTOCOL_REQ_DONE; }
+//             *p_xfer->p_Step = 1U;
+//             return PROTOCOL_REQ_RESPOND;
+//         }
 
-    if (status == PROTOCOL_DATA_MODE_STATUS_OK)
-    {
-        p_state->Index += chunk;
-        p_xfer->p_TxMeta->Id = p_app->DATA_ID;
-        p_xfer->p_TxMeta->Length = chunk;
-    }
+//         case 1U: /* each arriving DATA frame is written and acknowledged */
+//         {
+//             /* An ack landing here refers to the status frame, not to a chunk. Nothing to do. */
+//             if (IsRxAck(p_xfer) == true) { return PROTOCOL_REQ_AWAIT; }
 
-    return status;
-}
+//             packet_size_t writeSize = p_xfer->p_RxMeta->Length;
 
-/******************************************************************************/
-/*!
-    Read - device streams memory to the host.
+//             /* The remote is ahead of the size it declared. Refuse rather than overrun. */
+//             if ((size_t)writeSize > (p_subState->DataModeSize - p_subState->DataIndex)) { return PROTOCOL_REQ_REJECT; }
 
-    Paced by the host's acks: every ack frees the floor and pulls the next chunk.
-*/
-/******************************************************************************/
-static inline Protocol_ReqCode_T Protocol_DataMode_Read(Flash_T * p_context, Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload)
-{
-    Flash_T * p_app = p_context;
-    Protocol_DataMode_State_T * p_state = p_xfer->p_Substate;
-    uint16_t status;
+//             flashStatus = Flash_ContinueWrite_Blocking(p_flash, (const uint8_t *)p_rxPayload, writeSize);
+//             if (flashStatus != NV_MEMORY_STATUS_SUCCESS)
+//             {
+//                 ((MotPacket_DataModeResp_T *)p_txPayload)->Status = flashStatus;
+//                 p_xfer->p_TxMeta->Id     = MOT_PACKET_DATA_MODE_WRITE;
+//                 p_xfer->p_TxMeta->Length = sizeof(MotPacket_DataModeResp_T);
+//                 return PROTOCOL_REQ_DONE;
+//             }
 
-    p_state->StateId = Protocol_DataModeRead_StateOf(p_state, p_xfer->p_RxMeta);
+//             p_subState->DataIndex += writeSize;
+//             if (p_subState->DataIndex < p_subState->DataModeSize) { return PROTOCOL_REQ_ACCEPT; }
 
-    switch (p_state->StateId)
-    {
-        case PROTOCOL_DATA_MODE_STATE_OPEN:
-            return Protocol_DataMode_ProcOpen(p_app, p_state, p_xfer, p_rxPayload, p_txPayload);
+//             ((MotPacket_DataModeResp_T *)p_txPayload)->Status = NV_MEMORY_STATUS_SUCCESS;
+//             p_xfer->p_TxMeta->Id     = MOT_PACKET_DATA_MODE_WRITE;
+//             p_xfer->p_TxMeta->Length = sizeof(MotPacket_DataModeResp_T);
+//             return PROTOCOL_REQ_DONE;
+//         }
 
-        /* A read fault reports and ends here; otherwise the chunk is already staged. */
-        case PROTOCOL_DATA_MODE_STATE_DATA:
-            status = Protocol_DataMode_ProcReadChunk(p_app, p_state, p_xfer, p_txPayload);
-            return (status == PROTOCOL_DATA_MODE_STATUS_OK) ? PROTOCOL_REQ_RESPOND : Protocol_DataMode_Reply(p_state, p_xfer, p_txPayload, status, PROTOCOL_REQ_DONE);
-
-        case PROTOCOL_DATA_MODE_STATE_CLOSE:
-            return Protocol_DataMode_Reply(p_state, p_xfer, p_txPayload, PROTOCOL_DATA_MODE_STATUS_OK, PROTOCOL_REQ_DONE);
-
-        case PROTOCOL_DATA_MODE_STATE_ERROR:
-            return PROTOCOL_REQ_REJECT;
-
-        case PROTOCOL_DATA_MODE_STATE_IDLE:
-        default:
-            return PROTOCOL_REQ_AWAIT;
-    }
-}
-
-/******************************************************************************/
-/*!
-    Write - host streams memory to the device.
-
-    Paced by the host's data packets. Only the first and last earn a reply; the rest are
-    answered by the Sync layer's ack.
-*/
-/******************************************************************************/
-static inline Protocol_ReqCode_T Protocol_DataMode_Write(Flash_T * p_context, Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload)
-{
-    Flash_T * p_app = p_context;
-    Protocol_DataMode_State_T * p_state = p_xfer->p_Substate;
-    uint16_t status;
-
-    p_state->StateId = Protocol_DataModeWrite_StateOf(p_app, p_state, p_xfer->p_RxMeta);
-
-    switch (p_state->StateId)
-    {
-        case PROTOCOL_DATA_MODE_STATE_OPEN:
-            return Protocol_DataMode_ProcOpen(p_app, p_state, p_xfer, p_rxPayload, p_txPayload);
-
-        /* ACCEPT is the silent path: the ack is the whole reply. A fault reports and ends. */
-        case PROTOCOL_DATA_MODE_STATE_DATA:
-            status = Protocol_DataMode_ProcWriteChunk(p_app, p_state, p_xfer->p_RxMeta, p_rxPayload);
-            return (status == PROTOCOL_DATA_MODE_STATUS_OK) ? PROTOCOL_REQ_ACCEPT : Protocol_DataMode_Reply(p_state, p_xfer, p_txPayload, status, PROTOCOL_REQ_DONE);
-
-        /* Last chunk: absorb it, then answer with the transfer's outcome. */
-        case PROTOCOL_DATA_MODE_STATE_CLOSE:
-            status = Protocol_DataMode_ProcWriteChunk(p_app, p_state, p_xfer->p_RxMeta, p_rxPayload);
-            return Protocol_DataMode_Reply(p_state, p_xfer, p_txPayload, status, PROTOCOL_REQ_DONE);
-
-        case PROTOCOL_DATA_MODE_STATE_ERROR:
-            return PROTOCOL_REQ_REJECT;
-
-        case PROTOCOL_DATA_MODE_STATE_IDLE:
-        default:
-            return PROTOCOL_REQ_AWAIT;
-    }
-}
-
+//         default:
+//             return PROTOCOL_REQ_ABORT;
+//     }
+// }

@@ -32,6 +32,7 @@
 #define MOT_PROTOCOL_H
 
 #include "MotPacket.h"
+#include "Framework/Protocol/Extension/Protocol_FlashLoader.h"
 #include "Framework/Protocol/Protocol.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 
@@ -68,41 +69,25 @@ typedef enum MotProtocol_MemConfig
 MotProtocol_MemConfig_T;
 
 
+
+
 /*
+    Stateful handlers. Both are resumable: Step is the resume point, the sub-state is
+    MotProtocol_DataModeState_T, and payload pointers arrive already offset past the header.
 
+    Read is ack-paced   - RESPOND a chunk, wait for the ack, RESPOND the next.
+    Write is data-paced - ACCEPT or REJECT each arriving chunk, no ack round trip.
 */
-// /* Maps to Protocol.SubStateIndex */
-// typedef enum MotProtocol_DataModeStateId
-// {
-//     MOT_PROTOCOL_DATA_MODE_INACTIVE,
-//     MOT_PROTOCOL_DATA_MODE_READ_ACTIVE,
-//     MOT_PROTOCOL_DATA_MODE_WRITE_ACTIVE,
-// }
-// MotProtocol_DataModeStateId_T;
-// typedef enum MotProtocol_DataModeStateId { IDLE, REQUESTING, RECEIVING, COMPLETE, ERROR } MotProtocol_DataModeStateId_T;
+/*
+    Bulk transfer is Protocol_DataMode_Read / Protocol_DataMode_Write, bound to Flash by
+    Protocol_FlashLoader.h. Register those directly and hand them an interface built here -
+    the integration layer supplies the Flash instance.
+*/
+#define MOT_DATA_MODE_CHUNK_MAX ((packet_size_t)(MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)))
 
+#define MOT_PROTOCOL_FLASH_LOADER(p_Flash) PROTOCOL_FLASH_LOADER(p_Flash, MOT_PACKET_DATA_MODE_DATA, MOT_DATA_MODE_CHUNK_MAX)
 
-/* For Stateful DataMode Read/Write */
-typedef struct MotProtocol_DataModeState
-{
-    uintptr_t DataModeAddress;
-    size_t DataModeSize;
-    size_t DataIndex;
-    // MotProtocol_DataModeStateId_T StateId;
-    // uint8_t buffer[256];
-}
-MotProtocol_DataModeState_T;
-
-// static inline void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState) { p_subState->StateIndex = 0U; }
-
-extern const Packet_Format_T MOT_PROTOCOL_PACKET_CLASS;
-
-extern void MotProtocol_BuildTxHeader(MotPacket_T * p_packet, const Protocol_HeaderMeta_T * p_meta);
-
-extern Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_reqContext);
-extern Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * const p_flash, Protocol_ReqContext_T * p_reqContext);
-
-extern packet_size_t MotProtocol_EraseFlash_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket);
+extern Protocol_ReqCode_T MotProtocol_EraseFlash_Blocking(Flash_T * p_flash, Packet_Xfer_T * p_xfer, const MotPacket_DataModeReq_T * p_req, MotPacket_DataModeResp_T * p_resp);
 // extern Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext);
 // extern packet_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket);
 // extern packet_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket);

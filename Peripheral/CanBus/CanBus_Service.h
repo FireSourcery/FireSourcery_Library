@@ -137,8 +137,8 @@ typedef const struct
     uint32_t           ID_MASK;      /* bits to compare; 0x7FF for exact, 0x780 for COB-ID class */
     CanBus_RouteHandler_T HANDLER;
 
-    void * P_NODE; /* Per Route context for data handler */
-    CanBus_ReqHandler_T NODE_REQ; /* Per Route request handler */
+    // void * P_NODE; /* Per Route context for data handler */
+    // CanBus_ReqHandler_T NODE_REQ; /* Per Route request handler */
 }
 CanBus_ReqRoute_T;
 

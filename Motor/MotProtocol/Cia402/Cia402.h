@@ -31,6 +31,7 @@
 /******************************************************************************/
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 
 /******************************************************************************/
@@ -314,7 +315,7 @@ typedef enum Cia402_OdType
 }
 Cia402_OdType_T;
 
-static const uint8_t Cia402_OdType_Size(Cia402_OdType_T type)
+static uint8_t Cia402_OdType_Size(Cia402_OdType_T type)
 {
     switch (type)
     {
