@@ -278,17 +278,6 @@ Cia402_FaultReactionOption_T;
     Object Dictionary Indices (CiA 402)
 */
 /******************************************************************************/
-/*
-    Controlword 0x6040 RW with the bit semantics above (master → drive command path)
-    Statusword 0x6041 RO with the state-encoding bits above (drive → master state report)
-    Modes of Operation 0x6060 / 0x6061 pair, with at least one supported mode declared in 0x6502
-    The state machine itself — transitions match the table when control bits are written
-    Quick stop, fault reaction, shutdown, disable, halt option codes (0x605A–E) — at minimum supported, even if only one value each
-    Fault Reset edge detection on Controlword bit 7
-    Cyclic update of Statusword (typ. ≤ PDO cycle time) so master sees state changes within one cycle
-    Mandatory monitoring objects: Position actual (0x6064), Velocity actual (0x606C), Torque actual (0x6077), DC bus voltage (0x6079)
-    EMCY message on fault entry per CiA 301 (CANopen base) with error code mapping per CiA 402
-*/
 typedef enum Cia402_OdIndex
 {
     CIA402_OD_CONTROLWORD               = (0x6040U), /* RW  U16  Master command */
@@ -324,6 +313,20 @@ typedef enum Cia402_OdType
     CIA402_OD_TYPE_U32,
 }
 Cia402_OdType_T;
+
+static const uint8_t Cia402_OdType_Size(Cia402_OdType_T type)
+{
+    switch (type)
+    {
+        case CIA402_OD_TYPE_I8:  return 1U;
+        case CIA402_OD_TYPE_U8:  return 1U;
+        case CIA402_OD_TYPE_I16: return 2U;
+        case CIA402_OD_TYPE_U16: return 2U;
+        case CIA402_OD_TYPE_I32: return 4U;
+        case CIA402_OD_TYPE_U32: return 4U;
+        default: return 0U;
+    }
+}
 
 typedef enum Cia402_OdAccess
 {
@@ -623,6 +626,7 @@ Cia402_Pdo_T;
 
 #define CIA402_COB_FUNCTION_MASK    (0x780U) /* upper 4 bits */
 #define CIA402_COB_NODE_MASK        (0x07FU) /* lower 7 bits */
+#define CIA402_COB_MASK             (CIA402_COB_FUNCTION_MASK | CIA402_COB_NODE_MASK)
 
 #define CIA402_COB_FUNCTION(cob)    ((cob) & CIA402_COB_FUNCTION_MASK)
 #define CIA402_COB_NODE(cob)        ((cob) & CIA402_COB_NODE_MASK)
@@ -650,6 +654,7 @@ Cia402_Cob_T;
 /******************************************************************************/
 /*
     Adapter context — one per CiA 402 axis.
+    Motor_Cia402 / Cia402_MotorAdapter
 
     Holds:
       - PrevControl       : previous Controlword for FaultReset rising-edge detection
@@ -680,7 +685,6 @@ typedef struct Cia402_Config
     uint32_t                      QuickStopDecel;
 }
 Cia402_Config_T;
-
 
 typedef struct Cia402_Adapter
 {
@@ -723,14 +727,13 @@ typedef Cia402_OdStatus_T(*Cia402_OdSetFn_T)  (void * p_context, uint16_t index,
 typedef const struct Cia402_OdInterface
 {
     void * p_Context;
-    // Cia402_Adapter_T * p_Adapter;
     Cia402_OdGetInfoFn_T GetInfo;
     Cia402_OdGetFn_T Get;
     Cia402_OdSetFn_T Set;
 }
 Cia402_OdInterface_T;
 
-extern uint8_t Cia402_Sdo_HandleRequest(const Cia402_OdInterface_T * p_od, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_rsp);
+extern uint8_t Cia402_Sdo_HandleRequest(const Cia402_OdInterface_T * p_od, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_rsp);
 extern void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter_T * p_adapter, uint16_t cob_id, const Cia402_Pdo_T * p_pdo, uint8_t dlc);
 
 
@@ -745,7 +748,7 @@ typedef struct Cia402_OdMeta
     uint8_t           SubIndex;
     Cia402_OdType_T   Type;
     Cia402_OdAccess_T Access;
-    uint8_t           Size; /* in bytes */
+    // uint8_t           Size; /* in bytes */
 }
 Cia402_OdMeta_T;
 
@@ -763,17 +766,29 @@ typedef struct Cia402_OdEntry
 }
 Cia402_OdEntry_T;
 
-typedef struct Cia402_OdAccessorEntry
-{
-    uint16_t Index;
-    uint8_t SubIndex;
-    int32_t(*Get)(const void *, const Cia402_Adapter_T *);
-    Cia402_OdStatus_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
-}
-Cia402_OdAccessorEntry_T;
+// typedef struct Cia402_OdAccessorEntry
+// {
+//     uint16_t Index;
+//     uint8_t SubIndex;
+//     int32_t(*Get)(const void *, const Cia402_Adapter_T *);
+//     Cia402_OdStatus_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
+// }
+// Cia402_OdAccessorEntry_T;
 
 #define OD_ADAPTER(idx, sub, ty, acc, field) \
     { (idx), (sub), (ty), (acc), offsetof(Cia402_Adapter_T, field), NULL, NULL }
 
 #define OD_FN(idx, sub, ty, acc, get_fn, set_fn) \
     { (idx), (sub), (ty), (acc), 0xFFFFU, (get_fn), (set_fn) }
+
+
+static const Cia402_OdEntry_T * Cia402_OdTable_Find(const Cia402_OdEntry_T * p_table, size_t length, uint16_t index, uint8_t subindex)
+{
+    /* Linear is fine for ~20 entries; binary search if it grows past ~50. */
+    for (uint16_t i = 0U; i < length; i++)
+    {
+        const Cia402_OdEntry_T * e = &p_table[i];
+        if ((e->Meta.Index == index) && (e->Meta.SubIndex == subindex)) { return e; }
+    }
+    return NULL;
+}

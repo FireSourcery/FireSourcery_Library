@@ -66,6 +66,16 @@ typedef const struct
 }
 CanBus_BroadcastEntry_T;
 
+// typedef const struct CanBus_BroadcastService
+// {
+//     CanBus_BroadcastEntry_T * P_BROADCASTS;
+//     uint8_t BROADCAST_COUNT;
+//     const volatile uint32_t * P_TIMER;
+//     CanBus_BroadcastState_T * P_STATES; /* Parallel array of broadcast states */
+// }
+// CanBus_BroadcastService_T;
+
+
 /*
     Disabled
 */
@@ -113,8 +123,12 @@ static inline void _CanBus_ProcBroadcastService(CanBus_T * p_can, CanBus_Broadca
 /*
     this layer handles request routing
 */
-// typedef void (*CanBus_RouteHandler_T)(void * p_dev, const uint8_t * p_rx, uint8_t * p_tx);
-// typedef void (*CanBus_RouteHandler_T)(void * p_dev, void * adapter, const uint8_t * p_rx, uint8_t * p_tx);
+
+
+// typedef void (*CanBus_ReqHandler_T)(void * p_dev, const uint8_t * p_rx, uint8_t * p_tx);
+typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const void * p_rx, void * p_tx);
+
+// typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
 typedef void (*CanBus_RouteHandler_T)(void * p_dev, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
 
 typedef const struct
@@ -122,8 +136,9 @@ typedef const struct
     uint32_t           ID_MATCH;     /* expected (id & ID_MASK) */
     uint32_t           ID_MASK;      /* bits to compare; 0x7FF for exact, 0x780 for COB-ID class */
     CanBus_RouteHandler_T HANDLER;
-    // void * P_CONTEXT; /* Per Route context for data handler */
-    // CanBus_RxHandler_T   HANDLER;      /* called with full frame */
+
+    void * P_NODE; /* Per Route context for data handler */
+    CanBus_ReqHandler_T NODE_REQ; /* Per Route request handler */
 }
 CanBus_ReqRoute_T;
 
@@ -148,19 +163,12 @@ static inline void _CanBus_ProcRequestService(CanBus_T * p_can, CanBus_ReqRoute_
 }
 
 
-/*
-    CanBus_ReqHandler_T
-    application layer handles request routing, or a single handler for all requests.
-*/
-// typedef void (*CanBus_ReqHandler_T)(void * p_dev, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
-// typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
 
 typedef const struct CanBus_Service
 {
     CanBus_BroadcastEntry_T * P_BROADCASTS;  uint8_t BROADCAST_COUNT;
     CanBus_ReqRoute_T * P_ROUTES;             uint8_t ROUTE_COUNT;
     // CanBus_RxRequestMapper_T REQ_MAPPER;
-    // CanBus_ReqHandler_T REQ_HANDLER;
     // const volatile uint32_t * P_TIMER;
 }
 CanBus_Service_T;

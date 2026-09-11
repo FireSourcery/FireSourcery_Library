@@ -7,7 +7,7 @@
     @brief  Stateful bulk transfer - Read and Write - on the REQ / RESP handler pair.
 */
 /******************************************************************************/
-#include "../Engine/Protocol_Dispatch.h"
+#include "../Engine/Protocol_Request.h"
 #include "../Engine/Packet.h"
 #include "Math/math_general.h"
 

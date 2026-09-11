@@ -11,16 +11,6 @@
 #include "Peripheral/NvMemory/Flash/Flash.h"
 
 
-/******************************************************************************/
-/*!
-    Wire payloads
-*/
-/******************************************************************************/
-typedef struct PACKET_PACKED Protocol_DataMode_Req { uint32_t Address; uint32_t Size; uint32_t Config; } Protocol_DataMode_Req_T;
-typedef struct PACKET_PACKED Protocol_DataMode_Resp { uint16_t Status; }                                 Protocol_DataMode_Resp_T;
-
-#define PROTOCOL_DATA_MODE_STATUS_OK (0U)   /* Application status. Non-zero ends the transfer. */
-
 
 
 /******************************************************************************/
@@ -41,6 +31,12 @@ static inline Protocol_ReqCode_T Protocol_DataMode_ProcOpen(Flash_T * p_app, Pro
     return (p_resp->Status == PROTOCOL_DATA_MODE_STATUS_OK) ? PROTOCOL_REQ_RESPOND : PROTOCOL_REQ_DONE;
 }
 
+
+// static inline Protocol_ReqCode_T Protocol_DataMode_Reply(void * p_app, Packet_Xfer_T * p_xfer, const Protocol_DataMode_Req_T * p_req, Protocol_DataMode_Resp_T * p_resp)
+// {
+//     p_resp->Status = PROTOCOL_DATA_MODE_STATUS_OK;
+//     return PROTOCOL_REQ_RESPOND;
+// }
 
 /*! Stage a status reply from an explicit value, rather than from sub-state. */
 static inline Protocol_ReqCode_T Protocol_DataMode_Reply(const Protocol_DataMode_State_T * p_state, Packet_Xfer_T * p_xfer, void * p_txPayload, uint16_t status, Protocol_ReqCode_T onOk)

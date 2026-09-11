@@ -4,7 +4,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2025 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -26,204 +26,152 @@
 /*!
     @file   Socket.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  The instance. Binding, configuration, lifecycle.
 */
 /******************************************************************************/
 #include "Protocol.h"
 
-//todo
-typedef enum Protocol_RxState
-{
-    PROTOCOL_RX_STATE_INACTIVE,
-    PROTOCOL_RX_STATE_WAIT_BYTE_1, /* SYNC */
-    PROTOCOL_RX_STATE_WAIT_LENGTH, /* HEADER */
-    PROTOCOL_RX_STATE_WAIT_PACKET, /* DATA */
-}
-Protocol_RxState_T;
+#include <stdint.h>
+#include <stdbool.h>
 
-typedef struct Packet_RxParserState
-{
-    Protocol_RxState_T RxState;
-    packet_size_t RxIndex;          /* Index into P_RX_PACKET_BUFFER, number of bytes received */
-    uint32_t RxTimeStart;
-    // Protocol_HeaderMeta_T RxMeta;   /* Rx Parse Packet Meta */
+/******************************************************************************/
+/*
+    Protocol.h is the engine: given a link, a service and a state, run one pass. It has no
+    opinion about where those came from.
 
-    // alternatively seperate parser state. copy header copies 1 extra field.
-    // packet_size_t Length;           /* Total packet length */
-    // packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */
-}
-Packet_RxParserState_T;
+    This file is what a socket instance is - one Xcvr and one format, chosen from tables,
+    with the buffers and the NVM configuration that belong to this port and not to the
+    protocol. Nothing here parses, dispatches or acknowledges.
 
+    The split matters because selection is runtime and the engine's inputs are const. The
+    link is assembled per pass from the current selection, which costs a handful of stores
+    and keeps Protocol.h free of any notion that a format can change. The request table and
+    its context need no such view - they are const fields of Socket_T already, so they pass
+    straight through.
+
+        Socket_T        const, per instance   buffers, tables, timer
+        Socket_State_T  mutable               selection, config, engine state
+        Protocol_Base_T view, per pass        the transport binding in effect
+
+    Selection is admitted only while the socket is idle. Swapping a format mid-exchange
+    would leave a staged response built to one header shape and acked against another, so
+    that is lifecycle reasoning and it belongs here rather than in the engine.
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*!
-    Protocol_Socket
+    Status - observation only. The socket does not read it back.
+*/
+/******************************************************************************/
+typedef enum Socket_Status
+{
+    SOCKET_STATUS_DISABLED,
+    SOCKET_STATUS_IDLE,             /* Enabled, nothing in flight */
+    SOCKET_STATUS_RX_FRAME,         /* A frame is part way in */
+    SOCKET_STATUS_BUSY,             /* An exchange is in flight */
+}
+Socket_Status_T;
+
+/******************************************************************************/
+/*!
+    Config - NVM backed, writable at runtime through the socket's own protocol
 */
 /******************************************************************************/
 typedef struct Socket_Config
 {
-    uint8_t XcvrId;
-    uint8_t SpecsId;
+    uint8_t XcvrId;             /* Index into P_XCVR_TABLE */
+    uint8_t FormatId;           /* Index into P_FORMAT_TABLE */
     uint32_t BaudRate;
-    uint32_t WatchdogTimeout;
-    //uint32_t RxTimeout
-    //uint32_t ReqTimeout
-    //uint8_t NackLimit
-    bool IsEnableOnInit;     /* enable on start up */
+    uint32_t RxTimeout;         /* Frame deadline */
+    uint32_t ReqTimeout;        /* Exchange deadline */
+    bool IsEnableOnInit;
+    uint32_t WatchdogTimeout;    /* Watchdog deadline */
 }
 Socket_Config_T;
 
+/******************************************************************************/
+/*!
+    State
+*/
+/******************************************************************************/
 typedef struct Socket_State
 {
-    /*
-        Active Refs
-    */
+    /* Selection. Pointers into the instance's const tables. */
     const Xcvr_T * p_Xcvr;
-    const Packet_Format_T * p_Specs;
-    // Datagram_T Datagram; // configurable broadcast
+    const Packet_Format_T * p_Format;
 
-    /*
-        Runtime State/StateMachines
-    */
-    /* Rx */
-    Protocol_RxState_T RxState;
-    Protocol_RxCode_T RxStatus;     /* Returned from child function, also return to caller. updated per proc. store as way of retaining 2 return values */
-    packet_size_t RxIndex;          /* Index into P_RX_PACKET_BUFFER, number of bytes received */
-    uint32_t RxTimeStart;
-    Protocol_HeaderMeta_T RxMeta;   /* Rx Parse Packet Meta */
+    Socket_Config_T Config;     /* Working copy, loaded from NVM at init */
+    Protocol_State_T Protocol;  /* Parser + sync + request + counters */
 
-    // todo
-    Packet_RxParserState_T RxParserState;
-    Protocol_HeaderMeta_T TxMeta;
-
-    /* Tx */
-    packet_size_t TxLength;
-
-    /* Req/Response */
-    Protocol_ReqState_T ReqState;
-    Protocol_ReqCode_T ReqStatus;    /* Returned from child function, also return to caller. updated per proc. store as way of retaining 2 return values */
-    Protocol_Req_T * p_ReqActive;    /* */
-    uint32_t ReqTimeStart;           /* Set on Req Start and Complete */
-    uint32_t ReqSubStateIndex; // track ext req index internally?
-    // Protocol_ReqContext_T ReqContext; // buffer for passing req parameters.
-
-    /* Protocol_CommState */
-    uint8_t NackCount;
-    uint8_t TxNackRxCount;
-    uint8_t RxNackTxCount;
-
-    /* */
-    bool IsRxWatchdogEnable;
-
-    Socket_Config_T Config;
-
-    /* Debug */
-    // uint16_t TxPacketCount;
-    // uint16_t RxPacketSuccessCount;
-    // uint16_t RxPacketErrorCount;
-    // uint16_t RxPacketErrorSync;
+    bool IsEnabled;
 }
 Socket_State_T;
 
-#define SOCKET_STATE_ALLOC() (&(Socket_State_T){})
-
-
-/*
-    Combine:
-        Xcvr_T, or selection
-        Protocol handler, or selection
+/******************************************************************************/
+/*!
+    Instance
 */
+/******************************************************************************/
 typedef const struct Socket
 {
-    /*
-        Per Instance/Socket
-    */
     Socket_State_T * P_SOCKET_STATE;
-    uint8_t * P_RX_PACKET_BUFFER;
-    uint8_t * P_TX_PACKET_BUFFER;
-    uint8_t PACKET_BUFFER_LENGTH;           /* Must be greater than Specs RX_LENGTH_MAX */
-    /* Protocol_Req_T Context */
-    void * P_APP_CONTEXT;                   /* User app context for packet processing */
-    void * P_REQ_STATE_BUFFER;              /* Session layer. Child protocol control variables, must be largest enough to hold substate context referred by specs */
 
+    Protocol_Base_T PROTOCOL;
 
-    // alternatively fixed or default init
-    // const Packet_Format_T * P_PACKET_FORMAT;
-    // const Xcvr_T * P_XCVR;
+    /* Selectable bindings. Arrays of pointers - neither need be contiguous. */
+    const Xcvr_T * const * P_XCVR_TABLE;
+    uint8_t XCVR_COUNT;
+    const Packet_Format_T * const * P_FORMAT_TABLE;
+    uint8_t FORMAT_COUNT;
 
-    const Socket_Config_T * P_NVM_CONFIG;   /* Initial Config */
-
-    /*
-        Protocol Context common
-    */
-    // alternatively Map overlaping sockets for selection
-    // const Protocol_Base_T * P_PROTOCOL;
-    // const Protocol_Req_T * (*REQ_MAPPER)(packet_id_t req); /* faster map with switch */
-    const Protocol_Req_T * P_REQ_TABLE;
-    uint8_t REQ_TABLE_LENGTH;
-    // REQ_TIMEOUT
-
-    /*  */
-    const Packet_Format_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
-    uint8_t PACKET_CLASS_COUNT;
-
-    const Xcvr_T * const * P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
-    uint8_t XCVR_COUNT; /* number of Xcvr in table */
-
-    const volatile uint32_t * P_TIMER;
+    const Socket_Config_T * P_NVM_CONFIG;   /* Initial config. The clock lives in PROTOCOL.P_TIMER. */
 }
 Socket_T;
 
-// #define _SOCKET_INIT(p_State, p_RxBuffer, p_TxBuffer, BufferLength, p_AppContext, p_SubstateBuffer, p_Config, p_ReqTable, ReqCount, p_PacketClass,p_Xcvr, p_Timer) (Socket_T)
+/******************************************************************************/
+/*!
+    Query
+*/
+/******************************************************************************/
+static inline bool Socket_IsEnabled(const Socket_T * p_socket) { return p_socket->P_SOCKET_STATE->IsEnabled; }
 
-
-#define SOCKET_INIT(p_State, p_RxBuffer, p_TxBuffer, BufferLength, p_AppContext, p_SubstateBuffer, p_Config, p_ReqTable, ReqCount, p_PacketClassTable, PacketClassCount, p_XcvrTable, XcvrCount, p_Timer) (Socket_T) \
-{ \
-    .P_SOCKET_STATE         = p_State,                      \
-    .P_RX_PACKET_BUFFER     = p_RxBuffer,                   \
-    .P_TX_PACKET_BUFFER     = p_TxBuffer,                   \
-    .PACKET_BUFFER_LENGTH   = BufferLength,                 \
-    .P_APP_CONTEXT          = p_AppContext,                 \
-    .P_REQ_STATE_BUFFER     = p_SubstateBuffer,             \
-    .P_NVM_CONFIG           = p_Config,                     \
-    .P_REQ_TABLE            = p_ReqTable,                   \
-    .REQ_TABLE_LENGTH       = ReqCount,                     \
-    .P_PACKET_CLASS_TABLE   = p_PacketClassTable,           \
-    .PACKET_CLASS_COUNT     = PacketClassCount,             \
-    .P_XCVR_TABLE           = p_XcvrTable,                  \
-    .XCVR_COUNT             = XcvrCount,                    \
-    .P_TIMER                = p_Timer,                      \
+/*! true while an exchange occupies the socket. Selection is refused in this condition. */
+static inline bool Socket_IsBusy(const Socket_T * p_socket)
+{
+    return Protocol_IsReqSyncActive(&p_socket->P_SOCKET_STATE->Protocol);
 }
 
-#define SOCKET_ALLOC(BufferLength, p_AppContext, p_SubstateBuffer, p_Config, p_ReqTable, ReqCount, p_PacketClassTable, PacketClassCount, p_XcvrTable, XcvrCount, p_Timer) \
-    SOCKET_INIT(SOCKET_STATE_ALLOC(), PACKET_BUFFER_ALLOC(BufferLength), PACKET_BUFFER_ALLOC(BufferLength), BufferLength, p_AppContext, p_SubstateBuffer, p_Config, \
-                p_ReqTable, ReqCount, p_PacketClassTable, PacketClassCount, p_XcvrTable, XcvrCount, p_Timer)
+static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
+{
+    const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
-
-
-static inline Protocol_RxCode_T _Socket_GetRxStatus(const Socket_State_T * p_socket) { return p_socket->RxStatus; }
-static inline Protocol_ReqCode_T _Socket_GetReqStatus(const Socket_State_T * p_socket) { return p_socket->ReqStatus; }
+    if (p_state->IsEnabled == false)                                    { return SOCKET_STATUS_DISABLED; }
+    if (Protocol_IsReqSyncActive(&p_state->Protocol) == true)                { return SOCKET_STATUS_BUSY; }
+    if (Packet_IsRxWaiting(&p_state->Protocol.RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
+    return SOCKET_STATUS_IDLE;
+}
 
 /*
     Watchdog
 */
-/*!
-    @return true if WatchdogTimeout reached, a successful Req has not occurred
-*/
-static inline bool Socket_IsRxLost(const Socket_T * p_socket)
-{
-    const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-    return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->P_TIMER - p_state->ReqTimeStart > p_state->Config.WatchdogTimeout));
-}
-
-// static inline bool _Socket_IsRxLost(const Socket_T * p_socket)
+// /*!
+//     @return true if WatchdogTimeout reached, a successful Req has not occurred
+// */
+// static inline bool Socket_IsRxLost(const Socket_T * p_socket)
 // {
-//     return (*p_socket->P_TIMER - p_socket->P_SOCKET_STATE->ReqTimeStart > p_socket->P_SOCKET_STATE->Config.WatchdogTimeout);
+//     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
+//     return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->P_TIMER - p_state->ReqTimeStart > p_state->Config.WatchdogTimeout));
 // }
 
-static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_socket->IsRxWatchdogEnable = true; } }
-static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
-static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
+// // static inline bool _Socket_IsRxLost(const Socket_T * p_socket)
+// // {
+// //     return (*p_socket->P_TIMER - p_socket->P_SOCKET_STATE->ReqTimeStart > p_socket->P_SOCKET_STATE->Config.WatchdogTimeout);
+// // }
+
+// static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_socket->IsRxWatchdogEnable = true; } }
+// static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
+// static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
 
 /*
     User must reboot. Does propagate set. Current settings remain active until reboot.
@@ -232,20 +180,29 @@ static inline void _Socket_EnableOnInit(Socket_State_T * p_socket) { p_socket->C
 static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->Config.IsEnableOnInit = false; }
 
 
-/*
-    Extern
+/******************************************************************************/
+/*!
+    Proc
 */
-extern const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id);
+/******************************************************************************/
+/*!
+    @brief  One non-blocking pass. Single threaded.
+            Cadence is the caller's: the engine reads the clock but never waits on it.
 
-extern void Socket_Init(const Socket_T * p_socket);
-extern void Socket_Proc(const Socket_T * p_socket);
+    The link is written out here, at the only place that needs it. Each field comes from its
+    own source - selection from state, buffers from the instance, the deadline from config -
+    so a builder would only hide where they came from. The request table, its context and its
+    deadline pass individually; they are already fields of Socket_T and repackaging them
+    would be the same data in a second shape.
+*/
+static inline void Socket_Proc(const Socket_T * p_socket)
+{
+    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
-extern void Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId);
-extern void Socket_ConfigXcvrBaudRate(const Socket_T * p_socket, uint32_t baudRate);
-extern void Socket_SetSpecs(const Socket_T * p_socket, uint8_t specsId);
-extern bool Socket_Enable(const Socket_T * p_socket);
-extern void Socket_Disable(const Socket_T * p_socket);
+    if (p_state->IsEnabled == false) { return; }
 
+    Protocol_Proc(&p_socket->PROTOCOL, p_state->p_Xcvr, p_state->p_Format, &p_state->Protocol);
+}
 
 typedef enum Socket_ConfigId
 {

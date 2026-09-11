@@ -102,10 +102,10 @@ typedef struct Packet_RxParser
                                 /* alternatively overload Length */
     // Packet_FrameFormat_T * p_FrameFormat; /* determine optional length field */
     /*
-        Total frame length. 0 while unknown, and 0 again the moment a frame resolves - the
-        rewind clears it. Read it during the parse, not after: a caller that needs the length
-        of a COMPLETE frame recovers it from PARSE_RX_HEADER, which is the only source that
-        survives the rewind.
+        Total frame length. 0 while unknown, and it survives the rewind that follows a resolved
+        frame - see Packet_RewindRx. This is the parser's own account of the frame, independent
+        of anything the format says about it, so it is what a caller checks Meta.Length against.
+        Cleared on entry to HEADER, when the next frame makes it meaningless.
     */
     packet_size_t FrameLength;
 }
@@ -150,15 +150,40 @@ Packet_RxParser_T;
 // }
 
 /*!
-    Rewind for the next frame. Clears the result along with the progress - nothing survives,
-    so a caller that still needs the resolved frame must read it before the next Proc.
+    Rewind the progress for the next frame, keeping FrameLength.
+
+    The resolved length is the parser's own account of the frame, and the only number the
+    caller can check the format's Meta.Length against - PARSE_RX_LENGTH and PARSE_RX_HEADER
+    read the wire independently and can disagree. Clearing it here would leave the caller
+    with nothing but the format's word for how long its own frame is.
+
+    FrameLength is cleared on entry to HEADER, where it stops describing anything.
 */
-static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
+static inline void Packet_RewindRx(Packet_RxParser_T * p_parser)
 {
     p_parser->StateId = PACKET_RX_STATE_START;
     p_parser->Index = 0U;
     p_parser->NextIndex = 1U;
+}
+
+/*! Full reset. Drops the resolved length too - for abandonment, not for a frame that landed. */
+static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
+{
+    Packet_RewindRx(p_parser);
     p_parser->FrameLength = 0U;
+}
+
+/*! The parser's own account of the resolved frame. Valid until the next frame reaches HEADER. */
+static inline packet_size_t Packet_RxFrameLength(const Packet_RxParser_T * p_parser) { return p_parser->FrameLength; }
+
+/*!
+    Single byte delimiter, per the format's author contract: START_ID_LENGTH is 0 or 1, so
+    only p_buffer[0] is tested. A wider START_ID would compare a uint8_t against a value that
+    cannot fit it and never match - the contract is what keeps that unreachable.
+*/
+static inline bool _Packet_IsStartId(const Packet_Format_T * p_format, const uint8_t * p_buffer)
+{
+    return ((p_format->START_ID == 0x00U) || (p_buffer[0U] == p_format->START_ID));
 }
 
 
@@ -183,7 +208,7 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
                 delimiter is already byte 0, so this costs one extra RxN per frame.
             */
             if (p_parser->Index < p_format->START_ID_LENGTH) { p_parser->NextIndex = p_format->START_ID_LENGTH; }
-            else if ((p_format->START_ID == 0x00U) || (p_buffer[0U] == p_format->START_ID))
+            else if (_Packet_IsStartId(p_format, p_buffer) == true)
             {
                 p_parser->StateId = PACKET_RX_STATE_HEADER;
                 p_parser->FrameLength = 0U;
@@ -247,8 +272,11 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
         Incoming packet bytes wait in queue. Cannot miss packets (unless overflow)
         Cannot check for Abort without user signal, persistent wait process
     */
-    /* Rewind. Index must clear with the state, or the next frame builds from a stale offset. */
-    if (rxCode != PACKET_RX_AWAIT) { Packet_ResetRx(p_parser); }
+    /*
+        Rewind. Index must clear with the state, or the next frame builds from a stale offset.
+        FrameLength survives so the caller can check the format's Meta.Length against it.
+    */
+    if (rxCode != PACKET_RX_AWAIT) { Packet_RewindRx(p_parser); }
 
     return rxCode;
 }

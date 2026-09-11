@@ -123,6 +123,14 @@ typedef struct Protocol_SyncState
 {
     Protocol_SyncStateId_T StateId;
     uint8_t RetransmitCount;    /* Retries spent on the outstanding frame */
+    /*
+        Latched from the bound handler's policy when the frame goes out, because the budget
+        belongs to the outstanding frame and outlives the request that produced it. A handler
+        returning DONE unbinds before the response is even transmitted, so reading the policy
+        at nack or deadline time would find nothing bound and a budget of zero - which is
+        every stateless-with-ack exchange, i.e. the common case.
+    */
+    uint8_t RetransmitMax;
 }
 Protocol_SyncState_T;
 
@@ -145,20 +153,24 @@ static inline void Protocol_ResetSync(Protocol_SyncState_T * p_state)
 {
     p_state->StateId = PROTOCOL_SYNC_OPEN;
     p_state->RetransmitCount = 0U;
+    p_state->RetransmitMax = 0U;
 }
 
-static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state)
+/*! Takes the policy because this is the moment the budget must be captured - see RetransmitMax. */
+static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
 {
     p_state->StateId = PROTOCOL_SYNC_AWAIT_ACK;
+    p_state->RetransmitCount = 0U;
+    p_state->RetransmitMax = policy.RETRANSMIT_MAX;
 }
 
 /*
     Retransmit while the budget lasts, otherwise abandon. Shared by the nack and deadline
     paths, which differ only in what triggered them.
 */
-static inline Protocol_SyncEvent_T Protocol_ResolveNackCount(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
+static inline Protocol_SyncEvent_T Protocol_ResolveNackCount(Protocol_SyncState_T * p_state)
 {
-    if (p_state->RetransmitCount >= policy.RETRANSMIT_MAX)
+    if (p_state->RetransmitCount >= p_state->RetransmitMax)
     {
         Protocol_ResetSync(p_state);
         return PROTOCOL_SYNC_EVENT_FAILED;
@@ -168,10 +180,8 @@ static inline Protocol_SyncEvent_T Protocol_ResolveNackCount(Protocol_SyncState_
     return PROTOCOL_SYNC_EVENT_RETRANSMIT;
 }
 
-/* policy is unread - kept for symmetry with Protocol_ResolveNackCount, which does consult it. */
-static inline Protocol_SyncEvent_T Protocol_ResolveAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
+static inline Protocol_SyncEvent_T Protocol_ResolveAck(Protocol_SyncState_T * p_state)
 {
-    (void)policy;
     Protocol_ResetSync(p_state);
     return PROTOCOL_SYNC_EVENT_RESUME;
 }
@@ -179,8 +189,12 @@ static inline Protocol_SyncEvent_T Protocol_ResolveAck(Protocol_SyncState_T * p_
 /*!
     @brief  Fold one classified frame into the handshake.
     @param  rxClass  from Packet_ClassOf. This layer never sees an Id or a format.
+
+            No policy parameter: the only policy this layer consults is the retransmit budget,
+            and that was latched at Protocol_ExpectAck. Taking it again here would re-introduce
+            the lifetime bug, since by now the request may well have closed.
 */
-static inline Protocol_SyncEvent_T Protocol_ProcSyncRx(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy, Packet_ClassId_T rxClass)
+static inline Protocol_SyncEvent_T Protocol_ProcSyncRx(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
 {
     /* An abort ends the exchange wherever it was. The caller acks it if policy says so. */
     if (rxClass == PACKET_CLASS_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
@@ -193,8 +207,8 @@ static inline Protocol_SyncEvent_T Protocol_ProcSyncRx(Protocol_SyncState_T * p_
         case PROTOCOL_SYNC_AWAIT_ACK:
             switch (rxClass)
             {
-                case PACKET_CLASS_ACK: return Protocol_ResolveAck(p_state, policy);
-                case PACKET_CLASS_NACK: return Protocol_ResolveNackCount(p_state, policy);
+                case PACKET_CLASS_ACK: return Protocol_ResolveAck(p_state);
+                case PACKET_CLASS_NACK: return Protocol_ResolveNackCount(p_state);
                     /* A data frame before the ack is out of sequence - the remote is ahead of us. */
                 default: return PROTOCOL_SYNC_EVENT_REJECT;
             }
@@ -206,9 +220,9 @@ static inline Protocol_SyncEvent_T Protocol_ProcSyncRx(Protocol_SyncState_T * p_
 /*!
     @brief  The request deadline expired. Same choice as a nack: retry or abandon.
 */
-static inline Protocol_SyncEvent_T Protocol_ResolveSyncRxTimeout(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
+static inline Protocol_SyncEvent_T Protocol_ResolveSyncRxTimeout(Protocol_SyncState_T * p_state)
 {
-    return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK) ? Protocol_ResolveNackCount(p_state, policy) : PROTOCOL_SYNC_EVENT_FAILED;
+    return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK) ? Protocol_ResolveNackCount(p_state) : PROTOCOL_SYNC_EVENT_FAILED;
 }
 
 

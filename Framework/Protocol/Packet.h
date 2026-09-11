@@ -98,15 +98,21 @@ typedef struct Packet_Meta
 Packet_Meta_T;
 
 /* Allocation context */
-typedef struct Packet_Context
+typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Packet_Context
 {
     Packet_Meta_T Meta;
-    // packet_size_t TotalLength;
     uint8_t Packet[]; /* Physical Header and Payload contiguous. Parser passes payload pointer */
 }
 Packet_Context_T;
 
-#define PACKET_CONTEXT_ALLOC(BufferLength) (Packet_Context_T *)PACKET_BUFFER_ALLOC(BufferLength + sizeof(Packet_Meta_T))
+/*
+    The literal is declared as a union containing Packet_Context_T, so the storage's effective
+    type includes the struct and reading it back as one is defined. Casting a uint8_t[] literal
+    to Packet_Context_T * is not: alignas fixes the address, not the effective type, and GCC
+    turns on strict aliasing at -O2. The union member also carries the struct's own alignment.
+*/
+#define PACKET_CONTEXT_ALLOC(BufferLength)                                      \
+    (&(union { Packet_Context_T Context; uint8_t Bytes[sizeof(Packet_Meta_T) + (BufferLength)]; }){0}.Context)
 
 
 /*!
@@ -279,7 +285,7 @@ static inline uint16_t _Packet_Checksum(const uint8_t * p_src, size_t size)
     return checksum;
 }
 
-static uint16_t Packet_Checksum(const uint8_t * p_packet, size_t totalSize, size_t checksumStart, size_t checksumSize)
+static inline uint16_t Packet_Checksum(const uint8_t * p_packet, size_t totalSize, size_t checksumStart, size_t checksumSize)
 {
     const size_t checksumEnd = checksumStart + checksumSize;
     uint16_t checksum = 0U;
@@ -355,38 +361,3 @@ static uint16_t Packet_Checksum(const uint8_t * p_packet, size_t totalSize, size
 // }
 
 
-
-
-// typedef enum Protocol_RxCode
-// {
-//     // Success codes
-//     PROTOCOL_RX_CODE_AWAIT_PACKET = 0x00,  /* Continue receiving */
-//     PROTOCOL_RX_CODE_PACKET_COMPLETE = 0x01,  /* Complete packet received */
-//     PROTOCOL_RX_CODE_PACKET_FRAGMENT = 0x02,  /* Fragment received, more expected */
-
-//     // Sync/Control codes
-//     PROTOCOL_RX_CODE_ACK = 0x10,
-//     PROTOCOL_RX_CODE_NACK = 0x11,
-//     PROTOCOL_RX_CODE_ABORT = 0x12,
-//     PROTOCOL_RX_CODE_RESET = 0x13,  /* Protocol reset requested */
-//     PROTOCOL_RX_CODE_HEARTBEAT = 0x14,  /* Keep-alive packet */
-
-//     // Error codes - Header/Meta
-//     PROTOCOL_RX_CODE_ERROR_TIMEOUT = 0x20,
-//     PROTOCOL_RX_CODE_ERROR_INVALID_ID = 0x21,  /* Unknown packet ID */
-//     PROTOCOL_RX_CODE_ERROR_INVALID_LENGTH = 0x22, /* Invalid length field */
-//     PROTOCOL_RX_CODE_ERROR_HEADER_CRC = 0x23,  /* Header checksum error */
-//     PROTOCOL_RX_CODE_ERROR_START_MARKER = 0x24,  /* Missing start delimiter */
-//     PROTOCOL_RX_CODE_ERROR_SEQUENCE = 0x25,  /* Sequence number error */
-
-//     // Error codes - Data/Payload
-//     PROTOCOL_RX_CODE_ERROR_DATA_CRC = 0x30,  /* Payload checksum error */
-//     PROTOCOL_RX_CODE_ERROR_DATA_LENGTH = 0x31,  /* Payload length mismatch */
-//     PROTOCOL_RX_CODE_ERROR_DATA_FORMAT = 0x32,  /* Invalid data format */
-//     PROTOCOL_RX_CODE_ERROR_BUFFER_FULL = 0x33,  /* Receive buffer overflow */
-
-//     // System errors
-//     PROTOCOL_RX_CODE_ERROR_SYSTEM = 0xF0,  /* Generic system error */
-//     PROTOCOL_RX_CODE_ERROR_NOT_READY = 0xF1,  /* System not ready */
-//     PROTOCOL_RX_CODE_ERROR_BUSY = 0xF2,  /* System busy */
-// } Protocol_RxCode_T;

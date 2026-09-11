@@ -119,27 +119,6 @@ void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN_Frame_
     }
 }
 
-/*
-    Outer dispatcher — one inbound CAN frame, switch on COB-ID
-
-    Frames not addressed to this node, or in unconsumed COB-ID classes
-    (NMT, SYNC, EMCY, our own TxPDOs, SDO response), are ignored.
-*/
-// void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
-// {
-//     Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
-
-//     if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return; }
-
-//     switch (CIA402_COB_FUNCTION(p_rx->CanId.Id))
-//     {
-//         case CIA402_COB_RXPDO1_BASE:  MotorController_Cia402_HandleRxPdo1(p_mc, p_rx, p_tx);       break;
-//         case CIA402_COB_RXPDO2_BASE:  MotorController_Cia402_HandleRxPdo2(p_mc, p_rx, p_tx);       break;
-//         case CIA402_COB_SDO_REQ_BASE: MotorController_Cia402_HandleSdo(p_mc, p_rx, p_tx);       break;
-//         /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
-//         default:            break;
-//     }
-// }
 
 /*
 
@@ -196,6 +175,8 @@ const CanBus_ReqRoute_T CIA402_ROUTES[] =
     { CIA402_COB_RXPDO1_BASE,  CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleRxPdo1 },
     { CIA402_COB_RXPDO2_BASE,  CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleRxPdo2 },
     { CIA402_COB_SDO_REQ_BASE, CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleSdo },
+
+    // { CIA402_COB_SDO_REQ_BASE | 0U, CIA402_COB_MASK, NULL, Motor0, (CanBus_ReqHandler_T)Motor_Cia402_HandleSdo },
 };
 
 const CanBus_BroadcastEntry_T CIA402_BROADCASTS[] = {
@@ -212,3 +193,25 @@ CanBus_Service_T MOTOR_CONTROLLER_CIA402_SERVICE =
     .BROADCAST_COUNT = sizeof(CIA402_BROADCASTS) / sizeof(CIA402_BROADCASTS[0]),
 };
 
+
+/*
+    Outer dispatcher — one inbound CAN frame, switch on COB-ID
+
+    Frames not addressed to this node, or in unconsumed COB-ID classes
+    (NMT, SYNC, EMCY, our own TxPDOs, SDO response), are ignored.
+*/
+// void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+// {
+//     Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
+
+//     if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return; }
+
+//     switch (CIA402_COB_FUNCTION(p_rx->CanId.Id))
+//     {
+//         case CIA402_COB_RXPDO1_BASE:  MotorController_Cia402_HandleRxPdo1(p_mc, p_rx, p_tx);       break;
+//         case CIA402_COB_RXPDO2_BASE:  MotorController_Cia402_HandleRxPdo2(p_mc, p_rx, p_tx);       break;
+//         case CIA402_COB_SDO_REQ_BASE: MotorController_Cia402_HandleSdo(p_mc, p_rx, p_tx);       break;
+//         /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
+//         default:            break;
+//     }
+// }
