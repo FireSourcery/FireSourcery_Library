@@ -92,6 +92,13 @@ Packet_Xfer_T;
 */
 typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload);
 
+/* Process handles header */
+// typedef Protocol_ReqCode_T(*Protocol_ProcReqRespFrame_T) (void * p_context, const void * p_rxFrame, void * p_txFrame);
+
+/* continuity through substate */
+// typedef Protocol_ReqCode_T(*Protocol_ProcStatefulReq_T) (void * p_context, void * p_substate, const Packet_Meta_T * p_rxMeta, const void * p_rxPayload);
+// typedef Protocol_ReqCode_T(*Protocol_ProcStatefulResp_T)(void * p_context, void * p_substate, Packet_Meta_T * p_txMeta, void * p_txPayload);
+
 /*!
     A request table entry.
 
@@ -109,8 +116,7 @@ typedef const struct Protocol_Req
 }
 Protocol_Req_T;
 
-#define PROTOCOL_REQ(Id, Proc, AckPolicy) \
-    { .ID = (packet_id_t)(Id), .PROC = (Protocol_ProcReqResp_T)(Proc), .ACK = AckPolicy }
+#define PROTOCOL_REQ(Id, Proc, AckPolicy) { .ID = (packet_id_t)(Id), .PROC = (Protocol_ProcReqResp_T)(Proc), .ACK = AckPolicy }
 
 /*
     The request service. Id -> handler, and nothing about framing.
@@ -138,8 +144,8 @@ Protocol_Req_T;
 /******************************************************************************/
 typedef enum Protocol_ReqStateId
 {
-    PROTOCOL_REQ_IDLE,
-    PROTOCOL_REQ_ACTIVE,
+    PROTOCOL_REQ_STATE_IDLE,
+    PROTOCOL_REQ_STATE_ACTIVE,
 }
 Protocol_ReqStateId_T;
 
@@ -155,42 +161,6 @@ Protocol_ReqState_T;
 /******************************************************************************/
 /*!
     Proc
-*/
-/******************************************************************************/
-static inline void Protocol_Req_Reset(Protocol_ReqState_T * p_state)
-{
-    p_state->StateId = PROTOCOL_REQ_IDLE;
-    p_state->p_ReqActive = NULL;
-    p_state->Step = 0U;
-}
-
-/*!
-    @brief  Invoke the bound handler.
-
-            Identical for the opening call and every continuation - the handler distinguishes
-            them by Step, which the engine only clears at Select. Returns to IDLE on DONE and
-            ABORT.
-
-    @param  p_xfer  handler context. p_Step must point at this state's Step.
-*/
-static inline Protocol_ReqCode_T Protocol_Req_Proc(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
-{
-    Protocol_ReqCode_T reqCode;
-
-    if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
-
-    p_state->StateId = PROTOCOL_REQ_ACTIVE;
-
-    reqCode = p_state->p_ReqActive->PROC(p_app, p_xfer, p_rxPayload, p_txPayload);
-
-    if ((reqCode == PROTOCOL_REQ_DONE) || (reqCode == PROTOCOL_REQ_ABORT)) { Protocol_Req_Reset(p_state); }
-
-    return reqCode;
-}
-
-/******************************************************************************/
-/*!
-
 */
 /******************************************************************************/
 /*! @return pointer to Req, NULL when the id has no handler */
@@ -210,22 +180,77 @@ static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req
 
     @return false when the id has no handler.
 */
-static inline bool Protocol_Req_Select(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+static inline bool Protocol_CaptureReq(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
 {
+    if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; } /* stay on the same request even if id changes */
     p_state->p_ReqActive = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
     p_state->Step = 0U;
+    if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
     return (p_state->p_ReqActive != NULL);
 }
+
+
+static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
+{
+    p_state->StateId = PROTOCOL_REQ_STATE_IDLE;
+    p_state->p_ReqActive = NULL;
+    p_state->Step = 0U;
+}
+
+/*!
+    @brief  Invoke the bound handler.
+
+            Identical for the opening call and every continuation - the handler distinguishes
+            them by Step, which the engine only clears at Select. Returns to IDLE on DONE and
+            ABORT.
+
+    @param  p_xfer  handler context. p_Step must point at this state's Step.
+*/
+// static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
+// {
+//     Protocol_ReqCode_T reqCode;
+
+//     if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
+
+//     p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE;
+
+//     reqCode = p_state->p_ReqActive->PROC(p_app, p_xfer, p_rxPayload, p_txPayload);
+
+//     if ((reqCode == PROTOCOL_REQ_DONE) || (reqCode == PROTOCOL_REQ_ABORT)) { Protocol_ResetReq(p_state); }
+
+//     return reqCode;
+// }
+
+static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
+{
+    Protocol_ReqCode_T reqCode;
+
+    if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
+
+    switch (p_state->StateId)
+    {
+        case PROTOCOL_REQ_STATE_IDLE:
+            return PROTOCOL_REQ_DONE;
+
+        case PROTOCOL_REQ_STATE_ACTIVE:
+            reqCode = p_state->p_ReqActive->PROC(p_app, p_xfer, p_rxPayload, p_txPayload);
+            if ((reqCode == PROTOCOL_REQ_DONE) || (reqCode == PROTOCOL_REQ_ABORT)) { Protocol_ResetReq(p_state); }
+            return reqCode;
+    }
+}
+
 
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
-static inline bool Protocol_Req_IsActive(const Protocol_ReqState_T * p_state) { return (p_state->StateId == PROTOCOL_REQ_ACTIVE); }
+static inline bool Protocol_IsReqActive(const Protocol_ReqState_T * p_state) { return (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE); }
+
+// static inline bool Protocol_IsReqActive(const Protocol_ReqState_T * p_state) { return (p_state->p_ReqActive != NULL); }
 
 /*! Zeroed when nothing is bound, so an unbound socket acks nothing. */
-static inline Protocol_AckPolicy_T Protocol_Req_AckPolicy(const Protocol_ReqState_T * p_state)
+static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState_T * p_state)
 {
     return (p_state->p_ReqActive != NULL) ? p_state->p_ReqActive->ACK : (Protocol_AckPolicy_T)PROTOCOL_ACK_NONE;
 }

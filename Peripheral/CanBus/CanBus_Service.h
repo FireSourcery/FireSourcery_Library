@@ -122,6 +122,7 @@ typedef const struct
     uint32_t           ID_MATCH;     /* expected (id & ID_MASK) */
     uint32_t           ID_MASK;      /* bits to compare; 0x7FF for exact, 0x780 for COB-ID class */
     CanBus_RouteHandler_T HANDLER;
+    // void * P_CONTEXT; /* Per Route context for data handler */
     // CanBus_RxHandler_T   HANDLER;      /* called with full frame */
 }
 CanBus_ReqRoute_T;
@@ -151,7 +152,7 @@ static inline void _CanBus_ProcRequestService(CanBus_T * p_can, CanBus_ReqRoute_
     CanBus_ReqHandler_T
     application layer handles request routing, or a single handler for all requests.
 */
-typedef void (*CanBus_ReqHandler_T)(void * p_dev, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
+// typedef void (*CanBus_ReqHandler_T)(void * p_dev, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
 // typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
 
 typedef const struct CanBus_Service

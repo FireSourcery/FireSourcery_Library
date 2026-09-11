@@ -137,7 +137,7 @@ typedef union
     uint32_t CanId;
     struct
     {
-        uint32_t Id : 29;
+        uint32_t Id  : 29;
         uint32_t Err : 1;
         uint32_t Rtr : 1;
         uint32_t Eff : 1;

@@ -65,6 +65,8 @@ RingT_T;
 */
 #define RING_T_ARGS(ring) (ring).TYPE, (ring).P_STATE
 
+
+
 /******************************************************************************/
 /*!
     Status Operations - Compile-Time Optimized
@@ -267,3 +269,18 @@ static inline size_t RingT_PopFrontMax(Ring_Type_T type, Ring_State_T * p_ring, 
     _RingT_RemoveFront(type, p_ring, popCount);
     return popCount;
 }
+
+
+
+/*
+    Byte Sized Base
+*/
+// typedef const struct
+// {
+//     size_t SIZE; // ArraySpan_T BYTE_SPAN;
+//     Ring_State_T * P_STATE; /* State allocation includes its flexible Buffer[] */
+// }
+// RingBuffer_T;
+
+
+// static inline bool RingBufferT_PushBack(size_t stride, RingBuffer_T ring, const void * p_unit) { _RingT_PushBack((Ring_Type_T) { .TYPE_SIZE = stride, .LENGTH = ring.SIZE / stride }, ring.P_STATE, p_unit); }

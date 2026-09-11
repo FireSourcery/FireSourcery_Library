@@ -149,7 +149,7 @@ static inline bool Socket_IsEnabled(const Socket_T * p_socket) { return p_socket
 /*! true while an exchange occupies the socket. Selection is refused in this condition. */
 static inline bool Socket_IsBusy(const Socket_T * p_socket)
 {
-    return Protocol_IsInFlight(&p_socket->P_SOCKET_STATE->Protocol);
+    return Protocol_IsReqSyncActive(&p_socket->P_SOCKET_STATE->Protocol);
 }
 
 static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
@@ -157,8 +157,8 @@ static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
     if (p_state->IsEnabled == false)                                    { return SOCKET_STATUS_DISABLED; }
-    if (Protocol_IsInFlight(&p_state->Protocol) == true)                { return SOCKET_STATUS_BUSY; }
-    if (Packet_RxParser_IsInFrame(&p_state->Protocol.RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
+    if (Protocol_IsReqSyncActive(&p_state->Protocol) == true)                { return SOCKET_STATUS_BUSY; }
+    if (Packet_IsRxWaiting(&p_state->Protocol.RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
     return SOCKET_STATUS_IDLE;
 }
 
@@ -207,7 +207,7 @@ static inline bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId)
 
     p_state->Config.XcvrId = xcvrId;
     p_state->p_Xcvr = p_socket->P_XCVR_TABLE[xcvrId];
-    Packet_RxParser_Reset(&p_state->Protocol.RxParser);      /* bytes from the old port are not this frame */
+    Packet_FlushRxParser(&p_state->Protocol.RxParser);      /* bytes from the old port are not this frame */
 
     if (p_state->IsEnabled == true) { Xcvr_ConfigBaudRate(p_state->p_Xcvr, p_state->Config.BaudRate); }
     return true;
@@ -224,7 +224,7 @@ static inline bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
 
     p_state->Config.FormatId = formatId;
     p_state->p_Format = p_socket->P_FORMAT_TABLE[formatId];
-    Packet_RxParser_Reset(&p_state->Protocol.RxParser);      /* a partial frame has no meaning in the new shape */
+    Packet_FlushRxParser(&p_state->Protocol.RxParser);      /* a partial frame has no meaning in the new shape */
     return true;
 }
 

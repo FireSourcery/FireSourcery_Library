@@ -148,7 +148,7 @@
 // }
 
 // /*! true once a delimiter has been accepted and the frame is still incomplete. */
-// // static inline bool Packet_RxParser_IsInFrame(const Packet_RxParser_T * p_parser) { return (p_parser->StateId != PACKET_RX_STATE_START); }
+// // static inline bool Packet_IsRxWaiting(const Packet_RxParser_T * p_parser) { return (p_parser->StateId != PACKET_RX_STATE_START); }
 
 // /*!
 //     Reset framing state for a new packet (start byte already consumed).
@@ -217,7 +217,7 @@
 //             break;
 //     }
 
-//     if (rxCode != PACKET_RX_AWAIT) { Packet_RxParser_Reset(p_parser); }
+//     if (rxCode != PACKET_RX_AWAIT) { Packet_FlushRxParser(p_parser); }
 
 //     return rxCode;
 // }

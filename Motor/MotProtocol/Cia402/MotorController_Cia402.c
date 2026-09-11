@@ -125,21 +125,21 @@ void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN_Frame_
     Frames not addressed to this node, or in unconsumed COB-ID classes
     (NMT, SYNC, EMCY, our own TxPDOs, SDO response), are ignored.
 */
-void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
-{
-    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
+// void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+// {
+//     Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
 
-    if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return; }
+//     if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return; }
 
-    switch (CIA402_COB_FUNCTION(p_rx->CanId.Id))
-    {
-        case CIA402_COB_RXPDO1_BASE:  MotorController_Cia402_HandleRxPdo1(p_mc, p_rx, p_tx);       break;
-        case CIA402_COB_RXPDO2_BASE:  MotorController_Cia402_HandleRxPdo2(p_mc, p_rx, p_tx);       break;
-        case CIA402_COB_SDO_REQ_BASE: MotorController_Cia402_HandleSdo(p_mc, p_rx, p_tx);       break;
-        /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
-        default:            break;
-    }
-}
+//     switch (CIA402_COB_FUNCTION(p_rx->CanId.Id))
+//     {
+//         case CIA402_COB_RXPDO1_BASE:  MotorController_Cia402_HandleRxPdo1(p_mc, p_rx, p_tx);       break;
+//         case CIA402_COB_RXPDO2_BASE:  MotorController_Cia402_HandleRxPdo2(p_mc, p_rx, p_tx);       break;
+//         case CIA402_COB_SDO_REQ_BASE: MotorController_Cia402_HandleSdo(p_mc, p_rx, p_tx);       break;
+//         /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
+//         default:            break;
+//     }
+// }
 
 /*
 

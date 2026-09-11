@@ -81,8 +81,11 @@ typedef enum Packet_ClassId
 }
 Packet_ClassId_T;
 
-/* Framing */
-/* Effectively VirtualHeader for unknown Packet struct */
+/*
+    Effectively VirtualHeader for unknown Packet struct
+    denotation and semsntics
+    Extracted Field Values
+*/
 typedef struct Packet_Meta
 {
     packet_id_t Id;         /* Packet type identifier. Index into P_REQ_TABLE */
@@ -90,7 +93,7 @@ typedef struct Packet_Meta
     uint32_t Sequence;      /* Sequence number (optional) */
     uint16_t  Source;       /* normalized, not a wire field */
     uint16_t  Dest;
-    uint16_t  Flags;      /* REPLY_EXPECTED | BROADCAST */
+    uint16_t  Flags;        /* REPLY_EXPECTED | BROADCAST */
 }
 Packet_Meta_T;
 
@@ -99,12 +102,25 @@ typedef struct Packet_Context
 {
     Packet_Meta_T Meta;
     // packet_size_t TotalLength;
-    uint8_t Packet[]; /* Physical Header and Payload. Parser passes payload pointer */
+    uint8_t Packet[]; /* Physical Header and Payload contiguous. Parser passes payload pointer */
 }
 Packet_Context_T;
 
 #define PACKET_CONTEXT_ALLOC(BufferLength) (Packet_Context_T *)PACKET_BUFFER_ALLOC(BufferLength + sizeof(Packet_Meta_T))
 
+
+/*!
+    Frame/header variants
+    Frame Encoding/Decoding
+    layout is a view with the buffer's lifetime
+*/
+typedef const struct Packet_FrameFormat
+{
+    packet_size_t HEADER_LENGTH;     /* bytes consumed from frame start by the header */
+    packet_size_t BODY_LENGTH;       /* 0 for variable-length body */
+    packet_size_t TRAILER_LENGTH;
+}
+Packet_FrameFormat_T;
 
 /*!
     Rx framing primitives - narrow queries, one answer each.
@@ -120,8 +136,9 @@ Packet_Context_T;
     IS_RX_VALID    Phase 2. Checksum / CRC over the complete frame.
 */
 typedef packet_size_t (*Packet_ParseRxLength_T)(const void * p_buffer, packet_size_t rxCount);
-typedef packet_id_t   (*Packet_ParseRxId_T)    (const void * p_buffer);
 typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_size_t length);
+/* return optional length field / checksum descriptor */
+// typedef Packet_FrameFormat_T * (*Packet_ParseRxFrame_T)(const void * p_buffer, packet_size_t rxCount);
 
 /*!
     Phase 2 — Validation / Completion
@@ -131,74 +148,67 @@ typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_si
     Phase 2 errors : ERROR_DATA(checksum failure)
     Phase 2 success : PACKET_COMPLETE
 */
-typedef void(*Packet_ParseRxHeader_T)(Packet_Meta_T * p_meta, const void * p_buffer, packet_size_t length);
-
 /*!
     Tx — Build Header
     Called after handler fills payload.
     Writes all header fields (start, id, length, checksum).
 */
-typedef void (*Packet_BuildTxHeader_T)(const Packet_Meta_T * p_meta, void * p_buffer, packet_size_t length);
-
-// split essential fields implementation
-// typedef void (*Packet_BuildTxHeader_T)(void * p_buffer, packet_id_t id, packet_size_t length);
-
+typedef Packet_FrameFormat_T * (*Packet_ParseRxHeader_T)(Packet_Meta_T * p_meta, const void * p_buffer);
+typedef Packet_FrameFormat_T * (*Packet_BuildTxHeader_T)(const Packet_Meta_T * p_meta, void * p_buffer);
 
 /******************************************************************************/
 /*!
-    Packet Class Variables / Format Specs
+    Packet Codec
     Frame Operations
     swap for delimited | length-prefixed | bus-based
 
-    Same framing, discriminator inside the frame → one ops, a shape or rule table.
-    Same framing, discriminator outside the frame → same ops, different cfg. Master versus slave.
+    Per Framing set.
     Different sync, delimiter, escaping or CRC → separate ops.
 */
 /******************************************************************************/
 typedef const struct Packet_Format
 {
-    const uint8_t LENGTH_MIN;            /* Rx this many bytes before calling PARSE_RX */
-    const uint8_t LENGTH_MAX;
-    const uint32_t START_ID;             /* 0x00 for Rx Parser handle */
-
+    uint8_t LENGTH_MIN;             /* Rx this many bytes before calling PARSE_RX */
+    uint8_t LENGTH_MAX;             /* the buffer length */
+    uint32_t START_ID;              /* 0x00 for Rx Parser handle */
+    uint32_t START_ID_LENGTH;
+    // Packet_FrameFormat_T FrameFormat; /* Default FrameFromat */
     /* Enframe/Deframe */
     /* Rx */
-    // const Packet_ParseRxFraming_T PARSE_RX_FRAMING;  // Phase 1: Id + Length
-    const Packet_ParseRxLength_T PARSE_RX_LENGTH;         // Phase 1: frame length, 0 while unknown
-    const Packet_ValidateRx_T    IS_RX_VALID;          // Phase 2: integrity
-    const Packet_ParseRxId_T     ID_OF;             // Id of a validated frame
-
+    Packet_ParseRxLength_T PARSE_RX_LENGTH;    // Phase 1: frame length, 0 while unknown
+    Packet_ValidateRx_T    IS_RX_VALID;         // Phase 2: integrity
     /* On a completed frame */
-    const Packet_ParseRxHeader_T PARSE_RX_HEADER;   // Phase 2: fields extraction
+    Packet_ParseRxHeader_T PARSE_RX_HEADER;   // Phase 2: fields extraction
     /* Tx */
-    const Packet_BuildTxHeader_T BUILD_TX_HEADER;  // symmetric with Phase 2
+    Packet_BuildTxHeader_T BUILD_TX_HEADER;  // symmetric with Phase 2
 
-    const packet_id_t ACK_ID;
-    const packet_id_t NACK_ID;
-    const packet_id_t ABORT_ID;
+    uint8_t CONTROL_CHAR_LENGTH;
+    packet_id_t ACK_ID;
+    packet_id_t NACK_ID;
+    packet_id_t ABORT_ID;
 }
 Packet_Format_T;
 
-// frame/header variants
-// typedef const struct Packet_HeaderFormat
-// {
-   // uint16_t hdr_len;      /* bytes consumed from frame start by the header */
-    // uint16_t body_len;     /* bytes after hdr_len, trailer included */
-    // uint16_t trailer_len;
-// } Packet_HeaderFormat_T;
-// typedef const struct Packet_HeaderFormat
-// {
-//     Field_T SYNC;
-//     Field_T ID;
-//     Field_T LENGTH;
-//     Field_T CHECKSUM;
-//     Packet_ComputeChecksum_T COMPUTE;
-    // const packet_size_t LENGTH_MIN;
-    // const packet_size_t HEADER_LENGTH;     /* fixed header length known to include contain data length value */
-// } Packet_HeaderFormat_T;
 
-// static inline void Packet_ParseRxHeader(Packet_Format_T * p_specs, const uint8_t * p_header, Packet_Meta_T * p_meta) { return p_specs->PARSE_RX_HEADER(p_header, p_meta); }
-// static inline void Packet_BuildTxHeader(Packet_Format_T * p_specs, uint8_t * p_header, const Packet_Meta_T * p_meta) { p_specs->BUILD_TX_HEADER(p_header, p_meta); }
+
+/*
+    Extract Fields
+*/
+/* Packet_RxCode_T rxCode == COMPLETE */
+static inline packet_size_t Packet_ParseRxHeader(Packet_Format_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_header)
+{
+    Packet_FrameFormat_T * p_framing = p_codec->PARSE_RX_HEADER(p_meta, p_header);
+    return p_framing->HEADER_LENGTH + p_framing->TRAILER_LENGTH + ((p_framing->BODY_LENGTH == 0U) ? p_meta->Length : p_framing->BODY_LENGTH);
+}
+
+static inline packet_size_t Packet_BuildTxHeader(Packet_Format_T * p_codec, const Packet_Meta_T * p_meta, uint8_t * p_header)
+{
+    Packet_FrameFormat_T * p_framing = p_codec->BUILD_TX_HEADER(p_meta, p_header);
+    return p_framing->HEADER_LENGTH + p_framing->TRAILER_LENGTH + ((p_framing->BODY_LENGTH == 0U) ? p_meta->Length : p_framing->BODY_LENGTH);
+
+    /* Variable length payload use Meta.Length. Fixed use BODY_LENGTH. */
+    // return p_framing->HEADER_LENGTH + p_framing->TRAILER_LENGTH + p_framing->BODY_LENGTH + p_tx->Meta.Length;
+}
 
 static inline packet_id_t Packet_ControlIdOf(Packet_Format_T * p_format, Packet_ClassId_T classId)
 {
@@ -223,12 +233,6 @@ static inline Packet_ClassId_T Packet_ClassOf(const Packet_Format_T * p_format, 
     if (id == p_format->ABORT_ID) { return PACKET_CLASS_ABORT; }
     return PACKET_CLASS_DATA;
 }
-
-// static inline void Protocol_BuildControl(Packet_Format_T * p_format, uint8_t * p_header, Packet_ClassId_T txId)
-// {
-//     Packet_Meta_T meta = { .Id = Packet_ControlIdOf(p_format, txId) };
-//     p_format->BUILD_TX_HEADER(p_header, &meta);
-// }
 
 
 /*
@@ -256,7 +260,15 @@ static uint16_t Packet_Checksum(const uint8_t * p_packet, size_t totalSize, size
 /*
     by  descriptor
 */
-/* instance per req */
+// typedef const struct Packet_HeaderFormat
+// {
+//     Field_T SYNC;
+//     Field_T ID;
+//     Field_T LENGTH;
+//     Field_T CHECKSUM;
+    // const packet_size_t LENGTH_MIN;
+    // const packet_size_t HEADER_LENGTH;     /* fixed header length known to include contain data length value */
+// } Packet_HeaderFormat_T;
 
 
 // Rx — generic incremental parser driven by descriptor

@@ -67,10 +67,12 @@
 /******************************************************************************/
 typedef struct Protocol_AckPolicy
 {
-    uint8_t TX_ACK_OPEN     : 1U;   /* On Entry. Ack the request packet on arrival */
-    uint8_t RX_ACK_OPEN     : 1U;   /* On Entry. Await an ack after the opening response */
-    uint8_t TX_ACK_STEP     : 1U;   /* Ack each continuation packet on arrival */
-    uint8_t RX_ACK_STEP     : 1U;   /* Await an ack after each continuation response */
+    uint8_t ACK_REQ         : 1U;   /* Ack the request */
+    uint8_t EXPECT_ACK_RESP : 1U;   /* Await an ack after response */
+    // uint8_t TX_ACK_OPEN     : 1U;   /* On Entry. Ack the request packet on arrival */
+    // uint8_t RX_ACK_OPEN     : 1U;   /* On Entry. Await an ack after the opening response */
+    // uint8_t TX_ACK_STEP     : 1U;   /* Ack each continuation packet on arrival */
+    // uint8_t RX_ACK_STEP     : 1U;   /* Await an ack after each continuation response */
     uint8_t TX_ACK_ABORT    : 1U;   /* Acknowledge a received abort */
     uint8_t RETRANSMIT_MAX  : 3U;   /* Retries before the exchange is abandoned. 0 = no retry */
 }
@@ -84,6 +86,22 @@ Protocol_AckPolicy_T;
     The OPEN / STEP selection is made where isStep is known, in the composition. Neither bit
     pair is read here.
 */
+
+/*!
+    product of rx char, sync state, request state,
+    What the handshake yields to the layer above.
+*/
+typedef enum Protocol_SyncEvent
+{
+    PROTOCOL_SYNC_EVENT_NONE,           /* Nothing to act on this pass */
+    PROTOCOL_SYNC_EVENT_REQUEST,        /* Data frame accepted - deliver it to the handler */
+    PROTOCOL_SYNC_EVENT_RESUME,         /* Our frame was acked - the sequence may continue */
+    PROTOCOL_SYNC_EVENT_RETRANSMIT,     /* Caller re-sends the staged response */
+    PROTOCOL_SYNC_EVENT_ABORT,          /* Remote terminated the exchange */
+    PROTOCOL_SYNC_EVENT_REJECT,         /* Out of sequence. Caller nacks. */
+    PROTOCOL_SYNC_EVENT_FAILED,         /* Retransmit limit reached, or deadline expired */
+}
+Protocol_SyncEvent_T;
 
 /******************************************************************************/
 /*!
@@ -104,27 +122,22 @@ typedef struct Protocol_SyncState
 }
 Protocol_SyncState_T;
 
-/*! What the handshake yields to the layer above. */
-typedef enum Protocol_SyncEvent
-{
-    PROTOCOL_SYNC_EVENT_NONE,           /* Nothing to act on this pass */
-    PROTOCOL_SYNC_EVENT_REQUEST,        /* Data frame accepted - deliver it to the handler */
-    PROTOCOL_SYNC_EVENT_RESUME,         /* Our frame was acked - the sequence may continue */
-    PROTOCOL_SYNC_EVENT_RETRANSMIT,     /* Caller re-sends the staged response */
-    PROTOCOL_SYNC_EVENT_ABORT,          /* Remote terminated the exchange */
-    PROTOCOL_SYNC_EVENT_REJECT,         /* Out of sequence. Caller nacks. */
-    PROTOCOL_SYNC_EVENT_FAILED,         /* Retransmit limit reached, or deadline expired */
-}
-Protocol_SyncEvent_T;
-
-
 
 /******************************************************************************/
 /*!
     Proc
 */
 /******************************************************************************/
-static inline void Protocol_Sync_Reset(Protocol_SyncState_T * p_state)
+/*
+    After a response is transmitted the caller picks the destination directly:
+
+        Protocol_ExpectAck      one frame outstanding, retry budget intact
+        Protocol_ResetSync      nothing outstanding, budget cleared
+
+    Which one is a reading of the bound handler's RX_ACK bit, and only the caller knows
+    whether the OPEN or the STEP bit applies.
+*/
+static inline void Protocol_ResetSync(Protocol_SyncState_T * p_state)
 {
     p_state->StateId = PROTOCOL_SYNC_OPEN;
     p_state->RetransmitCount = 0U;
@@ -139,11 +152,11 @@ static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state)
     Retransmit while the budget lasts, otherwise abandon. Shared by the nack and deadline
     paths, which differ only in what triggered them.
 */
-static inline Protocol_SyncEvent_T Protocol_Sync_Retry(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
+static inline Protocol_SyncEvent_T Protocol_ResolveNackCount(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
 {
     if (p_state->RetransmitCount >= policy.RETRANSMIT_MAX)
     {
-        Protocol_Sync_Reset(p_state);
+        Protocol_ResetSync(p_state);
         return PROTOCOL_SYNC_EVENT_FAILED;
     }
 
@@ -151,66 +164,49 @@ static inline Protocol_SyncEvent_T Protocol_Sync_Retry(Protocol_SyncState_T * p_
     return PROTOCOL_SYNC_EVENT_RETRANSMIT;
 }
 
+static inline Protocol_SyncEvent_T Protocol_ResolveAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
+{
+    Protocol_ResetSync(p_state);
+    return PROTOCOL_SYNC_EVENT_RESUME;
+}
+
 /*!
     @brief  Fold one classified frame into the handshake.
     @param  rxClass  from Packet_ClassOf. This layer never sees an Id or a format.
 */
-static inline Protocol_SyncEvent_T Protocol_Sync_OnRx(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy, Packet_ClassId_T rxClass)
+static inline Protocol_SyncEvent_T Protocol_ProcSyncRx(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy, Packet_ClassId_T rxClass)
 {
     /* An abort ends the exchange wherever it was. The caller acks it if policy says so. */
-    if (rxClass == PACKET_CLASS_ABORT)
-    {
-        Protocol_Sync_Reset(p_state);
-        return PROTOCOL_SYNC_EVENT_ABORT;
-    }
+    if (rxClass == PACKET_CLASS_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
 
     switch (p_state->StateId)
     {
-        case PROTOCOL_SYNC_OPEN:
-            /* Nothing outstanding, so an ack or nack refers to nothing. */
-            return (rxClass == PACKET_CLASS_DATA) ? PROTOCOL_SYNC_EVENT_REQUEST : PROTOCOL_SYNC_EVENT_REJECT;
+        /* Nothing outstanding, so an ack or nack refers to nothing. */
+        case PROTOCOL_SYNC_OPEN:  return (rxClass == PACKET_CLASS_DATA) ? PROTOCOL_SYNC_EVENT_REQUEST : PROTOCOL_SYNC_EVENT_REJECT;
 
         case PROTOCOL_SYNC_AWAIT_ACK:
             switch (rxClass)
             {
-                case PACKET_CLASS_ACK:
-                    Protocol_Sync_Reset(p_state);
-                    return PROTOCOL_SYNC_EVENT_RESUME;
-
-                case PACKET_CLASS_NACK:
-                    return Protocol_Sync_Retry(p_state, policy);
-
-                /* A data frame before the ack is out of sequence - the remote is ahead of us. */
-                default:
-                    return PROTOCOL_SYNC_EVENT_REJECT;
+                case PACKET_CLASS_ACK: return Protocol_ResolveAck(p_state, policy);
+                case PACKET_CLASS_NACK: return Protocol_ResolveNackCount(p_state, policy);
+                    /* A data frame before the ack is out of sequence - the remote is ahead of us. */
+                default: return PROTOCOL_SYNC_EVENT_REJECT;
             }
 
-        default:
-            return PROTOCOL_SYNC_EVENT_NONE;
+        default: return PROTOCOL_SYNC_EVENT_NONE;
     }
 }
 
 /*!
     @brief  The request deadline expired. Same choice as a nack: retry or abandon.
 */
-static inline Protocol_SyncEvent_T Protocol_Sync_OnTimeout(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
+static inline Protocol_SyncEvent_T Protocol_ResolveSyncRxTimeout(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
 {
-    return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK) ? Protocol_Sync_Retry(p_state, policy) : PROTOCOL_SYNC_EVENT_FAILED;
+    return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK) ? Protocol_ResolveNackCount(p_state, policy) : PROTOCOL_SYNC_EVENT_FAILED;
 }
 
-/*
-    After a response is transmitted the caller picks the destination directly:
 
-        Protocol_ExpectAck      one frame outstanding, retry budget intact
-        Protocol_Sync_Reset     nothing outstanding, budget cleared
-
-    Which one is a reading of the bound handler's RX_ACK bit, and only the caller knows
-    whether the OPEN or the STEP bit applies.
-*/
-
-
-
-static inline bool Protocol_Sync_IsAwaitingAck(const Protocol_SyncState_T * p_state) { return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK); }
+static inline bool Protocol_IsSyncWaiting(const Protocol_SyncState_T * p_state) { return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK); }
 
 /******************************************************************************/
 /*

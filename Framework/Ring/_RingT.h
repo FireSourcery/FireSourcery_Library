@@ -95,13 +95,19 @@ static inline void ring_buffer_assign_at(size_t stride, void * p_buffer, size_t 
 /* Flyweight shape descriptor. LENGTH is in TYPE_SIZE counts (NOT bytes). Always declared const. */
 typedef const struct Ring_Type { size_t TYPE_SIZE; size_t LENGTH; } Ring_Type_T;
 
-
 /* 0 is excluded: it is not a power of 2 here, and (0 - 1U) would mask to SIZE_MAX */
-#define RING_IS_POW2(x) (((x) != 0U) && (((x) & ((x) - 1U)) == 0U))
+#define RING_IS_POW2(x) (((x) & ((x) - 1U)) == 0U)
+#define RING_IS_ALIGNED(x, align) (((x) & ((align) - 1U)) == 0U)
+
 /* Evaluates to 0. Fails the translation for a non-power-of-2 LENGTH, which array_index_of_counter would silently corrupt. */
 #define _RING_ASSERT_POW2(Length) (0U * sizeof(struct { static_assert(RING_IS_POW2(Length), "Ring LENGTH must be a non-zero power of 2"); int _; }))
 
 #define RING_TYPE_INIT(UnitSize, Length) { .TYPE_SIZE = (UnitSize), .LENGTH = (Length) + _RING_ASSERT_POW2(Length) }
+
+#define RING_VALIDATE_PARAMS(TypeSize, Length) \
+    static_assert(_RING_POW2_DEF(RING_IS_POW2(Length), true), "POW2 mode requires power-of-2 Length"); \
+    static_assert(RING_IS_ALIGNED(TypeSize, sizeof(uintptr_t)) || RING_IS_ALIGNED(Length, sizeof(uintptr_t)), "Ring unit size must be aligned to uintptr_t size"); \
+
 
 /*
     Cursors are free-running counters. Only their masked value indexes the buffer.

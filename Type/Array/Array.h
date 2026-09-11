@@ -42,12 +42,7 @@
     Wrapper around values array, preset functions for int types and operations
 */
 /******************************************************************************/
-typedef const struct
-{
-    void * P_BUFFER;
-    size_t LENGTH;
-}
-ArraySpan_T;
+typedef struct { void * P_BUFFER; size_t LENGTH; } ArraySpan_T;
 
 // static allocation only, for inline convenience
 #define _BUFFER_ALLOC(Bytes) ((void *)(alignas(uintptr_t) uint8_t[(Bytes)]){})
@@ -73,31 +68,26 @@ static inline void * ArraySpan_At(ArraySpanT_T span, size_t index) { return void
 static inline void ArraySpan_CopyTo(ArraySpanT_T span, void * p_dest) { memcpy(p_dest, span.P_BUFFER, ArraySpan_Size(span)); }
 static inline void ArraySpan_CopyFrom(ArraySpanT_T span, const void * p_src) { memcpy(span.P_BUFFER, p_src, ArraySpan_Size(span)); }
 
+static inline ArraySpanT_T ArraySpanT_Cast(size_t type, ArraySpan_T arrayBuffer) { return (ArraySpanT_T) { .TYPE_SIZE = type, .P_BUFFER = arrayBuffer.P_BUFFER, .LENGTH = arrayBuffer.LENGTH / type }; }
+
 
 /*
     Void * or Struct
     compiler optimization to inline type size
 */
-static inline intptr_t Array_GetV(size_t type, ArraySpan_T array, size_t index) { return void_array_get(type, array.P_BUFFER, index); }
-static inline void Array_SetV(size_t type, ArraySpan_T array, size_t index, value_t value) { void_array_set(type, array.P_BUFFER, index, value); }
+static inline intptr_t _ArrayT_GetV(size_t type, ArraySpan_T array, size_t index) { return void_array_get(type, array.P_BUFFER, index); }
+static inline void _ArrayT_SetV(size_t type, ArraySpan_T array, size_t index, value_t value) { void_array_set(type, array.P_BUFFER, index, value); }
 
-static inline void Array_Set(size_t type, ArraySpan_T array, size_t index, const void * p_value) { switch_copy(void_array_at(type, array.P_BUFFER, index), p_value, type); }
-static inline void Array_Get(size_t type, ArraySpan_T array, size_t index, void * p_value) { switch_copy(p_value, void_array_at(type, array.P_BUFFER, index), type); }
+static inline void _ArrayT_Set(size_t type, ArraySpan_T array, size_t index, const void * p_value) { switch_copy(void_array_at(type, array.P_BUFFER, index), p_value, type); }
+static inline void _ArrayT_Get(size_t type, ArraySpan_T array, size_t index, void * p_value) { switch_copy(p_value, void_array_at(type, array.P_BUFFER, index), type); }
 
-
-// static inline void Array_CopyTo(size_t type, ArraySpan_T array, size_t index, size_t count, const void * p_value)
-// {
-//     assert((index + count) <= array.LENGTH);
-//     void_array_copy_to(type, void_array_at(type, array.P_BUFFER, index), p_value, count);
-// }
-
-// static inline void Array_CopyFrom(size_t type, ArraySpan_T array, size_t index, size_t count, const void * p_value)
-// {
-//     assert((index + count) <= array.LENGTH);
-//     void_array_copy_from(type, void_array_at(type, array.P_BUFFER, index), p_value, count);
-// }
+static inline void ArrayT_CopyTo(size_t type, ArraySpan_T arrayBuffer, void * p_value) { ArraySpan_CopyTo(ArraySpanT_Cast(type, arrayBuffer), p_value); }
+static inline void ArrayT_CopyFrom(size_t type, ArraySpan_T arrayBuffer, const void * p_value) { ArraySpan_CopyFrom(ArraySpanT_Cast(type, arrayBuffer), p_value); }
 
 
+/*
+
+*/
 typedef const struct
 {
     void * P_BUFFER;
