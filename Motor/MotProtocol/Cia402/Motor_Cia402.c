@@ -333,102 +333,6 @@ bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, con
     return true;
 }
 
-/******************************************************************************/
-/*
-    TxPDO build dispatchers
-*/
-/******************************************************************************/
-
-// size_t Motor_Cia402_BuildTxPdo1(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, uint32_t * p_id, uint8_t * p_resp)
-// {
-//     Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Status_T *)p_resp);
-//     SetCanFrameId(p_tx, CIA402_COB_TXPDO1_BASE | p_adapter->Config.NodeId);
-//     p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_Status_T);
-// }
-
-// void Motor_Cia402_BuildTxPdo2(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, uint32_t * p_id, uint8_t * p_resp)
-// {
-//     SetCanFrameId(p_tx, CIA402_COB_TXPDO2_BASE | p_adapter->Config.NodeId);
-
-//     switch (p_adapter->Input.ActiveMode)
-//     {
-//         case CIA402_MODE_PROFILE_TORQUE:
-//         case CIA402_MODE_CYCLIC_SYNC_TORQUE:
-//             Motor_Cia402_BuildTxPdo_SwTorque(p_motor, (Cia402_TxPdo_StatusTorque_T *)p_tx->Data);
-//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_StatusTorque_T);
-//             break;
-//         case CIA402_MODE_VELOCITY:
-//         case CIA402_MODE_PROFILE_VELOCITY:
-//         case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
-//             Motor_Cia402_BuildTxPdo_SwVelocity(p_motor, (Cia402_TxPdo_StatusVelocity_T *)p_tx->Data);
-//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_StatusVelocity_T);
-//             break;
-//         case CIA402_MODE_PROFILE_POSITION:
-//         case CIA402_MODE_CYCLIC_SYNC_POSITION:
-//             Motor_Cia402_BuildTxPdo_SwPosition(p_motor, (Cia402_TxPdo_StatusPosition_T *)p_tx->Data);
-//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_StatusPosition_T);
-//             break;
-//         default:
-//             Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Status_T *)p_tx->Data);
-//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_Status_T);
-//             break;
-//     }
-// }
-
-// /* maybe optimized over 2 virtual calls */
-// bool Motor_Cia402_HandleCanRx(Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
-// {
-//     if (CIA402_COB_NODE(p_rx->CobId) != nodeId) { return false; }
-
-//     switch (CIA402_COB_FUNCTION(p_rx->CobId))
-//     {
-//         case CIA402_COB_RXPDO1_BASE: /* 0x200 — Controlword only */
-//             Motor_Cia402_HandleRxPdo_Cw(p_motor, p_adapter, (const Cia402_RxPdo_Control_T *)p_rx->Data);
-//             return false;
-
-//         case CIA402_COB_RXPDO2_BASE: /* 0x300 — Controlword + setpoint, layout depends on mode */
-//             switch (p_adapter->Input.ActiveMode)
-//             {
-//                 case CIA402_MODE_PROFILE_TORQUE:
-//                 case CIA402_MODE_CYCLIC_SYNC_TORQUE:
-//                     Motor_Cia402_HandleRxPdo_CwTorque(p_motor, p_adapter, (const Cia402_RxPdo_ControlTorque_T *)p_rx->Data);
-//                     break;
-//                 case CIA402_MODE_VELOCITY:
-//                 case CIA402_MODE_PROFILE_VELOCITY:
-//                 case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
-//                     Motor_Cia402_HandleRxPdo_CwVelocity(p_motor, p_adapter, (const Cia402_RxPdo_ControlVelocity_T *)p_rx->Data);
-//                     break;
-//                 case CIA402_MODE_PROFILE_POSITION:
-//                 case CIA402_MODE_CYCLIC_SYNC_POSITION:
-//                     Motor_Cia402_HandleRxPdo_CwPosition(p_motor, p_adapter, (const Cia402_RxPdo_ControlPosition_T *)p_rx->Data);
-//                     break;
-//                 default:
-//                     /* No setpoint mapping for current mode — fall back to Controlword-only */
-//                     Motor_Cia402_HandleRxPdo_Cw(p_motor, p_adapter, (const Cia402_RxPdo_Control_T *)p_rx->Data);
-//                     break;
-//             }
-//             return false;
-
-//         case CIA402_COB_SDO_REQ_BASE: /* 0x600 — SDO download/upload request */
-//             {
-//                 const Cia402_Sdo_T * p_req = (const Cia402_Sdo_T *)p_rx->Data;
-//                 Cia402_Sdo_T * p_resp = (Cia402_Sdo_T *)p_tx->Data;
-//                 if (Motor_Cia402_HandleSdo(p_motor, p_adapter, p_req, p_resp) == true)
-//                 {
-//                     p_tx->CobId = (uint16_t)(CIA402_COB_SDO_RSP_BASE | nodeId);
-//                     p_tx->Dlc = 8U;
-//                     return true;
-//                 }
-//                 return false;
-//             }
-
-//         default:
-//             /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
-//             return false;
-//     }
-// }
-
-
 
 // /******************************************************************************/
 // /*
@@ -536,6 +440,100 @@ bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, con
 // // }
 
 
+/******************************************************************************/
+/*
+    TxPDO build dispatchers
+*/
+/******************************************************************************/
+/* dierctly mapped to can service table by node id */
+// size_t Motor_Cia402_BuildTxPdo1(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, CAN_Frame_T * p_resp)
+// {
+//     Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Status_T *)p_resp);
+//     SetCanFrameId(p_tx, CIA402_COB_TXPDO1_BASE | p_adapter->Config.NodeId);
+//     p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_Status_T);
+// }
+
+// void Motor_Cia402_BuildTxPdo2(Motor_T * p_motor, Cia402_Adapter_T * p_adapter,   CAN_Frame_T * p_resp)
+// {
+//     SetCanFrameId(p_tx, CIA402_COB_TXPDO2_BASE | p_adapter->Config.NodeId);
+
+//     switch (p_adapter->Input.ActiveMode)
+//     {
+//         case CIA402_MODE_PROFILE_TORQUE:
+//         case CIA402_MODE_CYCLIC_SYNC_TORQUE:
+//             Motor_Cia402_BuildTxPdo_SwTorque(p_motor, (Cia402_TxPdo_StatusTorque_T *)p_tx->Data);
+//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_StatusTorque_T);
+//             break;
+//         case CIA402_MODE_VELOCITY:
+//         case CIA402_MODE_PROFILE_VELOCITY:
+//         case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
+//             Motor_Cia402_BuildTxPdo_SwVelocity(p_motor, (Cia402_TxPdo_StatusVelocity_T *)p_tx->Data);
+//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_StatusVelocity_T);
+//             break;
+//         case CIA402_MODE_PROFILE_POSITION:
+//         case CIA402_MODE_CYCLIC_SYNC_POSITION:
+//             Motor_Cia402_BuildTxPdo_SwPosition(p_motor, (Cia402_TxPdo_StatusPosition_T *)p_tx->Data);
+//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_StatusPosition_T);
+//             break;
+//         default:
+//             Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Status_T *)p_tx->Data);
+//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_Status_T);
+//             break;
+//     }
+// }
+
+// /* maybe optimized over 2 virtual calls */
+// bool Motor_Cia402_HandleCanRx(Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+// {
+//     if (CIA402_COB_NODE(p_rx->CobId) != nodeId) { return false; }
+
+//     switch (CIA402_COB_FUNCTION(p_rx->CobId))
+//     {
+//         case CIA402_COB_RXPDO1_BASE: /* 0x200 — Controlword only */
+//             Motor_Cia402_HandleRxPdo_Cw(p_motor, p_adapter, (const Cia402_RxPdo_Control_T *)p_rx->Data);
+//             return false;
+
+//         case CIA402_COB_RXPDO2_BASE: /* 0x300 — Controlword + setpoint, layout depends on mode */
+//             switch (p_adapter->Input.ActiveMode)
+//             {
+//                 case CIA402_MODE_PROFILE_TORQUE:
+//                 case CIA402_MODE_CYCLIC_SYNC_TORQUE:
+//                     Motor_Cia402_HandleRxPdo_CwTorque(p_motor, p_adapter, (const Cia402_RxPdo_ControlTorque_T *)p_rx->Data);
+//                     break;
+//                 case CIA402_MODE_VELOCITY:
+//                 case CIA402_MODE_PROFILE_VELOCITY:
+//                 case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
+//                     Motor_Cia402_HandleRxPdo_CwVelocity(p_motor, p_adapter, (const Cia402_RxPdo_ControlVelocity_T *)p_rx->Data);
+//                     break;
+//                 case CIA402_MODE_PROFILE_POSITION:
+//                 case CIA402_MODE_CYCLIC_SYNC_POSITION:
+//                     Motor_Cia402_HandleRxPdo_CwPosition(p_motor, p_adapter, (const Cia402_RxPdo_ControlPosition_T *)p_rx->Data);
+//                     break;
+//                 default:
+//                     /* No setpoint mapping for current mode — fall back to Controlword-only */
+//                     Motor_Cia402_HandleRxPdo_Cw(p_motor, p_adapter, (const Cia402_RxPdo_Control_T *)p_rx->Data);
+//                     break;
+//             }
+//             return false;
+
+//         case CIA402_COB_SDO_REQ_BASE: /* 0x600 — SDO download/upload request */
+//             {
+//                 const Cia402_Sdo_T * p_req = (const Cia402_Sdo_T *)p_rx->Data;
+//                 Cia402_Sdo_T * p_resp = (Cia402_Sdo_T *)p_tx->Data;
+//                 if (Motor_Cia402_HandleSdo(p_motor, p_adapter, p_req, p_resp) == true)
+//                 {
+//                     p_tx->CobId = (uint16_t)(CIA402_COB_SDO_RSP_BASE | nodeId);
+//                     p_tx->Dlc = 8U;
+//                     return true;
+//                 }
+//                 return false;
+//             }
+
+//         default:
+//             /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
+//             return false;
+//     }
+// }
 
 // /******************************************************************************/
 // /*

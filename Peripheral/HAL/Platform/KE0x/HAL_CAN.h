@@ -117,44 +117,35 @@ static inline void _HAL_CAN_WriteTxExtendedId(HAL_CAN_T * p_hal, uint32_t id, bo
     p_hal->TEIDR3 = idr3.Bytes;
 }
 
-static inline void _HAL_CAN_EncodeExtId(uint32_t id29, bool rtr, volatile uint8_t * p_idr0, volatile uint8_t * p_idr1, volatile uint8_t * p_idr2, volatile uint8_t * p_idr3)
+static inline void _HAL_CAN_WriteTxStandardId(HAL_CAN_T * p_hal, uint32_t id, bool rtr)
 {
-    union { uint32_t Id; MSCAN_ExtendIDType Fields; }  id = { .Id = id29 };
-    IDR1_3_UNION idr1 = { .IDR1 = {.EID17_15 = id.Fields.EID17_15, .R_TEIDE = 1U, .R_TSRR = 1U, .EID20_18_OR_SID2_0 = id.Fields.EID20_18 } };
-    IDR1_3_UNION idr3 = { .IDR3 = {.ERTR = rtr, .EID6_0 = id.Fields.EID6_0 } };
-    *p_idr0 = id.Fields.EID28_21;
-    *p_idr1 = idr1.Bytes;
-    *p_idr2 = id.Fields.EID14_7;
-    *p_idr3 = idr3.Bytes;
+    union { uint32_t Id; MSCAN_StandardIDType Fields; } stdId = { .Id = id };
+    IDR1_3_UNION idr1 = { .IDR1 = {.EID17_15 = 0U, .R_TEIDE = 0U, .R_TSRR = rtr, .EID20_18_OR_SID2_0 = stdId.Fields.EID2_0 } };
+
+    p_hal->TSIDR0 = stdId.Fields.EID10_3;
+    p_hal->TSIDR1 = idr1.Bytes;
 }
 
-static inline void _HAL_CAN_EncodeStdId(uint32_t id11, bool rtr, volatile uint8_t * p_idr0, volatile uint8_t * p_idr1)
+static inline uint32_t _HAL_CAN_ReadRxExtendedId(const HAL_CAN_T * p_hal)
 {
-    union { uint32_t Id; MSCAN_StandardIDType Fields; }  id = { .Id = id11 };
-    IDR1_3_UNION idr1 = { .IDR1 = {.EID17_15 = 0U, .R_TEIDE = 0U, .R_TSRR = rtr, .EID20_18_OR_SID2_0 = id.Fields.EID2_0 } };
-    *p_idr0 = id.Fields.EID10_3;
-    *p_idr1 = idr1.Bytes;
-}
-
-static inline uint32_t _HAL_CAN_DecodeExtId(uint8_t idr0, uint8_t idr1, uint8_t idr2, uint8_t idr3)
-{
-    IDR1_3_UNION u1 = { .Bytes = idr1 };
-    IDR1_3_UNION u3 = { .Bytes = idr3 };
-    union { uint32_t Id; MSCAN_ExtendIDType Fields; } id = { .Fields = {
-        .EID28_21 = idr0,
+    IDR1_3_UNION u1 = { .Bytes = p_hal->REIDR1 };
+    IDR1_3_UNION u3 = { .Bytes = p_hal->REIDR3 };
+    union { uint32_t Id; MSCAN_ExtendIDType Fields; } id =
+    { .Fields = {
+        .EID28_21 = p_hal->REIDR0,
         .EID20_18 = u1.IDR1.EID20_18_OR_SID2_0,
         .EID17_15 = u1.IDR1.EID17_15,
-        .EID14_7 = idr2,
+        .EID14_7 = p_hal->REIDR2,
         .EID6_0 = u3.IDR3.EID6_0,
     } };
 
     return id.Id;
 }
 
-static inline uint32_t _HAL_CAN_DecodeStdId(uint8_t idr0, uint8_t idr1)
+static inline uint32_t _HAL_CAN_ReadRxStandardId(const HAL_CAN_T * p_hal)
 {
-    IDR1_3_UNION u1 = { .Bytes = idr1 };
-    union { uint32_t Id; MSCAN_StandardIDType Fields; }  id = { .Fields = {.EID2_0 = u1.IDR1.EID20_18_OR_SID2_0, .EID10_3 = idr0 } };
+    IDR1_3_UNION u1 = { .Bytes = p_hal->RSIDR1 };
+    union { uint32_t Id; MSCAN_StandardIDType Fields; }  id = { .Fields = {.EID2_0 = u1.IDR1.EID20_18_OR_SID2_0, .EID10_3 = p_hal->RSIDR0 } };
     return id.Id;
 }
 
@@ -176,13 +167,13 @@ static inline uint32_t _HAL_CAN_DecodeStdId(uint8_t idr0, uint8_t idr1)
 static inline void HAL_CAN_WriteTxExtendedId(HAL_CAN_T * p_hal, uint32_t id)
 {
     p_hal->CANTBSEL = p_hal->CANTFLG & MSCAN_CANTFLG_TXE_MASK; /* Select an empty Tx buffer, 1 of 3 available */
-    _HAL_CAN_EncodeExtId(id, false, &p_hal->TEIDR0, &p_hal->TEIDR1, &p_hal->TEIDR2, &p_hal->TEIDR3);
+    _HAL_CAN_WriteTxExtendedId(p_hal, id, false);
 }
 
 static inline void HAL_CAN_WriteTxStandardId(HAL_CAN_T * p_hal, uint32_t id)
 {
     p_hal->CANTBSEL = p_hal->CANTFLG & MSCAN_CANTFLG_TXE_MASK;
-    _HAL_CAN_EncodeStdId(id, false, &p_hal->TSIDR0, &p_hal->TSIDR1);
+    _HAL_CAN_WriteTxStandardId(p_hal, id, false);
 }
 
 static inline void HAL_CAN_WriteTxRemote(HAL_CAN_T * p_hal, bool isRemote)
@@ -217,12 +208,12 @@ static inline bool HAL_CAN_ReadRxExtendedFlag(const HAL_CAN_T * p_hal)
 
 static inline uint32_t HAL_CAN_ReadRxStandardId(const HAL_CAN_T * p_hal)
 {
-    return _HAL_CAN_DecodeStdId(p_hal->RSIDR0, p_hal->RSIDR1);
+    return _HAL_CAN_ReadRxStandardId(p_hal);
 }
 
 static inline uint32_t HAL_CAN_ReadRxExtendedId(const HAL_CAN_T * p_hal)
 {
-    return _HAL_CAN_DecodeExtId(p_hal->REIDR0, p_hal->REIDR1, p_hal->REIDR2, p_hal->REIDR3);
+    return _HAL_CAN_ReadRxExtendedId(p_hal);
 }
 
 static inline uint8_t HAL_CAN_ReadRxLength(const HAL_CAN_T * p_hal) { return p_hal->RDLR & 0x0FU; }

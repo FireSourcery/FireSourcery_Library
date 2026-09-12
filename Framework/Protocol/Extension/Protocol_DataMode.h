@@ -50,17 +50,11 @@ typedef const struct Protocol_DataModeInterface
     Protocol_DataMode_Ops_T * P_OPS;
     void * P_MODULE;
     packet_id_t DATA_ID;        /* Id carrying a raw chunk in either direction */
+    packet_id_t RESP_ID;
     packet_size_t CHUNK_MAX;    /* Bounded by the format's payload capacity */
 }
 Protocol_DataModeInterface_T;
 
-// typedef const struct Protocol_FlashLoader
-// {
-//     Flash_T * P_MODULE;
-//     packet_id_t DATA_ID;        /* Id carrying a raw chunk in either direction */
-//     packet_size_t CHUNK_MAX;    /* Bounded by the format's payload capacity */
-// }
-// Protocol_FlashLoader_T;
 
 /******************************************************************************/
 /*!
@@ -109,10 +103,10 @@ static inline void Protocol_DataMode_Begin(Protocol_DataModeState_T * p_xfer, co
 }
 
 /*! Bytes remaining, clamped to one chunk. CHUNK_MAX moved to the interface, so this takes it. */
-static inline packet_size_t Protocol_DataMode_ChunkOf(Protocol_DataModeInterface_T * p_app, const Protocol_DataModeState_T * p_state)
-{
-    return (packet_size_t)math_min(p_state->Size - p_state->Index, p_app->CHUNK_MAX);
-}
+// static inline packet_size_t Protocol_DataMode_ChunkOf(Protocol_DataModeInterface_T * p_app, const Protocol_DataModeState_T * p_state)
+// {
+//     return (packet_size_t)math_min(p_state->Size - p_state->Index, p_app->CHUNK_MAX);
+// }
 
 
 static inline void Protocol_DataModeReq_Setup(Protocol_DataModeState_T * p_substate, const Packet_Meta_T * p_rxMeta, const Protocol_DataMode_Req_T * p_req)

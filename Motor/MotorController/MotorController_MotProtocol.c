@@ -39,21 +39,8 @@
 /*!
     MotProtocol implementation using MotorController_T.
     MotorController_T is the Protocol P_APP_CONTEXT directly, which avoids double buffering.
-
-    Handler contract, per Protocol_Request.h:
-        p_rxPayload / p_txPayload arrive already offset past the header - a handler never
-        sees a delimiter, a length or a checksum, and never builds a header. It sets Id and
-        Length on p_TxMeta and BUILD_TX_HEADER does the rest.
-
-        Length on p_TxMeta is the PAYLOAD length, not the frame length.
-
-        A stateless handler returns DONE on its first call. Anything that does not return
-        DONE or ABORT leaves the request bound and the socket busy.
 */
 /******************************************************************************/
-/* The response payload can never exceed what one frame carries. */
-#define MOT_PAYLOAD_MAX ((packet_size_t)(MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)))
-
 /*
     Bound a count parsed from the request against what the response frame can hold.
 
@@ -63,19 +50,29 @@
 */
 static inline uint8_t CountMax(uint8_t count, size_t respElementSize)
 {
-    const uint8_t limit = (uint8_t)(MOT_PAYLOAD_MAX / respElementSize);
+    const uint8_t limit = (uint8_t)(MOT_PACKET_PAYLOAD_LENGTH_MAX / respElementSize);
     return (count < limit) ? count : limit;
 }
 
 /******************************************************************************/
 /*! Ping - answered with a bare sync frame, built by the codec from the id alone */
 /******************************************************************************/
-static Protocol_ReqCode_T Ping(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const MotPacket_PingReq_T * p_rxPayload, MotPacket_PingResp_T * p_txPayload)
+/* The reply is a bare sync frame, so the codec writes all of it from the id alone. */
+static Protocol_ReqCode_T Ping(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
     (void)p_rxPayload; (void)p_txPayload;
     MotBuzzer_Short(MotorController_Buzzer(p_dev));
 
-    /* The reply is a bare sync frame, so the codec writes all of it from the id alone. */
+    p_xfer->p_TxMeta->Id = MOT_PACKET_SYNC_ACK;
+    p_xfer->p_TxMeta->Length = 0U;
+    return PROTOCOL_REQ_DONE;
+}
+
+static Protocol_ReqCode_T PingAlt(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
+{
+    (void)p_rxPayload; (void)p_txPayload;
+    MotBuzzer_Short(MotorController_Buzzer(p_dev));
+
     p_xfer->p_TxMeta->Id = MOT_PACKET_SYNC_ACK;
     p_xfer->p_TxMeta->Length = 0U;
     return PROTOCOL_REQ_DONE;
@@ -193,7 +190,7 @@ static Protocol_ReqCode_T WriteVar32(MotorController_T * p_dev, Packet_Xfer_T * 
 static Protocol_ReqCode_T ReadMem_Blocking(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const MotPacket_MemReadReq_T * p_rxPayload, MotPacket_MemReadResp_T * p_txPayload)
 {
     uint8_t * p_buffer = p_txPayload->ByteData;
-    uint8_t size = (p_rxPayload->Size < MOT_PAYLOAD_MAX) ? p_rxPayload->Size : (uint8_t)MOT_PAYLOAD_MAX;
+    uint8_t size = (p_rxPayload->Size < MOT_PACKET_PAYLOAD_LENGTH_MAX) ? p_rxPayload->Size : (uint8_t)MOT_PACKET_PAYLOAD_LENGTH_MAX;
     NvMemory_Status_T status;
 
     memset(p_buffer, 0U, size);
@@ -284,7 +281,7 @@ static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_dev, Packet_X
 const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH] =
 {
     PROTOCOL_REQ(MOT_PACKET_PING,               Ping,               PROTOCOL_ACK_NONE),
-    PROTOCOL_REQ(MOT_PACKET_PING_ALT,           Ping,               PROTOCOL_ACK_NONE),
+    PROTOCOL_REQ(MOT_PACKET_PING_ALT,           PingAlt,            PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_STOP_ALL,           StopAll,            PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_VERSION,            Version,            PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_CALL,               Call_Blocking,      PROTOCOL_ACK_NONE),

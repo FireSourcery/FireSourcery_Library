@@ -34,15 +34,11 @@
 #include "Motor/MotProtocol/MotProtocol.h"
 #include "Motor/MotorController/MotorController_Var.h"
 
-/*
-    Must track the initialiser in the .c: the flash loader adds two rows, and a length short
-    of the initialiser is a compile error rather than a silent truncation - but only because
-    the array is declared with this bound in both places.
-*/
+
 #if defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-#define MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH (14U)
+#define MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH (15U)
 #else
-#define MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH (12U)
+#define MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH (13U)
 #endif
 
 extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH];
@@ -85,4 +81,19 @@ static packet_size_t MotorController_WriteVar16s(MotorController_T * p_dev, cons
     return count * sizeof(uint8_t);
 }
 
+
+/* expandable to bitfields */
+typedef enum MotProtocol_MemConfig
+{
+    MOT_PROTOCOL_MEM_CONFIG_RAM = 0x00U,
+    MOT_PROTOCOL_MEM_CONFIG_FLASH = 0x01U,
+    MOT_PROTOCOL_MEM_CONFIG_EEPROM = 0x02U,
+    MOT_PROTOCOL_MEM_CONFIG_ONCE = 0x03U,
+    MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_0 = 0x04U,
+    MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_1 = 0x05U,
+    MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_2 = 0x06U,
+    MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_3 = 0x07U,
+    MOT_PROTOCOL_MEM_CONFIG_RESERVED = 0xFFU,
+}
+MotProtocol_MemConfig_T;
 

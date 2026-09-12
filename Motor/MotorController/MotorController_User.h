@@ -65,12 +65,15 @@ typedef enum MotorController_SystemCmd
 }
 MotorController_SystemCmd_T;
 
-// typedef enum MotorController_GenericStatus
-// {
-//     MOT_USER_CALL_STATUS_OK = 0,
-//     MOT_USER_CALL_STATUS_ERROR = 1,
-// }
-// MotorController_GenericStatus_T;
+typedef enum MotorController_GenericStatus
+{
+    MOT_STATUS_SUCCESS  = 0x00U,
+    MOT_STATUS_ERROR    = 0x01U,
+    // MOT_STATUS_INVALID_COMMAND   = 0x01U,
+    // MOT_STATUS_INVALID_PARAMETER = 0x02U,
+    // MOT_STATUS_DEVICE_BUSY       = 0x03U,
+}
+MotorController_GenericStatus_T;
 
 
 /******************************************************************************/

@@ -208,6 +208,16 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
             ABORT.
 
     @param  p_xfer  handler context. p_Step must point at this state's Step.
+
+    Handler contract
+    p_rxPayload / p_txPayload arrive already offset past the header - a handler never
+    sees a delimiter, a length or a checksum, and never builds a header. It sets Id and
+    Length on p_TxMeta and BUILD_TX_HEADER does the rest.
+
+    Length on p_TxMeta is the PAYLOAD length, not the frame length.
+
+    A stateless handler returns DONE on its first call. Anything that does not return
+    DONE or ABORT leaves the request bound and the socket busy.
 */
 static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {

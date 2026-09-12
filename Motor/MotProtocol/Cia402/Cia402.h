@@ -346,6 +346,15 @@ typedef struct Cia402_OdInfo
 }
 Cia402_OdInfo_T;
 
+/******************************************************************************/
+/*
+    Object Dictionary metadata — common-layer entry point.
+
+    Returns spec-fixed type / access / size for the given (index, subindex).
+    All sizes are compile-time constants (sizeof of the wire type).
+    For unknown entries, returns Type = CIA402_OD_TYPE_NONE.
+*/
+/******************************************************************************/
 extern Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex);
 
 /* SDO abort codes per CiA 301 */
@@ -373,6 +382,98 @@ typedef enum Cia402_OdStatus
     CIA402_OD_ERR_GENERAL           = (int)0x08000000, /* General error */
 }
 Cia402_OdStatus_T;
+
+
+/******************************************************************************/
+/*
+    Adapter context — one per CiA 402 axis.
+    Motor_Cia402 / Cia402_MotorAdapter
+
+    Holds:
+      - PrevControl       : previous Controlword for FaultReset rising-edge detection
+      - ActiveMode        : current Modes of Operation (0x6060/0x6061)
+      - QuickStopOption   : 0x605A
+      - ShutdownOption    : 0x605B
+      - DisableOpOption   : 0x605C
+      - HaltOption        : 0x605D
+      - FaultReactOption  : 0x605E
+      - QuickStopDecel    : 0x6085
+*/
+/******************************************************************************/
+typedef struct Cia402_Input
+{
+    Cia402_Control_T              PrevControl;
+    Cia402_OpMode_T               ActiveMode;
+}
+Cia402_Input_T;
+
+typedef struct Cia402_Config
+{
+    uint8_t                       NodeId;
+    Cia402_QuickStopOption_T      QuickStopOption;
+    Cia402_ShutdownOption_T       ShutdownOption;
+    Cia402_DisableOpOption_T      DisableOpOption;
+    Cia402_HaltOption_T           HaltOption;
+    Cia402_FaultReactionOption_T  FaultReactOption;
+    uint32_t                      QuickStopDecel;
+}
+Cia402_Config_T;
+
+typedef struct Cia402_Adapter
+{
+    Cia402_Input_T Input;
+    Cia402_Config_T Config;
+}
+Cia402_Adapter_T;
+
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+typedef struct Cia402_OdMeta
+{
+    uint16_t          Index;
+    uint8_t           SubIndex;
+    Cia402_OdType_T   Type;
+    Cia402_OdAccess_T Access;
+    // uint8_t           Size; /* in bytes */
+}
+Cia402_OdMeta_T;
+
+/*
+    Table Entry
+*/
+/* Generic accessor — pulls a typed value from a raw byte pointer */
+typedef struct Cia402_OdEntry
+{
+    Cia402_OdMeta_T Meta;
+    uint16_t AdapterOffset; /* offsetof(Motor_Cia402_T/Cia402_Adapter_T, ...) — 0xFFFF if not adapter-backed */
+    /* For non-adapter-backed entries, fall back to the function-pointer shape */
+    int32_t(*Get)(const void *, const Cia402_Adapter_T *);
+    Cia402_OdStatus_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
+}
+Cia402_OdEntry_T;
+
+
+#define OD_ADAPTER(idx, sub, ty, acc, field) \
+    { (idx), (sub), (ty), (acc), offsetof(Cia402_Adapter_T, field), NULL, NULL }
+
+#define OD_FN(idx, sub, ty, acc, get_fn, set_fn) \
+    { (idx), (sub), (ty), (acc), 0xFFFFU, (get_fn), (set_fn) }
+
+
+static const Cia402_OdEntry_T * Cia402_OdTable_Find(const Cia402_OdEntry_T * p_table, size_t length, uint16_t index, uint8_t subindex)
+{
+    /* Linear is fine for ~20 entries; binary search if it grows past ~50. */
+    for (uint16_t i = 0U; i < length; i++)
+    {
+        const Cia402_OdEntry_T * e = &p_table[i];
+        if ((e->Meta.Index == index) && (e->Meta.SubIndex == subindex)) { return e; }
+    }
+    return NULL;
+}
 
 
 /******************************************************************************/
@@ -593,6 +694,7 @@ typedef union Cia402_Pdo
 }
 Cia402_Pdo_T;
 
+
 /******************************************************************************/
 /*
     CAN packet parsing types (CiA 301 base)
@@ -652,59 +754,6 @@ typedef struct Cia402_Cob
 }
 Cia402_Cob_T;
 
-/******************************************************************************/
-/*
-    Adapter context — one per CiA 402 axis.
-    Motor_Cia402 / Cia402_MotorAdapter
-
-    Holds:
-      - PrevControl       : previous Controlword for FaultReset rising-edge detection
-      - ActiveMode        : current Modes of Operation (0x6060/0x6061)
-      - QuickStopOption   : 0x605A
-      - ShutdownOption    : 0x605B
-      - DisableOpOption   : 0x605C
-      - HaltOption        : 0x605D
-      - FaultReactOption  : 0x605E
-      - QuickStopDecel    : 0x6085
-*/
-/******************************************************************************/
-typedef struct Cia402_Input
-{
-    Cia402_Control_T              PrevControl;
-    Cia402_OpMode_T               ActiveMode;
-}
-Cia402_Input_T;
-
-typedef struct Cia402_Config
-{
-    uint8_t                       NodeId;
-    Cia402_QuickStopOption_T      QuickStopOption;
-    Cia402_ShutdownOption_T       ShutdownOption;
-    Cia402_DisableOpOption_T      DisableOpOption;
-    Cia402_HaltOption_T           HaltOption;
-    Cia402_FaultReactionOption_T  FaultReactOption;
-    uint32_t                      QuickStopDecel;
-}
-Cia402_Config_T;
-
-typedef struct Cia402_Adapter
-{
-    Cia402_Input_T Input;
-    Cia402_Config_T Config;
-}
-Cia402_Adapter_T;
-
-
-/******************************************************************************/
-/*
-    Object Dictionary metadata — common-layer entry point.
-
-    Returns spec-fixed type / access / size for the given (index, subindex).
-    All sizes are compile-time constants (sizeof of the wire type).
-    For unknown entries, returns Type = CIA402_OD_TYPE_NONE.
-*/
-/******************************************************************************/
-extern Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex);
 
 
 /******************************************************************************/
@@ -736,60 +785,3 @@ Cia402_OdInterface_T;
 
 extern uint8_t Cia402_Sdo_HandleRequest(const Cia402_OdInterface_T * p_od, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_rsp);
 extern void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter_T * p_adapter, uint16_t cob_id, const Cia402_Pdo_T * p_pdo, uint8_t dlc);
-
-
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-typedef struct Cia402_OdMeta
-{
-    uint16_t          Index;
-    uint8_t           SubIndex;
-    Cia402_OdType_T   Type;
-    Cia402_OdAccess_T Access;
-    // uint8_t           Size; /* in bytes */
-}
-Cia402_OdMeta_T;
-
-/*
-    Table Entry
-*/
-/* Generic accessor — pulls a typed value from a raw byte pointer */
-typedef struct Cia402_OdEntry
-{
-    Cia402_OdMeta_T Meta;
-    uint16_t AdapterOffset; /* offsetof(Motor_Cia402_T/Cia402_Adapter_T, ...) — 0xFFFF if not adapter-backed */
-    /* For non-adapter-backed entries, fall back to the function-pointer shape */
-    int32_t(*Get)(const void *, const Cia402_Adapter_T *);
-    Cia402_OdStatus_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
-}
-Cia402_OdEntry_T;
-
-// typedef struct Cia402_OdAccessorEntry
-// {
-//     uint16_t Index;
-//     uint8_t SubIndex;
-//     int32_t(*Get)(const void *, const Cia402_Adapter_T *);
-//     Cia402_OdStatus_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
-// }
-// Cia402_OdAccessorEntry_T;
-
-#define OD_ADAPTER(idx, sub, ty, acc, field) \
-    { (idx), (sub), (ty), (acc), offsetof(Cia402_Adapter_T, field), NULL, NULL }
-
-#define OD_FN(idx, sub, ty, acc, get_fn, set_fn) \
-    { (idx), (sub), (ty), (acc), 0xFFFFU, (get_fn), (set_fn) }
-
-
-static const Cia402_OdEntry_T * Cia402_OdTable_Find(const Cia402_OdEntry_T * p_table, size_t length, uint16_t index, uint8_t subindex)
-{
-    /* Linear is fine for ~20 entries; binary search if it grows past ~50. */
-    for (uint16_t i = 0U; i < length; i++)
-    {
-        const Cia402_OdEntry_T * e = &p_table[i];
-        if ((e->Meta.Index == index) && (e->Meta.SubIndex == subindex)) { return e; }
-    }
-    return NULL;
-}

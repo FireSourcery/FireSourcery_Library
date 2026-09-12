@@ -45,7 +45,8 @@
 #define MOT_PACKET_START_BYTE           (0xA5U) /* 165 */
 
 #define MOT_PACKET_LENGTH_MAX           (40U) /*  */
-#define MOT_PACKET_LENGTH_MIN           (4U)  /* sizeof(MotPacket_Sync_T) */
+#define MOT_PACKET_LENGTH_MIN           (4U)  /* sizeof(MotPacket_Control_T) */
+
 #define MOT_PACKET_HEADER_LENGTH        (8U)
 #define MOT_PACKET_PAYLOAD_LENGTH_MAX   (32U)
 
@@ -126,15 +127,19 @@ typedef enum MotPacket_Id ENUM8_T
 }
 MotPacket_Id_T;
 
-/* Generic bases */
-typedef struct MOT_PACKET_PACKED MotPacket_HeaderShort
+/*
+    4-Byte Sync Control
+*/
+typedef struct MOT_PACKET_PACKED MotPacket_Control
 {
     uint8_t Start;      /* MOT_PACKET_START_BYTE */
-    uint8_t Id;         /* MotPacket_Id_T */
-    uint8_t Imm[2U];    /* Imm or checksum */
+    uint8_t SyncId;     /* MotPacket_Id_T */
+    uint8_t Flex;       /* Optional SubId */
+    uint8_t Flags;      /* Checksum */
 }
-MotPacket_HeaderShort_T;
+MotPacket_Control_T;
 
+/* Generic bases */
 /*
     General 8-byte Header for all variable length packets
 */
@@ -145,23 +150,9 @@ typedef struct MOT_PACKET_PACKED MotPacket_Header
     uint8_t Length;
     uint8_t Sequence;
     uint16_t Checksum;  /* Optionally move to trailer */
-    uint16_t Flags;     /* Source/Dest */
+    uint16_t Flags;     /* Source/Dest/Sequence/Etc */
 }
 MotPacket_Header_T;
-
-
-/*
-    4-Byte Sync Control
-*/
-typedef struct MOT_PACKET_PACKED MotPacket_Sync
-{
-    uint8_t Start;      /* MOT_PACKET_START_BYTE */
-    uint8_t SyncId;     /* MotPacket_Id_T */
-    uint8_t Flex;       /* Optional SubId */
-    uint8_t Flags;      /* Checksum */
-}
-MotPacket_Sync_T;
-
 
 typedef union MOT_PACKET_PACKED MotPacket
 {
@@ -174,10 +165,31 @@ typedef union MOT_PACKET_PACKED MotPacket
 }
 MotPacket_T;
 
+
+/* Prefix 4-Byte Header */
+typedef struct MOT_PACKET_PACKED MotPacket_HeaderShort
+{
+    uint8_t Start;      /* MOT_PACKET_START_BYTE */
+    uint8_t Id;         /* MotPacket_Id_T */
+    uint8_t Imm[2U];    /* Imm or checksum */
+}
+MotPacket_HeaderShort_T;
+
+typedef union MOT_PACKET_PACKED MotPacket_Short
+{
+    struct
+    {
+        MotPacket_HeaderShort_T Header;
+        uint8_t Payload[MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_HeaderShort_T)];
+    };
+    uint8_t Bytes[MOT_PACKET_LENGTH_MAX];
+}
+MotPacket_Short_T;
+
 /*
     Two frame shapes share one format:
 
-        sync    4 bytes, MotPacket_Sync_T,   1-byte XOR check, no payload
+        sync    4 bytes, MotPacket_Control_T,   1-byte XOR check, no payload
         data    8-byte MotPacket_Header_T,   16-bit sum check, variable payload
 
     Which one applies is a function of the Id alone - MotPacket_ParseLength answers it for Rx,
@@ -201,21 +213,6 @@ static inline uint8_t _MotPacket_FrameLength(const MotPacket_T * p_packet) { ret
     Meta format handled by header
 */
 /******************************************************************************/
-
-/******************************************************************************/
-/*! Header Only */
-/******************************************************************************/
-/******************************************************************************/
-/*! Ping */
-/******************************************************************************/
-typedef MotPacket_Sync_T MotPacket_PingReq_T;
-typedef MotPacket_Sync_T MotPacket_PingResp_T;
-
-/******************************************************************************/
-/*! Common Generic Status */
-/******************************************************************************/
-// typedef struct MotPacket_StatusResp { uint8_t Start; uint8_t Id; uint16_t Status; } MotPacket_StatusResp_T;
-
 /******************************************************************************/
 /*!
     Fixed Length
@@ -281,14 +278,14 @@ typedef struct MOT_PACKET_PACKED MotPacket_Var16WriteResp { uint8_t VarStatus[8U
 typedef struct MOT_PACKET_PACKED MotPacket_Var32ReadReq { MotPacket_VarReadFixedReq_T Read[8U]; } MotPacket_Var32ReadReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_Var32ReadResp { uint32_t Values[8U]; } MotPacket_Var32ReadResp_T;
 
-/* Request reponse common */
-static inline uint8_t MotPacket_Var32Read_ParseCount(const MotPacket_T * p_packet) { return _MotPacket_PayloadLength(p_packet) / sizeof(MotPacket_VarReadFixedReq_T); }
 
 typedef struct MOT_PACKET_PACKED MotPacket_Var32WriteReq { MotPacket_VarWriteFixedReq_T Write[4U]; }    MotPacket_Var32WriteReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_Var32WriteResp { uint8_t VarStatus[4U]; }                    MotPacket_Var32WriteResp_T;
 
-static inline uint8_t MotPacket_Var32WriteReq_ParseCount(const MotPacket_T * p_packet) { return _MotPacket_PayloadLength(p_packet) / sizeof(MotPacket_VarWriteFixedReq_T); }
-
+/* Request reponse common */
+// static inline uint8_t MotPacket_Var32Read_ParseCount(const Packet_Meta_T * p_packet) { return p_packet->Length / sizeof(MotPacket_VarReadFixedReq_T); }
+// static inline uint8_t MotPacket_Var32Read_ParseCount(const MotPacket_T * p_packet) { return _MotPacket_PayloadLength(p_packet) / sizeof(MotPacket_VarReadFixedReq_T); }
+// static inline uint8_t MotPacket_Var32WriteReq_ParseCount(const MotPacket_T * p_packet) { return _MotPacket_PayloadLength(p_packet) / sizeof(MotPacket_VarWriteFixedReq_T); }
 
 /******************************************************************************/
 /*! Mem Address Read */
@@ -341,20 +338,13 @@ typedef struct MOT_PACKET_PACKED MotPacket_DataMode { uint8_t ByteData[MOT_PACKE
     Extern
 */
 /******************************************************************************/
-/*
-    Defined in MotPacket.c and bound into the format as PARSE_RX_LENGTH. Declared here because
-    without a prototype the call site sees an implicit int return, which truncates nothing here
-    but is a diagnostic in C23 and a silent conversion in older modes.
-*/
-extern packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_t rxCount);
-
-extern uint16_t MotPacket_Checksum(const MotPacket_T * p_packet, size_t totalSize);
-extern uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId);
-extern uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength);
+// extern uint16_t MotPacket_Checksum(const MotPacket_T * p_packet, size_t totalSize);
+// extern uint8_t MotPacket_Sync_Build(MotPacket_Control_T * p_txPacket, MotPacket_Id_T syncId);
+// extern uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength);
 
 /* Codec - bound into MOT_PROTOCOL_PACKET_CLASS, not called directly. */
-extern packet_size_t MotProtocol_ParseRxLength(const void * p_buffer, packet_size_t rxCount);
-extern bool MotProtocol_IsRxValid(const void * p_buffer, packet_size_t length);
-extern Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const void * p_buffer);
-extern Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, void * p_buffer);
+extern packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_t rxCount);
+extern bool MotProtocol_IsRxValid(const MotPacket_T * p_buffer, packet_size_t length);
+extern Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_buffer);
+extern Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, MotPacket_T * p_buffer);
 

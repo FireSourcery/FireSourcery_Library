@@ -243,6 +243,10 @@ typedef const struct Packet_Codec
     packet_id_t ACK_ID;
     packet_id_t NACK_ID;
     packet_id_t ABORT_ID;
+
+    // keep this here so Protocol_Req can remain a table only
+    // .RX_TIMEOUT_DEFAULT
+    // BAUD_RATE_DEFAULT
 }
 Packet_Codec_T;
 

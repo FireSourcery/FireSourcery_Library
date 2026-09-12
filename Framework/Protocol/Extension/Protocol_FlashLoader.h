@@ -90,12 +90,46 @@ static const Protocol_DataMode_Ops_T PROTOCOL_FLASH_LOADER_OPS =
 }
 
 
+/******************************************************************************/
+/*! Erase */
+/******************************************************************************/
+Protocol_ReqCode_T Protocol_FlashLoader_Erase_Blocking(Flash_T * p_flash, Packet_Xfer_T * p_xfer, const MotPacket_DataModeReq_T * p_req, MotPacket_DataModeResp_T * p_resp)
+{
+    p_resp->Status = Flash_Erase_Blocking(p_flash, p_req->AddressStart, p_req->SizeBytes);
+    // p_xfer->p_TxMeta->Id = MOT_PACKET_DATA_MODE_ERASE;
+    p_xfer->p_TxMeta->Length = sizeof(MotPacket_DataModeResp_T);
+    return PROTOCOL_REQ_DONE;
+}
+
+
+/*
+    Alternative version, without generic engine
+*/
+// typedef const struct Protocol_FlashLoader
+// {
+//     Flash_T * P_MODULE;
+//     packet_id_t DATA_ID;        /* Id carrying a raw chunk in either direction */
+//     packet_size_t CHUNK_MAX;    /* Bounded by the format's payload capacity */
+// }
+// Protocol_FlashLoader_T;
+
+
+/******************************************************************************/
+/*!
+    Flash loader
+
+    The transfers themselves are Protocol_DataMode_Read and Protocol_DataMode_Write, bound to
+    Flash through Protocol_FlashLoader.h.
+
+    Optionallyy  macro fixed Id amd cpimds.
+*/
+/******************************************************************************/
 /*
     A bound handler is re-entered for EVERY frame that arrives while the exchange is open,
     including the ack that paces it. Step alone cannot tell those apart, so a handler that is
     also ack-paced has to read the class of the arriving frame from its Id.
 */
-static inline bool IsRxAck(const Packet_Xfer_T * p_xfer) { return (p_xfer->p_RxMeta->Id == MOT_PACKET_SYNC_ACK); }
+// static inline bool IsRxAck(const Packet_Xfer_T * p_xfer) { return (p_xfer->p_RxMeta->Id == MOT_PACKET_SYNC_ACK); }
 
 // /******************************************************************************/
 // /*! Stateful Read Data - ack-paced. RESPOND a chunk, wait for the ack, RESPOND the next. */
@@ -206,4 +240,59 @@ static inline bool IsRxAck(const Packet_Xfer_T * p_xfer) { return (p_xfer->p_RxM
 //         default:
 //             return PROTOCOL_REQ_ABORT;
 //     }
+// }
+
+
+/******************************************************************************/
+/*!
+    Mem
+    Stateless Read Write
+*/
+/******************************************************************************/
+// NvMemory_Status_T ReadMem_Blocking(Flash_T * p_flash, uintptr_t address, uint8_t size, MotProtocol_MemConfig_T config, uint8_t * p_destBuffer)
+// {
+//     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
+
+//     switch ((MotProtocol_MemConfig_T)config)
+//     {
+//         case MOT_PROTOCOL_MEM_CONFIG_RAM: memcpy(p_destBuffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
+//         case MOT_PROTOCOL_MEM_CONFIG_FLASH: memcpy(p_destBuffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+//         case MOT_PROTOCOL_MEM_CONFIG_ONCE: status = Flash_ReadOnce_Blocking(p_flash, address, size, p_destBuffer); break;
+//         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
+//     }
+
+//     return status;
+// }
+
+// packet_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
+// {
+//     const MotPacket_MemReadReq_T * p_req = (const MotPacket_MemReadReq_T *)p_rxPacket->Payload;
+//     NvMemory_Status_T status = ReadMem_Blocking(p_flash, p_req->Address, p_req->Size, (MotProtocol_MemConfig_T)p_req->Config, p_txPacket->Payload);
+//     (void)status; /* MemRead header carries size only; status currently unused */
+
+//     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_MEM_READ, p_req->Size);
+// }
+
+// NvMemory_Status_T WriteMem_Blocking(Flash_T * p_flash, uintptr_t address, uint8_t size, MotProtocol_MemConfig_T config, const uint8_t * p_data)
+// {
+//     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
+
+//     switch ((MotProtocol_MemConfig_T)config)
+//     {
+//         case MOT_PROTOCOL_MEM_CONFIG_RAM: memcpy((void *)address, p_data, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
+//         case MOT_PROTOCOL_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
+//         case MOT_PROTOCOL_MEM_CONFIG_ONCE: status = Flash_WriteOnce_Blocking(p_flash, address, p_data, size); break;
+//         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
+//     }
+
+//     return status;
+// }
+
+// packet_size_t MotProtocol_WriteMem_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
+// {
+//     const MotPacket_MemWriteReq_T * p_req = (const MotPacket_MemWriteReq_T *)p_rxPacket->Payload;
+//     NvMemory_Status_T status = WriteMem_Blocking(p_flash, p_req->Address, p_req->Size, (MotProtocol_MemConfig_T)p_req->Config, p_req->ByteData);
+//     ((MotPacket_MemWriteResp_T *)p_txPacket->Payload)->Status = status;
+
+//     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_MEM_WRITE, sizeof(MotPacket_MemWriteResp_T));
 // }
