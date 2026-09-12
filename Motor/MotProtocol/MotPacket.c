@@ -53,7 +53,7 @@ uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncI
     p_txPacket->Start = MOT_PACKET_START_BYTE;
     p_txPacket->SyncId = syncId;
     p_txPacket->Flex = 0U; /* reserved */
-    p_txPacket->Checksum = p_txPacket->Start ^ p_txPacket->SyncId ^ p_txPacket->Flex;
+    p_txPacket->Flags = p_txPacket->Start ^ p_txPacket->SyncId ^ p_txPacket->Flex;
     return sizeof(MotPacket_Sync_T);
 }
 
@@ -76,20 +76,9 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
     p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T);
     p_packet->Header.Sequence = 0U;
     p_packet->Header.Flags = 0U;
-    // p_packet->Header.Checksum = Packet_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
     p_packet->Header.Checksum = MotPacket_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
     return p_packet->Header.Length;
 }
-
-
-
-
-// on complete
-packet_id_t MotPacket_ParseId(const MotPacket_T * p_rxPacket, packet_size_t rxCount)
-{
-    return (p_rxPacket->Header.Id);
-}
-
 
 /******************************************************************************/
 /*!
@@ -125,6 +114,8 @@ static inline bool IsSyncShape(packet_id_t id)
         default:                    return false;
     }
 }
+
+// packet_size_t _MotPacket_ParseLength(const uint8_t rxLeading[MOT_PACKET_LENGTH_MIN])
 
 /*! Phase 1. Total frame length, or 0 while not yet determinable. */
 // known after min
@@ -165,7 +156,7 @@ packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_
             }
             else
             {
-                return MotPacket_ParseTotalLength(p_rxPacket);
+                return _MotPacket_FrameLength(p_rxPacket);
             }
     }
 }
@@ -222,7 +213,7 @@ Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, v
     return (Packet_FrameFormat_T *)&MOT_FRAME_DATA;
 }
 
-const Packet_Format_T MOT_PROTOCOL_PACKET_CLASS =
+const Packet_Codec_T MOT_PROTOCOL_PACKET_CLASS =
 {
     .LENGTH_MIN         = MOT_PACKET_LENGTH_MIN,
     .LENGTH_MAX         = MOT_PACKET_LENGTH_MAX,

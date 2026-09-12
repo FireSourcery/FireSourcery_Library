@@ -68,18 +68,7 @@ typedef PACKET_SIZE_TYPE    packet_size_t;
     returns reqid code via pointer upon completion.
 */
 /******************************************************************************/
-typedef enum Packet_ClassId
-{
-    PACKET_CLASS_DATA,              /* Regular data packet */
-    PACKET_CLASS_ACK,               /* Acknowledgment */
-    PACKET_CLASS_NACK,              /* Negative acknowledgment */
-    PACKET_CLASS_ABORT,             /* Abort transmission */
-    // PACKET_CLASS_ERROR,
-    // PACKET_CLASS_HEARTBEAT,         /* Keep-alive */
-    // PACKET_CLASS_RESET,             /* Protocol reset */
-    // PACKET_CLASS_CONFIG,            /* Protocol configuration */
-}
-Packet_ClassId_T;
+
 
 /*
     Effectively VirtualHeader for unknown Packet struct
@@ -104,6 +93,8 @@ typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Packet_Context
     uint8_t Packet[]; /* Physical Header and Payload contiguous. Parser passes payload pointer */
 }
 Packet_Context_T;
+
+#define PACKET_CONTEXT_ALLOC_T(BufferLength) union { Packet_Context_T Context; uint8_t Bytes[sizeof(Packet_Meta_T) + (BufferLength)]; }
 
 /*
     The literal is declared as a union containing Packet_Context_T, so the storage's effective
@@ -158,7 +149,9 @@ Packet_FrameFormat_T;
 */
 typedef packet_size_t (*Packet_ParseRxLength_T)(const void * p_buffer, packet_size_t rxCount);
 typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_size_t length);
+
 /* return optional length field / checksum descriptor */
+/* Packet_FrameFormat_T contains fixed frame length or index of length field */
 // typedef Packet_FrameFormat_T * (*Packet_ParseRxFrame_T)(const void * p_buffer, packet_size_t rxCount);
 
 /*!
@@ -176,6 +169,18 @@ typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_si
 */
 typedef Packet_FrameFormat_T * (*Packet_ParseRxHeader_T)(Packet_Meta_T * p_meta, const void * p_buffer);
 typedef Packet_FrameFormat_T * (*Packet_BuildTxHeader_T)(const Packet_Meta_T * p_meta, void * p_buffer);
+
+/* callback maped to id entry */
+// typedef struct
+// {
+//     packet_id_t ID;
+//     Protocol_ProcReqResp_T PROC;
+//     Protocol_AckPolicy_T ACK;
+//     // uint8_t MIN_LENGTH;
+//     // uint8_t MAX_LENGTH;
+//     // uint8_t FLAGS;
+// }
+// Packet_Id_T;
 
 /******************************************************************************/
 /*!
@@ -210,28 +215,36 @@ typedef Packet_FrameFormat_T * (*Packet_BuildTxHeader_T)(const Packet_Meta_T * p
         static const Packet_Format_T MOT_FORMAT = { .LENGTH_MAX = MOT_PACKET_LENGTH_MAX, ... };
 */
 /******************************************************************************/
-typedef const struct Packet_Format
+/*
+    Every frame's total length is computable from a fixed prefix < LENGTH_MIN => resolve in 2 virtualized calls
+    Frame Length Field Index < LENGTH_MIN
+*/
+typedef const struct Packet_Codec
 {
     uint8_t LENGTH_MIN;             /* Rx this many bytes before calling PARSE_RX */
     uint8_t LENGTH_MAX;             /* the buffer length */
     uint32_t START_ID;              /* 0x00 for Rx Parser handle */
     uint32_t START_ID_LENGTH;
     // Packet_FrameFormat_T FrameFormat; /* Default FrameFromat */
+    uint8_t HEADER_LENGTH_MIN;             /* Rx this many bytes before calling PARSE_RX */
+    uint8_t HEADER_LENGTH_MAX;
+    /* Offset to call typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(... void * restrict p_txPayload); */
+
     /* Enframe/Deframe */
     /* Rx */
     Packet_ParseRxLength_T PARSE_RX_LENGTH;    // Phase 1: frame length, 0 while unknown
-    Packet_ValidateRx_T    IS_RX_VALID;         // Phase 2: integrity
+    Packet_ValidateRx_T    IS_RX_VALID;        // Phase 2: integrity
     /* On a completed frame */
-    Packet_ParseRxHeader_T PARSE_RX_HEADER;   // Phase 2: fields extraction
+    Packet_ParseRxHeader_T PARSE_RX_HEADER;    // Phase 2: fields extraction
     /* Tx */
-    Packet_BuildTxHeader_T BUILD_TX_HEADER;  // symmetric with Phase 2
+    Packet_BuildTxHeader_T BUILD_TX_HEADER;    // symmetric with Phase 2
 
     uint8_t CONTROL_CHAR_LENGTH;
     packet_id_t ACK_ID;
     packet_id_t NACK_ID;
     packet_id_t ABORT_ID;
 }
-Packet_Format_T;
+Packet_Codec_T;
 
 
 
@@ -239,13 +252,12 @@ Packet_Format_T;
     Extract Fields
 */
 /* Packet_RxCode_T rxCode == COMPLETE */
-static inline Packet_FrameFormat_T * Packet_ParseRxHeader(Packet_Format_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_header)
+static inline Packet_FrameFormat_T * Packet_ParseRxHeader(Packet_Codec_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_header)
 {
     return p_codec->PARSE_RX_HEADER(p_meta, p_header);
-    // return p_framing->HEADER_LENGTH + p_framing->TRAILER_LENGTH + ((p_framing->BODY_LENGTH == 0U) ? p_meta->Length : p_framing->BODY_LENGTH);
 }
 
-static inline packet_size_t Packet_BuildTxHeader(Packet_Format_T * p_codec, const Packet_Meta_T * p_meta, uint8_t * p_header)
+static inline packet_size_t Packet_BuildTxHeader(Packet_Codec_T * p_codec, const Packet_Meta_T * p_meta, uint8_t * p_header)
 {
     Packet_FrameFormat_T * p_framing = p_codec->BUILD_TX_HEADER(p_meta, p_header);
     return p_framing->HEADER_LENGTH + p_framing->TRAILER_LENGTH + ((p_framing->BODY_LENGTH == 0U) ? p_meta->Length : p_framing->BODY_LENGTH);
@@ -254,23 +266,37 @@ static inline packet_size_t Packet_BuildTxHeader(Packet_Format_T * p_codec, cons
     // return p_framing->HEADER_LENGTH + p_framing->TRAILER_LENGTH + p_framing->BODY_LENGTH + p_tx->Meta.Length;
 }
 
-static inline packet_id_t Packet_ControlIdOf(Packet_Format_T * p_format, Packet_ClassId_T classId)
+
+
+/*
+    Packet content type, for handling at the protocol layer
+*/
+typedef enum Packet_ClassId
+{
+    PACKET_CLASS_DATA,              /* Regular data packet */
+    PACKET_CLASS_ACK,               /* Acknowledgment */
+    PACKET_CLASS_NACK,              /* Negative acknowledgment */
+    PACKET_CLASS_ABORT,             /* Abort transmission */
+    // PACKET_CLASS_STATUS,
+    // PACKET_CLASS_HEARTBEAT,         /* Keep-alive */
+    // PACKET_CLASS_RESET,             /* Protocol reset */
+    // PACKET_CLASS_CONFIG,            /* Protocol configuration */
+}
+Packet_ClassId_T;
+
+static inline packet_id_t Packet_ControlIdOf(Packet_Codec_T * p_format, Packet_ClassId_T classId)
 {
     switch (classId)
     {
         case PACKET_CLASS_ACK:      return p_format->ACK_ID;            /* Acknowledgment */
         case PACKET_CLASS_NACK:     return p_format->NACK_ID;           /* Negative acknowledgment */
         case PACKET_CLASS_ABORT:    return p_format->ABORT_ID;          /* Abort transmission */
-        // case PACKET_CLASS_DATA:         return p_format->ACK_ID;        /* Regular data packet */
-        // case PACKET_CLASS_ERROR:        return p_format->NACK_ID;
-        // case PACKET_CLASS_HEARTBEAT:    return p_format->ACK_ID;        /* Keep-alive */
-        // case PACKET_CLASS_RESET:        return p_format->ACK_ID;        /* Protocol reset */
-        // case PACKET_CLASS_CONFIG:       return p_format->ACK_ID;        /* Protocol configuration */
-        default:                        return p_format->NACK_ID;
+        case PACKET_CLASS_DATA:     return 0U;
+        default:                    return 0U;
     }
 }
 
-static inline Packet_ClassId_T Packet_ClassOf(const Packet_Format_T * p_format, packet_id_t id)
+static inline Packet_ClassId_T Packet_ClassOf(const Packet_Codec_T * p_format, packet_id_t id)
 {
     if (id == p_format->ACK_ID)   { return PACKET_CLASS_ACK; }
     if (id == p_format->NACK_ID)  { return PACKET_CLASS_NACK; }

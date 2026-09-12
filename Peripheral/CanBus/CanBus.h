@@ -220,11 +220,11 @@ static inline void _CanBus_Rx_ISR(CanBus_T * p_can, uint8_t bufferId, uint8_t hw
             break;
     }
 
-    if (p_can->REQ_CALLBACK != NULL)
-    {
-        p_can->REQ_CALLBACK(p_can->P_CONTEXT, p_buf->Frame.CanId.Id, &p_buf->Frame.Data[0U]);
-        p_buf->State = CAN_BUS_BUFFER_IDLE;
-    }
+    // if (p_can->REQ_CALLBACK != NULL)
+    // {
+    //     p_can->REQ_CALLBACK(p_can->P_CONTEXT, p_buf->Frame.CanId.Id, &p_buf->Frame.Data[0U]);
+    //     p_buf->State = CAN_BUS_BUFFER_IDLE;
+    // }
 }
 
 static inline void CanBus_Rx_ISR(CanBus_T * p_can)

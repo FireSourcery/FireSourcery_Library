@@ -126,7 +126,7 @@ Protocol_State_T;
 static inline bool _Protocol_IsElapsed(uint32_t timerNow, uint32_t timeStart, uint32_t timeout) { return ((timerNow - timeStart) > timeout); }
 
 /*! true while an exchange occupies the socket, in either layer. */
-static inline bool Protocol_IsReqSyncActive(const Protocol_State_T * p_state) { return Protocol_IsReqActive(&p_state->Req) || Protocol_IsSyncWaiting(&p_state->Sync); }
+static inline bool Protocol_IsReqSyncActive(const Protocol_State_T * p_state) { return Protocol_IsReqActive(&p_state->Req) || Protocol_IsAckWaiting(&p_state->Sync); }
 
 static inline void Protocol_ResetReqSync(Protocol_State_T * p_state)
 {
@@ -166,7 +166,7 @@ static inline void Protocol_Reset(Protocol_State_T * p_state, uint32_t timerNow)
     Tx - every byte out of this engine passes through here
 */
 /******************************************************************************/
-static inline bool Protocol_TxResponse(const Xcvr_T * p_xcvr, const Packet_Format_T * p_format, Packet_Context_T * p_tx)
+static inline bool Protocol_TxResponse(const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format, Packet_Context_T * p_tx)
 {
     packet_size_t frameLength = Packet_BuildTxHeader(p_format, &p_tx->Meta, p_tx->Packet);
     return Xcvr_TxN(p_xcvr, p_tx->Packet, frameLength);
@@ -185,7 +185,7 @@ static inline bool Protocol_TxResponse(const Xcvr_T * p_xcvr, const Packet_Forma
     frameLength here would be too late - BUILD_TX_HEADER has already written by the time it is
     known.
 */
-static inline void Protocol_TxControl(const Xcvr_T * p_xcvr, const Packet_Format_T * p_format, Packet_ClassId_T txClass)
+static inline void Protocol_TxControl(const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format, Packet_ClassId_T txClass)
 {
     uint8_t frame[PACKET_CONTROL_LENGTH_MAX];
     Packet_Meta_T meta = { .Id = Packet_ControlIdOf(p_format, txClass), .Length = 0U };
@@ -212,7 +212,7 @@ static inline void Protocol_TxControl(const Xcvr_T * p_xcvr, const Packet_Format
     NextIndex > Index, so the next turn needs bytes and the Xcvr eventually runs dry, or
     changes state, which cannot repeat - START to HEADER to PAYLOAD resolves.
 */
-static inline Packet_RxCode_T Protocol_CaptureRx(const Xcvr_T * p_xcvr, const Packet_Format_T * p_format, Packet_RxParser_T * p_parser, uint8_t * p_rxBuffer)
+static inline Packet_RxCode_T Protocol_CaptureRx(const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format, Packet_RxParser_T * p_parser, uint8_t * p_rxBuffer)
 {
     Packet_RxCode_T rxCode = PACKET_RX_AWAIT;
 
@@ -243,12 +243,6 @@ static inline Packet_RxCode_T Protocol_CaptureRx(const Xcvr_T * p_xcvr, const Pa
 */
 static inline bool Protocol_ProcRxDeadline(Protocol_State_T * p_state, uint32_t rxTimeout, uint32_t timerNow)
 {
-    /*
-        The slide is the whole mechanism, not an optimisation. Without it RxTimeStart is
-        written only by Protocol_Reset, so rxTimeout after enable the elapsed test is
-        permanently true and the first pass that finds a frame part way in kills it - every
-        frame whose bytes span two passes.
-    */
     if (Packet_IsRxWaiting(&p_state->RxParser) == false) { p_state->RxTimeStart = timerNow; return false; }
     if (_Protocol_IsElapsed(timerNow, p_state->RxTimeStart, rxTimeout) == false) { return false; }
 
@@ -268,7 +262,7 @@ static inline bool Protocol_ProcRxDeadline(Protocol_State_T * p_state, uint32_t 
     because "received" and "processed" are different claims.
 */
 /*! @return false when the id has no handler - the caller must not go on to dispatch. */
-static inline bool Protocol_StartRequest(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
+static inline bool Protocol_StartRequest(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format)
 {
     if (Protocol_CaptureReq(&p_state->Req, p_link->P_REQ_TABLE, p_link->REQ_TABLE_LENGTH, p_link->P_RX_PACKET->Meta.Id) == false)
     {
@@ -292,7 +286,7 @@ static inline bool Protocol_StartRequest(const Protocol_Base_T * p_link, Protoco
             not be the data frame's length. Only the request's own framing describes the shape
             the response is being built to.
 */
-static inline void Protocol_ProcRequest(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format,
+static inline void Protocol_ProcRequest(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format,
                                         Packet_FrameFormat_T * p_rxFraming, Packet_FrameFormat_T * p_txFraming)
 {
     if ((p_rxFraming == NULL) || (p_txFraming == NULL)) { return; }
@@ -307,6 +301,7 @@ static inline void Protocol_ProcRequest(const Protocol_Base_T * p_link, Protocol
         .p_Step     = &p_state->Req.Step,
     };
 
+    /* must determine response frame before building header. or shift index  */
     switch (Protocol_ProcReq(&p_state->Req, p_link->P_APP_CONTEXT, &xfer, &p_link->P_RX_PACKET->Packet[p_rxFraming->HEADER_LENGTH], &p_link->P_TX_PACKET->Packet[p_txFraming->HEADER_LENGTH]))
     {
         /* Act on the handler's verdict. The only place a request's output reaches the wire. */
@@ -330,12 +325,12 @@ static inline void Protocol_ProcRequest(const Protocol_Base_T * p_link, Protocol
     }
 }
 
-static inline void Protocol_ProcRequestTimeout(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
+static inline void Protocol_ProcRequestTimeout(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format)
 {
     uint32_t timerNow = *p_link->P_TIMER;
     if (Protocol_IsReqSyncActive(p_state) && _Protocol_IsElapsed(timerNow, p_state->ReqTimeStart, p_link->REQ_TIMEOUT))
     {
-        switch (Protocol_ResolveSyncRxTimeout(&p_state->Sync))
+        switch (Protocol_ResolveAckTimeout(&p_state->Sync))
         {
             case PROTOCOL_SYNC_EVENT_RETRANSMIT:
                 Protocol_TxResponse(p_xcvr, p_format, p_link->P_TX_PACKET);
@@ -343,6 +338,7 @@ static inline void Protocol_ProcRequestTimeout(const Protocol_Base_T * p_link, P
                 p_state->Stat.Retransmits++;
                 break;
 
+            case PROTOCOL_SYNC_EVENT_FAILED:
             default:
                 Protocol_TxControl(p_xcvr, p_format, PACKET_CLASS_NACK);
                 Protocol_ResetReqSync(p_state);
@@ -355,9 +351,9 @@ static inline void Protocol_ProcRequestTimeout(const Protocol_Base_T * p_link, P
 /*
     One resolved frame, through the handshake and into the handler.
 */
-static inline Protocol_SyncEvent_T Protocol_ProcFrame(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format)
+static inline Protocol_SyncEvent_T Protocol_ProcFrame(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format)
 {
-    Protocol_SyncEvent_T syncEvent = Protocol_ProcSyncRx(&p_state->Sync, Packet_ClassOf(p_format, p_link->P_RX_PACKET->Meta.Id));
+    Protocol_SyncEvent_T syncEvent = Protocol_ProcExpectAck(&p_state->Sync, Packet_ClassOf(p_format, p_link->P_RX_PACKET->Meta.Id));
     uint32_t timerNow = *p_link->P_TIMER;
 
     /* cross product of sync state and  */
@@ -422,7 +418,7 @@ static inline Protocol_SyncEvent_T Protocol_ProcFrame(const Protocol_Base_T * p_
     @param  p_format the selected framing. Both travel as arguments rather than in p_link
                      because the socket may swap either between passes.
 */
-static inline void Protocol_Proc(const Protocol_Base_T * p_link, const Xcvr_T * p_xcvr, const Packet_Format_T * p_format, Protocol_State_T * p_state)
+static inline void Protocol_Proc(const Protocol_Base_T * p_link, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format, Protocol_State_T * p_state)
 {
     uint32_t timerNow = *p_link->P_TIMER;
     Protocol_SyncEvent_T syncEvent = PROTOCOL_SYNC_EVENT_NONE;
@@ -436,13 +432,13 @@ static inline void Protocol_Proc(const Protocol_Base_T * p_link, const Xcvr_T * 
             p_framing = Packet_ParseRxHeader(p_format, &p_link->P_RX_PACKET->Meta, p_link->P_RX_PACKET->Packet);
 
             /* The format's own account of its frame, checked against what the parser collected. */
-            if ((p_framing == NULL) || (_Protocol_IsFrameConsistent(p_framing, &p_link->P_RX_PACKET->Meta, Packet_RxFrameLength(&p_state->RxParser)) == false))
-            {
-                p_framing = NULL;
-                Protocol_TxControl(p_xcvr, p_format, PACKET_CLASS_NACK);
-                p_state->Stat.FrameErrors++;
-                break;
-            }
+            // if ((p_framing == NULL) || (_Protocol_IsFrameConsistent(p_framing, &p_link->P_RX_PACKET->Meta, Packet_RxFrameLength(&p_state->RxParser)) == false))
+            // {
+            //     p_framing = NULL;
+            //     Protocol_TxControl(p_xcvr, p_format, PACKET_CLASS_NACK);
+            //     p_state->Stat.FrameErrors++;
+            //     break;
+            // }
 
             syncEvent = Protocol_ProcFrame(p_link, p_state, p_xcvr, p_format);
             p_state->Stat.Frames++;

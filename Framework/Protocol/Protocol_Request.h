@@ -86,6 +86,9 @@ typedef struct Packet_Xfer
     uint32_t * p_Step;                  /* Resume point. Handler advances it. */
 }
 Packet_Xfer_T;
+// or asymmetric frame
+// typedef struct { pkt_meta_t  meta; const void * payload; size_t len; } pkt_req_t;
+// typedef struct { void * buf; size_t cap; size_t len; } pkt_res_t;
 
 /*
     Table can cast payload with exact type for handling ergonomics
@@ -144,8 +147,9 @@ Protocol_Req_T;
 /******************************************************************************/
 typedef enum Protocol_ReqStateId
 {
-    PROTOCOL_REQ_STATE_IDLE,
-    PROTOCOL_REQ_STATE_ACTIVE,
+    PROTOCOL_REQ_STATE_IDLE,    /* WAIT_RX_ID */
+    PROTOCOL_REQ_STATE_ACTIVE,  /* WAIT_RX_NEXT */
+    /* Optionally add PROCESS_REQ_EXT for multi response */
 }
 Protocol_ReqStateId_T;
 
@@ -156,7 +160,6 @@ typedef struct Protocol_ReqState
     uint32_t Step;                          /* Handler resume point, cleared per request */
 }
 Protocol_ReqState_T;
-
 
 /******************************************************************************/
 /*!
@@ -206,21 +209,6 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
 
     @param  p_xfer  handler context. p_Step must point at this state's Step.
 */
-// static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
-// {
-//     Protocol_ReqCode_T reqCode;
-
-//     if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
-
-//     p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE;
-
-//     reqCode = p_state->p_ReqActive->PROC(p_app, p_xfer, p_rxPayload, p_txPayload);
-
-//     if ((reqCode == PROTOCOL_REQ_DONE) || (reqCode == PROTOCOL_REQ_ABORT)) { Protocol_ResetReq(p_state); }
-
-//     return reqCode;
-// }
-
 static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
     Protocol_ReqCode_T reqCode;

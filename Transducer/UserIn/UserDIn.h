@@ -58,6 +58,9 @@ typedef enum UserDIn_Mode
     // USER_DIN_MODE_HOLD,             /* Requires hold time */
 }
 UserDIn_Mode_T;
+
+typedef void (*UserDIn_Fn_T)(void * p_context, UserDIn_Edge_T edge);
+
 // typedef struct UserDIn_Hold
 // {
 //     // bool ToggleState;                   /* For toggle mode */
@@ -71,12 +74,9 @@ typedef struct UserDIn_Config
 {
     UserDIn_Mode_T Mode;
     size_t CmdId;
+    bool Invert;
 }
 UserDIn_Config_T;
-
-typedef void (*UserDIn_Fn_T)(void * p_context, UserDIn_Edge_T edge);
-// typedef int (*UserDIn_Fn_T)(void * p_context, UserDIn_Edge_T edge);
-// typedef void (*UserDIn_Fn_T)(void * p_context, bool prevState, bool currentState);
 
 /******************************************************************************/
 /*
@@ -106,7 +106,7 @@ typedef const struct UserDIn
     const volatile uint32_t * P_TIMER;
     uint16_t DEBOUNCE_TIME;
     UserDIn_Config_T * P_NVM_CONFIG; /* optionally */
-    // UserDIn_Fn_T * P_CMD_TABLE;
+    // UserDIn_Fn_T * P_OPT_TABLE;
 }
 UserDIn_T;
 

@@ -9,7 +9,7 @@ void CanBus_Init(CanBus_T * p_can)
     HAL_CAN_Init(p_can->P_HAL);
     HAL_CAN_EnableRxFullInterrupt(p_can->P_HAL);
     // p_can->P_STATE->ServiceHandler = CanBus_ProcServiceDisabled;
-    p_can->P_STATE->p_Service = p_can->P_SERVICE; /* default active service; runtime-swappable via CanBus_Enable/CanBus_SelectService */
+    p_can->P_STATE->p_Service = p_can->P_SERVICE; /* default active service; runtime-swappable via CanBus_Enable/CanBus_SetService */
 }
 
 void CanBus_InitBaudRate(CanBus_T * p_can, uint32_t bitRate)

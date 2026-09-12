@@ -85,9 +85,14 @@ Packet_RxCode_T;
 /******************************************************************************/
 typedef enum Packet_RxState
 {
+    /* Feed convention */
     PACKET_RX_STATE_START,      /* Scanning for the delimiter */
     PACKET_RX_STATE_HEADER,     /* Growing the header until the length is known */
     PACKET_RX_STATE_PAYLOAD,    /* Collecting the rest of the frame */
+    /* Step convention */
+    // WAIT_BYTE_1, /* SYNC */
+    // WAIT_LENGTH, /* HEADER */
+    // WAIT_PACKET, /* DATA */
 }
 Packet_RxState_T;
 
@@ -103,7 +108,7 @@ typedef struct Packet_RxParser
     // Packet_FrameFormat_T * p_FrameFormat; /* determine optional length field */
     /*
         Total frame length. 0 while unknown, and it survives the rewind that follows a resolved
-        frame - see Packet_RewindRx. This is the parser's own account of the frame, independent
+        frame - see Packet_ResetRxState. This is the parser's own account of the frame, independent
         of anything the format says about it, so it is what a caller checks Meta.Length against.
         Cleared on entry to HEADER, when the next frame makes it meaningless.
     */
@@ -159,7 +164,7 @@ Packet_RxParser_T;
 
     FrameLength is cleared on entry to HEADER, where it stops describing anything.
 */
-static inline void Packet_RewindRx(Packet_RxParser_T * p_parser)
+static inline void Packet_ResetRxState(Packet_RxParser_T * p_parser)
 {
     p_parser->StateId = PACKET_RX_STATE_START;
     p_parser->Index = 0U;
@@ -169,19 +174,16 @@ static inline void Packet_RewindRx(Packet_RxParser_T * p_parser)
 /*! Full reset. Drops the resolved length too - for abandonment, not for a frame that landed. */
 static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
 {
-    Packet_RewindRx(p_parser);
+    Packet_ResetRxState(p_parser);
     p_parser->FrameLength = 0U;
 }
-
-/*! The parser's own account of the resolved frame. Valid until the next frame reaches HEADER. */
-static inline packet_size_t Packet_RxFrameLength(const Packet_RxParser_T * p_parser) { return p_parser->FrameLength; }
 
 /*!
     Single byte delimiter, per the format's author contract: START_ID_LENGTH is 0 or 1, so
     only p_buffer[0] is tested. A wider START_ID would compare a uint8_t against a value that
     cannot fit it and never match - the contract is what keeps that unreachable.
 */
-static inline bool _Packet_IsStartId(const Packet_Format_T * p_format, const uint8_t * p_buffer)
+static inline bool _Packet_IsStartId(const Packet_Codec_T * p_format, const uint8_t * p_buffer)
 {
     return ((p_format->START_ID == 0x00U) || (p_buffer[0U] == p_format->START_ID));
 }
@@ -190,7 +192,7 @@ static inline bool _Packet_IsStartId(const Packet_Format_T * p_format, const uin
 /*!
     Feed p_buffer, Packet_RxParser_T.Index holds valid length
 */
-static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, const Packet_Format_T * p_format, const uint8_t * p_buffer)
+static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, const Packet_Codec_T * p_format, const uint8_t * p_buffer)
 {
     Packet_RxCode_T rxCode = PACKET_RX_AWAIT;
 
@@ -198,14 +200,9 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
     {
         case PACKET_RX_STATE_START:
             /*
-                The delimiter must be at the front. Anything else is discarded and the scan
-                restarts there - not Index--, which does not slide the buffer, so RxN would
-                refill past a rejected p_buffer[0] and retest it against fresh data forever.
-
                 Scanning a byte at a time is what keeps the reject branch from losing bytes.
-                Bulk-reading LENGTH_MIN and searching inside it would need the delimiter
-                shifted to the front (memmove, and a non-const p_buffer); on a clean line the
-                delimiter is already byte 0, so this costs one extra RxN per frame.
+                Bulk-reading LENGTH_MIN and searching inside it would need the delimiter shifted to the front (memmove, and a non-const p_buffer);
+                on a clean line the delimiter is already byte 0, so this costs one extra RxN per frame.
             */
             if (p_parser->Index < p_format->START_ID_LENGTH) { p_parser->NextIndex = p_format->START_ID_LENGTH; }
             else if (_Packet_IsStartId(p_format, p_buffer) == true)
@@ -276,7 +273,7 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
         Rewind. Index must clear with the state, or the next frame builds from a stale offset.
         FrameLength survives so the caller can check the format's Meta.Length against it.
     */
-    if (rxCode != PACKET_RX_AWAIT) { Packet_RewindRx(p_parser); }
+    if (rxCode != PACKET_RX_AWAIT) { Packet_ResetRxState(p_parser); }
 
     return rxCode;
 }
@@ -289,6 +286,9 @@ static inline packet_size_t Packet_RxRemaining(const Packet_RxParser_T * p_parse
 {
     return (p_parser->Index < p_parser->NextIndex) ? (packet_size_t)(p_parser->NextIndex - p_parser->Index) : (packet_size_t)0U;
 }
+
+/*! The parser's own account of the resolved frame. Valid until the next frame reaches HEADER. */
+static inline packet_size_t Packet_RxFrameLength(const Packet_RxParser_T * p_parser) { return p_parser->FrameLength; }
 
 /*! true once a delimiter has been accepted and the frame is still incomplete. */
 static inline bool Packet_IsRxWaiting(const Packet_RxParser_T * p_parser) { return (p_parser->StateId != PACKET_RX_STATE_START); }

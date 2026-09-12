@@ -32,7 +32,6 @@
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Types.h)
 
-
 /*
     Register granularity HAL accessors.
     split data handling, unless sequence/launch constraints
@@ -118,45 +117,12 @@ HAL_CAN_DriverStatus_T;
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadErrorStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 
 
+#include "CAN_Frame.h"
+
 /*
     using data interface [CAN_Frame_T]
     default implementation
 */
-/*
-    SocketCAN convention
-*/
-/* Flag bits in upper 3 bits of Id, following SocketCAN convention */
-#define CAN_ID_FLAG_EXT     0x80000000U
-#define CAN_ID_FLAG_RTR     0x40000000U
-#define CAN_ID_FLAG_ERR     0x20000000U
-#define CAN_ID_MASK_EXT     0x1FFFFFFFU  /* 29-bit */
-#define CAN_ID_MASK_STD     0x000007FFU  /* 11-bit */
-
-typedef union
-{
-    uint32_t CanId;
-    struct
-    {
-        uint32_t Id  : 29;
-        uint32_t Err : 1;
-        uint32_t Rtr : 1;
-        uint32_t Eff : 1;
-    };
-}
-can_id_t;
-
-typedef struct __attribute__((packed))
-{
-    can_id_t CanId;
-    // uint32_t CanId;
-    uint8_t DataLength;
-    uint8_t Opt;
-    uint8_t Resv0;
-    uint8_t Resv1;
-    uint8_t Data[8];
-}
-CAN_Frame_T;
-
 static inline void HAL_CAN_WriteTxId(HAL_CAN_T * p_hal, can_id_t id)
 {
     if (id.Eff == true) { HAL_CAN_WriteTxExtendedId(p_hal, id.Id); } else { HAL_CAN_WriteTxStandardId(p_hal, id.Id); }
@@ -171,7 +137,6 @@ static inline can_id_t HAL_CAN_ReadRxId(HAL_CAN_T * p_hal)
     id.Id = (id.Eff) ? HAL_CAN_ReadRxExtendedId(p_hal) : HAL_CAN_ReadRxStandardId(p_hal);
     return id;
 }
-
 
 /*
 
@@ -188,24 +153,29 @@ static inline void HAL_CAN_ReadRxMessage(HAL_CAN_T * p_hal, CAN_Frame_T * p_rxFr
     p_rxFrame->DataLength = HAL_CAN_ReadRxData(p_hal, &p_rxFrame->Data[0U]);
 }
 
+static inline void HAL_CAN_PollRxMessage(HAL_CAN_T * p_can, CAN_Frame_T * p_rxFrame)
+{
+    if (HAL_CAN_ReadRxFullFlag(p_can))
+    {
+        p_rxFrame->CanId = HAL_CAN_ReadRxId(p_can);
+        p_rxFrame->DataLength = HAL_CAN_ReadRxLength(p_can);
+        HAL_CAN_ReadRxData(p_can, &p_rxFrame->Data[0U]);
+        HAL_CAN_ClearRxFullFlag(p_can);
+    }
+}
+
 /*
     granular signature
 */
-static inline size_t HAL_CAN_ReadRx(HAL_CAN_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData)
-{
-    size_t length = 0U;
-    if (HAL_CAN_ReadRxFullFlag(p_can))
-    {
-        *p_rxId = HAL_CAN_ReadRxId(p_can);
-        length = HAL_CAN_ReadRxLength(p_can);
-        HAL_CAN_ReadRxData(p_can, p_rxData);
-        HAL_CAN_ClearRxFullFlag(p_can);
-    }
-    return length;
-}
-
-static inline void HAL_CAN_WriteTx(HAL_CAN_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
+static inline void _HAL_CAN_WriteTx(HAL_CAN_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
 {
     HAL_CAN_WriteTxId(p_can, id);
     HAL_CAN_WriteTxData(p_can, p_txData, length); /* includes start Transmit */
 }
+
+static inline size_t _HAL_CAN_ReadRx(HAL_CAN_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData)
+{
+    *p_rxId = HAL_CAN_ReadRxId(p_can);
+    return HAL_CAN_ReadRxData(p_can, p_rxData);
+}
+

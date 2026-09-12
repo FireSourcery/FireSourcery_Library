@@ -284,6 +284,7 @@ static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_dev, Packet_X
 const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH] =
 {
     PROTOCOL_REQ(MOT_PACKET_PING,               Ping,               PROTOCOL_ACK_NONE),
+    PROTOCOL_REQ(MOT_PACKET_PING_ALT,           Ping,               PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_STOP_ALL,           StopAll,            PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_VERSION,            Version,            PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_CALL,               Call_Blocking,      PROTOCOL_ACK_NONE),

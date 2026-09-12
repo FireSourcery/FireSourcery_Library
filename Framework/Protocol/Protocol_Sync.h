@@ -114,6 +114,7 @@ Protocol_SyncEvent_T;
 /******************************************************************************/
 typedef enum Protocol_SyncStateId
 {
+    // PROTOCOL_SYNC_DISABLED, /* Act is module disable */
     PROTOCOL_SYNC_OPEN,
     PROTOCOL_SYNC_AWAIT_ACK,
 }
@@ -194,7 +195,7 @@ static inline Protocol_SyncEvent_T Protocol_ResolveAck(Protocol_SyncState_T * p_
             and that was latched at Protocol_ExpectAck. Taking it again here would re-introduce
             the lifetime bug, since by now the request may well have closed.
 */
-static inline Protocol_SyncEvent_T Protocol_ProcSyncRx(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
+static inline Protocol_SyncEvent_T Protocol_ProcExpectAck(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
 {
     /* An abort ends the exchange wherever it was. The caller acks it if policy says so. */
     if (rxClass == PACKET_CLASS_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
@@ -220,19 +221,16 @@ static inline Protocol_SyncEvent_T Protocol_ProcSyncRx(Protocol_SyncState_T * p_
 /*!
     @brief  The request deadline expired. Same choice as a nack: retry or abandon.
 */
-static inline Protocol_SyncEvent_T Protocol_ResolveSyncRxTimeout(Protocol_SyncState_T * p_state)
+static inline Protocol_SyncEvent_T Protocol_ResolveAckTimeout(Protocol_SyncState_T * p_state)
 {
     return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK) ? Protocol_ResolveNackCount(p_state) : PROTOCOL_SYNC_EVENT_FAILED;
 }
 
-
-static inline bool Protocol_IsSyncWaiting(const Protocol_SyncState_T * p_state) { return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK); }
+static inline bool Protocol_IsAckWaiting(const Protocol_SyncState_T * p_state) { return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK); }
 
 /******************************************************************************/
 /*
-    GAP - the alternating bit.
-
-    Stop-and-wait ARQ is only correct with a sequence bit on both the data frame and its ack.
+    Stop-and-wait ARQ is only correct with a [sequence] field.
     Without one, a lost ACK is indistinguishable from a lost DATA frame at the remote, so it
     retransmits, and we execute the request a second time.
 
@@ -240,17 +238,13 @@ static inline bool Protocol_IsSyncWaiting(const Protocol_SyncState_T * p_state) 
         remote times out, retransmits REQ(n)
         we execute AGAIN
 
-    Harmless for VarRead. Not harmless for SaveNvm, a data-mode chunk write, or anything that
-    accumulates.
-
-    The wire field already exists - MotPacket_Header_T.Sequence, and Packet_Meta_T.Sequence -
-    both currently unused. The receiver-side rule is small and belongs next to the ack reflex
+    The wire field already exists - Packet_Meta_T.Sequence -
+    The receiver-side rule is small and belongs next to the ack reflex
     in Protocol_Request:
 
         if (rxMeta.Sequence == LastAccepted) { re-ack, do NOT re-run the handler; }
         else { run the handler; LastAccepted = rxMeta.Sequence; ack; }
 
-    One byte of state per socket, plus echoing the sequence in the ack so the remote can pair
-    them. Worth doing before this is relied on for flash writes.
+    Flash case remote side handles restart.
 */
 /******************************************************************************/

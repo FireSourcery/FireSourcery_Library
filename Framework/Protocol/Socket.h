@@ -99,7 +99,7 @@ typedef struct Socket_State
 {
     /* Selection. Pointers into the instance's const tables. */
     const Xcvr_T * p_Xcvr;
-    const Packet_Format_T * p_Format;
+    const Packet_Codec_T * p_Format;
 
     Socket_Config_T Config;     /* Working copy, loaded from NVM at init */
     Protocol_State_T Protocol;  /* Parser + sync + request + counters */
@@ -123,7 +123,7 @@ typedef const struct Socket
     /* Selectable bindings. Arrays of pointers - neither need be contiguous. */
     const Xcvr_T * const * P_XCVR_TABLE;
     uint8_t XCVR_COUNT;
-    const Packet_Format_T * const * P_FORMAT_TABLE;
+    const Packet_Codec_T * const * P_FORMAT_TABLE;
     uint8_t FORMAT_COUNT;
 
     const Socket_Config_T * P_NVM_CONFIG;   /* Initial config. The clock lives in PROTOCOL.P_TIMER. */

@@ -114,7 +114,7 @@ void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN_Frame_
     if (p_adapter == NULL) { return; }
     if (Motor_Cia402_HandleSdo(&p_mc->MOTORS.P_DEVS[0], p_adapter, (const Cia402_Sdo_T *)p_rx->Data, (Cia402_Sdo_T *)p_tx->Data) == true)
     {
-        p_tx->CanId.CanId = (CIA402_COB_SDO_RSP_BASE | p_adapter->Config.NodeId);
+        p_tx->CanId.Id32 = (CIA402_COB_SDO_RSP_BASE | p_adapter->Config.NodeId);
         p_tx->DataLength = 8U;
     }
 }
@@ -128,7 +128,7 @@ void MotorController_Cia402_BuildTxPdo1(MotorController_T * p_mc, CAN_Frame_T * 
     Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
     Motor_T * p_motor = &p_mc->MOTORS.P_DEVS[0];
 
-    p_tx->CanId.CanId = CIA402_COB_TXPDO1_BASE | p_adapter->Config.NodeId;
+    p_tx->CanId.Id32 = CIA402_COB_TXPDO1_BASE | p_adapter->Config.NodeId;
     Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Status_T *)p_tx->Data);
     p_tx->DataLength = sizeof(Cia402_TxPdo_Status_T);
 }
@@ -138,7 +138,7 @@ void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * 
     Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
     Motor_T * p_motor = &p_mc->MOTORS.P_DEVS[0];
 
-    p_tx->CanId.CanId = CIA402_COB_TXPDO2_BASE | p_adapter->Config.NodeId;
+    p_tx->CanId.Id32 = CIA402_COB_TXPDO2_BASE | p_adapter->Config.NodeId;
 
     switch (p_adapter->Input.ActiveMode)
     {

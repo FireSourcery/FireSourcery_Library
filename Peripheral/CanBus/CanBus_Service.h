@@ -87,7 +87,7 @@ static const CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_EMPTY = { .BUILD = CanBus
 static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_BroadcastEntry_T * p_broadcast)
 {
     CAN_Frame_T frame = { 0U };
-    frame.CanId.CanId = p_broadcast->ID; /* seed default ID; frame builders (e.g. CiA402) may override */
+    frame.CanId.Id32  = p_broadcast->ID; /* seed default ID; frame builders (e.g. CiA402) may override */
     p_broadcast->BUILD(p_can->P_CONTEXT, &frame);
     HAL_CAN_WriteTxMessage(p_can->P_HAL, &frame);
 }
@@ -97,7 +97,7 @@ static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_BroadcastEntry_
 // {
 //     uint8_t data[8U];
 //     p_broadcast->BUILD(p_can->P_CONTEXT, &data[0U]);
-//     HAL_CAN_WriteTx(p_can->P_HAL, ((can_id_t) {.CanId = p_broadcast->ID }), &data[0U], 8U);
+//     HAL_CAN_WriteTx(p_can->P_HAL, ((can_id_t) {.Id32 = p_broadcast->ID }), &data[0U], 8U);
 // }
 
 // static inline void _CanBus_ProcBroadcastService(CanBus_T * p_can, CanBus_BroadcastEntry_T * p_b, CanBus_BroadcastState_T * p_s, uint8_t count, uint32_t timer)
@@ -123,18 +123,15 @@ static inline void _CanBus_ProcBroadcastService(CanBus_T * p_can, CanBus_Broadca
 /*
     this layer handles request routing
 */
-
-
 // typedef void (*CanBus_ReqHandler_T)(void * p_dev, const uint8_t * p_rx, uint8_t * p_tx);
 typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const void * p_rx, void * p_tx);
-
 // typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
-typedef void (*CanBus_RouteHandler_T)(void * p_dev, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
+typedef void (*CanBus_RouteHandler_T)(void * p_dev, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
 
 typedef const struct
 {
-    uint32_t           ID_MATCH;     /* expected (id & ID_MASK) */
-    uint32_t           ID_MASK;      /* bits to compare; 0x7FF for exact, 0x780 for COB-ID class */
+    uint32_t ID_MATCH;     /* expected (id & ID_MASK) */
+    uint32_t ID_MASK;      /* bits to compare; 0x7FF for exact, 0x780 for COB-ID class */
     CanBus_RouteHandler_T HANDLER;
 
     // void * P_NODE; /* Per Route context for data handler */
@@ -167,9 +164,10 @@ static inline void _CanBus_ProcRequestService(CanBus_T * p_can, CanBus_ReqRoute_
 typedef const struct CanBus_Service
 {
     CanBus_BroadcastEntry_T * P_BROADCASTS;  uint8_t BROADCAST_COUNT;
-    CanBus_ReqRoute_T * P_ROUTES;             uint8_t ROUTE_COUNT;
+    CanBus_ReqRoute_T * P_ROUTES; uint8_t ROUTE_COUNT;
     // CanBus_RxRequestMapper_T REQ_MAPPER;
     // const volatile uint32_t * P_TIMER;
+    // void ** P_CONTEXT_MUX;
 }
 CanBus_Service_T;
 
@@ -180,6 +178,7 @@ CanBus_Service_T;
     Dispatch one inbound frame: route-table match first, else the service-wide REQ_HANDLER.
     Handler fills txFrame (ID/DLC/data); a non-zero DataLength is transmitted as the reply.
 */
+// static inline void CanBus_ProcRequestService(CanBus_T * p_can, void * p_context)
 static inline void CanBus_ProcRequestService(CanBus_T * p_can)
 {
     CAN_Frame_T * p_rxFrame = &p_can->P_STATE->Channel[0U].Frame; // todo handle selection
@@ -199,6 +198,7 @@ static inline void CanBus_RxProcRequest_ISR(CanBus_T * p_can)
     if (p_rx != NULL) { CanBus_ProcRequestService(p_can); }
 }
 
+
 static inline void CanBus_ProcBroadcastService(CanBus_T * p_can, uint32_t timer)
 {
     CanBus_Service_T * p_service = p_can->P_STATE->p_Service;
@@ -206,24 +206,17 @@ static inline void CanBus_ProcBroadcastService(CanBus_T * p_can, uint32_t timer)
     _CanBus_ProcBroadcastService(p_can, p_service->P_BROADCASTS, p_service->BROADCAST_COUNT, timer);
 }
 
-static inline void CanBus_Enable(CanBus_T * p_can, CanBus_Service_T * p_service)
-{
-    p_can->P_STATE->p_Service = p_service;
-}
 
-static inline void CanBus_Disable(CanBus_T * p_can)
-{
-    p_can->P_STATE->p_Service = NULL; // def empty to eliminate nullcheck
-}
+
+static inline void CanBus_Enable(CanBus_T * p_can, CanBus_Service_T * p_service) { p_can->P_STATE->p_Service = p_service; }
+// todo def empty to eliminate nullcheck
+static inline void CanBus_Disable(CanBus_T * p_can) { p_can->P_STATE->p_Service = NULL; }
 
 /*
-    Runtime protocol swap — select the active service by index from the configured table.
-    The active service is a single aligned pointer that the RX/broadcast paths reload each
-    pass, so a repoint takes effect on the next frame/tick (atomic store on Cortex-M).
     TODO: on swap also reprogram HW acceptance filters from the new route table and rephase
         broadcast timestamps to avoid a startup burst on the newly selected service.
 */
-static inline void CanBus_SelectService(CanBus_T * p_can, uint8_t index)
+static inline void CanBus_SetService(CanBus_T * p_can, uint8_t index)
 {
     if (index < p_can->SERVICE_COUNT) { CanBus_Enable(p_can, &p_can->P_SERVICE_TABLE[index]); }
 }
