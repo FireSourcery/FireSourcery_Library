@@ -42,13 +42,13 @@
     Implement as conventional interface pattern, Signature context as interface type.
 */
 struct RotorSensor;
-struct RotorSensor_Config;
+struct RotorSensor_UnitRef;
 
 typedef void(*RotorSensor_Proc_T)(const struct RotorSensor * p_sensor);
 typedef bool(*RotorSensor_Test_T)(const struct RotorSensor * p_sensor);
 typedef int (*RotorSensor_Get_T)(const struct RotorSensor * p_sensor);
 typedef void(*RotorSensor_Set_T)(const struct RotorSensor * p_sensor, int value);
-typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const struct RotorSensor_Config * p_config);
+typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const struct RotorSensor_UnitRef * p_config);
 
 
 /*
@@ -74,7 +74,7 @@ RotorSensor_VTable_T;
     [RotorSensor_Units_T]
     temporary args
 */
-typedef struct RotorSensor_Config
+typedef struct RotorSensor_UnitRef
 {
     uint8_t PolePairs;              /* Motor Pole Pairs. Config Mech/Electrical conversion */
     /* Config scalar speed. Caller derive  */
@@ -82,7 +82,7 @@ typedef struct RotorSensor_Config
     uint16_t SpeedTypeMax_Angle16; /* electrical */
     /* uint32_t PollingFreq */
 }
-RotorSensor_Config_T;
+RotorSensor_UnitRef_T;
 
 /* RotorSensor_SpeedCalibration_T */
 // typedef struct RotorSensor_Config
@@ -182,7 +182,7 @@ static inline bool RotorSensor_IsFeedbackAvailable(const RotorSensor_T * p_senso
 */
 static inline bool RotorSensor_VerifyCalibration(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->VERIFY_CALIBRATION(p_sensor); }
 
-static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
     p_sensor->P_STATE->SpeedFractRef = ANGLE_SPEED_FRACT_REF(p_config->SpeedTypeMax_Angle16);
     // p_sensor->P_STATE->SpeedFractRef = Angle_SpeedFractRef_FromRpm(p_config->PollingFreq, p_config->SpeedTypeMax_Rpm);

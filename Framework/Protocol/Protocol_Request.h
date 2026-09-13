@@ -34,6 +34,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <sys/cdefs.h>
 
 /******************************************************************************/
 /*
@@ -42,15 +43,7 @@
         IDLE      no request bound
         ACTIVE    a handler is mid-sequence
 
-    Step is the handler's resume point - a program counter it advances itself. That makes a
-    multi-step handler a coroutine in the Protothreads sense (Dunkels): one function, switch
-    on Step, return between yields, sub-state carried in P_SUB_STATE rather than the C stack.
-    The engine does not interpret Step; only the handler assigns meaning to it.
-
-    "Waiting for the next packet" is not a state. It is ACTIVE with nothing delivered this
-    pass. That is what collapses the old five-state Socket.c machine: dispatch state and
-    handshake state are orthogonal regions (Harel), and the old enum was their cross-product
-    with most cells unreachable.
+    dispatch state and handshake state are orthogonal regions (Harel),
 
     Sans-I/O, like the parser and the handshake. This layer never touches the Xcvr; it
     returns a Protocol_ReqCode_T saying what should go out, and the composition sends it.
@@ -74,28 +67,41 @@ typedef enum Protocol_ReqCode
 }
 Protocol_ReqCode_T;
 
+/*  Optionally
+    Step is the handler's resume point - a program counter it advances itself. That makes a
+    multi-step handler a coroutine in the Protothreads sense (Dunkels): one function, switch
+    on Step, return between yields, sub-state carried in P_SUB_STATE rather than the C stack.
+    The engine does not interpret Step; only the handler assigns meaning to it.
+
+*/
+/* sub type inherit. */
+typedef struct Protocol_Substate
+{
+    uint32_t Step;
+    uint8_t _Resv[];
+}
+Protocol_Substate_T;
+
 /*
     Packet Substate Context.
     Everything the handler may read or write, and nothing about the transport.
+    Protocol_ReqParams_T
 */
 typedef struct Packet_Xfer
 {
-    const Packet_Meta_T * p_RxMeta;     /* Virtual header of the frame just delivered */
-    Packet_Meta_T * p_TxMeta;           /* Handler sets Id and Length; the format builds the header */
-    void * p_Substate;                  /* Handler's own storage, sized by the child protocol */
-    uint32_t * p_Step;                  /* Resume point. Handler advances it. */
+    const Packet_Meta_T * const p_RxMeta;     /* Virtual header of the frame just delivered */
+    Packet_Meta_T * const p_TxMeta;           /* Handler sets Id and Length; the format builds the header */
+    void * const p_Substate;                  /* Handler's own storage, sized by the child protocol */
+    // Protocol_Substate_T * p_Substate;   /* Handler's own storage, sized by the child protocol */
 }
 Packet_Xfer_T;
-// or asymmetric frame
-// typedef struct { pkt_meta_t  meta; const void * payload; size_t len; } pkt_req_t;
-// typedef struct { void * buf; size_t cap; size_t len; } pkt_res_t;
 
 /*
     Table can cast payload with exact type for handling ergonomics
 */
 typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload);
 
-/* Process handles header */
+/* Process handles wire header */
 // typedef Protocol_ReqCode_T(*Protocol_ProcReqRespFrame_T) (void * p_context, const void * p_rxFrame, void * p_txFrame);
 
 /* continuity through substate */
@@ -111,34 +117,22 @@ typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, Packet_Xfe
 */
 typedef const struct Protocol_Req
 {
-    packet_id_t ID;
+    Packet_Id_T ID; /* Must be embedded for __container_of */
+#ifdef PROTOCOL_REQUEST_TX_OFFSET
+    Packet_Id_T RESP_ID; /* optionally, or assume same as ID if not specified */
+#endif
     Protocol_ProcReqResp_T PROC;
     Protocol_AckPolicy_T ACK;
-    // uint8_t MIN_LENGTH;
-    // uint8_t MAX_LENGTH;
 }
 Protocol_Req_T;
 
+
 #define PROTOCOL_REQ(Id, Proc, AckPolicy) { .ID = (packet_id_t)(Id), .PROC = (Protocol_ProcReqResp_T)(Proc), .ACK = AckPolicy }
 
-/*
-    The request service. Id -> handler, and nothing about framing.
+#ifndef __containerof
+#define __containerof(x, s, m) ((s *)(const void *)((const char *)(x) - offsetof(s, m)))
+#endif
 
-    No format pointer: which bytes delimit a frame is settled before an id exists, so a
-    table that maps ids to handlers cannot need it. The format belongs to Protocol_Base_T,
-    which is also what lets one table serve two framings.
-*/
-// typedef const struct Protocol_ReqService
-// {
-//     const Protocol_Req_T * P_TABLE;             /* id -> handler */
-//     uint8_t TABLE_LENGTH;
-
-//     void * P_APP;           /* Passed to every handler */
-//     void * P_SUB_STATE;     /* Handler sub-state buffer */
-
-//     const uint32_t REQ_TIMEOUT;
-// }
-// Protocol_ReqService_T;
 
 /******************************************************************************/
 /*!
@@ -157,7 +151,7 @@ typedef struct Protocol_ReqState
 {
     Protocol_ReqStateId_T StateId;
     const Protocol_Req_T * p_ReqActive;     /* Bound by Select, retained while ACTIVE */
-    uint32_t Step;                          /* Handler resume point, cleared per request */
+    uint32_t ReqTimeStart;      /* Exchange deadline base */
 }
 Protocol_ReqState_T;
 
@@ -166,30 +160,19 @@ Protocol_ReqState_T;
     Proc
 */
 /******************************************************************************/
-/*! @return pointer to Req, NULL when the id has no handler */
-static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
-{
-    const Protocol_Req_T * p_req = NULL;
-    for (uint8_t iReq = 0U; iReq < tableLength; iReq++) { if (p_reqTable[iReq].ID == id) { p_req = &p_reqTable[iReq]; break; } }
-    return p_req;
-}
-
-/*!
-    @brief  Bind the handler for an incoming id.
-
-            Separate from Proc because the ack policy that decides whether this very frame
-            gets acked is a property of the handler - so binding must precede the ack, and
-            invocation must follow it.
-
-    @return false when the id has no handler.
-*/
-static inline bool Protocol_CaptureReq(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+static inline bool Protocol_CaptureReq(Protocol_ReqState_T * p_state, Packet_Id_T * p_packetId)
 {
     if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; } /* stay on the same request even if id changes */
-    p_state->p_ReqActive = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
-    p_state->Step = 0U;
-    if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
-    return (p_state->p_ReqActive != NULL);
+    p_state->p_ReqActive = __containerof(p_packetId, Protocol_Req_T, ID);
+    return true;
+}
+
+static inline const Packet_Id_T * Protocol_ReqRespId(const Protocol_ReqState_T * p_state)
+{
+#ifndef PROTOCOL_REQUEST_TX_OFFSET
+    return (p_state->p_ReqActive != NULL) ? &p_state->p_ReqActive->ID : NULL;
+    //   p_state->p_ReqActive->RESP_ID
+#endif
 }
 
 
@@ -197,7 +180,7 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
 {
     p_state->StateId = PROTOCOL_REQ_STATE_IDLE;
     p_state->p_ReqActive = NULL;
-    p_state->Step = 0U;
+    // p_state->Step = 0U;
 }
 
 /*!
@@ -219,11 +202,9 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
     A stateless handler returns DONE on its first call. Anything that does not return
     DONE or ABORT leaves the request bound and the socket busy.
 */
-static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
+static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
     Protocol_ReqCode_T reqCode;
-
-    if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
 
     switch (p_state->StateId)
     {
@@ -242,6 +223,17 @@ static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state,
     return reqCode;
 }
 
+static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxFrame, void * p_txFrame)
+{
+    if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
+
+    packet_size_t rxOffset = p_state->p_ReqActive->ID.FRAME_FORMAT->HEADER_LENGTH;
+#ifndef PROTOCOL_REQUEST_TX_OFFSET
+    packet_size_t txOffset = rxOffset;
+    // packet_size_t txOffset = p_state->p_ReqActive->RESP_ID.FRAME_FORMAT == NULL ? rxOffset : p_state->p_ReqActive->RESP_ID.FRAME_FORMAT->HEADER_LENGTH;
+#endif
+    return _Protocol_ProcReq(p_state, p_app, p_xfer, &p_rxFrame[rxOffset], &p_txFrame[txOffset]);
+}
 
 /******************************************************************************/
 /*!
@@ -249,7 +241,6 @@ static inline Protocol_ReqCode_T Protocol_ProcReq(Protocol_ReqState_T * p_state,
 */
 /******************************************************************************/
 static inline bool Protocol_IsReqActive(const Protocol_ReqState_T * p_state) { return (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE); }
-
 // static inline bool Protocol_IsReqActive(const Protocol_ReqState_T * p_state) { return (p_state->p_ReqActive != NULL); }
 
 /*! Zeroed when nothing is bound, so an unbound socket acks nothing. */
@@ -259,6 +250,58 @@ static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState
 }
 
 
+
+/******************************************************************************/
+/*!
+    Alternative table search
+*/
+/******************************************************************************/
+/*! @return pointer to Req, NULL when the id has no handler */
+static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+{
+    const Protocol_Req_T * p_req = NULL;
+    for (uint8_t iReq = 0U; iReq < tableLength; iReq++) { if (p_reqTable[iReq].ID.ID == id) { p_req = &p_reqTable[iReq]; break; } }
+    return p_req;
+}
+
+/*!
+    @brief  Bind the handler for an incoming id.
+
+            Separate from Proc because the ack policy that decides whether this very frame
+            gets acked is a property of the handler - so binding must precede the ack, and
+            invocation must follow it.
+
+    @return false when the id has no handler.
+*/
+static inline bool Protocol_CaptureReqOfTable(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+{
+    if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; } /* stay on the same request even if id changes */
+    p_state->p_ReqActive = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
+    // p_state->Step = 0U;
+    if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
+    return (p_state->p_ReqActive != NULL);
+}
+
+// full map the descriptor at the main.c layer minus buffers
+// typedef const struct Protocol_ReqService
+// {
+//     const Protocol_Req_T * P_TABLE;             /* id -> handler */
+//     uint8_t TABLE_LENGTH;
+
+//     void * P_APP;           /* Passed to every handler */
+//     void * P_SUB_STATE;     /* Handler sub-state buffer */
+
+    /* The request service. Id -> handler */
+    // const Protocol_Req_T * P_REQ_TABLE;
+    // uint8_t REQ_TABLE_LENGTH;
+    // void * P_APP_CONTEXT;                   /* Passed to every handler */
+    // void * P_REQ_CONTEXT;                   /* Handler sub-state. Sized for the largest handler */
+
+    // const volatile uint32_t * P_TIMER;
+    // const uint32_t RX_TIMEOUT;              /* Frame deadline */
+    // const uint32_t REQ_TIMEOUT;             /* Exchange deadline */
+// }
+// Protocol_ReqService_T;
 
 
 /******************************************************************************/

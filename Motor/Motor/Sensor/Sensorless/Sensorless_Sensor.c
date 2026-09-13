@@ -83,7 +83,7 @@ static bool Sensorless_Sensor_VerifyCalibration(const Sensorless_Sensor_T * p_se
    basis. SpeedFractRef — the only field CAPTURE_SPEED reads — is written by the
    RotorSensor base before dispatching here, and the remaining scale factor (G_pu)
    needs the FOC electrical params, so Motor_ValidateConfig owns it. */
-static void Sensorless_Sensor_InitFrom(const Sensorless_Sensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static void Sensorless_Sensor_InitFrom(const Sensorless_Sensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
     (void)p_sensor; (void)p_config;
 }

@@ -152,7 +152,7 @@ static inline void Socket_Proc(const Socket_T * p_socket)
 
     if (p_state->IsEnabled == false) { return; }
 
-    Protocol_Proc(&p_socket->PROTOCOL, p_state->p_Xcvr, p_state->p_Format, &p_state->Protocol);
+    Protocol_Proc(&p_socket->PROTOCOL, &p_state->Protocol, p_state->p_Xcvr, p_state->p_Format);
 }
 
 

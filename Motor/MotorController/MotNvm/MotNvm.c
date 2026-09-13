@@ -84,6 +84,7 @@ static bool IsManufactureWritable(uint8_t * p_image, const uint8_t * p_source, u
 }
 
 // Skip Empty
+/* Empty if each byte is either erased or 0 */
 static bool IsSourceEmpty(const uint8_t * p_source, uint8_t size)
 {
     for (uint8_t i = 0U; i < size; i++) { if (p_source[i] != FLASH_UNIT_ERASE_PATTERN && p_source[i] != 0U) { return false; } }
@@ -103,14 +104,6 @@ NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, ui
     {
         status = _MotNvm_WriteManufacture_Blocking(p_motNvm, address, p_source, size);
     }
-
-    /* Assume sequential write, propagate on last */
-    // if (address + size == p_motNvm->MANUFACTURE_ADDRESS + p_motNvm->MANUFACTURE_SIZE)
-    // {
-    //     /* read its entirety */
-    //     status = MotNvm_ReadManufacture_Blocking(p_motNvm, p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE, &read[0U]);
-    //     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WriteConstFrom(p_motNvm, (Nvm_Manufacturer_T *)&read[0U]); }
-    // }
 
     return status;
 }
@@ -195,17 +188,34 @@ NvMemory_Status_T MotNvm_WriteMotorCalibration(const MotNvm_T * p_motNvm, const 
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ELECTRICAL_CALIBRATION, (const void *)p_source, sizeof(Motor_ElectricalCalib_T));
 }
 
-// NvMemory_Status_T MotNvm_WriteBoardRef(const MotNvm_T * p_motNvm, size_t id, const uint8_t* p_source)
+
+/*
+By Id
+*/
+/* expandable to bitfields */
+// typedef enum MotNvm_MemSection
+// {
+//     MOT_NVM_MEM_RAM = 0x00U,
+//     MOT_NVM_MEM_FLASH = 0x01U,
+//     MOT_NVM_MEM_EEPROM = 0x02U,
+//     MOT_NVM_MEM_ONCE = 0x03U,
+//     MOT_NVM_MEM_BOARD_REF_0 = 0x04U,
+//     MOT_NVM_MEM_BOARD_REF_1 = 0x05U,
+//     MOT_NVM_MEM_BOARD_REF_2 = 0x06U,
+//     MOT_NVM_MEM_BOARD_REF_3 = 0x07U,
+//     MOT_NVM_MEM_RESERVED = 0xFFU,
+// }
+// MotNvm_MemSection_T;
+
+// NvMemory_Status_T MotNvm_WriteBoardRef(const MotNvm_T * p_motNvm, MotNvm_MemSection_T id, const uint8_t * p_source)
 // {
 //     switch (id)
 //     {
-//         case 0U: return MotNvm_WritePhaseCalibration(p_motNvm, (const Phase_Calibration_T *)p_source);
-//         case 1U: return MotNvm_WriteMotorCalibration(p_motNvm, (const Motor_ElectricalCalib_T *)p_source);
+//         case MOT_NVM_MEM_BOARD_REF_0: return MotNvm_WritePhaseCalibration(p_motNvm, (const Phase_Calibration_T *)p_source);
+//         case MOT_NVM_MEM_BOARD_REF_1: return MotNvm_WriteMotorCalibration(p_motNvm, (const Motor_ElectricalCalib_T *)p_source);
 //         default: return NV_MEMORY_STATUS_ERROR_OTHER;
 //     }
 // }
-
-
 
 /******************************************************************************/
 /*!

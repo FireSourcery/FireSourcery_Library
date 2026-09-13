@@ -44,26 +44,19 @@
 /******************************************************************************/
 uint16_t MotPacket_Checksum(const MotPacket_T * p_packet, size_t totalSize)
 {
-    return Packet_Checksum((const uint8_t *)p_packet, totalSize, offsetof(MotPacket_Header_T, Checksum), sizeof(p_packet->Header.Checksum));
+    return Packet_Checksum((const uint8_t *)p_packet, totalSize, offsetof(MotPacket_Header_T, Checksum), sizeof(p_packet->Long.Header.Checksum));
 }
 
-uint8_t MotPacket_Sync_Build(MotPacket_Control_T * p_txPacket, MotPacket_Id_T syncId)
+uint8_t MotPacket_BuildControl(MotPacket_Control_T * p_txPacket, MotPacket_Id_T syncId)
 {
     assert((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT));
     p_txPacket->Start = MOT_PACKET_START_BYTE;
     p_txPacket->SyncId = syncId;
-    p_txPacket->Flex = 0U; /* reserved */
-    p_txPacket->Flags = p_txPacket->Start ^ p_txPacket->SyncId ^ p_txPacket->Flex;
+    p_txPacket->Option = 0U; /* reserved */
+    p_txPacket->Checksum = p_txPacket->Start ^ p_txPacket->SyncId ^ p_txPacket->Option;
     return sizeof(MotPacket_Control_T);
 }
 
-// static inline uint8_t MotPacket_BuildFixed(MotPacket_HeaderShort_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength)
-// {
-//     p_packet->Start = MOT_PACKET_START_BYTE;
-//     p_packet->Id = headerId;
-//     p_packet->Checksum = Packet_Checksum(p_packet);
-//     return payloadLength + sizeof(MotPacket_HeaderShort_T);
-// }
 
 /*!
     @brief  Set header and build checksum. call last.
@@ -71,18 +64,18 @@ uint8_t MotPacket_Sync_Build(MotPacket_Control_T * p_txPacket, MotPacket_Id_T sy
 */
 uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength)
 {
-    p_packet->Header.Start = MOT_PACKET_START_BYTE;
-    p_packet->Header.Id = headerId;
-    p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T);
-    p_packet->Header.Sequence = 0U;
-    p_packet->Header.Flags = 0U;
-    p_packet->Header.Checksum = MotPacket_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
-    return p_packet->Header.Length;
+    p_packet->Long.Header.Start = MOT_PACKET_START_BYTE;
+    p_packet->Long.Header.Id = headerId;
+    p_packet->Long.Header.Length = payloadLength + sizeof(MotPacket_Header_T);
+    p_packet->Long.Header.Sequence = 0U;
+    p_packet->Long.Header.Flags = 0U;
+    p_packet->Long.Header.Checksum = MotPacket_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
+    return p_packet->Long.Header.Length;
 }
 
 /******************************************************************************/
 /*!
-    Packet Interface - the codec bound into MOT_PROTOCOL_PACKET_CLASS
+    Packet Interface - the codec bound into MOT_PACKET_CODEC
 
     Two frame shapes, selected by Id alone:
         sync    4 bytes,  MotPacket_Control_T,  Start ^ SyncId ^ Flex, no payload
@@ -119,10 +112,9 @@ static inline bool IsSyncShape(packet_id_t id)
 // packet_size_t _MotPacket_ParseLength(const uint8_t rxLeading[MOT_PACKET_LENGTH_MIN])
 
 /*! Phase 1. Total frame length, or 0 while not yet determinable. */
-// known after min
 packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_t rxCount)
 {
-    switch (p_rxPacket->Header.Id)
+    switch (p_rxPacket->Long.Header.Id) // known after MOT_PACKET_LENGTH_MIN
     {
         // Sync packets — complete immediately, no checksum verification needed
         case MOT_PACKET_SYNC_ACK:   return sizeof(MotPacket_Control_T);
@@ -132,19 +124,9 @@ packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_
         case MOT_PACKET_PING_BOOT:  return sizeof(MotPacket_Control_T);
         case MOT_PACKET_PING_ALT:   return sizeof(MotPacket_Control_T);
 
-            /*
-                Fixed length, mapped from the id rather than trusted from the length field.
-
-                The MotPacket_*Req_T types are PAYLOAD structs, not whole packets, so the
-                header has to be added. Returning the payload size alone made STOP_ALL and
-                VERSION resolve to 0 - which this function reserves for "not yet
-                determinable", so the parser grew the header a byte at a time to LENGTH_MAX
-                and then rejected the frame - and made CALL an 8-byte frame whose checksum
-                was then computed over half of itself.
-            */
+        /* Fixed length, mapped from the id */
         case MOT_PACKET_STOP_ALL:           return sizeof(MotPacket_Header_T) + sizeof(MotPacket_StopReq_T);
         case MOT_PACKET_VERSION:            return sizeof(MotPacket_Header_T) + sizeof(MotPacket_VersionReq_T);
-            // case MOT_PACKET_REBOOT:      return sizeof(MotPacket_Header_T) + sizeof(MotPacket_CallReq_T);
         case MOT_PACKET_CALL:               return sizeof(MotPacket_Header_T) + sizeof(MotPacket_CallReq_T);
         case MOT_PACKET_FIXED_VAR_READ:     return sizeof(MotPacket_Header_T) + sizeof(MotPacket_VarReadFixedReq_T);
         case MOT_PACKET_FIXED_VAR_WRITE:    return sizeof(MotPacket_Header_T) + sizeof(MotPacket_VarWriteFixedReq_T);
@@ -172,7 +154,7 @@ bool MotProtocol_IsRxValid(const MotPacket_T * p_packet, packet_size_t length)
         return true;
     }
 
-    return (MotPacket_Checksum(p_packet, length) == p_packet->Header.Checksum);
+    return (MotPacket_Checksum(p_packet, length) == p_packet->Long.Header.Checksum);
 }
 
 /*!
@@ -182,7 +164,7 @@ bool MotProtocol_IsRxValid(const MotPacket_T * p_packet, packet_size_t length)
 Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_packet)
 {
 
-    p_meta->Id = p_packet->Header.Id;   /* offset 1 in both shapes */
+    p_meta->Id = p_packet->Long.Header.Id;   /* offset 1 in both shapes */
 
     if (IsSyncShape(p_meta->Id) == true)
     {
@@ -191,11 +173,11 @@ Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const M
     }
 
     /* A total shorter than its own header describes nothing. Reject before the subtraction. */
-    if (p_packet->Header.Length < sizeof(MotPacket_Header_T)) { return NULL; }
+    if (p_packet->Long.Header.Length < sizeof(MotPacket_Header_T)) { return NULL; }
 
-    p_meta->Length   = (packet_size_t)(p_packet->Header.Length - sizeof(MotPacket_Header_T));
-    p_meta->Sequence = p_packet->Header.Sequence;
-    p_meta->Flags    = p_packet->Header.Flags;
+    p_meta->Length   = (packet_size_t)(p_packet->Long.Header.Length - sizeof(MotPacket_Header_T));
+    p_meta->Sequence = p_packet->Long.Header.Sequence;
+    p_meta->Flags    = p_packet->Long.Header.Flags;
     return (Packet_FrameFormat_T *)&MOT_FRAME_DATA;
 }
 
@@ -204,7 +186,7 @@ Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, M
 {
     if (IsSyncShape(p_meta->Id) == true)
     {
-        (void)MotPacket_Sync_Build((MotPacket_Control_T *)p_buffer, (MotPacket_Id_T)p_meta->Id);
+        (void)MotPacket_BuildControl((MotPacket_Control_T *)p_buffer, (MotPacket_Id_T)p_meta->Id);
         return (Packet_FrameFormat_T *)&MOT_FRAME_SYNC;
     }
 
@@ -212,7 +194,7 @@ Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, M
     return (Packet_FrameFormat_T *)&MOT_FRAME_DATA;
 }
 
-const Packet_Codec_T MOT_PROTOCOL_PACKET_CLASS =
+const Packet_Codec_T MOT_PACKET_CODEC =
 {
     .LENGTH_MIN         = MOT_PACKET_LENGTH_MIN,
     .LENGTH_MAX         = MOT_PACKET_LENGTH_MAX,

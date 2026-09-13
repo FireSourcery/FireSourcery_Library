@@ -73,6 +73,7 @@ const Cia402_OdMeta_T CIA402_OD_META[] =
     { CIA402_OD_SUPPORTED_DRIVE_MODES,   0U, CIA402_OD_TYPE_U32, CIA402_OD_ACCESS_RO, /* sizeof(uint32_t) */ },
 };
 
+static const Cia402_OdInfo_T OD_ABSENT = { CIA402_OD_TYPE_NONE, CIA402_OD_ACCESS_NONE, 0U };
 
 /* switch mapped */
 const Cia402_OdMeta_T * _TableIndex(uint16_t index, uint8_t subindex)
@@ -101,8 +102,6 @@ const Cia402_OdMeta_T * _TableIndex(uint16_t index, uint8_t subindex)
         default:                                return NULL;
     }
 }
-
-static const Cia402_OdInfo_T OD_ABSENT = { CIA402_OD_TYPE_NONE, CIA402_OD_ACCESS_NONE, 0U };
 
 Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex)
 {

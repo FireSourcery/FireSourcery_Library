@@ -33,7 +33,7 @@
 #include <string.h>
 
 
-void Hall_InitFrom(const Hall_T * p_hall, const Hall_Config_T * p_config)
+void Hall_InitFrom(Hall_T * p_hall, const Hall_Config_T * p_config)
 {
     Pin_Input_Init(&p_hall->PIN_A);
     Pin_Input_Init(&p_hall->PIN_B);
@@ -45,12 +45,12 @@ void Hall_InitFrom(const Hall_T * p_hall, const Hall_Config_T * p_config)
 /*
     PinA, B, C HAL initialized in main app
 */
-void Hall_Init(const Hall_T * p_hall)
+void Hall_Init(Hall_T * p_hall)
 {
     Hall_InitFrom(p_hall, p_hall->P_NVM_CONFIG);
 }
 
-// void Hall_InitInterrupts(const Hall_T * p_hall)
+// void Hall_InitInterrupts(Hall_T * p_hall)
 // {
 //     HAL_Hall_InitPinInterruptDualEdge(p_hall->P_HAL_PIN_A, p_hall->PIN_A_ID);
 //     HAL_Hall_InitPinInterruptDualEdge(p_hall->P_HAL_PIN_B, p_hall->PIN_B_ID);
@@ -62,10 +62,10 @@ void Hall_Init(const Hall_T * p_hall)
     180 Degree Active
     Sensors are aligned to motor phase, 0 degree offset.
 */
-void Hall_StartCalibrate(const Hall_T * p_hall) { p_hall->P_STATE->Sensors.Value = 0U; } /* Next poll is edge */
+void Hall_StartCalibrate(Hall_T * p_hall) { p_hall->P_STATE->Sensors.Value = 0U; } /* Next poll is edge */
 
 /* Call for each known phase */
-void Hall_CalibrateState(const Hall_T * p_hall, Hall_Id_T calibratedId)
+void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId)
 {
     p_hall->P_STATE->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = calibratedId;
 }
@@ -86,7 +86,7 @@ bool Hall_Verify(uint8_t sensorsValue)
 }
 
 /* Check wiring */
-bool Hall_IsStateValid(const Hall_T * p_hall)
+bool Hall_IsStateValid(Hall_T * p_hall)
 {
     return Hall_Verify(Hall_ReadSensors(p_hall).Value);
 }
@@ -111,12 +111,12 @@ bool Hall_IsCalibrationTableValid(const Hall_State_T * p_hall)
 
 */
 /******************************************************************************/
-int Hall_VarId_Get(const Hall_T * p_hall, Hall_VarId_T varId)
+int Hall_VarId_Get(Hall_T * p_hall, Hall_VarId_T varId)
 {
     int value = 0;
     switch (varId)
     {
-        case HALL_VAR_SENSOR_STATE: value = Hall_ReadSensors(p_hall).Value; break;
+        case HALL_VAR_SENSOR_PINS:  value = Hall_ReadSensors(p_hall).Value; break;
         case HALL_VAR_SENSOR_ID:    value = p_hall->P_STATE->Id; break;
         default: break;
     }
@@ -156,13 +156,13 @@ int _Hall_ConfigId_Get(const Hall_Config_T * p_hall, Hall_ConfigId_T varId)
     return value;
 }
 
-void Hall_ConfigId_Set(const Hall_T * p_hall, Hall_ConfigId_T varId, int varValue)
+void Hall_ConfigId_Set(Hall_T * p_hall, Hall_ConfigId_T varId, int varValue)
 {
     if (p_hall == NULL) return;
     _Hall_ConfigId_Set(&p_hall->P_STATE->Config, varId, varValue);
 }
 
-int Hall_ConfigId_Get(const Hall_T * p_hall, Hall_ConfigId_T varId)
+int Hall_ConfigId_Get(Hall_T * p_hall, Hall_ConfigId_T varId)
 {
     if (p_hall == NULL) return 0;
     return _Hall_ConfigId_Get(&p_hall->P_STATE->Config, varId);

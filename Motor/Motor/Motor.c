@@ -176,7 +176,7 @@ void Motor_ValidateConfig(Motor_T * p_motor)
 */
 void Motor_InitUnits(Motor_Context_T * p_motor)
 {
-    RotorSensor_Config_T config =
+    RotorSensor_UnitRef_T config =
     {
         .PolePairs = p_motor->Config.SpeedRating.PolePairs,
         .SpeedTypeMax_Angle16 = _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating),

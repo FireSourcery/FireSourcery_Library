@@ -380,6 +380,7 @@ typedef enum Cia402_OdStatus
     CIA402_OD_ERR_VALUE_HIGH        = (int)0x06090031, /* Value too high */
     CIA402_OD_ERR_VALUE_LOW         = (int)0x06090032, /* Value too low */
     CIA402_OD_ERR_GENERAL           = (int)0x08000000, /* General error */
+    CIA402_OD_ERR_DEVICE_STATE      = (int)0x08000022, /* Refused due to present device state */
 }
 Cia402_OdStatus_T;
 

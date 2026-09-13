@@ -165,6 +165,17 @@ static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state, Protocol_A
     p_state->RetransmitMax = policy.RETRANSMIT_MAX;
 }
 
+// static inline void Protocol_ResolveExpectAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy)
+// {
+//     if (policy.EXPECT_ACK_RESP)
+//     {
+//         p_state->StateId = PROTOCOL_SYNC_AWAIT_ACK;
+//         p_state->RetransmitCount = 0U;
+//         p_state->RetransmitMax = policy.RETRANSMIT_MAX;
+//     }
+//     else { Protocol_ResetSync(p_state); }
+// }
+
 /*
     Retransmit while the budget lasts, otherwise abandon. Shared by the nack and deadline
     paths, which differ only in what triggered them.
@@ -195,7 +206,7 @@ static inline Protocol_SyncEvent_T Protocol_ResolveAck(Protocol_SyncState_T * p_
             and that was latched at Protocol_ExpectAck. Taking it again here would re-introduce
             the lifetime bug, since by now the request may well have closed.
 */
-static inline Protocol_SyncEvent_T Protocol_ProcExpectAck(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
+static inline Protocol_SyncEvent_T Protocol_ProcSyncState(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
 {
     /* An abort ends the exchange wherever it was. The caller acks it if policy says so. */
     if (rxClass == PACKET_CLASS_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
@@ -217,6 +228,7 @@ static inline Protocol_SyncEvent_T Protocol_ProcExpectAck(Protocol_SyncState_T *
         default: return PROTOCOL_SYNC_EVENT_NONE;
     }
 }
+
 
 /*!
     @brief  The request deadline expired. Same choice as a nack: retry or abandon.

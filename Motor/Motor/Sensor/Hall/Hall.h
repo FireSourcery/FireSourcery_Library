@@ -254,7 +254,7 @@ static inline Hall_Id_T _Hall_IdOf(const Hall_State_T * p_hall, uint8_t physical
 /*
     Physical Sensors
 */
-static inline Hall_Sensors_T Hall_ReadSensors(const Hall_T * p_hall)
+static inline Hall_Sensors_T Hall_ReadSensors(Hall_T * p_hall)
 {
     return (Hall_Sensors_T)
     {
@@ -273,7 +273,7 @@ static inline void _Hall_CaptureSensors(Hall_State_T * p_state, Hall_Sensors_T s
     p_state->Id = _Hall_IdOf(p_state, sensors.Value);
 }
 
-static inline void Hall_CaptureSensors_ISR(const Hall_T * p_hall)
+static inline void Hall_CaptureSensors_ISR(Hall_T * p_hall)
 {
     _Hall_CaptureSensors(p_hall->P_STATE, Hall_ReadSensors(p_hall));
 }
@@ -282,7 +282,7 @@ static inline void Hall_CaptureSensors_ISR(const Hall_T * p_hall)
     Capture sensor on Hall edge, angle boundary
     @return true on every phase edge. i.e 6x per Hall cycle
 */
-static inline bool Hall_PollCaptureSensors(const Hall_T * p_hall)
+static inline bool Hall_PollCaptureSensors(Hall_T * p_hall)
 {
     Hall_Sensors_T sensors = Hall_ReadSensors(p_hall);
     bool isEdge = (p_hall->P_STATE->Sensors.Value != sensors.Value);
@@ -293,7 +293,7 @@ static inline bool Hall_PollCaptureSensors(const Hall_T * p_hall)
 /*
     return true once per electrical cycle
 */
-// static inline bool Hall_PollEdgeA(const Hall_T * p_hall) { return ((Hall_ReadSensors(p_hall).A == 1U) && (p_hall->P_STATE->Sensors.A == 0U)); }
+// static inline bool Hall_PollEdgeA(Hall_T * p_hall) { return ((Hall_ReadSensors(p_hall).A == 1U) && (p_hall->P_STATE->Sensors.A == 0U)); }
 
 /******************************************************************************/
 /*
@@ -328,7 +328,7 @@ static inline uint16_t Hall_ResolveAngle(Hall_State_T * p_hall)
 
 /* Next poll is edge */
 // static inline void Hall_Reset(Hall_T * p_hall) { p_hall->Sensors.Value = 0U; p_hall->Angle = 0U; }
-static inline void Hall_ZeroInitial(const Hall_T * p_hall)
+static inline void Hall_ZeroInitial(Hall_T * p_hall)
 {
     Hall_CaptureSensors_ISR(p_hall);
     p_hall->P_STATE->Angle = _Hall_Angle16BoundaryOf(p_hall->P_STATE->Id, HALL_DIRECTION_UNKNOWN); /* assume middle */
@@ -354,15 +354,15 @@ static inline Hall_Direction_T Hall_GetDirection(const Hall_State_T * p_hall) { 
 
 */
 /******************************************************************************/
-extern void Hall_InitFrom(const Hall_T * p_hall, const Hall_Config_T * p_config);
-extern void Hall_Init(const Hall_T * p_hall);
+extern void Hall_InitFrom(Hall_T * p_hall, const Hall_Config_T * p_config);
+extern void Hall_Init(Hall_T * p_hall);
 
-extern void Hall_StartCalibrate(const Hall_T * p_hall);
-extern void Hall_CalibrateState(const Hall_T * p_hall, Hall_Id_T calibratedId);
+extern void Hall_StartCalibrate(Hall_T * p_hall);
+extern void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId);
 
 extern bool Hall_Verify(uint8_t sensorsValue);
 extern bool Hall_IsCalibrationTableValid(const Hall_State_T * p_hall);
-extern bool Hall_IsStateValid(const Hall_T * p_hall);
+extern bool Hall_IsStateValid(Hall_T * p_hall);
 
 
 /*
@@ -370,12 +370,12 @@ extern bool Hall_IsStateValid(const Hall_T * p_hall);
 */
 typedef enum Hall_VarId
 {
-    HALL_VAR_SENSOR_STATE,
+    HALL_VAR_SENSOR_PINS,
     HALL_VAR_SENSOR_ID,
 }
 Hall_VarId_T;
 
-extern int Hall_VarId_Get(const Hall_T * p_hall, Hall_VarId_T varId);
+extern int Hall_VarId_Get(Hall_T * p_hall, Hall_VarId_T varId);
 
 typedef enum Hall_ConfigId
 {
@@ -391,8 +391,8 @@ Hall_ConfigId_T;
 extern int _Hall_ConfigId_Get(const Hall_Config_T * p_hall, Hall_ConfigId_T varId);
 extern void _Hall_ConfigId_Set(Hall_Config_T * p_hall, Hall_ConfigId_T varId, int varValue);
 
-extern void Hall_ConfigId_Set(const Hall_T * p_hall, Hall_ConfigId_T varId, int varValue);
-extern int Hall_ConfigId_Get(const Hall_T * p_hall, Hall_ConfigId_T varId);
+extern void Hall_ConfigId_Set(Hall_T * p_hall, Hall_ConfigId_T varId, int varValue);
+extern int Hall_ConfigId_Get(Hall_T * p_hall, Hall_ConfigId_T varId);
 
 #endif
 

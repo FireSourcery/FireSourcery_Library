@@ -29,6 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "Cia402.h"
 #include "Motor/MotorController/MotorController_Var.h"
 #include "Peripheral/CanBus/CanBus.h"
 #include "Peripheral/CanBus/CanBus_Service.h"

@@ -71,7 +71,7 @@ typedef struct
     CAN_Frame_T Frame;
     // CAN_Frame_T TxBuffer;
     CanBus_BufferState_T State;
-    uint32_t BroadcastTime;
+    uint32_t TimeStamp;
     uint32_t HwIndex;
 }
 CanBus_Buffer_T;
@@ -79,13 +79,12 @@ CanBus_Buffer_T;
 /******************************************************************************/
 /*! Rx Callbacks */
 /******************************************************************************/
-typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data); //, uint32_t length);
+// typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data); //, uint32_t length);
 /*
     Full-frame Rx callback — preserves DLC, RTR, and ID metadata.
 */
-typedef void (*CanBus_RxFrame_T)(void * p_dev, const CAN_Frame_T * p_frame);
-// direct write data to application buffer
-// typedef uint8_t * (*CanBus_RxDataMapper_T)(void * p_dev, uint32_t id);
+// typedef void (*CanBus_RxFrame_T)(void * p_dev, const CAN_Frame_T * p_frame);
+
 
 /******************************************************************************/
 /*! Runtime state */
@@ -122,19 +121,10 @@ typedef const struct CanBus
     CanBus_Service_T * P_SERVICE; /* default */
     CanBus_Service_T * P_SERVICE_TABLE; /* Protocol selection */
     uint8_t SERVICE_COUNT;
-    CanBus_RxRequest_T REQ_CALLBACK;
+    // CanBus_RxRequest_T REQ_CALLBACK;
     // const volatile uint32_t * P_TIMER;
 }
 CanBus_T;
-
-#define CAN_BUS_INIT(p_Hal, p_State, p_App, Callback)  \
-{                                                                                  \
-    .P_HAL = p_Hal,                                                                \
-    .P_STATE = p_State,                                                            \
-    .P_CONTEXT = p_App,                                                            \
-    .REQ_CALLBACK = Callback,                                                \
-}
-
 
 
 /******************************************************************************/

@@ -45,7 +45,7 @@ typedef CanBus_BuildFrame_T CanBus_BuildBroadcast_T;
 // typedef CanBus_BuildData_T CanBus_BuildBroadcast_T;
 // #endif
 
-typedef void (*CanBus_Tick_T)(void * p_context, uint32_t dt_us);
+// typedef void (*CanBus_Tick_T)(void * p_context, uint32_t dt_us);
 
 // keep for interface
 typedef struct
@@ -83,7 +83,7 @@ static void  CanBus_BuildEmpty(void * p_context, CAN_Frame_T * p_frame) { (void)
 static const CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_EMPTY = { .BUILD = CanBus_BuildEmpty, .ID = 0U, .INTERVAL = 0U, .P_STATE = NULL };
 
 /* App context is the driver's P_CONTEXT (single source). */
- /* Frame-form: callee fills ID, DLC, data (e.g. CiA402 TxPDO) */
+/* Frame-form: callee fills ID, DLC, data (e.g. CiA402 TxPDO) */
 static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_BroadcastEntry_T * p_broadcast)
 {
     CAN_Frame_T frame = { 0U };
@@ -124,7 +124,7 @@ static inline void _CanBus_ProcBroadcastService(CanBus_T * p_can, CanBus_Broadca
     this layer handles request routing
 */
 // typedef void (*CanBus_ReqHandler_T)(void * p_dev, const uint8_t * p_rx, uint8_t * p_tx);
-typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const void * p_rx, void * p_tx);
+// typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const void * p_rx, void * p_tx);
 // typedef void (*CanBus_ReqHandler_T)(void * p_dev, void * adapter, const CAN_Frame_T * p_rxFrame, CAN_Frame_T * p_txFrame);
 typedef void (*CanBus_RouteHandler_T)(void * p_dev, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
 
@@ -160,7 +160,7 @@ static inline void _CanBus_ProcRequestService(CanBus_T * p_can, CanBus_ReqRoute_
 }
 
 
-
+/* unit of selecion, alternatatively CanBus holds  */
 typedef const struct CanBus_Service
 {
     CanBus_BroadcastEntry_T * P_BROADCASTS;  uint8_t BROADCAST_COUNT;

@@ -118,7 +118,7 @@ static bool Hall_RotorSensor_VerifyCalibration(const Hall_RotorSensor_T * p_sens
     Hall sensors as speed encoder.
     CPR = PolePairs*6   => GetSpeed => mechanical speed
 */
-static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
     AngleCounter_T * p_counter = PulseEncoder_Counter(&p_sensor->PULSE);
     AngleCounter_Config_T config =
@@ -132,7 +132,7 @@ static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_se
     p_counter->Ref.AngleSpeed32PerCount = angle32_speed_per_count_cpr(p_sensor->POLLING_FREQ, 6U);
 }
 
-static void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
     AngleCounter_Config_T config =
     {

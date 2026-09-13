@@ -76,7 +76,7 @@ static bool SinCos_RotorSensor_VerifyCalibration(const SinCos_RotorSensor_T * p_
 /*
     Wire mech-domain SpeedRated -> AngleSpeed projection via PolePairs.
 */
-static void SinCos_RotorSensor_InitUnitsFrom(const SinCos_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static void SinCos_RotorSensor_InitUnitsFrom(const SinCos_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
     SinCos_Config_SetAngleRatio(p_sensor->SIN_COS.P_STATE, p_config->PolePairs);
 }

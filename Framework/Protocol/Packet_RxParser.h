@@ -105,7 +105,6 @@ typedef struct Packet_RxParser
     packet_size_t Index;        /* Bytes held in the buffer */
     packet_size_t NextIndex;    /* NextIndex. Bytes wanted before the next Packet_ProcRxParser. Never exceeds LENGTH_MAX. */
                                 /* alternatively overload Length */
-    // Packet_FrameFormat_T * p_FrameFormat; /* determine optional length field */
     /*
         Total frame length. 0 while unknown, and it survives the rewind that follows a resolved
         frame - see Packet_ResetRxState. This is the parser's own account of the frame, independent
@@ -113,6 +112,8 @@ typedef struct Packet_RxParser
         Cleared on entry to HEADER, when the next frame makes it meaningless.
     */
     packet_size_t FrameLength;
+    // Packet_FrameFormat_T * p_FrameFormat; /* determine optional length field */
+    // uint32_t RxTimeStart;       /* Frame deadline base */
 }
 Packet_RxParser_T;
 
@@ -122,38 +123,6 @@ Packet_RxParser_T;
     Proc
 */
 /******************************************************************************/
-// static inline packet_size_t _Packet_NextRxIndex(const Packet_RxParser_T * p_parser, const Packet_Format_T * p_format)
-// {
-//     /*
-//         Set xcvrRxLimit for PARSE_RX_FRAMING. Prevent reading bytes from the following packet.
-//         RxLength known => Check Rx remaining
-//         RxLength unknown => Check 1 byte or a known const value, until RxLength is known
-//     */
-//     if (p_parser->Length > 0U) { return p_parser->Length; } /* PacketLength is known. */
-//     /* PacketLength is unknown */ /*nextRxIndex = max(p_format->RX_LENGTH_MIN, p_parser->Index + 1U)  */
-//     else { return (p_parser->Index < p_format->LENGTH_MIN) ? p_format->LENGTH_MIN : p_parser->Index + 1U; }
-// }
-
-
-
-// static inline Packet_RxState_T Packet_RxStateOf(const Packet_RxParser_T * p_parser)
-// {
-//     if (p_parser->Index == 0U) { return PACKET_RX_STATE_START; }    /* nothing accepted yet */
-//     if (p_parser->Length == 0U) { return PACKET_RX_STATE_HEADER; }   /* delimiter in, length unresolved */
-//     return PACKET_RX_STATE_PAYLOAD;
-//     // if (p_parser->Index >= p_parser->Length) { return PACKET_RX_STATE_PAYLOAD; }
-//     // return PACKET_RX_STATE_START;
-// }
-/* directly mapped to count */
-// static inline Packet_RxState_T _Packet_RxStateOf(Packet_Format_T * p_specs, size_t rxCount)
-// {
-//     if (rxCount == 0U) { return PACKET_RX_STATE_START; }
-//     else if (rxCount < p_specs->LENGTH_MIN) { return PACKET_RX_STATE_HEADER; }
-//     // else if (rxCount < p_state-> Length) { return PROTOCOL_RX_STATE_WAIT_PACKET; }
-//     else if (rxCount < p_specs->LENGTH_MAX) { return PACKET_RX_STATE_PAYLOAD; }
-//     else { return PACKET_RX_STATE_START; } /* Invalid length, reset */
-// }
-
 /*!
     Rewind the progress for the next frame, keeping FrameLength.
 
@@ -188,9 +157,12 @@ static inline bool _Packet_IsStartId(const Packet_Codec_T * p_format, const uint
     return ((p_format->START_ID == 0x00U) || (p_buffer[0U] == p_format->START_ID));
 }
 
-
 /*!
     Feed p_buffer, Packet_RxParser_T.Index holds valid length
+    called when p_parser->Index == p_parser->NextIndex
+    Drains the Xcvr Rx buffer into a contiguous buffer, which can be cast to Packet format
+    Receive into P_RX_PACKET_BUFFER and run PARSE_RX_FRAMING for RxMeta.Length and ReqCode / Rx completion
+    Packet is complete => Req, ReqExt or Sync, or Error
 */
 static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, const Packet_Codec_T * p_format, const uint8_t * p_buffer)
 {
@@ -221,6 +193,11 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
         case PACKET_RX_STATE_HEADER: /* Wait for Length */
             /* 0 = not yet determinable. Grow the header a byte at a time until the format answers. */
             p_parser->FrameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
+            /*
+                Set NextIndex for Rx before the next PARSE_RX_FRAMING. Prevent reading bytes from the following packet.
+                RxLength known => Get Rx remaining
+                RxLength unknown => Get 1 byte or a known const value, until RxLength is known
+            */
             p_parser->NextIndex = (p_parser->FrameLength > 0U) ? p_parser->FrameLength : (packet_size_t)(p_parser->Index + 1U);
 
             /* One bound covers both: a length that overruns the buffer, and one that undercuts what is already held. */
@@ -261,13 +238,10 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
     }
     /*
         Continue CaptureRx during ReqExt processing
-        Buffers may be overwritten after Req returns. (No repeat process on same Rx)
+        Buffers may be overwritten after Req returns. No repeat process on same Rx Data State
         Req ensure packet data is processed, or copied
         Rx can queue out of sequence. Invalid Rx sequence until timeout buffer flush
-
-        Alternatively, pause CaptureRx during ReqExt processing
-        Incoming packet bytes wait in queue. Cannot miss packets (unless overflow)
-        Cannot check for Abort without user signal, persistent wait process
+        check for Abort without user signal, persistent wait process
     */
     /*
         Rewind. Index must clear with the state, or the next frame builds from a stale offset.
@@ -278,6 +252,14 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
     return rxCode;
 }
 
+// static inline bool Packet_ProcRxParserTimer(Packet_RxParser_T * p_parser, uint32_t rxTimeout, uint32_t timerNow)
+// {
+//     if (p_parser->StateId != PACKET_RX_STATE_START) { p_parser->RxTimeStart = timerNow; return false; }
+//     if (_Protocol_IsElapsed(timerNow, p_parser->RxTimeStart, rxTimeout) == false) { return false; }
+
+//     Packet_ResetRx(p_parser);
+//     return true;
+// }
 
 /*!
 
@@ -294,53 +276,21 @@ static inline packet_size_t Packet_RxFrameLength(const Packet_RxParser_T * p_par
 static inline bool Packet_IsRxWaiting(const Packet_RxParser_T * p_parser) { return (p_parser->StateId != PACKET_RX_STATE_START); }
 
 
-/******************************************************************************/
-/*!
 
-*/
-/******************************************************************************/
-
-
-
-
-
-
-
-/* Drains the Xcvr Rx buffer into the Protocol Rx buffer */
-/*
-    Receive into P_RX_PACKET_BUFFER and run PARSE_RX_FRAMING for RxMeta.Length and ReqCode / Rx completion
-    Packet is complete => Req, ReqExt or Sync, or Error
-    Read into a contiguous buffer, which can be cast to Packet format
-*/
-// static inline Packet_RxCode_T CaptureRx(Packet_RxParser_T * p_parser, Packet_Format_T * p_format, const uint8_t * p_rx )
+// static inline Packet_RxState_T Packet_RxStateOf(const Packet_RxParser_T * p_parser)
 // {
-//     Packet_RxCode_T rxStatus;
-//     uint8_t nextRxIndex;
-
-//     do /* Loop to empty Xcvr Rx buffer. Check for completetion, per Rx 1 byte, during unknown length, or up to known length */
-//     {
-//         /*
-//             Set xcvrRxLimit for PARSE_RX_FRAMING. Prevent reading bytes from the following packet.
-//             RxMeta.Length known => Check Rx remaining
-//             RxMeta.Length unknown => Check 1 byte or a known const value, until RxMeta.Length is known
-//         */
-//         if (p_parser->Length > 0U) { nextRxIndex = p_parser->Length; } /* PacketLength is known. */
-
-//         /* PacketLength is unknown */ /*nextRxIndex = max(p_format->RX_LENGTH_MIN, p_parser->Index + 1U)  */
-//         else { nextRxIndex = (p_parser->Index < p_format->LENGTH_MIN) ? p_format->LENGTH_MIN : p_parser->Index + 1U; }
-
-//         if (nextRxIndex > p_format->LENGTH_MAX || nextRxIndex < p_parser->Index) { return PACKET_RX_ERROR_FRAME; }
-//         /* (RxIndex == nextRxIndex) => (xcvrRxLimit == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
-
-//         /* Copy from Xcvr buffer to Protocol buffer, up to xcvrRxLimit */
-//         p_parser->Index += Xcvr_RxMax(p_parser->p_Xcvr, &p_rx[p_parser->Index], nextRxIndex - p_parser->Index);
-
-//         if (p_parser->Index < nextRxIndex) { return PACKET_RX_AWAIT; } /* Xcvr Rx Buffer empty, wait for Xcvr */
-
-//         /* returns PACKET_RX_AWAIT on successful set of meta data */ /* more bytes in Xcvr Buffer, continue while loop */
-//         rxStatus = p_format->PARSE_RX_FRAMING(p_rx, p_parser->Index, &p_parser->RxMeta);
-//     }
-//     while (rxStatus == PACKET_RX_AWAIT);
-
-//     return rxStatus;
+//     if (p_parser->Index == 0U) { return PACKET_RX_STATE_START; }    /* nothing accepted yet */
+//     if (p_parser->Length == 0U) { return PACKET_RX_STATE_HEADER; }   /* delimiter in, length unresolved */
+//     return PACKET_RX_STATE_PAYLOAD;
+//     // if (p_parser->Index >= p_parser->Length) { return PACKET_RX_STATE_PAYLOAD; }
+//     // return PACKET_RX_STATE_START;
+// }
+/* directly mapped to count */
+// static inline Packet_RxState_T _Packet_RxStateOf(Packet_Format_T * p_specs, size_t rxCount)
+// {
+//     if (rxCount == 0U) { return PACKET_RX_STATE_START; }
+//     else if (rxCount < p_specs->LENGTH_MIN) { return PACKET_RX_STATE_HEADER; }
+//     // else if (rxCount < p_state-> Length) { return PROTOCOL_RX_STATE_WAIT_PACKET; }
+//     else if (rxCount < p_specs->LENGTH_MAX) { return PACKET_RX_STATE_PAYLOAD; }
+//     else { return PACKET_RX_STATE_START; } /* Invalid length, reset */
 // }

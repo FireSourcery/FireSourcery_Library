@@ -41,8 +41,11 @@
 */
 /******************************************************************************/
 #include "Motor/MotProtocol/MotPacket.h"
+#include "Motor/MotProtocol/MotVarId.h"
+#include "Motor/MotProtocol/Cia402/Cia402.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /******************************************************************************/
 /*! CAN IDs */
@@ -50,11 +53,7 @@
 #define MOT_CAN_TX_TELEMETRY1_ID     (0x181U)   /* speed, IPhase, VPhase, VBus */
 #define MOT_CAN_TX_TELEMETRY2_ID     (0x182U)   /* heat, fault flags, state */
 #define MOT_CAN_RX_CONTROL_ID        (0x001U)
-#define MOT_CAN_RX_VAR_READ_ID            (0x1A0U)
-#define MOT_CAN_RX_VAR_WRITE_ID           (0x1A1U)   /* distinct from read so both can route */
 
-#define MOT_CAN_RX_CONFIG_READ_ID         (0x1B0U)
-#define MOT_CAN_RX_CONFIG_WRITE_ID        (0x1B1U)
 
 /******************************************************************************/
 /*! Frame types */
@@ -87,10 +86,68 @@ typedef struct __attribute__((packed))
 }
 MotCan_StateControl_T;
 
-typedef MotPacket_VarReadFixedReq_T MotCan_VarReadReq_T;
-typedef MotPacket_VarReadFixedResp_T MotCan_VarReadResp_T;
-typedef MotPacket_VarWriteFixedReq_T MotCan_VarWriteReq_T;
-typedef MotPacket_VarWriteFixedResp_T MotCan_VarWriteResp_T;
+/******************************************************************************/
+/*!
+    MotVar objects in the CANopen manufacturer-specific range (0x2000-0x5FFF)
+
+    MotVarId_T is already a namespaced struct accessor: {Prefix, Type} names the
+    struct type, {Instance, Base} names the member within it. That is precisely a
+    CANopen record — so the type pair becomes the object index and the member pair
+    its subindex:
+
+        index    = 0x2000 | (Prefix << 4) | Type    -> 0x2000..0x20FF  (256 objects)
+        subindex = (Instance << 4) | Base           -> 0x00..0x3F      (64 members)
+
+    Every var is therefore reachable over the standard SDO route at 0x600 + node,
+    with standard CiA 301 abort codes, and consumes only 256 of the 16384
+    manufacturer indices.
+
+    Note: subindex 0 is a real member here (Instance 0, Base 0), not the CiA 301
+    "number of entries" count — these are flat accessor records, not arrays.
+*/
+/******************************************************************************/
+#define MOT_CAN_OD_VAR_BASE     (0x2000U)
+#define MOT_CAN_OD_VAR_LAST     (MOT_CAN_OD_VAR_BASE | 0x00FFU)
+
+#define MOT_CAN_OD_SUBINDEX_MAX (0x3FU)     /* Instance 2 bits, Base 4 bits */
+
+static inline bool MotCan_Od_IsVarIndex(uint16_t index) { return (index >= MOT_CAN_OD_VAR_BASE) && (index <= MOT_CAN_OD_VAR_LAST); }
+
+static inline MotVarId_T MotCan_Od_ToVarId(uint16_t index, uint8_t subindex)
+{
+    return (MotVarId_T) { .Prefix = (index >> 4U) & 0x0FU, .Type = index & 0x0FU, .Instance = (subindex >> 4U) & 0x03U, .Base = subindex & 0x0FU };
+}
+
+/* Encode-form counterparts — host/EDS side of the same bijection. */
+static inline uint16_t MotCan_Od_IndexOf(MotVarId_T varId)    { return MOT_CAN_OD_VAR_BASE | MOT_VAR_ID_TYPE_ID(varId.Prefix, varId.Type); }
+static inline uint8_t  MotCan_Od_SubIndexOf(MotVarId_T varId) { return (uint8_t)((varId.Instance << 4U) | varId.Base); }
+
+/*
+    MotVarId_Status_T -> CiA 301 abort code.
+    State-dependent write refusals all map to 0x08000022, the spec's
+    "cannot be transferred because of the present device state".
+*/
+static inline Cia402_OdStatus_T MotCan_Od_StatusOf(MotVarId_Status_T status)
+{
+    switch (status)
+    {
+        case MOT_VAR_STATUS_OK:                      return CIA402_OD_OK;
+        case MOT_VAR_STATUS_ERROR_INVALID_ID:        return CIA402_OD_ERR_NO_OBJECT;
+        case MOT_VAR_STATUS_ERROR_READ_ONLY:         return CIA402_OD_ERR_READ_ONLY;
+        case MOT_VAR_STATUS_ERROR_WRITE_ONLY:        return CIA402_OD_ERR_WRITE_ONLY;
+        case MOT_VAR_STATUS_ERROR_ACCESS_DISABLED:   return CIA402_OD_ERR_DEVICE_STATE;
+        case MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE:  return CIA402_OD_ERR_DEVICE_STATE;
+        case MOT_VAR_STATUS_ERROR_NOT_RUNNING_STATE: return CIA402_OD_ERR_DEVICE_STATE;
+        default:                                     return CIA402_OD_ERR_GENERAL;
+    }
+}
+
+static inline Cia402_OdInfo_T MotCan_Od_GetInfo(uint16_t index, uint8_t subindex)
+{
+    return (MotCan_Od_IsVarIndex(index) && (subindex <= MOT_CAN_OD_SUBINDEX_MAX))
+        ? (Cia402_OdInfo_T) { .Type = CIA402_OD_TYPE_I32, .Access = CIA402_OD_ACCESS_RW, .Size = sizeof(int32_t) }
+    : (Cia402_OdInfo_T) { .Type = CIA402_OD_TYPE_NONE, .Access = CIA402_OD_ACCESS_NONE, .Size = 0U };
+}
 
 /******************************************************************************/
 /*! TX broadcasts — call periodically (e.g. every 20 ms) */

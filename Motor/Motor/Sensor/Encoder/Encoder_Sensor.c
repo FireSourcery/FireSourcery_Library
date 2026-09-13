@@ -75,7 +75,7 @@ static bool Encoder_RotorSensor_IsSensorAvailable(const Encoder_RotorSensor_T * 
 // angle resolution 65536/cpr
 // el angle per tick = 65536/cpr * polepairs
 // counts per electrical revolution = cpr/polepairs
-static void Encoder_RotorSensor_InitFrom(const Encoder_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static void Encoder_RotorSensor_InitFrom(const Encoder_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
     p_sensor->ENCODER.P_STATE->Config.ScalarSpeedRef_Rpm = p_config->SpeedTypeMax_Rpm;
     Encoder_ModeDT_InitValuesFrom(&p_sensor->ENCODER, &p_sensor->ENCODER.P_STATE->Config);
