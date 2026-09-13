@@ -111,20 +111,15 @@ Packet_Context_T;
     Frame Encoding/Decoding
     layout is a view with the buffer's lifetime
 
-    Returned by PARSE_RX_HEADER and BUILD_TX_HEADER, and held by the engine across the handler
-    call, so it must point at storage that outlives the call - a static const per shape, never
-    a compound literal in the callback's own frame.
+    Returned by PARSE_RX_FRAME, and referenced by the request table's Packet_Id_T, so it must
+    point at storage that outlives both - a static const per shape, never a compound literal
+    in a callback's own frame.
 
-    The engine offsets the Rx payload by the HEADER_LENGTH of the frame that just arrived, and
-    the Tx payload by the HEADER_LENGTH of the frame that OPENED the exchange - held in
-    Protocol_State_T.p_ReqFraming. The two are not the same on a continuation, where the
-    arriving frame is an ack and need not share the data frame's header length.
-
-    CONTRACT, still unenforced: a format whose RESPONSE header differs in length from its
-    REQUEST header places the Tx payload at the request's offset, because the handler must
-    write its payload before BUILD_TX_HEADER can run and so the response header length is not
-    yet knowable. Keep the two equal, or add a query yielding the Tx frame format from
-    Meta.Id alone and offset by that.
+    Payload offsets no longer come from the arriving frame. The row bound for an id carries
+    the shape of its request in ID.FRAME_FORMAT and of its answer in RESP_ID.FRAME_FORMAT, so
+    both offsets are known before the handler runs and a response may take a shape its request
+    did not. What PARSE_RX_FRAME returns is the parser's own reading of the arriving frame,
+    which the engine checks the row against - see Packet_IsFrameConsistent.
 */
 typedef const struct Packet_FrameFormat
 {
@@ -172,13 +167,15 @@ Packet_Id_T;
     express protocol meaning. Whether an Id is an ack is decided by Packet_ClassOf, above the
     parser, from the ids declared on this format.
 
-    PARSE_RX_LENGTH   Phase 1. Total frame length, or 0 while not yet determinable.
+    PARSE_RX_LENGTH Phase 1. Total frame length, or 0 while not yet determinable.
                 Called once at LENGTH_MIN, then per additional byte for formats whose length
                 is not at a fixed offset. Free to inspect the Id to pick a frame shape.
-    IS_RX_VALID    Phase 2. Checksum / CRC over the complete frame.
-    PARSE_RX_HEADER Phase 2. The only source of Meta.Id, and so of the frame's class.
+    IS_RX_VALID     Phase 2. Checksum / CRC over the complete frame.
+    PARSE_RX_FRAME  Phase 2. The only source of Meta.Id, and so of the frame's class.
 
-    keep separate from ParseRxFrame: handle 3 conditions need more bytes, complete with a row, complete with no row
+    PARSE_RX_LENGTH stays separate from PARSE_RX_FRAME because a parse has three outcomes -
+    need more bytes, complete, unframeable - and a single pointer return cannot carry them.
+    Length answers completion; PARSE_RX_FRAME runs once, on a frame already known to be whole.
 */
 typedef packet_size_t (*Packet_ParseRxLength_T)(const void * p_buffer, packet_size_t rxCount);
 typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_size_t length);
@@ -200,8 +197,13 @@ typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_si
     Writes all header fields (start, id, length, checksum).
 */
 /* optionally engine provide checksum */
-typedef Packet_Id_T * (*Packet_ParseRxFrame_T)(Packet_Meta_T * p_meta, const void * p_header);
-typedef void (*Packet_BuildTxFrame_T)(const Packet_Meta_T * p_meta, void * p_header);
+/*
+    Fills p_meta and reports the shape it read the frame as. NULL when the header cannot
+    describe a frame at all. Resolving the id to a table row is the engine's - the codec does
+    not see the request table, which is what keeps one codec usable by more than one.
+*/
+typedef Packet_FrameFormat_T * (*Packet_ParseRxFrame_T)(Packet_Meta_T * p_meta, const void * p_frame);
+typedef void (*Packet_BuildTxFrame_T)(const Packet_Meta_T * p_meta, void * p_frame);
 
 
 /******************************************************************************/
@@ -244,9 +246,9 @@ typedef const struct Packet_Codec
     Packet_ParseRxLength_T PARSE_RX_LENGTH;    // Phase 1: frame length, 0 while unknown
     Packet_ValidateRx_T    IS_RX_VALID;        // Phase 2: integrity
     /* On a completed frame */
-    Packet_ParseRxFrame_T PARSE_RX_HEADER;    // Phase 2: fields extraction
+    Packet_ParseRxFrame_T PARSE_RX_FRAME;     // Phase 2: fields extraction
     /* Tx */
-    Packet_BuildTxFrame_T BUILD_TX_HEADER;    // symmetric with Phase 2
+    Packet_BuildTxFrame_T BUILD_TX_FRAME;     // symmetric with Phase 2
 
     Packet_FrameFormat_T CONTROL_FRAME_FORMAT;
     packet_id_t ACK_ID;
@@ -261,14 +263,14 @@ Packet_Codec_T;
 
 #define PACKET_CODEC_ASSERT(Codec, PacketBufferLength) \
     static_assert((Codec.LENGTH_MAX) <= (PacketBufferLength) , "frame exceeds buffer"); \
-    static_assert((Codec.START_ID_LENGTH) <= (Codec.LENGTH_MIN) , "frame exceeds buffer");
+    static_assert((Codec.START_ID_LENGTH) <= (Codec.LENGTH_MIN) , "delimiter exceeds the minimum header");
 
 /*
     Extract Fields
 */
 /* Packet_RxCode_T rxCode == COMPLETE */
-static inline Packet_Id_T * Packet_ParseRxHeader(Packet_Codec_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_header) { return p_codec->PARSE_RX_HEADER(p_meta, p_header); }
-static inline void Packet_BuildTxHeader(Packet_Codec_T * p_codec, const Packet_Meta_T * p_meta, uint8_t * p_header) { p_codec->BUILD_TX_HEADER(p_meta, p_header); }
+static inline Packet_FrameFormat_T * Packet_ParseRxFrame(Packet_Codec_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_frame) { return p_codec->PARSE_RX_FRAME(p_meta, p_frame); }
+static inline void Packet_BuildTxFrame(Packet_Codec_T * p_codec, const Packet_Meta_T * p_meta, uint8_t * p_frame) { p_codec->BUILD_TX_FRAME(p_meta, p_frame); }
 
 /* Variable length payload use Meta.Length. Fixed use BODY_LENGTH. */
 static inline packet_size_t Packet_FrameLengthOf(Packet_FrameFormat_T * p_format, const Packet_Meta_T * p_meta)

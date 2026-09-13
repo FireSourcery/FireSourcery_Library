@@ -31,14 +31,14 @@
 /******************************************************************************/
 #include "Cia402.h"
 #include "Motor/MotorController/MotorController_Var.h"
-#include "Peripheral/CanBus/CanBus.h"
-#include "Peripheral/CanBus/CanBus_Service.h"
+#include "Peripheral/CAN/CAN.h"
+#include "Peripheral/CAN/CAN_Service.h"
 
 /******************************************************************************/
 /*
     Rx route handlers — one per consumed COB-ID class, mapped directly into CIA402_ROUTES.
 
-    Each has the CanBus_RouteHandler_T shape (p_dev is the MotorController context), resolves
+    Each has the CAN_RouteHandler_T shape (p_dev is the MotorController context), resolves
     its adapter, and validates the node id. Only the SDO handler fills p_tx (a non-zero
     DataLength signals a reply); the RxPDO handlers never respond.
 
@@ -55,4 +55,4 @@ extern void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN
 extern void MotorController_Cia402_BuildTxPdo1(MotorController_T * p_mc, CAN_Frame_T * p_tx);
 extern void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * p_tx);
 
-extern CanBus_Service_T MOTOR_CONTROLLER_CIA402_SERVICE;
+extern CAN_Service_T MOTOR_CONTROLLER_CIA402_SERVICE;

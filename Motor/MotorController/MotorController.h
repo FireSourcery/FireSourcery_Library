@@ -54,9 +54,9 @@
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/Serial/Serial.h"
-#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-#include "Peripheral/CanBus/CanBus.h"
-#include "Peripheral/CanBus/CanBus_Service.h"
+#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+#include "Peripheral/CAN/CAN.h"
+#include "Peripheral/CAN/CAN_Service.h"
 #endif
 
 #include "Framework/Timer/Timer.h"
@@ -245,8 +245,8 @@ typedef const struct MotorController
 
     Serial_T * P_SERIALS;
     uint8_t SERIAL_COUNT;
-#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    CanBus_T * P_CAN_SOCKETS;
+#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+    CAN_T * P_CAN_SOCKETS;
     uint8_t CAN_SOCKET_COUNT;
 #endif
 

@@ -34,6 +34,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <assert.h>
 #include <sys/cdefs.h>
 
 /******************************************************************************/
@@ -118,7 +119,7 @@ typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, Packet_Xfe
 typedef const struct Protocol_Req
 {
     Packet_Id_T ID; /* Must be embedded for __container_of */
-#ifdef PROTOCOL_REQUEST_TX_OFFSET
+#ifdef PROTOCOL_RESPONSE_FORMAT_SEPARATE
     Packet_Id_T RESP_ID; /* optionally, or assume same as ID if not specified */
 #endif
     Protocol_ProcReqResp_T PROC;
@@ -127,7 +128,16 @@ typedef const struct Protocol_Req
 Protocol_Req_T;
 
 
-#define PROTOCOL_REQ(Id, Proc, AckPolicy) { .ID = (packet_id_t)(Id), .PROC = (Protocol_ProcReqResp_T)(Proc), .ACK = AckPolicy }
+/*
+    Frame shape is per id, so it belongs on the row. RESP_ID defaults to the request's id and
+    shape; a response that answers with a different shape names its own.
+*/
+#define PROTOCOL_REQ(Id, Format, Proc, AckPolicy)                       \
+{                                                                       \
+    .ID      = { .ID = (packet_id_t)(Id), .FRAME_FORMAT = (Format) },   \
+    .PROC    = (Protocol_ProcReqResp_T)(Proc),                          \
+    .ACK     = AckPolicy,                                               \
+}
 
 #ifndef __containerof
 #define __containerof(x, s, m) ((s *)(const void *)((const char *)(x) - offsetof(s, m)))
@@ -160,18 +170,29 @@ Protocol_ReqState_T;
     Proc
 */
 /******************************************************************************/
-static inline bool Protocol_CaptureReq(Protocol_ReqState_T * p_state, Packet_Id_T * p_packetId)
+/*!
+    @param  p_packetId  the ID member of a request table row, or NULL when the id has none.
+                        NULL must not reach __containerof - the subtraction would yield a
+                        non-NULL pointer into nothing.
+    @return false when the id has no handler.
+*/
+static inline bool Protocol_CaptureReq(Protocol_ReqState_T * p_state, const Packet_Id_T * p_packetId)
 {
+    assert(p_packetId != NULL);
     if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; } /* stay on the same request even if id changes */
     p_state->p_ReqActive = __containerof(p_packetId, Protocol_Req_T, ID);
-    return true;
+    if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
+    return (p_state->p_ReqActive != NULL);
 }
 
+/*! The shape the bound request answers with. NULL when nothing is bound. */
 static inline const Packet_Id_T * Protocol_ReqRespId(const Protocol_ReqState_T * p_state)
 {
-#ifndef PROTOCOL_REQUEST_TX_OFFSET
-    return (p_state->p_ReqActive != NULL) ? &p_state->p_ReqActive->ID : NULL;
-    //   p_state->p_ReqActive->RESP_ID
+    if (p_state->p_ReqActive == NULL) { return NULL; }
+#ifdef PROTOCOL_RESPONSE_FORMAT_SEPARATE
+    return (p_state->p_ReqActive->RESP_ID.FRAME_FORMAT != NULL) ? &p_state->p_ReqActive->RESP_ID : &p_state->p_ReqActive->ID;
+#else
+    return &p_state->p_ReqActive->ID;
 #endif
 }
 
@@ -223,15 +244,17 @@ static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state
     return reqCode;
 }
 
-static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxFrame, void * p_txFrame)
+/*!
+    Offset both payloads past their headers and invoke the handler.
+*/
+static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const uint8_t * p_rxFrame, uint8_t * p_txFrame)
 {
     if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
+    assert(p_state->p_ReqActive->ID.FRAME_FORMAT != NULL);
 
     packet_size_t rxOffset = p_state->p_ReqActive->ID.FRAME_FORMAT->HEADER_LENGTH;
-#ifndef PROTOCOL_REQUEST_TX_OFFSET
-    packet_size_t txOffset = rxOffset;
-    // packet_size_t txOffset = p_state->p_ReqActive->RESP_ID.FRAME_FORMAT == NULL ? rxOffset : p_state->p_ReqActive->RESP_ID.FRAME_FORMAT->HEADER_LENGTH;
-#endif
+    packet_size_t txOffset = Protocol_ReqRespId(p_state)->FRAME_FORMAT->HEADER_LENGTH;
+
     return _Protocol_ProcReq(p_state, p_app, p_xfer, &p_rxFrame[rxOffset], &p_txFrame[txOffset]);
 }
 
@@ -256,6 +279,19 @@ static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState
     Alternative table search
 */
 /******************************************************************************/
+/*!
+    Resolve an id to the row's ID member - the pointer Protocol_CaptureReq recovers the row
+    from. Returned rather than the row itself so the engine hands the dispatch layer the same
+    thing whether the search happens here or, later, inside a codec.
+
+    @return NULL when the id has no handler.
+*/
+static inline const Packet_Id_T * Protocol_SearchIdTable(const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+{
+    for (size_t iReq = 0U; iReq < tableLength; iReq++) { if (p_reqTable[iReq].ID.ID == id) { return &p_reqTable[iReq].ID; } }
+    return NULL;
+}
+
 /*! @return pointer to Req, NULL when the id has no handler */
 static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
 {
@@ -300,6 +336,11 @@ static inline bool Protocol_CaptureReqOfTable(Protocol_ReqState_T * p_state, con
     // const volatile uint32_t * P_TIMER;
     // const uint32_t RX_TIMEOUT;              /* Frame deadline */
     // const uint32_t REQ_TIMEOUT;             /* Exchange deadline */
+
+    // one lookup without searching
+// typedef Packet_Id_T * (*Packet_ParseRxFrame_T)(Packet_Meta_T * p_meta, const void * p_frame);
+// typedef void (*Packet_BuildTxFrame_T)(const Packet_Meta_T * p_meta, void * p_frame);
+
 // }
 // Protocol_ReqService_T;
 

@@ -52,7 +52,7 @@
 */
 /******************************************************************************/
 /*
-    Per-COB-ID Rx route handlers — mapped directly into CIA402_ROUTES (CanBus_RouteHandler_T shape:
+    Per-COB-ID Rx route handlers — mapped directly into CIA402_ROUTES (CAN_RouteHandler_T shape:
     p_dev is the MotorController context). The route table fans out by COB-ID class; each handler
     resolves its adapter/motor and validates the node id before acting.
 */
@@ -75,7 +75,7 @@ static Cia402_Adapter_T * Cia402_AdapterIfAddressed(MotorController_T * p_mc, co
 
 */
 /******************************************************************************/
-/* 0x600 SDO download/upload request — fills p_tx; non-zero DataLength signals a reply to CanBus_ProcRequest */
+/* 0x600 SDO download/upload request — fills p_tx; non-zero DataLength signals a reply to CAN_ProcRequest */
 void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 {
     Cia402_Adapter_T * p_adapter = Cia402_AdapterIfAddressed(p_mc, p_rx);
@@ -190,22 +190,22 @@ void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * 
     Frames not addressed to this node, or in unconsumed COB-ID classes
     (NMT, SYNC, EMCY, our own TxPDOs, SDO response), are ignored.
 */
-const CanBus_ReqRoute_T CIA402_ROUTES[] =
+const CAN_ReqRoute_T CIA402_ROUTES[] =
 {
-    { CIA402_COB_RXPDO1_BASE,  CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleRxPdo1 },
-    { CIA402_COB_RXPDO2_BASE,  CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleRxPdo2 },
-    { CIA402_COB_SDO_REQ_BASE, CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleSdo },
+    { CIA402_COB_RXPDO1_BASE,  CIA402_COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo1 },
+    { CIA402_COB_RXPDO2_BASE,  CIA402_COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo2 },
+    { CIA402_COB_SDO_REQ_BASE, CIA402_COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleSdo },
 
-    // { CIA402_COB_SDO_REQ_BASE | 0U, CIA402_COB_MASK, NULL, Motor0, (CanBus_ReqHandler_T)Motor_Cia402_HandleSdo },
+    // { CIA402_COB_SDO_REQ_BASE | 0U, CIA402_COB_MASK, NULL, Motor0, (CAN_ReqHandler_T)Motor_Cia402_HandleSdo },
 };
 
-const CanBus_BroadcastEntry_T CIA402_BROADCASTS[] = {
-  { .ID = CIA402_COB_TXPDO1_BASE, (CanBus_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo1, 10U, .P_STATE = &(CanBus_BroadcastState_T){ 0 } },
-  { .ID = CIA402_COB_TXPDO2_BASE, (CanBus_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo2, 100U, .P_STATE = &(CanBus_BroadcastState_T){ 0 } },
+const CAN_BroadcastEntry_T CIA402_BROADCASTS[] = {
+  { .ID = CIA402_COB_TXPDO1_BASE, (CAN_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo1, 10U, .P_STATE = &(CAN_BroadcastState_T){ 0 } },
+  { .ID = CIA402_COB_TXPDO2_BASE, (CAN_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo2, 100U, .P_STATE = &(CAN_BroadcastState_T){ 0 } },
   /* Heartbeat, etc. */
 };
 
-CanBus_Service_T MOTOR_CONTROLLER_CIA402_SERVICE =
+CAN_Service_T MOTOR_CONTROLLER_CIA402_SERVICE =
 {
     .P_ROUTES = CIA402_ROUTES,
     .ROUTE_COUNT = sizeof(CIA402_ROUTES) / sizeof(CIA402_ROUTES[0]),

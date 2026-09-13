@@ -155,7 +155,7 @@ static inline uint8_t MotorController_Var_GetVMonitorCount(MotorController_T * p
 static inline uint8_t MotorController_Var_GetProtocolCount(MotorController_T * p_dev) { return p_dev->PROTOCOL_COUNT; }
 static inline uint8_t MotorController_Var_GetCanSocketCount(MotorController_T * p_dev)
 {
-#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
     return p_dev->CAN_SOCKET_COUNT;
 #else
     return 0;
@@ -367,8 +367,8 @@ static int _HandleCommunication_Get(MotorController_T * p_dev, MotVarId_T varId)
     {
         case MOT_VAR_TYPE_SOCKET_STATE:             return 0;
         case MOT_VAR_TYPE_SOCKET_CONFIG:            return Socket_ConfigId_Get(SocketAt(p_dev, varId.Instance), varId.Base);
-        case MOT_VAR_TYPE_CAN_BUS_STATE:            return 0;
-        case MOT_VAR_TYPE_CAN_BUS_CONFIG:           return 0;
+        case MOT_VAR_TYPE_CAN_STATE:            return 0;
+        case MOT_VAR_TYPE_CAN_CONFIG:           return 0;
         default: return 0;
     }
 }
@@ -379,8 +379,8 @@ static MotVarId_Status_T _HandleCommunication_Set(MotorController_T * p_dev, Mot
     {
         case MOT_VAR_TYPE_SOCKET_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_SOCKET_CONFIG:            Socket_ConfigId_Set(SocketAt(p_dev, varId.Instance), varId.Base, value);     break;
-        case MOT_VAR_TYPE_CAN_BUS_STATE:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_CAN_BUS_CONFIG:           break;
+        case MOT_VAR_TYPE_CAN_STATE:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_CAN_CONFIG:           break;
         case MOT_VAR_TYPE_CIA_402_STATE:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_CIA_402_CONFIG:           break;
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
@@ -513,7 +513,7 @@ static MotVarId_Status_T CheckInputPolicy(MotorController_T * p_dev, MotVarId_T 
 
         // Communication: Config
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_COMMUNICATION, MOT_VAR_TYPE_SOCKET_CONFIG):
-        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_COMMUNICATION, MOT_VAR_TYPE_CAN_BUS_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_COMMUNICATION, MOT_VAR_TYPE_CAN_CONFIG):
             if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 

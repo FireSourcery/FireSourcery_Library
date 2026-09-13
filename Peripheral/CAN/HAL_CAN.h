@@ -92,26 +92,25 @@ static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex);
 static inline void HAL_CAN_InitBaudRate(HAL_CAN_T * p_hal, uint32_t baudRate);
 static inline void HAL_CAN_Init(HAL_CAN_T * p_hal);
 
+#include HAL_PERIPHERAL_PATH(HAL_CAN.h)
 
 /******************************************************************************/
 /*
 */
 /******************************************************************************/
-#include HAL_PERIPHERAL_PATH(HAL_CAN.h)
-
 /* unmap status at hal layer if needed */
-typedef enum
-{
-    CAN_BUS_MESSAGE_BUFFER_IDLE,
-    CAN_BUS_MESSAGE_BUFFER_RX_BUSY,
-    CAN_BUS_MESSAGE_BUFFER_TX_BUSY,
-    CAN_BUS_MESSAGE_BUFFER_RX_FIFO_BUSY,
-    CAN_BUS_MESSAGE_BUFFER_COMPLETE,
-    CAN_BUS_MESSAGE_BUFFER_TX_REMOTE,
-    CAN_BUS_MESSAGE_BUFFER_RX_REMOTE,
-    CAN_BUS_MESSAGE_BUFFER_DMA_ERROR
-}
-HAL_CAN_DriverStatus_T;
+// typedef enum
+// {
+//     CAN_MESSAGE_BUFFER_IDLE,
+//     CAN_MESSAGE_BUFFER_RX_BUSY,
+//     CAN_MESSAGE_BUFFER_TX_BUSY,
+//     CAN_MESSAGE_BUFFER_RX_FIFO_BUSY,
+//     CAN_MESSAGE_BUFFER_COMPLETE,
+//     CAN_MESSAGE_BUFFER_TX_REMOTE,
+//     CAN_MESSAGE_BUFFER_RX_REMOTE,
+//     CAN_MESSAGE_BUFFER_DMA_ERROR
+// }
+// HAL_CAN_DriverStatus_T;
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadTxStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadRxStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadErrorStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
@@ -153,7 +152,7 @@ static inline void HAL_CAN_ReadRxMessage(HAL_CAN_T * p_hal, CAN_Frame_T * p_rxFr
     p_rxFrame->DataLength = HAL_CAN_ReadRxData(p_hal, &p_rxFrame->Data[0U]);
 }
 
-static inline void HAL_CAN_PollRxMessage(HAL_CAN_T * p_can, CAN_Frame_T * p_rxFrame)
+static inline bool HAL_CAN_PollRxMessage(HAL_CAN_T * p_can, CAN_Frame_T * p_rxFrame)
 {
     if (HAL_CAN_ReadRxFullFlag(p_can))
     {
@@ -161,21 +160,23 @@ static inline void HAL_CAN_PollRxMessage(HAL_CAN_T * p_can, CAN_Frame_T * p_rxFr
         p_rxFrame->DataLength = HAL_CAN_ReadRxLength(p_can);
         HAL_CAN_ReadRxData(p_can, &p_rxFrame->Data[0U]);
         HAL_CAN_ClearRxFullFlag(p_can);
+        return true;
     }
+    return false;
 }
 
 /*
     granular signature
 */
-static inline void _HAL_CAN_WriteTx(HAL_CAN_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
-{
-    HAL_CAN_WriteTxId(p_can, id);
-    HAL_CAN_WriteTxData(p_can, p_txData, length); /* includes start Transmit */
-}
+// static inline void _HAL_CAN_WriteTx(HAL_CAN_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length)
+// {
+//     HAL_CAN_WriteTxId(p_can, id);
+//     HAL_CAN_WriteTxData(p_can, p_txData, length); /* includes start Transmit */
+// }
 
-static inline size_t _HAL_CAN_ReadRx(HAL_CAN_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData)
-{
-    *p_rxId = HAL_CAN_ReadRxId(p_can);
-    return HAL_CAN_ReadRxData(p_can, p_rxData);
-}
+// static inline size_t _HAL_CAN_ReadRx(HAL_CAN_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData)
+// {
+//     *p_rxId = HAL_CAN_ReadRxId(p_can);
+//     return HAL_CAN_ReadRxData(p_can, p_rxData);
+// }
 

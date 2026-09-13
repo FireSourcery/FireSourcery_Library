@@ -158,7 +158,7 @@ static inline uint32_t _HAL_CAN_ReadRxStandardId(const HAL_CAN_T * p_hal)
 */
 /******************************************************************************/
 /*
-    Tx write sequence (caller order — driven by upper CanBus/HAL_CAN.h wrapper):
+    Tx write sequence (caller order — driven by upper CAN/HAL_CAN.h wrapper):
         WriteTxExtendedId | WriteTxStandardId   — selects buffer, encodes ID with RTR=0
         WriteTxRemote (optional)                 — sets RTR on the already-selected buffer
         WriteTxData                              — writes payload, DLC, launches

@@ -36,8 +36,8 @@
 #include "Motor/MotProtocol/Cia402/MotorController_Cia402.h"
 #include "Motor/MotorController/Traction/MotorController_Traction.h"
 #include "Motor/Motor/Motor_User.h"
-#include "Peripheral/CanBus/CanBus.h"
-#include "Peripheral/CanBus/CanBus_Service.h"
+#include "Peripheral/CAN/CAN.h"
+#include "Peripheral/CAN/CAN_Service.h"
 
 
 #include <stdint.h>
@@ -103,19 +103,19 @@ static inline void BuildTelemetry2(MotorController_T * p_mc, CAN_Frame_T * p_tx)
 }
 
 
-static const CanBus_BroadcastEntry_T MOT_CAN_BROADCAST_TABLE[] =
+static const CAN_BroadcastEntry_T MOT_CAN_BROADCAST_TABLE[] =
 {
-    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U,     .BUILD = (CanBus_BuildBroadcast_T)BuildTelemetry1, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
-    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U,   .BUILD = (CanBus_BuildBroadcast_T)BuildTelemetry2, .P_STATE = &(CanBus_BroadcastState_T) { 0 } },
+    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U,     .BUILD = (CAN_BuildBroadcast_T)BuildTelemetry1, .P_STATE = &(CAN_BroadcastState_T) { 0 } },
+    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U,   .BUILD = (CAN_BuildBroadcast_T)BuildTelemetry2, .P_STATE = &(CAN_BroadcastState_T) { 0 } },
 };
 
 
 /******************************************************************************/
-/*! RX dispatch — register as CanBus_T REQ_CALLBACK */
+/*! RX dispatch — register as CAN_T REQ_CALLBACK */
 /******************************************************************************/
 /*!
     @brief  Dispatch received CAN frame to the appropriate handler.
-            Signature matches CanBus_RxRequest_T.
+            Signature matches CAN_RxRequest_T.
             p_context must be MotorController_T *.
 */
 /*
@@ -287,16 +287,16 @@ static inline void Req_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p
 }
 
 
-static const CanBus_ReqRoute_T MOT_CAN_ROUTES[] =
+static const CAN_ReqRoute_T MOT_CAN_ROUTES[] =
 {
-    { CIA402_COB_RXPDO1_BASE,  CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleRxPdo1 },
-    { CIA402_COB_RXPDO2_BASE,  CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)MotorController_Cia402_HandleRxPdo2 },
-    { CIA402_COB_SDO_REQ_BASE, CIA402_COB_FUNCTION_MASK, (CanBus_RouteHandler_T)Req_HandleSdo },
-    // { MOT_CAN_RX_CONTROL_ID,   0x7FFU, (CanBus_RouteHandler_T)Req_Traction }, /* 0x001 throttle/brake — no reply */
+    { CIA402_COB_RXPDO1_BASE,  CIA402_COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo1 },
+    { CIA402_COB_RXPDO2_BASE,  CIA402_COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo2 },
+    { CIA402_COB_SDO_REQ_BASE, CIA402_COB_FUNCTION_MASK, (CAN_RouteHandler_T)Req_HandleSdo },
+    // { MOT_CAN_RX_CONTROL_ID,   0x7FFU, (CAN_RouteHandler_T)Req_Traction }, /* 0x001 throttle/brake — no reply */
 };
 
 
-static const CanBus_Service_T MOTOR_CONTROLLER_MOT_CAN_SERVICE =
+static const CAN_Service_T MOTOR_CONTROLLER_MOT_CAN_SERVICE =
 {
     .P_ROUTES = MOT_CAN_ROUTES,
     .ROUTE_COUNT = sizeof(MOT_CAN_ROUTES) / sizeof(MOT_CAN_ROUTES[0]),

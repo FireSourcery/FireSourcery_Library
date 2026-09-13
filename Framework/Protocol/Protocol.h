@@ -157,7 +157,7 @@ static inline void Protocol_Reset(Protocol_State_T * p_state, uint32_t timerNow)
 /******************************************************************************/
 static inline bool Protocol_TxResponse(const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec, const Packet_FrameFormat_T * p_format, Packet_Context_T * p_tx)
 {
-    Packet_BuildTxHeader(p_codec, &p_tx->Meta, p_tx->Packet);
+    Packet_BuildTxFrame(p_codec, &p_tx->Meta, p_tx->Packet);
     return Xcvr_TxN(p_xcvr, p_tx->Packet, Packet_FrameLengthOf(p_format, &p_tx->Meta));
 }
 
@@ -178,7 +178,7 @@ static inline void Protocol_TxControl(const Xcvr_T * p_xcvr, const Packet_Codec_
 {
     uint8_t frame[PACKET_CONTROL_LENGTH_MAX];
     Packet_Meta_T meta = { .Id = Packet_ControlIdOf(p_codec, txClass), .Length = 0U };
-    Packet_BuildTxHeader(p_codec, &meta, frame);
+    Packet_BuildTxFrame(p_codec, &meta, frame);
     Xcvr_TxN(p_xcvr, frame, p_codec->CONTROL_FRAME_FORMAT.HEADER_LENGTH);
 }
 
@@ -241,14 +241,19 @@ static inline bool Protocol_ProcRxDeadline(Protocol_State_T * p_state, uint32_t 
 */
 /* With Protocol_Base_T buffer context  */
 /******************************************************************************/
-static inline Packet_Id_T * Protocol_ProcRxFrame(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format)
+static inline const Packet_Id_T * Protocol_ProcRxFrame(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_format)
 {
-    Packet_Id_T * p_id = NULL;
+    const Packet_Id_T * p_id = NULL;
     switch (Protocol_CaptureRx(p_xcvr, p_format, &p_state->RxParser, p_link->P_RX_PACKET->Packet))
     {
         /* 2. Classify, handshake, dispatch */
         case PACKET_RX_COMPLETE:
-            p_id = Packet_ParseRxHeader(p_format, &p_link->P_RX_PACKET->Meta, p_link->P_RX_PACKET->Packet);
+            /* The codec reads the frame; the table resolves the id. Keeping the two apart is
+               what lets one codec serve more than one request table. */
+            if (Packet_ParseRxFrame(p_format, &p_link->P_RX_PACKET->Meta, p_link->P_RX_PACKET->Packet) != NULL)
+            {
+                p_id = Protocol_SearchIdTable(p_link->P_REQ_TABLE, p_link->REQ_TABLE_LENGTH, p_link->P_RX_PACKET->Meta.Id);
+            }
             if (p_id == NULL)
             {
                 Protocol_TxControl(p_xcvr, p_format, PACKET_CLASS_NACK);     /* no handler for this id */
@@ -384,7 +389,7 @@ static inline void Protocol_ProcRequest(const Protocol_Base_T * p_link, Protocol
     };
 
     /* must determine response frame before building header. or shift index  */
-    Protocol_ReqCode_T reqCode = Protocol_ProcReqState(&p_state->Req, p_link->P_APP_CONTEXT, &xfer, &p_link->P_RX_PACKET->Packet, &p_link->P_TX_PACKET->Packet);
+    Protocol_ReqCode_T reqCode = Protocol_ProcReqState(&p_state->Req, p_link->P_APP_CONTEXT, &xfer, p_link->P_RX_PACKET->Packet, p_link->P_TX_PACKET->Packet);
 
 
     /* The handler's Length, before the frame builder indexes by it. A constant at most call sites. */
@@ -449,9 +454,8 @@ static inline void Protocol_ProcRequestTimeout(const Protocol_Base_T * p_link, P
 */
 static inline void Protocol_Proc(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec)
 {
-    uint32_t timerNow = *p_link->P_TIMER;
     Protocol_SyncEvent_T syncEvent = PROTOCOL_SYNC_EVENT_NONE;
-    Packet_Id_T * p_id = Protocol_ProcRxFrame(p_link, p_state, p_xcvr, p_codec);
+    const Packet_Id_T * p_id = Protocol_ProcRxFrame(p_link, p_state, p_xcvr, p_codec);
 
     if (p_id != NULL)
     {

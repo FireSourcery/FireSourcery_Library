@@ -86,8 +86,8 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
     is the only place that conversion happens.
 */
 /******************************************************************************/
-static const Packet_FrameFormat_T MOT_FRAME_SYNC = { .HEADER_LENGTH = sizeof(MotPacket_Control_T),  .BODY_LENGTH = 0U, .TRAILER_LENGTH = 0U };
-static const Packet_FrameFormat_T MOT_FRAME_DATA = { .HEADER_LENGTH = sizeof(MotPacket_Header_T),   .BODY_LENGTH = 0U, .TRAILER_LENGTH = 0U };
+Packet_FrameFormat_T MOT_FRAME_SYNC = { .HEADER_LENGTH = sizeof(MotPacket_Control_T),  .BODY_LENGTH = 0U, .TRAILER_LENGTH = 0U };
+Packet_FrameFormat_T MOT_FRAME_DATA = { .HEADER_LENGTH = sizeof(MotPacket_Header_T),   .BODY_LENGTH = 0U, .TRAILER_LENGTH = 0U };
 // static const Packet_FrameFormat_T MOT_FRAME_SHORT = { .HEADER_LENGTH = sizeof(MotPacket_Control_T),   .BODY_LENGTH = 0U, .TRAILER_LENGTH = 0U };
 
 /*
@@ -203,8 +203,8 @@ const Packet_Codec_T MOT_PACKET_CODEC =
 
     .PARSE_RX_LENGTH    = (Packet_ParseRxLength_T)MotPacket_ParseLength,
     .IS_RX_VALID        = (Packet_ValidateRx_T)MotProtocol_IsRxValid,
-    .PARSE_RX_HEADER    = (Packet_ParseRxHeader_T)MotProtocol_ParseRxHeader,
-    .BUILD_TX_HEADER    = (Packet_BuildTxHeader_T)MotProtocol_BuildTxHeader,
+    .PARSE_RX_FRAME     = (Packet_ParseRxFrame_T)MotProtocol_ParseRxHeader,
+    .BUILD_TX_FRAME     = (Packet_BuildTxFrame_T)MotProtocol_BuildTxHeader,
 
     .ACK_ID             = MOT_PACKET_SYNC_ACK,
     .NACK_ID            = MOT_PACKET_SYNC_NACK,

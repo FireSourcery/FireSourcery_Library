@@ -47,11 +47,7 @@
 #define MOT_PACKET_LENGTH_MAX           (40U) /*  */
 #define MOT_PACKET_LENGTH_MIN           (4U)  /* sizeof(MotPacket_Control_T) */
 
-#define MOT_PACKET_HEADER_LENGTH        (8U)
 #define MOT_PACKET_PAYLOAD_LENGTH_MAX   (32U)
-
-#define MOT_PACKET_ID_INDEX             (1U)
-#define MOT_PACKET_LENGTH_INDEX         (2U)
 
 #define MOT_PACKET_PACKED __attribute__((packed, aligned(4)))
 
@@ -364,4 +360,8 @@ extern packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packe
 extern bool MotProtocol_IsRxValid(const MotPacket_T * p_buffer, packet_size_t length);
 extern Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_buffer);
 extern Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, MotPacket_T * p_buffer);
+
+/* The two Tx/Rx shapes, named so a request table can declare which one an id uses. */
+extern Packet_FrameFormat_T MOT_FRAME_SYNC;
+extern Packet_FrameFormat_T MOT_FRAME_DATA;
 

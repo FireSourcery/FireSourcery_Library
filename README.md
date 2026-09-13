@@ -40,7 +40,7 @@ App → Motor → Transducer → Peripheral → HAL → Hardware
 
 ### Peripheral — Peripheral abstraction
 
-Common peripheral interface called by upper layers: `Analog`, `CanBus`, `ClockTimer`, `NvMemory`, `PWM`, `Pin`, `SPI`, `Serial`, `Xcvr`.
+Common peripheral interface called by upper layers: `Analog`, `CAN`, `ClockTimer`, `NvMemory`, `PWM`, `Pin`, `SPI`, `Serial`, `Xcvr`.
 
 - `Peripheral/HAL` — hardware abstraction layer; register-level code per chip.
 

@@ -223,10 +223,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
-    #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
-        for (uint8_t iCan = 0U; iCan < p_dev->CAN_SOCKET_COUNT; iCan++) { CanBus_ProcBroadcastService(&p_dev->P_CAN_SOCKETS[iCan], TimerT_Ticks(&p_dev->MILLIS_TIMER)); }
+    #ifdef MOTOR_CONTROLLER_CAN_ENABLE
+        for (uint8_t iCan = 0U; iCan < p_dev->CAN_SOCKET_COUNT; iCan++) { CAN_ProcBroadcastService(&p_dev->P_CAN_SOCKETS[iCan], TimerT_Ticks(&p_dev->MILLIS_TIMER)); }
         // optionally for proc request out of ISR priority
-        // CanBus_ProcRequestService
+        // CAN_ProcRequestService
     #endif
 
         /* Proc in all States */

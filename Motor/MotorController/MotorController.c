@@ -45,8 +45,8 @@ void MotorController_Init(MotorController_T * p_dev)
     for (uint8_t iAnalog = 0U; iAnalog < p_dev->ADC_COUNT; iAnalog++) { Analog_ADC_Init(&p_dev->P_ANALOG_ADCS[iAnalog]); }
     for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_Init(&p_dev->P_SERIALS[iSerial]); }
 
-#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    for (uint8_t iCan = 0U; iCan < p_dev->CAN_SOCKET_COUNT; iCan++) { CanBus_Init(&p_dev->P_CAN_SOCKETS[iCan]); }
+#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+    for (uint8_t iCan = 0U; iCan < p_dev->CAN_SOCKET_COUNT; iCan++) { CAN_Init(&p_dev->P_CAN_SOCKETS[iCan]); }
 #endif
 
     for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_dev->P_PROTOCOLS[iProtocol]); }
