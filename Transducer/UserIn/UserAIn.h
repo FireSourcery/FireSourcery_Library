@@ -63,8 +63,6 @@ typedef struct UserAIn_State
     uint16_t Value;                     /* Current filtered value. Percent16 by default */
     uint16_t ValuePrev;                 /* Previous value for edge detection */
     uint16_t RawValue_Adcu;             /* Raw ADC reading */
-
-    // bool (*EdgePinPassthrough)(UserDIn_T * p_dev); //optionally resolve to empty object
     UserAIn_Config_T Config;            /* Hold for runtime updates */
 }
 UserAIn_State_T;

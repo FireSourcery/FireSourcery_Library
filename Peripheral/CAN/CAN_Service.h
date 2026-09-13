@@ -207,3 +207,8 @@ static inline void CAN_SetService(CAN_T * p_can, uint8_t index)
     if (index < p_can->SERVICE_COUNT) { CAN_Enable(p_can, &p_can->P_SERVICE_TABLE[index]); }
 }
 
+
+static inline void CAN_TxService_ISR(CAN_T * p_can)
+{
+    (void)p_can;
+}

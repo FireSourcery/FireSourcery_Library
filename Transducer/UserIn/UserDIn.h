@@ -135,19 +135,16 @@ static inline bool UserDIn_IsFallingEdge(UserDIn_T * p_dev) { return is_falling_
 static inline UserDIn_Edge_T UserDIn_GetEdge(UserDIn_T * p_dev) { return (UserDIn_Edge_T)edge_sign(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
 
 /*
-    Utility functions
-*/
-static inline int UserDIn_ApplyGate(UserDIn_T * p_din, int value) { return UserDIn_GetState(p_din) ? value : 0; }
-// static inline int UserDIn_ApplyGate(UserDIn_T * p_din, int value) { return ((p_din != NULL) && UserDIn_GetState(p_din)) ? value : 0U; }
-
-/*
     GetState should remain 0 when disabled and only polled with Modal_Poll
 */
 static inline void UserDIn_Modal_Disable(UserDIn_T * p_dev) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; }
 static inline void UserDIn_Modal_Enable(UserDIn_T * p_dev) { p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL; }
 static inline bool UserDIn_Modal_IsDisable(UserDIn_T * p_dev) { return p_dev->P_STATE->Mode == USER_DIN_MODE_DISABLED; }
 
-
+/*
+    Utility functions
+*/
+static inline int UserDIn_ApplyGate(UserDIn_T * p_din, int value) { return UserDIn_GetState(p_din) ? value : 0; }
 
 /******************************************************************************/
 /*
@@ -190,8 +187,8 @@ static inline int UserDIn_Var_Get(UserDIn_T * p_dev, UserDIn_VarId_T varId)
 typedef enum UserDIn_ConfigId
 {
     USER_DIN_CONFIG_CMD_FN, /* Id */
-    USER_DIN_CONFIG_IS_ENABLED, // depreciate
     USER_DIN_CONFIG_MODE,
+    USER_DIN_CONFIG_INVERT,
 }
 UserDIn_ConfigId_T;
 
@@ -201,21 +198,31 @@ static inline int UserDIn_Config_Get(UserDIn_Config_T * p_config, UserDIn_Config
     {
         case USER_DIN_CONFIG_CMD_FN:        return p_config->CmdId;
         case USER_DIN_CONFIG_MODE:          return p_config->Mode;
-        case USER_DIN_CONFIG_IS_ENABLED:    return (p_config->Mode != USER_DIN_MODE_DISABLED);
+        case USER_DIN_CONFIG_INVERT:        return p_config->Invert;
         default: return 0;
     }
 }
 
-/*
+static inline void UserDIn_Config_Set(UserDIn_Config_T * p_config, UserDIn_ConfigId_T configId, int value)
+{
+    switch (configId)
+    {
+        case USER_DIN_CONFIG_CMD_FN:        p_config->CmdId = value; break;
+        case USER_DIN_CONFIG_MODE:          p_config->Mode = value; break;
+        case USER_DIN_CONFIG_INVERT:        p_config->Invert = value; break;
+        default: break;
+    }
+}
 
-*/
+
 static inline int UserDIn_Var_GetInstance(UserDIn_T * p_array, uint8_t length, uint8_t instance, int varId)
 {
     if (instance >= length) { return 0; }
     return UserDIn_Var_Get(&p_array[instance], varId);
 }
 
-/* whe config is  */
+
+/* whe config is stored externally  */
 static inline int UserDIn_Config_GetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId)
 {
     if (instance >= length) { return 0; }
@@ -225,12 +232,5 @@ static inline int UserDIn_Config_GetInstance(UserDIn_Config_T * p_array, uint8_t
 static inline void UserDIn_Config_SetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId, int value)
 {
     if (instance >= length) { return; }
-    UserDIn_Config_T * p_config = &p_array[instance];
-    switch (configId)
-    {
-        case USER_DIN_CONFIG_CMD_FN:        p_config->CmdId = value; break;
-        case USER_DIN_CONFIG_IS_ENABLED:    p_config->Mode = value ? USER_DIN_MODE_NORMAL : USER_DIN_MODE_DISABLED; break;
-        case USER_DIN_CONFIG_MODE:          p_config->Mode = value; break;
-        default: break;
-    }
+    UserDIn_Config_Set(&p_array[instance], configId, value);
 }

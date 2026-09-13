@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 
 /******************************************************************************/
 /*
@@ -112,8 +113,8 @@ typedef struct Packet_RxParser
         Cleared on entry to HEADER, when the next frame makes it meaningless.
     */
     packet_size_t FrameLength;
-    // Packet_FrameFormat_T * p_FrameFormat; /* determine optional length field */
-    // uint32_t RxTimeStart;       /* Frame deadline base */
+    // Packet_FrameFormat_T * p_FrameFormat;
+    uint32_t RxTimeStart;       /* Frame deadline base */
 }
 Packet_RxParser_T;
 
@@ -144,7 +145,7 @@ static inline void Packet_ResetRxState(Packet_RxParser_T * p_parser)
 static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
 {
     Packet_ResetRxState(p_parser);
-    p_parser->FrameLength = 0U;
+    // p_parser->FrameLength = 0U;
 }
 
 /*!
@@ -180,7 +181,7 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
             else if (_Packet_IsStartId(p_format, p_buffer) == true)
             {
                 p_parser->StateId = PACKET_RX_STATE_HEADER;
-                p_parser->FrameLength = 0U;
+                // p_parser->FrameLength = 0U;
                 p_parser->NextIndex = p_format->LENGTH_MIN;
             }
             else
@@ -192,17 +193,21 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
 
         case PACKET_RX_STATE_HEADER: /* Wait for Length */
             /* 0 = not yet determinable. Grow the header a byte at a time until the format answers. */
-            p_parser->FrameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
+            // p_parser->FrameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
+            packet_size_t frameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
+
             /*
                 Set NextIndex for Rx before the next PARSE_RX_FRAMING. Prevent reading bytes from the following packet.
                 RxLength known => Get Rx remaining
                 RxLength unknown => Get 1 byte or a known const value, until RxLength is known
             */
-            p_parser->NextIndex = (p_parser->FrameLength > 0U) ? p_parser->FrameLength : (packet_size_t)(p_parser->Index + 1U);
+            p_parser->NextIndex = (frameLength > 0U) ? frameLength : (packet_size_t)(p_parser->Index + 1U);
 
             /* One bound covers both: a length that overruns the buffer, and one that undercuts what is already held. */
             if ((p_parser->NextIndex > p_format->LENGTH_MAX) || (p_parser->NextIndex < p_parser->Index)) { rxCode = PACKET_RX_ERROR_FRAME; }
-            else if (p_parser->FrameLength > 0U) { p_parser->StateId = PACKET_RX_STATE_PAYLOAD; }
+            else if (frameLength > 0U) { p_parser->StateId = PACKET_RX_STATE_PAYLOAD; }
+
+            p_parser->FrameLength = frameLength; /* storage for consistency check only */
 
             // /* Declined to answer. Grow the header by a byte, until it can no longer become a frame. */
             // if (p_parser->Length == 0U)
@@ -226,11 +231,11 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
             break;
 
         case PACKET_RX_STATE_PAYLOAD:
-            // assert(p_parser->Index == p_parser->NextIndex); /* Ensure the whole payload has been received */
+            assert(p_parser->Index == p_parser->NextIndex); /* Ensure the whole payload has been received */
             // assert(p_parser->Index == p_parser->Length); /* Ensure the whole payload has been received */
             /* The whole frame is present, so this always resolves. */
             /* Frame is complete. caller parse remaining meta with PARSE_RX_HEADER */
-            rxCode = (p_format->IS_RX_VALID(p_buffer, p_parser->FrameLength) == true) ? PACKET_RX_COMPLETE : PACKET_RX_ERROR_DATA;
+            rxCode = (p_format->IS_RX_VALID(p_buffer, p_parser->NextIndex) == true) ? PACKET_RX_COMPLETE : PACKET_RX_ERROR_DATA;
             break;
 
         default:

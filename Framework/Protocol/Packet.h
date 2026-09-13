@@ -181,15 +181,18 @@ typedef packet_size_t (*Packet_ParseRxLength_T)(const void * p_buffer, packet_si
 typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_size_t length);
 
 
+// derive length with frame + payload length
+// rx meta parse in this layer, keeps consistency check in this layer
+// Request table can handle asymmetric resp id frame if needed
+// typedef Packet_Id_T * (*Packet_ParseRxFrame_T)(Packet_Meta_T * p_meta, const void * p_frame, packet_size_t rxCount);
+
+// Request table can override with asymmetric resp id frame if needed
+// typedef Packet_Id_T * (*Packet_ValidateRx_T) (const void * p_buffer, packet_size_t length);
 
 /*!
-    Phase 2 — Validation / Completion
+    Phase 2 — Extracts remaining header fields.
     Called by CaptureRx when RxIndex == Length (full packet in buffer).
-    Extracts remaining header fields.
     No rxCount parameter — Length is already known from Phase 1.
-
-    @return [Packet_Id_T *] MUST be from the Request Table
-            Rx returned Packet_Id_T determines response payload offset.
 */
 /*!
     Tx — Build Header
@@ -198,11 +201,9 @@ typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_si
 */
 /* optionally engine provide checksum */
 /*
-    Fills p_meta and reports the shape it read the frame as. NULL when the header cannot
-    describe a frame at all. Resolving the id to a table row is the engine's - the codec does
-    not see the request table, which is what keeps one codec usable by more than one.
+    the codec does not see the request table, which is what keeps one codec usable by more than one.
 */
-typedef Packet_FrameFormat_T * (*Packet_ParseRxFrame_T)(Packet_Meta_T * p_meta, const void * p_frame);
+typedef void (*Packet_ParseRxFrame_T)(Packet_Meta_T * p_meta, const void * p_frame);
 typedef void (*Packet_BuildTxFrame_T)(const Packet_Meta_T * p_meta, void * p_frame);
 
 
@@ -251,6 +252,7 @@ typedef const struct Packet_Codec
     Packet_BuildTxFrame_T BUILD_TX_FRAME;     // symmetric with Phase 2
 
     Packet_FrameFormat_T CONTROL_FRAME_FORMAT;
+    // packet_size_t CONTROL_FRAME_LENGTH;
     packet_id_t ACK_ID;
     packet_id_t NACK_ID;
     packet_id_t ABORT_ID;
@@ -269,7 +271,7 @@ Packet_Codec_T;
     Extract Fields
 */
 /* Packet_RxCode_T rxCode == COMPLETE */
-static inline Packet_FrameFormat_T * Packet_ParseRxFrame(Packet_Codec_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_frame) { return p_codec->PARSE_RX_FRAME(p_meta, p_frame); }
+static inline void Packet_ParseRxFrame(Packet_Codec_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_frame) { p_codec->PARSE_RX_FRAME(p_meta, p_frame); }
 static inline void Packet_BuildTxFrame(Packet_Codec_T * p_codec, const Packet_Meta_T * p_meta, uint8_t * p_frame) { p_codec->BUILD_TX_FRAME(p_meta, p_frame); }
 
 /* Variable length payload use Meta.Length. Fixed use BODY_LENGTH. */
@@ -285,9 +287,9 @@ static inline packet_size_t Packet_FrameLengthOf(Packet_FrameFormat_T * p_format
     and Meta.Length is what sizes the payload the handler is handed. Checking it against the
     length the parser actually collected is the one bound only the engine can apply.
 */
-static inline bool Packet_IsFrameConsistent(Packet_FrameFormat_T * p_framing, const Packet_Meta_T * p_meta, packet_size_t frameLength)
+static inline bool Packet_IsFrameConsistent(Packet_FrameFormat_T * p_framing, const Packet_Meta_T * p_meta, packet_size_t rxLength)
 {
-    return (Packet_FrameLengthOf(p_framing, p_meta) == (size_t)frameLength);
+    return (Packet_FrameLengthOf(p_framing, p_meta) == (size_t)rxLength);
 }
 
 static inline packet_id_t Packet_ControlIdOf(Packet_Codec_T * p_format, Packet_ClassId_T classId)

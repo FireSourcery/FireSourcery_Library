@@ -32,37 +32,28 @@
 #include "UserDIn.h"
 
 
-// /*  */
-// typedef const struct UserDIn_Cmd
+
+
+
+/*
+    Base Module holds pointer or opaque pointer to decouple from service
+*/
+
+// typedef const struct UserDIn_CmdTable
 // {
-//     UserDIn_Fn_T CMD;
+//     UserDIn_Fn_T * P_CMD_TABLE;
+//     uint8_t LENGTH;
 //     void * P_CONTEXT;
 // }
-// UserDIn_Cmd_T;
-
-
-// handle as collaborator patterns or
-// handle as wrap with service layer
-// typedef   struct
-// {
-// UserDIn_T  P_DEV;
-// }
-// OptDIn_T;
-
+// UserDIn_CmdTable_T;
 
 // static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONTEXT = NULL };
-
 
 // static inline void UserDIn_PollEdgeCmd(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)
 // {
 //     p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_Modal_PollEdgeValue(p_dev));
 // }
 
-
-// static inline void UserDIn_InitCmdFromTable(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)
-// {
-//
-// }
 
 /*
     Array helper

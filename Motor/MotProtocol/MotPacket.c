@@ -206,6 +206,9 @@ const Packet_Codec_T MOT_PACKET_CODEC =
     .PARSE_RX_FRAME     = (Packet_ParseRxFrame_T)MotProtocol_ParseRxHeader,
     .BUILD_TX_FRAME     = (Packet_BuildTxFrame_T)MotProtocol_BuildTxHeader,
 
+    /* An ack carries no table row, so the shape of one is declared here rather than found. */
+    .CONTROL_FRAME_FORMAT = { .HEADER_LENGTH = sizeof(MotPacket_Control_T), .BODY_LENGTH = 0U, .TRAILER_LENGTH = 0U },
+
     .ACK_ID             = MOT_PACKET_SYNC_ACK,
     .NACK_ID            = MOT_PACKET_SYNC_NACK,
     .ABORT_ID           = MOT_PACKET_SYNC_ABORT,

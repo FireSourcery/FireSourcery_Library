@@ -101,16 +101,15 @@ static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { retur
 /*!
 */
 /******************************************************************************/
-// typedef Pin_T FastPin_T; /* Same Struct */
+// typedef Pin_T FastPin_T; /* Same shape */
 // static inline bool FastPin_Input_ReadPhysical(const FastPin_T * p_pin) { return HAL_FastPin_ReadInput(p_pin->P_HAL_PIN, p_pin->ID); }
 
-// #define PinT_Read(p_pin)
+// #define PinT_Read(p_pin )
 //     _Generic((p_pin),
 //         Pin_T *: Pin_Input_Read,
-//         FastPin_T *: HAL_FastPin_ReadInput,
-//         HAL_Pin_T *: HAL_Pin_ReadInput,
+//         FastPin_T *: FastPin_ReadInput,
 //         default: Pin_Input_ReadPhysical
-//     )(p_pin)
+//     )(p_pin )
 
 /******************************************************************************/
 /*!

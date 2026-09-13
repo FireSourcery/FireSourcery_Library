@@ -40,7 +40,8 @@
     Private Helper Functions
 */
 /******************************************************************************/
-static inline bool ReadPin(UserDIn_T * p_dev) { return Pin_Input_Read(&p_dev->PIN); }
+// static inline bool ReadPin(UserDIn_T * p_dev) { return Pin_Input_Read(&p_dev->PIN); }
+static inline bool ReadPin(UserDIn_T * p_dev) { return Pin_Input_Read(&p_dev->PIN) ^ p_dev->P_STATE->Config.Invert; }
 static inline uint32_t GetTime(UserDIn_T * p_dev) { return *p_dev->P_TIMER; }
 
 /******************************************************************************/
@@ -68,13 +69,6 @@ bool UserDIn_PollRisingEdge(UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) 
 bool UserDIn_PollFallingEdge(UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == false); }
 UserDIn_Edge_T UserDIn_PollEdgeValue(UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) ? UserDIn_GetEdge(p_dev) : USER_DIN_EDGE_NULL; }
 
-
-/* run time select should not also be disabled.  */
-// UserDIn_Edge_T UserDIn_PollAsOptional(UserDIn_T * p_dev)
-// {
-//     if (p_dev == NULL) { return USER_DIN_EDGE_NULL; }
-//     return UserDIn_PollEdgeValue(p_dev);
-// }
 
 /******************************************************************************/
 /*
@@ -117,26 +111,12 @@ void UserDIn_InitFrom(UserDIn_T * p_dev, UserDIn_Config_T * p_config)
         Pin_Input_Init(&p_dev->PIN);
 
         // alternativel copy to local then resolve
-        // if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
-        if (p_config != NULL)
-        {
-            p_dev->P_STATE->Config = *p_config;
-            p_dev->P_STATE->Mode = p_config->Mode;
-        #ifdef USER_DIN_CMD_TABLE_ENABLE
-            p_dev->P_STATE->OptCmd = p_dev->P_CMD_TABLE[p_config->CmdId];
-        #else
-            p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
-        #endif
-        }
-        else
-        {
-            p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
-            p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
-        }
+        if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
 
-        Debounce_Init(&p_dev->P_STATE->Debounce, p_dev->DEBOUNCE_TIME);
+        p_dev->P_STATE->Mode = p_config->Mode; /*  */
+        p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
+        p_dev->P_STATE->Debounce.DebounceTime = p_dev->DEBOUNCE_TIME;
 
-        // p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
         /* Initialize debounce state to current pin reading */
         p_dev->P_STATE->Debounce.Time0 = GetTime(p_dev);
         p_dev->P_STATE->Debounce.State0 = ReadPin(p_dev);
