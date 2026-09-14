@@ -134,6 +134,8 @@ typedef struct Protocol_SyncState
     uint32_t AckTimeStart; /* Exchange deadline base. the exchange outlives the request binding.*/
 
     // Protocol_AckPolicy_T AckPolicy; //alternatively latched policy handle internally
+
+    uint32_t Timeout;
 }
 Protocol_SyncState_T;
 
@@ -250,7 +252,6 @@ static inline Protocol_SyncEvent_T Protocol_ProcSyncTimeout(Protocol_SyncState_T
     return _Protocol_ResolveSync(p_state, _Protocol_EvaluateTimeout(p_state), timerNow);
 }
 
-
 /*!
     Takes the policy and the shape because this is the moment both must be captured - see
     RetryMax and p_RetryFormat. Everything a retransmission needs is latched here, so the
@@ -307,7 +308,7 @@ static inline Packet_FrameFormat_T * Protocol_SyncRespFormat(const Protocol_Sync
 //     Retransmit while the budget lasts, otherwise abandon. Shared by the nack and deadline
 //     paths, which differ only in what triggered them.
 // */
-// static inline Protocol_SyncEvent_T Protocol_ResolveNackCount(Protocol_SyncState_T * p_state)
+// static inline Protocol_SyncEvent_T Protocol_ResolveRetryCount(Protocol_SyncState_T * p_state)
 // {
 //     // if (p_state->RetryCount >= p_state->AckPolicy.RETRANSMIT_MAX)
 //     if (p_state->RetryCount >= p_state->RetryMax)
