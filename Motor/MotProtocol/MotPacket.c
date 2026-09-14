@@ -208,4 +208,7 @@ const Packet_Codec_T MOT_PACKET_CODEC =
     .ACK_ID             = MOT_PACKET_SYNC_ACK,
     .NACK_ID            = MOT_PACKET_SYNC_NACK,
     .ABORT_ID           = MOT_PACKET_SYNC_ABORT,
+
+    /* Frame deadline, in SysTime_Millis ticks - the units the socket ages the parser by. */
+    .RX_TIMEOUT         = 1000U,
 };

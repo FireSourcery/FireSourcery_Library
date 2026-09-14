@@ -149,19 +149,6 @@ static Protocol_ReqCode_T Var16Write(MotorController_T * p_dev, Packet_Xfer_T * 
     return PROTOCOL_REQ_DONE;
 }
 
-static Protocol_ReqCode_T Var16WriteVerbose(void * p_devArg, Packet_Xfer_T * p_xfer, const void * p_rxPayloadArg, void * p_txPayloadArg)
-{
-    MotorController_T * p_dev = (MotorController_T *)p_devArg;
-    const MotPacket_Var16WriteReq_T * p_rxPayload = (const MotPacket_Var16WriteReq_T *)p_rxPayloadArg;
-    MotPacket_Var16WriteResp_T * p_txPayload = (MotPacket_Var16WriteResp_T *)p_txPayloadArg;
-
-    uint8_t varCount = CountMax((uint8_t)(p_xfer->p_RxMeta->Length / sizeof(p_rxPayload->Pairs[0U])), sizeof(uint8_t));
-
-    p_xfer->p_TxMeta->Length = MotorController_WriteVar16s(p_dev, p_rxPayload, p_txPayload, varCount);
-    p_xfer->p_TxMeta->Id = MOT_PACKET_VAR16_WRITE;
-    return PROTOCOL_REQ_DONE;
-}
-
 /******************************************************************************/
 /*! Read / Write Var32s */
 /******************************************************************************/
@@ -257,13 +244,13 @@ static Protocol_ReqCode_T WriteMem_Blocking(MotorController_T * p_dev, Packet_Xf
 */
 static Protocol_ReqCode_T ReadData(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
-    Protocol_DataModeInterface_T dataMode = MOT_PROTOCOL_FLASH_LOADER(p_dev->MOT_NVM.P_FLASH);
+    Protocol_DataMode_Interface_T dataMode = MOT_PROTOCOL_FLASH_LOADER(p_dev->MOT_NVM.P_FLASH);
     return Protocol_DataMode_Read((void *)&dataMode, p_xfer, p_rxPayload, p_txPayload);
 }
 
 static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
-    Protocol_DataModeInterface_T dataMode = MOT_PROTOCOL_FLASH_LOADER(p_dev->MOT_NVM.P_FLASH);
+    Protocol_DataMode_Interface_T dataMode = MOT_PROTOCOL_FLASH_LOADER(p_dev->MOT_NVM.P_FLASH);
     return Protocol_DataMode_Write((void *)&dataMode, p_xfer, p_rxPayload, p_txPayload);
 }
 #endif

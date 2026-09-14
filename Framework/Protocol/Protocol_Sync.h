@@ -50,8 +50,13 @@
     an event for the caller to perform, not performed here. The whole layer is a pure function
     of (state, class), which is what makes it checkable in isolation.
 
-    No timer. A request's deadline spans this layer and Request both, so the composition owns
-    it and delivers expiry as PROTOCOL_SYNC_EVENT_TIMEOUT.
+    Two event sources, one event stream. A frame arrives, or the deadline expires; both fold
+    through the same evaluate-then-resolve pair and yield a Protocol_SyncEvent_T, so the
+    composition acts on one enum in one switch and RETRANSMIT exists at exactly one call site.
+
+    The clock is an input, like a byte to the parser - this layer is handed a reading, never
+    reads one. What it does own is the arming, because the base is only meaningful against
+    its own transitions. See the note above Protocol_ProcSyncTimeout for why absolute.
 
     NOT YET IMPLEMENTED - the alternating bit. See the note at the foot of this file.
 */
@@ -128,9 +133,52 @@ typedef struct Protocol_SyncState
     Packet_FrameFormat_T * p_RetryFormat;
     uint32_t AckTimeStart; /* Exchange deadline base. the exchange outlives the request binding.*/
 
-    Protocol_AckPolicy_T AckPolicy; //alternatively latched policy handle internally
+    // Protocol_AckPolicy_T AckPolicy; //alternatively latched policy handle internally
 }
 Protocol_SyncState_T;
+
+/*!
+    Pure. Is a retransmission offerable at all.
+
+    Budget AND a latched shape, because the two can part company: a stateless handler that
+    returned DONE is unbound while its response is still outstanding, and the shape is what
+    survives that. Asking here is what lets the caller act on RETRANSMIT without re-testing
+    anything - the event is not raised unless it can be carried out.
+*/
+static inline bool _Protocol_CanRetry(const Protocol_SyncState_T * p_state)
+{
+    return ((p_state->RetryCount < p_state->RetryMax) && (p_state->p_RetryFormat != NULL));
+}
+
+/*! Pure. What an arriving frame means, given what is outstanding. No writes. */
+static inline Protocol_SyncEvent_T _Protocol_EvaluatePacket(const Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
+{
+    if (rxClass == PACKET_CLASS_ABORT) { return PROTOCOL_SYNC_EVENT_ABORT; }
+
+    switch (p_state->StateId)
+    {
+        case PROTOCOL_SYNC_OPEN:
+            /* An ack or nack refers to nothing and is dropped - answering it is the storm path. */
+            return (rxClass == PACKET_CLASS_DATA) ? PROTOCOL_SYNC_EVENT_REQUEST : PROTOCOL_SYNC_EVENT_NONE;
+
+        case PROTOCOL_SYNC_AWAIT_ACK:
+            switch (rxClass)
+            {
+                case PACKET_CLASS_ACK:  return PROTOCOL_SYNC_EVENT_RESUME;
+                case PACKET_CLASS_NACK: return _Protocol_CanRetry(p_state) ? PROTOCOL_SYNC_EVENT_RETRANSMIT : PROTOCOL_SYNC_EVENT_FAILED;
+                default:                return PROTOCOL_SYNC_EVENT_REJECT;   /* DATA before the ack: out of sequence */
+            }
+
+        default: return PROTOCOL_SYNC_EVENT_NONE;
+    }
+}
+
+/*! Pure. What the deadline means. Same choice as a nack, different trigger. */
+static inline Protocol_SyncEvent_T _Protocol_EvaluateTimeout(const Protocol_SyncState_T * p_state)
+{
+    if (p_state->StateId != PROTOCOL_SYNC_AWAIT_ACK) { return PROTOCOL_SYNC_EVENT_FAILED; }
+    return _Protocol_CanRetry(p_state) ? PROTOCOL_SYNC_EVENT_RETRANSMIT : PROTOCOL_SYNC_EVENT_FAILED;
+}
 
 
 /******************************************************************************/
@@ -155,37 +203,70 @@ static inline void Protocol_ResetSync(Protocol_SyncState_T * p_state)
     p_state->p_RetryFormat = NULL;
 }
 
+/******************************************************************************/
+/*!
+    Exchange deadline - absolute, unlike the parser's
+
+    The parser ages a duration: firing late costs only a held buffer
+*/
+/******************************************************************************/
+/*!
+    The one place sync state moves - the counterpart of _Packet_ResolveRx.
+
+    Re-arming is not uniform, and the watchdog is why: an advance says the peer is alive and
+    feeds it; a failure must leave the base where it was so silence stays visible.
+*/
+static inline Protocol_SyncEvent_T _Protocol_ResolveSync(Protocol_SyncState_T * p_state, Protocol_SyncEvent_T event, uint32_t timerNow)
+{
+    switch (event)
+    {
+        case PROTOCOL_SYNC_EVENT_REQUEST:    p_state->AckTimeStart = timerNow;                            break;
+        case PROTOCOL_SYNC_EVENT_RETRANSMIT: p_state->RetryCount++;  p_state->AckTimeStart = timerNow;     break;
+        case PROTOCOL_SYNC_EVENT_RESUME:
+        case PROTOCOL_SYNC_EVENT_ABORT:      Protocol_ResetSync(p_state); p_state->AckTimeStart = timerNow; break;
+
+        /* The exchange died. Do NOT re-arm. */
+        case PROTOCOL_SYNC_EVENT_FAILED:     Protocol_ResetSync(p_state);                                 break;
+
+        case PROTOCOL_SYNC_EVENT_REJECT:
+        case PROTOCOL_SYNC_EVENT_NONE:
+        default:                                                                                          break;
+    }
+    return event;
+}
+
+/*! @brief  Fold one classified frame into the handshake. */
+static inline Protocol_SyncEvent_T Protocol_ProcSyncPacket(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass, uint32_t timerNow)
+{
+    return _Protocol_ResolveSync(p_state, _Protocol_EvaluatePacket(p_state, rxClass), timerNow);
+}
+
+/*! @brief  The time event. Self-gating on everything except whether an exchange exists. */
+static inline Protocol_SyncEvent_T Protocol_ProcSyncTimeout(Protocol_SyncState_T * p_state, uint32_t reqTimeout, uint32_t timerNow)
+{
+    if (reqTimeout == 0U) { return PROTOCOL_SYNC_EVENT_NONE; }   /* deadline disabled */
+    if (timerNow - p_state->AckTimeStart <= reqTimeout) { return PROTOCOL_SYNC_EVENT_NONE; }
+
+    return _Protocol_ResolveSync(p_state, _Protocol_EvaluateTimeout(p_state), timerNow);
+}
+
+
 /*!
     Takes the policy and the shape because this is the moment both must be captured - see
     RetryMax and p_RetryFormat. Everything a retransmission needs is latched here, so the
     retransmit paths never consult the request binding.
 */
-static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy, Packet_FrameFormat_T * p_retryFormat)
+static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy, Packet_FrameFormat_T * p_retryFormat, uint32_t timerNow)
 {
-    p_state->StateId = PROTOCOL_SYNC_AWAIT_ACK;
-    p_state->RetryCount = 0U;
-    p_state->RetryMax = policy.RETRANSMIT_MAX;
+    p_state->StateId       = PROTOCOL_SYNC_AWAIT_ACK;
+    p_state->RetryCount    = 0U;
+    p_state->RetryMax      = policy.RETRANSMIT_MAX;
     p_state->p_RetryFormat = p_retryFormat;
+    p_state->AckTimeStart  = timerNow;   /* OPEN -> AWAIT_ACK is where the ack deadline begins */
 }
 
-/*! The outstanding frame's shape. NULL when nothing is outstanding. */
-static inline Packet_FrameFormat_T * Protocol_SyncRespFormat(const Protocol_SyncState_T * p_state) { return p_state->p_RetryFormat; }
 
-/******************************************************************************/
-/*!
-    Exchange deadline
-
-    Re-armed wherever the handshake advances - a frame accepted, an ack landed, a response
-    re-sent. Each of those is a transition of THIS state machine, which is why the base sits
-    beside it: the stamp and the transition cannot be separated and then forgotten apart.
-
-    The gate stays with the composition. "Is an exchange in progress" spans this layer and
-    Request both - a data-paced write is ACTIVE here while OPEN there - and no single module
-    can answer it. So this layer answers only "has the base expired", and the caller decides
-    whether that matters.
-*/
-/******************************************************************************/
-/*! Stamp the base. Every handshake advance passes through here. */
+/*! Stamp the base without a transition. For a reset, not for an advance. */
 static inline void Protocol_MarkSyncTime(Protocol_SyncState_T * p_state, uint32_t timerNow) { p_state->AckTimeStart = timerNow; }
 
 /*! The base, for a caller measuring link liveness on a longer scale. */
@@ -196,90 +277,10 @@ static inline bool Protocol_IsSyncElapsed(const Protocol_SyncState_T * p_state, 
     return ((timerNow - p_state->AckTimeStart) > timeout);
 }
 
-
-/*
-    Retransmit while the budget lasts, otherwise abandon. Shared by the nack and deadline
-    paths, which differ only in what triggered them.
-*/
-static inline Protocol_SyncEvent_T Protocol_ResolveNackCount(Protocol_SyncState_T * p_state)
-{
-    // if (p_state->RetryCount >= p_state->AckPolicy.RETRANSMIT_MAX)
-    if (p_state->RetryCount >= p_state->RetryMax)
-    {
-        Protocol_ResetSync(p_state);
-        return PROTOCOL_SYNC_EVENT_FAILED;
-    }
-
-    p_state->RetryCount++;
-    return PROTOCOL_SYNC_EVENT_RETRANSMIT;
-}
-
-
-/*!
-    @brief  Fold one classified frame into the handshake.
-    @param  rxClass  from Packet_ClassOf. This layer never sees an Id or a format.
-
-            No policy parameter: the only policy this layer consults is the retransmit budget,
-            and that was latched at Protocol_ExpectAck. Taking it again here would re-introduce
-            the lifetime bug, since by now the request may well have closed.
-*/
-static inline Protocol_SyncEvent_T Protocol_ProcSyncState(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
-{
-    /* An abort ends the exchange wherever it was. The caller acks it if policy says so. */
-    if (rxClass == PACKET_CLASS_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
-
-    // if (rxClass == PACKET_CLASS_ABORT && p_state->AckPolicy.SEND_ACK_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
-    // else { return PROTOCOL_SYNC_EVENT_NONE; }
-
-    switch (p_state->StateId)
-    {
-        /*
-            Nothing outstanding, so an ack or nack refers to nothing - and is DROPPED, not
-            nacked. Answering a control frame with a control frame is the same storm the abort
-            path is gated against, one layer down and unbounded: two sockets both in OPEN each
-            answer the other's nack with a nack, forever, at line rate.
-            The retransmit budget does not bound it because that budget only exists in AWAIT_ACK.
-
-            A nack goes out only in answer to a DATA frame or to garbage, never to a control frame.
-            That is what makes the exchange terminate.
-        */
-        case PROTOCOL_SYNC_OPEN:
-            switch (rxClass)
-            {
-                case PACKET_CLASS_DATA: return PROTOCOL_SYNC_EVENT_REQUEST;
-                case PACKET_CLASS_ACK:
-                case PACKET_CLASS_NACK:
-                case PACKET_CLASS_ABORT:
-                default: return PROTOCOL_SYNC_EVENT_NONE;
-            }
-        case PROTOCOL_SYNC_AWAIT_ACK:
-            switch (rxClass)
-            {
-                case PACKET_CLASS_ACK:
-                    Protocol_ResetSync(p_state);
-                    return PROTOCOL_SYNC_EVENT_RESUME;
-                case PACKET_CLASS_NACK:
-                    return Protocol_ResolveNackCount(p_state);
-                case PACKET_CLASS_DATA: /* A data frame before the ack is out of sequence - the remote is ahead of us. */
-                    return PROTOCOL_SYNC_EVENT_REJECT;
-                case PACKET_CLASS_ABORT:
-                default: return PROTOCOL_SYNC_EVENT_REJECT;
-            }
-
-        default: return PROTOCOL_SYNC_EVENT_NONE;
-    }
-}
-
-
-/*!
-    @brief  The request deadline expired. Same choice as a nack: retry or abandon.
-*/
-static inline Protocol_SyncEvent_T Protocol_ResolveAckTimeout(Protocol_SyncState_T * p_state)
-{
-    return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK) ? Protocol_ResolveNackCount(p_state) : PROTOCOL_SYNC_EVENT_FAILED;
-}
-
 static inline bool Protocol_IsAckWaiting(const Protocol_SyncState_T * p_state) { return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK); }
+
+/*! The outstanding frame's shape. NULL when nothing is outstanding. */
+static inline Packet_FrameFormat_T * Protocol_SyncRespFormat(const Protocol_SyncState_T * p_state) { return p_state->p_RetryFormat; }
 
 /******************************************************************************/
 /*
@@ -301,3 +302,76 @@ static inline bool Protocol_IsAckWaiting(const Protocol_SyncState_T * p_state) {
     Flash case remote side handles restart.
 */
 /******************************************************************************/
+
+// /*
+//     Retransmit while the budget lasts, otherwise abandon. Shared by the nack and deadline
+//     paths, which differ only in what triggered them.
+// */
+// static inline Protocol_SyncEvent_T Protocol_ResolveNackCount(Protocol_SyncState_T * p_state)
+// {
+//     // if (p_state->RetryCount >= p_state->AckPolicy.RETRANSMIT_MAX)
+//     if (p_state->RetryCount >= p_state->RetryMax)
+//     {
+//         Protocol_ResetSync(p_state);
+//         return PROTOCOL_SYNC_EVENT_FAILED;
+//     }
+
+//     p_state->RetryCount++;
+//     return PROTOCOL_SYNC_EVENT_RETRANSMIT;
+// }
+
+
+// /*!
+//     @brief  Fold one classified frame into the handshake.
+//     @param  rxClass  from Packet_ClassOf. This layer never sees an Id or a format.
+
+//             No policy parameter: the only policy this layer consults is the retransmit budget,
+//             and that was latched at Protocol_ExpectAck. Taking it again here would re-introduce
+//             the lifetime bug, since by now the request may well have closed.
+// */
+// static inline Protocol_SyncEvent_T Protocol_ProcSyncState(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
+// {
+//     /* An abort ends the exchange wherever it was. The caller acks it if policy says so. */
+//     if (rxClass == PACKET_CLASS_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
+
+//     // if (rxClass == PACKET_CLASS_ABORT && p_state->AckPolicy.SEND_ACK_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
+//     // else { return PROTOCOL_SYNC_EVENT_NONE; }
+
+//     switch (p_state->StateId)
+//     {
+//         /*
+//             Nothing outstanding, so an ack or nack refers to nothing - and is DROPPED, not
+//             nacked. Answering a control frame with a control frame is the same storm the abort
+//             path is gated against, one layer down and unbounded: two sockets both in OPEN each
+//             answer the other's nack with a nack, forever, at line rate.
+//             The retransmit budget does not bound it because that budget only exists in AWAIT_ACK.
+
+//             A nack goes out only in answer to a DATA frame or to garbage, never to a control frame.
+//             That is what makes the exchange terminate.
+//         */
+//         case PROTOCOL_SYNC_OPEN:
+//             switch (rxClass)
+//             {
+//                 case PACKET_CLASS_DATA: return PROTOCOL_SYNC_EVENT_REQUEST;
+//                 case PACKET_CLASS_ACK:
+//                 case PACKET_CLASS_NACK:
+//                 case PACKET_CLASS_ABORT:
+//                 default: return PROTOCOL_SYNC_EVENT_NONE;
+//             }
+//         case PROTOCOL_SYNC_AWAIT_ACK:
+//             switch (rxClass)
+//             {
+//                 case PACKET_CLASS_ACK:
+//                     Protocol_ResetSync(p_state);
+//                     return PROTOCOL_SYNC_EVENT_RESUME;
+//                 case PACKET_CLASS_NACK:
+//                     return Protocol_ResolveNackCount(p_state);
+//                 case PACKET_CLASS_DATA: /* A data frame before the ack is out of sequence - the remote is ahead of us. */
+//                     return PROTOCOL_SYNC_EVENT_REJECT;
+//                 case PACKET_CLASS_ABORT:
+//                 default: return PROTOCOL_SYNC_EVENT_REJECT;
+//             }
+
+//         default: return PROTOCOL_SYNC_EVENT_NONE;
+//     }
+// }

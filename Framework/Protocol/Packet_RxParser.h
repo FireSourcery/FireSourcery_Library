@@ -76,6 +76,7 @@ typedef enum Packet_RxCode
     PACKET_RX_COMPLETE,         /* Intact frame in the buffer. Id and Length are set. */
     PACKET_RX_ERROR_FRAME,      /* No usable length. Unframeable. */
     PACKET_RX_ERROR_DATA,       /* Failed validation. */
+    PACKET_RX_ERROR_TIMEOUT,    /* Frame stalled part way. Reached by the time event. */
 }
 Packet_RxCode_T;
 
@@ -103,14 +104,17 @@ typedef struct Packet_RxParser
     packet_size_t NextIndex;    /* NextIndex. Bytes wanted before the next Packet_ProcRxParser. Never exceeds LENGTH_MAX. */
                                 /* alternatively overload Length */
     /*
-        Total frame length. 0 while unknown, and it survives the rewind that follows a resolved
-        frame - see Packet_ResetRxState. This is the parser's own account of the frame, independent
+        Total frame length. 0 while unknown This is the parser's own account of the frame, independent
         of anything the format says about it, so it is what a caller checks Meta.Length against.
         Cleared on entry to HEADER, when the next frame makes it meaningless.
     */
     packet_size_t FrameLength;
     // Packet_FrameFormat_T * p_FrameFormat;
-    uint32_t RxTimeStart;       /* Frame deadline base */
+    /*
+        Time accumulated in the OPEN frame. Zeroed on START -> LENGTH and nowhere else, so it cannot carry across frames.
+        A duration rather than a base, which is what lets the parse path stay free of a clock reading
+    */
+    uint32_t RxTimeElapsed;
 }
 Packet_RxParser_T;
 
@@ -142,6 +146,19 @@ static inline void Packet_ResetRx(Packet_RxParser_T * p_parser)
 {
     Packet_ResetRxState(p_parser);
     // p_parser->FrameLength = 0U;
+}
+
+/*!
+    The one exit convention, shared by both events.
+
+    Any code but AWAIT has resolved the frame, so the progress is rewound for the next one -
+    whichever event produced it. Having it named once is the point: a byte event and a time
+    event that each rewound for themselves would be two conventions that merely agree.
+*/
+static inline Packet_RxCode_T _Packet_ResolveRx(Packet_RxParser_T * p_parser, Packet_RxCode_T rxCode)
+{
+    if (rxCode != PACKET_RX_AWAIT) { Packet_ResetRxState(p_parser); }
+    return rxCode;
 }
 
 /*!
@@ -180,6 +197,7 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
             {
                 p_parser->StateId = PACKET_RX_STATE_LENGTH;
                 p_parser->NextIndex = p_format->LENGTH_MIN;
+                p_parser->RxTimeElapsed = 0U;   /* a frame opens here, and nowhere else */
             }
             else
             {
@@ -228,47 +246,54 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
         Rewind. [Index] must clear with the state, or the next frame builds from a stale offset.
         FrameLength survives so the caller can check the format's Meta.Length against it.
     */
-    if (rxCode != PACKET_RX_AWAIT) { Packet_ResetRxState(p_parser); }
-
-    return rxCode;
+    return _Packet_ResolveRx(p_parser, rxCode);
 }
 
-/******************************************************************************/
-/*!
-    Frame deadline
-
-    Still sans-I/O: timerNow is an input, exactly like a byte. The parser never reads a clock,
-    it is handed the reading - which is what keeps it drivable from a table of
-    (bytes, timestamp) pairs with no hardware.
-
-    What moves here, and did not belong outside, is the COUPLING: the base is only meaningful
-    against the parser's own state, and it must be re-armed on the same transitions the state
-    machine makes. Held outside, the two could drift - a caller that reset the parser without
-    re-stamping would measure the new frame from the old frame's start.
-
-    No edge to detect: the base slides forward on every pass the parser is idle, so it stops
-    sliding the moment a frame opens and the deadline measures from there. That costs a store
-    per idle pass and removes the "was in frame" snapshot a caller would otherwise carry.
-*/
-/******************************************************************************/
 /*! true once a delimiter has been accepted and the frame is still incomplete. */
 static inline bool Packet_IsRxWaiting(const Packet_RxParser_T * p_parser) { return (p_parser->StateId != PACKET_RX_STATE_START); }
 
-/*! Stamp the base without testing it. For a reset that is not a timeout. */
-static inline void Packet_MarkRxTime(Packet_RxParser_T * p_parser, uint32_t timerNow) { p_parser->RxTimeStart = timerNow; }
-
+/******************************************************************************/
 /*!
-    @brief  Abandon a frame that stalled part way.
-    @return true when a frame was abandoned - the caller counts it and answers the line.
+    Frame deadline - the machine's second event
+
+    One state, two events, one exit. Packet_ProcRxParser is the byte event, this is the time
+    event, and both resolve through _Packet_ResolveRx. That is why PACKET_RX_ERROR_TIMEOUT is
+    a member of Packet_RxCode_T rather than a bool the caller has to fold in on the side.
+
+    Still sans-I/O, and more so than before: the input is a DURATION, not a clock reading.
+    That is what keeps the parse path free of a timestamp - arming reduces to zeroing a
+    counter on the open transition, which a state machine can do without taking on a new
+    dependency.
+
+    Expiry is the one transition the byte event cannot take. Packet_ProcRxParser runs only
+    when Index == NextIndex, i.e. only when the bytes it asked for actually arrived, and a
+    line that goes quiet mid-frame is exactly the case where it is never reached. So the
+    deadline is a second entry point the caller polls, not a test inside the switch.
 */
-static inline bool Packet_ProcRxTimeout(Packet_RxParser_T * p_parser, uint32_t rxTimeout, uint32_t timerNow)
+/******************************************************************************/
+/*!
+    @brief  The time event. Ages the open frame and abandons it if the deadline is spent.
+
+    @param  deltaTime  elapsed since the previous call, in the same units as RX_TIMEOUT.
+
+    No clock, not even a reading - a duration is not a timestamp, which is why arming above
+    needs no parameter and reduces to zeroing a counter. Idle costs one compare and no write:
+    a frame that is not open has nothing to age.
+
+    Counts time it was TOLD about. Skip calls and the deadline stretches; that is acceptable
+    here because firing late only means holding a partial frame longer, and is why the
+    exchange deadline in Protocol_Sync stays on absolute time instead.
+*/
+static inline Packet_RxCode_T Packet_ProcRxTimeout(Packet_RxParser_T * p_parser, const Packet_Codec_T * p_format, uint32_t deltaTime)
 {
-    if (p_parser->StateId == PACKET_RX_STATE_START) { p_parser->RxTimeStart = timerNow; return false; }
-    if (timerNow - p_parser->RxTimeStart <= rxTimeout) { return false; }
-    Packet_ResetRx(p_parser);
-    return true;
+    if (p_format->RX_TIMEOUT == 0U) { return PACKET_RX_AWAIT; }  /* deadline disabled */
+    if (p_parser->StateId == PACKET_RX_STATE_START) { return PACKET_RX_AWAIT; }  /* nothing open to age */
+    p_parser->RxTimeElapsed += deltaTime;
+    return _Packet_ResolveRx(p_parser, (p_parser->RxTimeElapsed > p_format->RX_TIMEOUT) ? PACKET_RX_ERROR_TIMEOUT : PACKET_RX_AWAIT);
 }
 
+/*! Zero the frame deadline. For Init and for a full reset - the open transition arms it. */
+static inline void Packet_ResetRxTime(Packet_RxParser_T * p_parser) { p_parser->RxTimeElapsed = 0U; }
 
 /*!
     Query after Proc
@@ -280,3 +305,5 @@ static inline packet_size_t Packet_RxRemaining(const Packet_RxParser_T * p_parse
 
 /*! The parser's own account of the resolved frame. Valid until the next frame reaches HEADER. */
 static inline packet_size_t Packet_RxFrameLength(const Packet_RxParser_T * p_parser) { return p_parser->FrameLength; }
+
+

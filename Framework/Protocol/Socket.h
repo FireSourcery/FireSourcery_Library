@@ -173,8 +173,8 @@ static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
 {
     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
-    if (p_state->IsEnabled == false)                                    { return SOCKET_STATUS_DISABLED; }
-    if (Protocol_IsReqSyncActive(&p_state->Protocol) == true)                { return SOCKET_STATUS_BUSY; }
+    if (p_state->IsEnabled == false) { return SOCKET_STATUS_DISABLED; }
+    if (Protocol_IsReqSyncActive(&p_state->Protocol) == true) { return SOCKET_STATUS_BUSY; }
     if (Packet_IsRxWaiting(&p_state->Protocol.RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
     return SOCKET_STATUS_IDLE;
 }

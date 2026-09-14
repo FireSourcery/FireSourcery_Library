@@ -186,13 +186,6 @@ typedef struct Protocol_ReqState
 {
     Protocol_ReqStateId_T StateId;
     Protocol_Req_T * p_ReqActive;     /* Bound by Select, retained while ACTIVE */
-    Packet_Id_T * p_ReqId; /* The most recently arrived id, which may differ from the active handler processing */
-    /*
-        No deadline base here. The exchange outlives the binding - a handler returning DONE
-        unbinds while its response is still outstanding - so the base is latched in
-        Protocol_SyncState_T beside RetryMax and p_RetryFormat, which outlive it for the same
-        reason. Protocol_ResetReq would otherwise clear the clock on a frame still in flight.
-    */
 }
 Protocol_ReqState_T;
 
@@ -223,48 +216,43 @@ static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req
 */
 static inline bool Protocol_CaptureReqOfTable(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
 {
-    /* Stay on the same outer request even if the rx id changes. */
-    if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE)
-    {
-        if (id == p_state->p_ReqActive->ID.ID) { p_state->p_ReqId = &p_state->p_ReqActive->ID; return true; }
-        const Protocol_Req_T * p_req = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
-        p_state->p_ReqId = (p_req != NULL) ? &p_req->ID : NULL;
-        return(p_state->p_ReqId != NULL);
-    }
+    /*
+        Stay on the same outer request. A continuation frame does not re-look-up: the bound row owns the exchange until the handler ends it.
+    */
+    if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; }
 
     p_state->p_ReqActive = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
-    p_state->p_ReqId = (p_state->p_ReqActive != NULL) ? &p_state->p_ReqActive->ID : NULL;
     if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
     return (p_state->p_ReqActive != NULL);
 }
 
 /*!
-    The most recent id
+    The bound row's id, carrying the frame shape for both directions.
+
+    One shape per exchange: the request and its answer share the row's FRAME_FORMAT, so the
+    rx and tx payload offsets are the same lookup. A row that must answer with a different
+    shape names it by restoring RESP_ID here - see the commented alternative in Protocol_Req_T.
+
+    @return NULL when nothing is bound.
 */
-static inline Packet_Id_T * Protocol_ReqActiveId(const Protocol_ReqState_T * p_state)
+static inline Packet_Id_T * Protocol_ReqId(const Protocol_ReqState_T * p_state)
 {
-    if (p_state->p_ReqActive == NULL) { return NULL; }
-    return (p_state->p_ReqId != NULL) ? p_state->p_ReqId : &p_state->p_ReqActive->ID;
+    return (p_state->p_ReqActive != NULL) ? &p_state->p_ReqActive->ID : NULL;
 }
 
-/*! The shape the bound request answers with. NULL when nothing is bound. */
 static inline Packet_Id_T * Protocol_ReqRespId(const Protocol_ReqState_T * p_state)
 {
-    if (p_state->p_ReqActive == NULL) { return NULL; }
-    return &p_state->p_ReqActive->ID; // the opening id
-    // return Protocol_ReqActiveId(p_state); //using the latest
-// #ifdef PROTOCOL_RESPONSE_FORMAT_SEPARATE
-//     return (p_state->p_ReqActive->RESP_ID.FRAME_FORMAT != NULL) ? &p_state->p_ReqActive->RESP_ID : &p_state->p_ReqActive->ID;
-// #else
-    // return &p_state->p_ReqActive->ID;
-// #endif
+#ifdef PROTOCOL_RESPONSE_ID_ASYMMETRIC
+    return (p_state->p_ReqActive->RESP_ID.FRAME_FORMAT != NULL) ? &p_state->p_ReqActive->RESP_ID : &p_state->p_ReqActive->ID;
+#else
+    return Protocol_ReqId(p_state);
+#endif
 }
 
 static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
 {
     p_state->StateId = PROTOCOL_REQ_STATE_IDLE;
     p_state->p_ReqActive = NULL;
-    p_state->p_ReqId = NULL;   /* outlives its exchange otherwise, and Protocol_ReqActiveId would report it */
 }
 
 /*!
@@ -311,18 +299,18 @@ static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state
 /*!
     Offset both payloads past their headers and invoke the handler.
 
-    Rx offset is the last data frame's, held in p_ReqId - a control frame never rebinds, so
-    on an ack-driven continuation it still names the packet the handler is working through.
-    Tx offset is the mirror and comes from RESP_ID, the only thing that knows the answer's shape.
+    One offset serves both: the bound row's shape describes the request and the answer alike,
+    and it cannot change under an active handler because CaptureReq does not re-look-up while
+    ACTIVE. A control frame arriving mid-exchange never reaches here at all.
 */
 static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const uint8_t * p_rxFrame, uint8_t * p_txFrame)
 {
     if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
 
-    assert(Protocol_ReqActiveId(p_state)->FRAME_FORMAT != NULL);
+    assert(Protocol_ReqId(p_state)->FRAME_FORMAT != NULL);
     assert(Protocol_ReqRespId(p_state)->FRAME_FORMAT != NULL);
 
-    packet_size_t rxOffset = Protocol_ReqActiveId(p_state)->FRAME_FORMAT->HEADER_LENGTH; /* the last data frame */
+    packet_size_t rxOffset = Protocol_ReqId(p_state)->FRAME_FORMAT->HEADER_LENGTH; /* the opening data frame */
     packet_size_t txOffset = Protocol_ReqRespId(p_state)->FRAME_FORMAT->HEADER_LENGTH;   /* the shape the row answers with */
 
     return _Protocol_ProcReq(p_state, p_app, p_xfer, &p_rxFrame[rxOffset], &p_txFrame[txOffset]);

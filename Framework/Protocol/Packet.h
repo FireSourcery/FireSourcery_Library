@@ -141,6 +141,7 @@ typedef enum Packet_ClassId
     PACKET_CLASS_ACK,               /* Acknowledgment */
     PACKET_CLASS_NACK,              /* Negative acknowledgment */
     PACKET_CLASS_ABORT,             /* Abort transmission */
+    _PACKET_CLASS_LENGTH,             /* Length indication */
     // PACKET_CLASS_STATUS,
     // PACKET_CLASS_HEARTBEAT,         /* Keep-alive */
     // PACKET_CLASS_RESET,             /* Protocol reset */
@@ -257,9 +258,17 @@ typedef const struct Packet_Codec
     packet_id_t NACK_ID;
     packet_id_t ABORT_ID;
 
-    // keep this here so Protocol_Req can remain a table only
-    // .RX_TIMEOUT_DEFAULT
-    // BAUD_RATE_DEFAULT
+    // packet_id_t CONTROL_IDS[_PACKET_CLASS_LENGTH];
+
+    /*
+        Frame deadline, in the same units as the deltaTime the caller ages the parser by.
+        0 disables it. Here rather than in Protocol_Base_T because the bound is a property of
+        this format and its baud - LENGTH_MAX bytes take as long as they take - and because
+        Socket_SetFormat swaps the pointer and resets the parser together, so the period and
+        the progress can never disagree.
+    */
+    uint32_t RX_TIMEOUT;
+    // uint32_t BAUD_RATE_DEFAULT;
 }
 Packet_Codec_T;
 
@@ -339,6 +348,7 @@ static inline packet_id_t Packet_ControlIdOf(Packet_Codec_T * p_format, Packet_C
         case PACKET_CLASS_DATA:     return 0U;
         default:                    return 0U;
     }
+    // return p_format->CONTROL_IDS[classId];
 }
 
 static inline Packet_ClassId_T Packet_ClassOf(const Packet_Codec_T * p_format, packet_id_t id)

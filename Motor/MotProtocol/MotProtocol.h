@@ -41,9 +41,9 @@
 // #define MOT_PROTOCOL_TIMEOUT_REQ        (5000U)     /* Timeout Req */
 
 
-#define MOT_DATA_MODE_CHUNK_MAX ((packet_size_t)(MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)))
+// #define MOT_DATA_MODE_CHUNK_MAX ((packet_size_t)(MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)))
 
-#define MOT_PROTOCOL_FLASH_LOADER(p_Flash) PROTOCOL_FLASH_LOADER(p_Flash, MOT_PACKET_DATA_MODE_DATA, MOT_DATA_MODE_CHUNK_MAX)
+// #define MOT_PROTOCOL_FLASH_LOADER(p_Flash) PROTOCOL_FLASH_LOADER(p_Flash, MOT_PACKET_DATA_MODE_DATA, MOT_DATA_MODE_CHUNK_MAX)
 
 
 #endif
