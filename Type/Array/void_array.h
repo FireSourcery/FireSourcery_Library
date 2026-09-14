@@ -79,6 +79,16 @@ static inline void void_array_copy_from(size_t type, void * p_buffer, const void
     For each doesnt need transparent type optimization to pass through to memcpy
 */
 /******************************************************************************/
+static inline value_t array_get_instance(size_t type, void * p_buffer, size_t max, get_field_t getter, uint8_t instance, int field_id)
+{
+    if (instance < max) { return getter(void_array_at(type, p_buffer, instance), field_id); }
+    return 0;
+}
+static inline void array_set_instance(size_t type, void * p_buffer, size_t max, set_field_t setter, uint8_t instance, int field_id, value_t value)
+{
+    if (instance < max) { setter(void_array_at(type, p_buffer, instance), field_id, value); }
+}
+
 /*
     accessors with 0 additional arguments
 */

@@ -88,12 +88,8 @@ typedef enum Packet_RxState
 {
     /* Feed convention */
     PACKET_RX_STATE_START,      /* Scanning for the delimiter */
-    PACKET_RX_STATE_HEADER,     /* Growing the header until the length is known */
-    PACKET_RX_STATE_PAYLOAD,    /* Collecting the rest of the frame */
-    /* Step convention */
-    // WAIT_BYTE_1, /* SYNC */
-    // WAIT_LENGTH, /* HEADER */
-    // WAIT_PACKET, /* DATA */
+    PACKET_RX_STATE_LENGTH,     /* Growing the header until the length is known */
+    PACKET_RX_STATE_END,        /* Collecting the rest of the frame */
 }
 Packet_RxState_T;
 
@@ -167,6 +163,8 @@ static inline bool _Packet_IsStartId(const Packet_Codec_T * p_format, const uint
 */
 static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, const Packet_Codec_T * p_format, const uint8_t * p_buffer)
 {
+    assert(p_parser->Index == p_parser->NextIndex); /* using Xcvr_RxN length or nothing */
+
     Packet_RxCode_T rxCode = PACKET_RX_AWAIT;
 
     switch (p_parser->StateId)
@@ -174,14 +172,13 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
         case PACKET_RX_STATE_START:
             /*
                 Scanning a byte at a time is what keeps the reject branch from losing bytes.
-                Bulk-reading LENGTH_MIN and searching inside it would need the delimiter shifted to the front (memmove, and a non-const p_buffer);
+                Bulk-reading LENGTH_MIN and searching inside it would need the delimiter shifted to the front
                 on a clean line the delimiter is already byte 0, so this costs one extra RxN per frame.
             */
             if (p_parser->Index < p_format->START_ID_LENGTH) { p_parser->NextIndex = p_format->START_ID_LENGTH; }
             else if (_Packet_IsStartId(p_format, p_buffer) == true)
             {
-                p_parser->StateId = PACKET_RX_STATE_HEADER;
-                // p_parser->FrameLength = 0U;
+                p_parser->StateId = PACKET_RX_STATE_LENGTH;
                 p_parser->NextIndex = p_format->LENGTH_MIN;
             }
             else
@@ -191,9 +188,9 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
             }
             break;
 
-        case PACKET_RX_STATE_HEADER: /* Wait for Length */
+        case PACKET_RX_STATE_LENGTH: /* Wait for Length */
+            // if (p_parser->FrameLength == 0) { p_parser->FrameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index); }
             /* 0 = not yet determinable. Grow the header a byte at a time until the format answers. */
-            // p_parser->FrameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
             packet_size_t frameLength = p_format->PARSE_RX_LENGTH(p_buffer, p_parser->Index);
 
             /*
@@ -205,34 +202,13 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
 
             /* One bound covers both: a length that overruns the buffer, and one that undercuts what is already held. */
             if ((p_parser->NextIndex > p_format->LENGTH_MAX) || (p_parser->NextIndex < p_parser->Index)) { rxCode = PACKET_RX_ERROR_FRAME; }
-            else if (frameLength > 0U) { p_parser->StateId = PACKET_RX_STATE_PAYLOAD; }
+            else if (frameLength > 0U) { p_parser->StateId = PACKET_RX_STATE_END; }
 
             p_parser->FrameLength = frameLength; /* storage for consistency check only */
-
-            // /* Declined to answer. Grow the header by a byte, until it can no longer become a frame. */
-            // if (p_parser->Length == 0U)
-            // {
-            //     if (p_parser->Index >= p_format->LENGTH_MAX) { rxCode = PACKET_RX_ERROR_FRAME; }
-            //     else { p_parser->Target = p_parser->Index + 1U; }
-            // }
-            // else
-            // {
-                // /* A length that cannot describe this frame makes everything after it meaningless. */
-            //     if ((p_parser->Length < p_parser->Index) || (p_parser->Length > p_format->LENGTH_MAX))
-            //     {
-            //         rxCode = PACKET_RX_ERROR_FRAME;
-            //     }
-            //     else
-            //     {
-            //         p_parser->StateId = PACKET_RX_STATE_PAYLOAD;
-            //         p_parser->Target = p_parser->Length;
-            //     }
-            // }
             break;
 
-        case PACKET_RX_STATE_PAYLOAD:
-            assert(p_parser->Index == p_parser->NextIndex); /* Ensure the whole payload has been received */
-            // assert(p_parser->Index == p_parser->Length); /* Ensure the whole payload has been received */
+        case PACKET_RX_STATE_END:
+            // assert(p_parser->Index == p_parser->FrameLength); /* Ensure the whole payload has been received */
             /* The whole frame is present, so this always resolves. */
             /* Frame is complete. caller parse remaining meta with PARSE_RX_HEADER */
             rxCode = (p_format->IS_RX_VALID(p_buffer, p_parser->NextIndex) == true) ? PACKET_RX_COMPLETE : PACKET_RX_ERROR_DATA;
@@ -249,7 +225,7 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
         check for Abort without user signal, persistent wait process
     */
     /*
-        Rewind. Index must clear with the state, or the next frame builds from a stale offset.
+        Rewind. [Index] must clear with the state, or the next frame builds from a stale offset.
         FrameLength survives so the caller can check the format's Meta.Length against it.
     */
     if (rxCode != PACKET_RX_AWAIT) { Packet_ResetRxState(p_parser); }
@@ -257,17 +233,45 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
     return rxCode;
 }
 
-// static inline bool Packet_ProcRxParserTimer(Packet_RxParser_T * p_parser, uint32_t rxTimeout, uint32_t timerNow)
-// {
-//     if (p_parser->StateId != PACKET_RX_STATE_START) { p_parser->RxTimeStart = timerNow; return false; }
-//     if (_Protocol_IsElapsed(timerNow, p_parser->RxTimeStart, rxTimeout) == false) { return false; }
+/******************************************************************************/
+/*!
+    Frame deadline
 
-//     Packet_ResetRx(p_parser);
-//     return true;
-// }
+    Still sans-I/O: timerNow is an input, exactly like a byte. The parser never reads a clock,
+    it is handed the reading - which is what keeps it drivable from a table of
+    (bytes, timestamp) pairs with no hardware.
+
+    What moves here, and did not belong outside, is the COUPLING: the base is only meaningful
+    against the parser's own state, and it must be re-armed on the same transitions the state
+    machine makes. Held outside, the two could drift - a caller that reset the parser without
+    re-stamping would measure the new frame from the old frame's start.
+
+    No edge to detect: the base slides forward on every pass the parser is idle, so it stops
+    sliding the moment a frame opens and the deadline measures from there. That costs a store
+    per idle pass and removes the "was in frame" snapshot a caller would otherwise carry.
+*/
+/******************************************************************************/
+/*! true once a delimiter has been accepted and the frame is still incomplete. */
+static inline bool Packet_IsRxWaiting(const Packet_RxParser_T * p_parser) { return (p_parser->StateId != PACKET_RX_STATE_START); }
+
+/*! Stamp the base without testing it. For a reset that is not a timeout. */
+static inline void Packet_MarkRxTime(Packet_RxParser_T * p_parser, uint32_t timerNow) { p_parser->RxTimeStart = timerNow; }
 
 /*!
+    @brief  Abandon a frame that stalled part way.
+    @return true when a frame was abandoned - the caller counts it and answers the line.
+*/
+static inline bool Packet_ProcRxTimeout(Packet_RxParser_T * p_parser, uint32_t rxTimeout, uint32_t timerNow)
+{
+    if (p_parser->StateId == PACKET_RX_STATE_START) { p_parser->RxTimeStart = timerNow; return false; }
+    if (timerNow - p_parser->RxTimeStart <= rxTimeout) { return false; }
+    Packet_ResetRx(p_parser);
+    return true;
+}
 
+
+/*!
+    Query after Proc
 */
 static inline packet_size_t Packet_RxRemaining(const Packet_RxParser_T * p_parser)
 {
@@ -276,26 +280,3 @@ static inline packet_size_t Packet_RxRemaining(const Packet_RxParser_T * p_parse
 
 /*! The parser's own account of the resolved frame. Valid until the next frame reaches HEADER. */
 static inline packet_size_t Packet_RxFrameLength(const Packet_RxParser_T * p_parser) { return p_parser->FrameLength; }
-
-/*! true once a delimiter has been accepted and the frame is still incomplete. */
-static inline bool Packet_IsRxWaiting(const Packet_RxParser_T * p_parser) { return (p_parser->StateId != PACKET_RX_STATE_START); }
-
-
-
-// static inline Packet_RxState_T Packet_RxStateOf(const Packet_RxParser_T * p_parser)
-// {
-//     if (p_parser->Index == 0U) { return PACKET_RX_STATE_START; }    /* nothing accepted yet */
-//     if (p_parser->Length == 0U) { return PACKET_RX_STATE_HEADER; }   /* delimiter in, length unresolved */
-//     return PACKET_RX_STATE_PAYLOAD;
-//     // if (p_parser->Index >= p_parser->Length) { return PACKET_RX_STATE_PAYLOAD; }
-//     // return PACKET_RX_STATE_START;
-// }
-/* directly mapped to count */
-// static inline Packet_RxState_T _Packet_RxStateOf(Packet_Format_T * p_specs, size_t rxCount)
-// {
-//     if (rxCount == 0U) { return PACKET_RX_STATE_START; }
-//     else if (rxCount < p_specs->LENGTH_MIN) { return PACKET_RX_STATE_HEADER; }
-//     // else if (rxCount < p_state-> Length) { return PROTOCOL_RX_STATE_WAIT_PACKET; }
-//     else if (rxCount < p_specs->LENGTH_MAX) { return PACKET_RX_STATE_PAYLOAD; }
-//     else { return PACKET_RX_STATE_START; } /* Invalid length, reset */
-// }

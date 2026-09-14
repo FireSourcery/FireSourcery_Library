@@ -358,8 +358,6 @@ typedef struct MOT_PACKET_PACKED MotPacket_DataMode { uint8_t ByteData[MOT_PACKE
 /* Codec - bound into MOT_PACKET_CODEC, not called directly. */
 extern packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_t rxCount);
 extern bool MotProtocol_IsRxValid(const MotPacket_T * p_buffer, packet_size_t length);
-extern Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_buffer);
-extern Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, MotPacket_T * p_buffer);
 
 /* The two Tx/Rx shapes, named so a request table can declare which one an id uses. */
 extern Packet_FrameFormat_T MOT_FRAME_SYNC;

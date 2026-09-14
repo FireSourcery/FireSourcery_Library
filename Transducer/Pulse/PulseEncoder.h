@@ -66,24 +66,9 @@ typedef const struct PulseEncoder
 }
 PulseEncoder_T;
 
-// #define PULSE_ENCODER_INIT(Timer, p_State) (PulseEncoder_T) { .TIMER = (Timer), .P_STATE = (p_State), }
 
-/*
-    Assemble from primitives
-*/
-#define PULSE_ENCODER_INIT_FROM(p_TimerHal, TimerFreq, SampleFreq, p_State) \
-    PULSE_ENCODER_INIT(PULSE_TIMER_INIT(p_TimerHal, TimerFreq, SampleFreq, &((p_State)->Timer)), p_State)
 
-// #define PULSE_ENCODER_INIT_FROM(p_TimerHal, TimerFreq, SampleFreq, p_State, extended, extendedFreq)
-// {
-//     .TIMER = PULSE_TIMER_INIT_EXTENDED
-//     (
-//         p_TimerHal, TimerFreq, SampleFreq,
-//         &p_State->Timer,
-//         extended, extendedFreq
-//     ),
-//     .P_STATE = p_State
-// };
+
 
 static inline Angle_T * PulseEncoder_Angle(PulseEncoder_T * p_encoder) { return AngleCounter_Angle(&p_encoder->P_STATE->Counter); }
 static inline AngleCounter_T * PulseEncoder_Counter(PulseEncoder_T * p_encoder) { return &p_encoder->P_STATE->Counter; }

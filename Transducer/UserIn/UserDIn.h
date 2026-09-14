@@ -105,18 +105,12 @@ typedef const struct UserDIn
     UserDIn_State_T * P_STATE;
     const volatile uint32_t * P_TIMER;
     uint16_t DEBOUNCE_TIME;
-    UserDIn_Config_T * P_NVM_CONFIG; /* optionally */
+    const UserDIn_Config_T * P_NVM_CONFIG;  /* Persisted config. NULL for a fixed-function pin with no user config */
     // UserDIn_Fn_T * P_OPT_TABLE;
 }
 UserDIn_T;
 
 #define USER_DIN_STATE_ALLOC() (&(UserDIn_State_T){})
-
-#define USER_DIN_INIT(Pin, p_State, p_Timer, DebounceTime) (UserDIn_T) \
-    { .PIN = Pin, .P_STATE = (p_State), .P_TIMER = (p_Timer), .DEBOUNCE_TIME = (DebounceTime), }
-
-#define USER_DIN_INIT_FROM(p_PinHal, PinId, PinIsInvert, p_State, p_Timer, DebounceTime) \
-    USER_DIN_INIT(PIN_INIT_INVERT(p_PinHal, PinId, PinIsInvert), p_State, p_Timer, DebounceTime)
 
 /*
 */
@@ -151,7 +145,7 @@ static inline int UserDIn_ApplyGate(UserDIn_T * p_din, int value) { return UserD
 
 */
 /******************************************************************************/
-extern void UserDIn_InitFrom(UserDIn_T * p_dev, UserDIn_Config_T * p_config);
+extern void UserDIn_InitFrom(UserDIn_T * p_dev, const UserDIn_Config_T * p_config);
 extern void UserDIn_Init(UserDIn_T * p_dev);
 extern bool UserDIn_PollEdge(UserDIn_T * p_dev);
 extern bool UserDIn_PollRisingEdge(UserDIn_T * p_dev);
@@ -192,7 +186,7 @@ typedef enum UserDIn_ConfigId
 }
 UserDIn_ConfigId_T;
 
-static inline int UserDIn_Config_Get(UserDIn_Config_T * p_config, UserDIn_ConfigId_T configId)
+static inline int _UserDIn_Config_Get(const UserDIn_Config_T * p_config, UserDIn_ConfigId_T configId)
 {
     switch (configId)
     {
@@ -203,7 +197,7 @@ static inline int UserDIn_Config_Get(UserDIn_Config_T * p_config, UserDIn_Config
     }
 }
 
-static inline void UserDIn_Config_Set(UserDIn_Config_T * p_config, UserDIn_ConfigId_T configId, int value)
+static inline void _UserDIn_Config_Set(UserDIn_Config_T * p_config, UserDIn_ConfigId_T configId, int value)
 {
     switch (configId)
     {
@@ -215,21 +209,32 @@ static inline void UserDIn_Config_Set(UserDIn_Config_T * p_config, UserDIn_Confi
 }
 
 
+/*
+    Config is owned by the device, loaded from P_NVM_CONFIG on init.
+    Mode mirrors into P_STATE->Mode, which Modal_Enable/Disable overrides at runtime without persisting.
+*/
+static inline int UserDIn_Config_Get(UserDIn_T * p_dev, UserDIn_ConfigId_T configId) { return _UserDIn_Config_Get(&p_dev->P_STATE->Config, configId); }
+
+static inline void UserDIn_Config_Set(UserDIn_T * p_dev, UserDIn_ConfigId_T configId, int value)
+{
+    _UserDIn_Config_Set(&p_dev->P_STATE->Config, configId, value);
+    if (configId == USER_DIN_CONFIG_MODE) { p_dev->P_STATE->Mode = p_dev->P_STATE->Config.Mode; }
+}
+
+
 static inline int UserDIn_Var_GetInstance(UserDIn_T * p_array, uint8_t length, uint8_t instance, int varId)
 {
     if (instance >= length) { return 0; }
     return UserDIn_Var_Get(&p_array[instance], varId);
 }
 
-
-/* whe config is stored externally  */
-static inline int UserDIn_Config_GetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId)
+static inline int UserDIn_Config_GetInstance(UserDIn_T * p_array, uint8_t length, uint8_t instance, int configId)
 {
     if (instance >= length) { return 0; }
     return UserDIn_Config_Get(&p_array[instance], configId);
 }
 
-static inline void UserDIn_Config_SetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId, int value)
+static inline void UserDIn_Config_SetInstance(UserDIn_T * p_array, uint8_t length, uint8_t instance, int configId, int value)
 {
     if (instance >= length) { return; }
     UserDIn_Config_Set(&p_array[instance], configId, value);

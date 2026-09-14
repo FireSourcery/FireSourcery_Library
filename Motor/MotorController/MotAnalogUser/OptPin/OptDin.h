@@ -89,12 +89,12 @@ static inline UserDIn_T * OptDin_SwitchBrake(UserDIn_T * p_pins, OptDin_State_T 
 */
 /******************************************************************************/
 /* OptDin_PollingMap_T polling ids include descriptor. move this to generic */
-static inline void OptDin_ResolveBindings(OptDin_State_T * p_state, UserDIn_T * p_dins, const UserDIn_Config_T * p_configs, uint8_t count)
+static inline void OptDin_ResolveBindings(OptDin_State_T * p_state, UserDIn_T * p_dins, uint8_t count)
 {
     for (uint8_t i = 0; i < count; i++)
     {
         UserDIn_T ** target = NULL;
-        switch (p_configs[i].CmdId)
+        switch (p_dins[i].P_STATE->Config.CmdId)
         {
             case MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE: target = &p_state->p_SwitchBrake; break;
             // case MOTOR_CONTROLLER_OPT_DIN_FORWARD:      target = &p_state->p_Forward;     break;
@@ -105,15 +105,15 @@ static inline void OptDin_ResolveBindings(OptDin_State_T * p_state, UserDIn_T * 
     }
 }
 
-static inline void OptDin_ResolveCallbacks(UserDIn_T * p_dins, const UserDIn_Config_T * p_configs, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
+static inline void OptDin_ResolveCallbacks(UserDIn_T * p_dins, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
 {
-    for (uint8_t i = 0; i < count; i++) { p_dins[i].P_STATE->OptCmd = p_cmdTable[p_configs[i].CmdId]; }
+    for (uint8_t i = 0; i < count; i++) { p_dins[i].P_STATE->OptCmd = p_cmdTable[p_dins[i].P_STATE->Config.CmdId]; }
 }
 
-static inline void OptDin_ResolveConfig(OptDin_State_T * p_state, UserDIn_T * p_dins, const UserDIn_Config_T * p_configs, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
+static inline void OptDin_ResolveConfig(OptDin_State_T * p_state, UserDIn_T * p_dins, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
 {
-    OptDin_ResolveBindings(p_state, p_dins, p_configs, count);
-    OptDin_ResolveCallbacks(p_dins, p_configs, count, p_cmdTable);
+    OptDin_ResolveBindings(p_state, p_dins, count);
+    OptDin_ResolveCallbacks(p_dins, count, p_cmdTable);
 }
 
 /******************************************************************************/

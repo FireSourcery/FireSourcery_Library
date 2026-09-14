@@ -72,10 +72,10 @@ void Shifter_SetPinMode(const Shifter_T * p_shifter, Shifter_PinMode_T mode)
 #if defined(SHIFTER_PINS_FR_OPTION)
     p_shifter->P_STATE->p_DecodeTable = SelectDecodeTable(pins);
 #endif
-    if (pins.Reverse) { UserDIn_Init(&p_shifter->REVERSE_DIN); }
+    if (pins.Reverse) { UserDIn_Init(&p_shifter->REVERSE_DIN); } else { UserDIn_Modal_Disable(&p_shifter->REVERSE_DIN); }
 #if defined(SHIFTER_PINS_FR_FIXED) || defined(SHIFTER_PINS_FR_OPTION)
-    if (pins.Forward) { UserDIn_Init(&p_shifter->FORWARD_DIN); }
-    if (pins.Neutral) { UserDIn_Init(&p_shifter->NEUTRAL_DIN); }
+    if (pins.Forward) { UserDIn_Init(&p_shifter->FORWARD_DIN); } else { UserDIn_Modal_Disable(&p_shifter->FORWARD_DIN); }
+    if (pins.Neutral) { UserDIn_Init(&p_shifter->NEUTRAL_DIN); } else { UserDIn_Modal_Disable(&p_shifter->NEUTRAL_DIN); }
 #endif
 }
 

@@ -161,7 +161,7 @@ bool MotProtocol_IsRxValid(const MotPacket_T * p_packet, packet_size_t length)
     Phase 2. The only source of Meta.Id, and so of the frame's class.
     @return NULL when the header cannot describe a frame - the engine nacks and counts it.
 */
-Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_packet)
+void MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_packet)
 {
 
     p_meta->Id = p_packet->Long.Header.Id;   /* offset 1 in both shapes */
@@ -169,29 +169,25 @@ Packet_FrameFormat_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const M
     if (IsSyncShape(p_meta->Id) == true)
     {
         p_meta->Length = 0U;
-        return (Packet_FrameFormat_T *)&MOT_FRAME_SYNC;
     }
 
     /* A total shorter than its own header describes nothing. Reject before the subtraction. */
-    if (p_packet->Long.Header.Length < sizeof(MotPacket_Header_T)) { return NULL; }
+    if (p_packet->Long.Header.Length < sizeof(MotPacket_Header_T)) { return; }
 
     p_meta->Length   = (packet_size_t)(p_packet->Long.Header.Length - sizeof(MotPacket_Header_T));
     p_meta->Sequence = p_packet->Long.Header.Sequence;
     p_meta->Flags    = p_packet->Long.Header.Flags;
-    return (Packet_FrameFormat_T *)&MOT_FRAME_DATA;
 }
 
 /*! Symmetric with PARSE_RX_HEADER. Called after the handler has written its payload. */
-Packet_FrameFormat_T * MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, MotPacket_T * p_buffer)
+void MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, MotPacket_T * p_buffer)
 {
     if (IsSyncShape(p_meta->Id) == true)
     {
         (void)MotPacket_BuildControl((MotPacket_Control_T *)p_buffer, (MotPacket_Id_T)p_meta->Id);
-        return (Packet_FrameFormat_T *)&MOT_FRAME_SYNC;
     }
 
     (void)MotPacket_BuildHeader((MotPacket_T *)p_buffer, (MotPacket_Id_T)p_meta->Id, p_meta->Length);
-    return (Packet_FrameFormat_T *)&MOT_FRAME_DATA;
 }
 
 const Packet_Codec_T MOT_PACKET_CODEC =

@@ -111,6 +111,7 @@ CAN_State_T;
 /******************************************************************************/
 /*!
     CAN instance — const config + mutable state pointer
+    Start at the socket level, HAL already handles frame state minus RTR
 */
 /******************************************************************************/
 typedef const struct CAN

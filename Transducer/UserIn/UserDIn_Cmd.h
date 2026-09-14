@@ -33,19 +33,16 @@
 
 
 
-
-
 /*
     Base Module holds pointer or opaque pointer to decouple from service
 */
-
-// typedef const struct UserDIn_CmdTable
-// {
-//     UserDIn_Fn_T * P_CMD_TABLE;
-//     uint8_t LENGTH;
-//     void * P_CONTEXT;
-// }
-// UserDIn_CmdTable_T;
+typedef const struct UserDIn_CmdTable
+{
+    UserDIn_Fn_T * P_CMD_TABLE;
+    uint8_t LENGTH;
+    void * P_CONTEXT;
+}
+UserDIn_CmdTable_T;
 
 // static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONTEXT = NULL };
 
@@ -54,11 +51,27 @@
 //     p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_Modal_PollEdgeValue(p_dev));
 // }
 
+// static inline void _UserDIn_PollEdgeCmd(UserDIn_T * p_dev, void * p_context)
+// {
+//     UserDIn_Edge_T edge = UserDIn_Modal_PollEdgeValue(p_dev);
+//     if (edge != USER_DIN_EDGE_NULL) { p_dev->P_STATE->OptCmd(p_context, edge); }
+// }
 
 /*
     Array helper
 */
-// static inline void UserDIn_Array_ResolveCallbacks(UserDIn_T * p_dins, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
+static inline void UserDIn_Array_ResolveCallbacks(UserDIn_T * p_dins, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
+{
+    for (uint8_t i = 0; i < count; i++) { p_dins[i].P_STATE->OptCmd = p_cmdTable[p_dins[i].P_NVM_CONFIG->CmdId]; }
+}
+
+
+// static inline bool UserDIn_Array_IsCmdIdPresent(UserDIn_T * p_dins, uint8_t count,  uint8_t cmdid)
 // {
-//     for (uint8_t i = 0; i < count; i++) { p_dins[i].P_STATE->OptCmd = p_cmdTable[p_configs[i].CmdId]; }
+//     for (uint8_t i = 0; i < count; i++)
+//     {
+//         if (p_dins[i].P_NVM_CONFIG->CmdId == cmdid) { return true; }
+//     }
+//     return false;
 // }
+

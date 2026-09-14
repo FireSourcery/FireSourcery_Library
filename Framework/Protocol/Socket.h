@@ -187,8 +187,8 @@ static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
     all, which only the application can act on - MotorController raises FaultFlags.RxLost
     from it. Hence config here rather than in Protocol_Base_T.
 
-    It reads Protocol.ReqTimeStart, which advances only on a frame the engine actually
-    delivered, so line noise cannot feed it.
+    It reads the handshake's own deadline base, which advances only on a frame the engine
+    actually delivered, so line noise cannot feed it.
 */
 /*!
     @return true if WatchdogTimeout reached, a successful Req has not occurred
@@ -196,10 +196,10 @@ static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
 static inline bool Socket_IsRxLost(const Socket_T * p_socket)
 {
     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-    return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->PROTOCOL.P_TIMER - p_state->Protocol.ReqTimeStart > p_state->Config.WatchdogTimeout));
+    return ((p_state->IsRxWatchdogEnable == true) && Protocol_IsSyncElapsed(&p_state->Protocol.Sync, p_state->Config.WatchdogTimeout, *p_socket->PROTOCOL.P_TIMER));
 }
 
-/*! Arming a disabled socket would fault immediately, since nothing can feed ReqTimeStart. */
+/*! Arming a disabled socket would fault immediately, since nothing can feed the base. */
 static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->IsEnabled == true) { p_socket->IsRxWatchdogEnable = true; } }
 static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
 static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }

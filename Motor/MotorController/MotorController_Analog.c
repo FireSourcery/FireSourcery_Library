@@ -38,8 +38,8 @@
 /******************************************************************************/
 static inline void SetAdcZero(MotorController_T * p_dev, MotAnalogUser_AinId_T id, uint16_t zero_Adcu)
 {
-    p_dev->P_MC->Config.AInConfigs[id].AdcZero = zero_Adcu;
-    UserAIn_Init(&p_dev->AINS[id].PIN);
+    p_dev->AINS[id].PIN.P_STATE->Config.AdcZero = zero_Adcu;
+    UserAIn_ApplyConfig(&p_dev->AINS[id].PIN);
 }
 
 void StartCalibrateAdc(MotorController_T * p_dev)

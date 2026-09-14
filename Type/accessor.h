@@ -8,8 +8,8 @@
 #include <sys/types.h>
 
 /* Generic Interface. Generic Array/Memory Access */
-
 typedef int value_t;
+typedef int enum_t;
 
 typedef void(*proc_t)(void * p_context);
 typedef value_t(*poll_t)(void * p_context);
@@ -17,12 +17,12 @@ typedef value_t(*poll_t)(void * p_context);
 typedef value_t(*get_t)(const void * p_context);
 typedef void (*set_t)(void * p_context, value_t value);
 
-typedef value_t(*get_field_t)(const void * p_context, size_t indexId);
-typedef void (*set_field_t)(void * p_context, size_t indexId, value_t value);
-
 typedef bool (*test_t)(const void * p_context);
 typedef bool (*test_value_t)(const void * p_context, value_t value);
-typedef bool (*test_field_t)(const void * p_context, size_t indexId, value_t value);
+
+typedef value_t(*get_field_t)(const void * p_context, enum_t indexId);
+typedef void (*set_field_t)(void * p_context, enum_t indexId, value_t value);
+typedef bool (*test_field_t)(const void * p_context, enum_t indexId, value_t value);
 
 typedef bool (*try_proc_t)(void * p_context);
 typedef bool (*try_set_t)(void * p_context, value_t value);
@@ -35,8 +35,8 @@ typedef int(*compare_t)(const void * a, const void * b);
 /* Shorthand */
 static inline void call_proc(proc_t proc, void * p_context) { if (proc != NULL) { proc(p_context); } }
 
-static inline value_t call_get_at(get_field_t get, void * p_context, size_t index) { return (get != NULL) ? get(p_context, index) : 0; }
-static inline void call_set_at(set_field_t set, void * p_context, size_t index, value_t value) { if (set != NULL) { set(p_context, index, value); } }
+static inline value_t call_get_at(get_field_t get, void * p_context, enum_t index) { return (get != NULL) ? get(p_context, index) : 0; }
+static inline void call_set_at(set_field_t set, void * p_context, enum_t index, value_t value) { if (set != NULL) { set(p_context, index, value); } }
 
 static inline bool call_test(test_t test, void * p_context) { return (test != NULL) ? test(p_context) : true; }
 static inline bool call_test_set(test_value_t test, void * p_context, value_t value) { return (test != NULL) ? test(p_context, value) : true; }

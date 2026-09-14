@@ -61,18 +61,6 @@ static inline uint8_t CountMax(uint8_t count, size_t respElementSize)
 static Protocol_ReqCode_T Ping(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
     (void)p_rxPayload; (void)p_txPayload;
-    MotBuzzer_Short(MotorController_Buzzer(p_dev));
-
-    p_xfer->p_TxMeta->Id = MOT_PACKET_SYNC_ACK;
-    p_xfer->p_TxMeta->Length = 0U;
-    return PROTOCOL_REQ_DONE;
-}
-
-static Protocol_ReqCode_T PingAlt(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
-{
-    (void)p_rxPayload; (void)p_txPayload;
-    MotBuzzer_Short(MotorController_Buzzer(p_dev));
-
     p_xfer->p_TxMeta->Id = MOT_PACKET_SYNC_ACK;
     p_xfer->p_TxMeta->Length = 0U;
     return PROTOCOL_REQ_DONE;
@@ -150,8 +138,23 @@ static Protocol_ReqCode_T Var16Read(MotorController_T * p_dev, Packet_Xfer_T * p
     return PROTOCOL_REQ_DONE;
 }
 
+
+
 static Protocol_ReqCode_T Var16Write(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const MotPacket_Var16WriteReq_T * p_rxPayload, MotPacket_Var16WriteResp_T * p_txPayload)
 {
+    uint8_t varCount = CountMax((uint8_t)(p_xfer->p_RxMeta->Length / sizeof(p_rxPayload->Pairs[0U])), sizeof(uint8_t));
+
+    p_xfer->p_TxMeta->Length = MotorController_WriteVar16s(p_dev, p_rxPayload, p_txPayload, varCount);
+    p_xfer->p_TxMeta->Id = MOT_PACKET_VAR16_WRITE;
+    return PROTOCOL_REQ_DONE;
+}
+
+static Protocol_ReqCode_T Var16WriteVerbose(void * p_devArg, Packet_Xfer_T * p_xfer, const void * p_rxPayloadArg, void * p_txPayloadArg)
+{
+    MotorController_T * p_dev = (MotorController_T *)p_devArg;
+    const MotPacket_Var16WriteReq_T * p_rxPayload = (const MotPacket_Var16WriteReq_T *)p_rxPayloadArg;
+    MotPacket_Var16WriteResp_T * p_txPayload = (MotPacket_Var16WriteResp_T *)p_txPayloadArg;
+
     uint8_t varCount = CountMax((uint8_t)(p_xfer->p_RxMeta->Length / sizeof(p_rxPayload->Pairs[0U])), sizeof(uint8_t));
 
     p_xfer->p_TxMeta->Length = MotorController_WriteVar16s(p_dev, p_rxPayload, p_txPayload, varCount);
@@ -281,7 +284,6 @@ static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_dev, Packet_X
 const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH] =
 {
     PROTOCOL_REQ(MOT_PACKET_PING,             &MOT_FRAME_SYNC,  Ping,                PROTOCOL_ACK_NONE),
-    PROTOCOL_REQ(MOT_PACKET_PING_ALT,         &MOT_FRAME_SYNC,  PingAlt,             PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_STOP_ALL,         &MOT_FRAME_DATA,  StopAll,             PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_VERSION,          &MOT_FRAME_DATA,  Version,             PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_CALL,             &MOT_FRAME_DATA,  Call_Blocking,       PROTOCOL_ACK_NONE),
@@ -298,3 +300,13 @@ const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MO
     PROTOCOL_REQ(MOT_PACKET_DATA_MODE_WRITE,  &MOT_FRAME_DATA,  WriteData_Blocking,  PROTOCOL_ACK_NONE),
 #endif
 };
+
+
+// Protocol_Req_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_packet)
+// {
+//     MotProtocol_ParseRxHeader(p_meta, p_packet);
+//     switch (p_packet->Long.Header.Id) // known after MOT_PACKET_LENGTH_MIN
+//     {   case MOT_PACKET_PING: return &MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[0];
+//     }
+//     return NULL;
+// }

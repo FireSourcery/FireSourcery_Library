@@ -39,15 +39,11 @@
 /******************************************************************************/
 void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
 {
-    if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_STATE->Config = *p_config; }
-    if (p_dev->P_EDGE_PIN != NULL)
-    {
-        if (p_dev->P_STATE->Config.UseEdgePin) { UserDIn_Init(p_dev->P_EDGE_PIN); }
-        else { UserDIn_Modal_Disable(p_dev->P_EDGE_PIN); }
-    }
+    if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
+    if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Init(p_dev->P_EDGE_PIN); }
 
-    /* Initialize linear conversion */
-    UserAIn_ReinitScale(p_dev);
+    /* Linear conversion and edge pin gate follow Config */
+    UserAIn_ApplyConfig(p_dev);
 
     /* Initialize state */
     p_dev->P_STATE->RawValue_Adcu = p_dev->P_STATE->Config.AdcZero;
@@ -58,6 +54,20 @@ void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config
 void UserAIn_Init(const UserAIn_T * p_dev) { UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }
 
 void UserAIn_ReinitScale(const UserAIn_T * p_dev) { Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax); }
+
+/*
+    Resolve Config onto runtime state.
+    UseEdgePin is the AIn's enable for its gate pin — the gate pin carries no config of its own.
+*/
+void UserAIn_ApplyConfig(const UserAIn_T * p_dev)
+{
+    UserAIn_ReinitScale(p_dev);
+    if (p_dev->P_EDGE_PIN != NULL)
+    {
+        if (p_dev->P_STATE->Config.UseEdgePin) { UserDIn_Modal_Enable(p_dev->P_EDGE_PIN); }
+        else { UserDIn_Modal_Disable(p_dev->P_EDGE_PIN); }
+    }
+}
 
 /******************************************************************************/
 /*

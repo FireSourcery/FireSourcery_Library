@@ -236,10 +236,10 @@ typedef void (*Packet_BuildTxFrame_T)(const Packet_Meta_T * p_meta, void * p_fra
 */
 typedef const struct Packet_Codec
 {
-    uint8_t LENGTH_MIN;             /* Rx this many bytes before calling PARSE_RX */
-    uint8_t LENGTH_MAX;             /* the buffer length */
+    packet_size_t LENGTH_MIN;       /* Rx this many bytes before calling PARSE_RX */
+    packet_size_t LENGTH_MAX;       /* the buffer length */
     uint32_t START_ID;              /* 0x00 for Rx Parser handle */
-    uint32_t START_ID_LENGTH;
+    uint8_t  START_ID_LENGTH;
     // Packet_FrameFormat_T FrameFormat; /* Default FrameFromat */
 
     /* Enframe/Deframe */
@@ -274,22 +274,59 @@ Packet_Codec_T;
 static inline void Packet_ParseRxFrame(Packet_Codec_T * p_codec, Packet_Meta_T * p_meta, const uint8_t * p_frame) { p_codec->PARSE_RX_FRAME(p_meta, p_frame); }
 static inline void Packet_BuildTxFrame(Packet_Codec_T * p_codec, const Packet_Meta_T * p_meta, uint8_t * p_frame) { p_codec->BUILD_TX_FRAME(p_meta, p_frame); }
 
-/* Variable length payload use Meta.Length. Fixed use BODY_LENGTH. */
+/*
+    Packet length max determined by packet_size_t
+*/
+/*! The body this frame declares. Meta.Length only for a variable-length body. */
+static inline packet_size_t _Packet_BodyLengthOf(Packet_FrameFormat_T * p_format, const Packet_Meta_T * p_meta)
+{
+    return (p_format->BODY_LENGTH == 0U) ? p_meta->Length : p_format->BODY_LENGTH;
+}
+
+/*! Header plus trailer. Both compile-time constants of the format, and both < LENGTH_MIN. */
+static inline packet_size_t _Packet_OverheadOf(Packet_FrameFormat_T * p_format)
+{
+    return p_format->HEADER_LENGTH + p_format->TRAILER_LENGTH;
+}
+
+/*!
+    PRECONDITION: the body length is already known to fit - the frame was either sized by the
+    parser within LENGTH_MAX, or passed Packet_IsFrameWithin.
+
+    This is the one place a wire-sourced value is ADDED to, so it is the one place the sum can
+    leave the type. The predicates below never call it for that reason: each subtracts from a
+    bound instead, so both hold in packet_size_t whatever PACKET_SIZE_TYPE is set to. Call it
+    to size a transfer that has already been admitted, not to decide whether to admit one.
+*/
+/*
+    Compile time known Packet_FrameLengthOf < Packet_Codec_T.LENGTH_MAX < sizeof(packet_size_t)
+*/
 static inline packet_size_t Packet_FrameLengthOf(Packet_FrameFormat_T * p_format, const Packet_Meta_T * p_meta)
 {
-    return p_format->HEADER_LENGTH + p_format->TRAILER_LENGTH + ((p_format->BODY_LENGTH == 0U) ? p_meta->Length : p_format->BODY_LENGTH);
+    return _Packet_OverheadOf(p_format) + _Packet_BodyLengthOf(p_format, p_meta);
 }
 
 /*!
     The format's account of the frame against the parser's own.
 
     PARSE_RX_LENGTH and PARSE_RX_HEADER read the wire independently, so they can disagree -
-    and Meta.Length is what sizes the payload the handler is handed. Checking it against the
-    length the parser actually collected is the one bound only the engine can apply.
+    rxLength is what the parser actually collected.
+    Meta.Length is set by the handler.
 */
 static inline bool Packet_IsFrameConsistent(Packet_FrameFormat_T * p_framing, const Packet_Meta_T * p_meta, packet_size_t rxLength)
 {
-    return (Packet_FrameLengthOf(p_framing, p_meta) == (size_t)rxLength);
+    return (Packet_FrameLengthOf(p_framing, p_meta) == rxLength);
+}
+
+/*!
+    Does a staged response fit the buffer it was built in.
+
+    Meta.Length on the Tx side is set by the handler, so it is application input rather than
+    wire input - but it still indexes a fixed buffer, and the frame builder trusts it.
+*/
+static inline bool Packet_IsFrameWithin(Packet_FrameFormat_T * p_format, const Packet_Meta_T * p_meta, packet_size_t bufferLength)
+{
+    return (Packet_FrameLengthOf(p_format, p_meta) <= bufferLength);
 }
 
 static inline packet_id_t Packet_ControlIdOf(Packet_Codec_T * p_format, Packet_ClassId_T classId)

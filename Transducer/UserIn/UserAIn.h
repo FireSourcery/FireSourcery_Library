@@ -59,10 +59,10 @@ UserAIn_Config_T;
 /******************************************************************************/
 typedef struct UserAIn_State
 {
-    Linear_T Units;                     /* ADC to percentage conversion */
     uint16_t Value;                     /* Current filtered value. Percent16 by default */
     uint16_t ValuePrev;                 /* Previous value for edge detection */
     uint16_t RawValue_Adcu;             /* Raw ADC reading */
+    Linear_T Units;                     /* ADC to percentage conversion */
     UserAIn_Config_T Config;            /* Hold for runtime updates */
 }
 UserAIn_State_T;
@@ -83,10 +83,6 @@ typedef const struct UserAIn
 UserAIn_T;
 
 #define USER_AIN_STATE_ALLOC() (&(UserAIn_State_T){0})
-
-#define USER_AIN_INIT(p_EdgePin, p_State, p_Config, Filter) (UserAIn_T) \
-    { .P_EDGE_PIN = p_EdgePin, .P_STATE = p_State, .FILTER_SHIFT = Filter, .P_NVM_CONFIG = p_Config, }
-
 
 /* Handle P_EDGE_PIN->P_HAL_PIN == NULL as empty opject */
 
@@ -148,12 +144,29 @@ extern void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p
 extern void UserAIn_Init(const UserAIn_T * p_dev);
 
 extern void UserAIn_ReinitScale(const UserAIn_T * p_dev);
+extern void UserAIn_ApplyConfig(const UserAIn_T * p_dev);
 
 /* Polling functions */
 extern void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu);
 extern bool UserAIn_PollEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
 extern bool UserAIn_PollRisingEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
 extern bool UserAIn_PollFallingEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
+
+
+
+// static inline int _UserAIn_Var_Get(const UserAIn_T * p_dev, int id)
+// {
+//     int32_t value = 0;
+//     switch (id)
+//     {
+//         case USER_AIN_VALUE:           value = UserAIn_GetValue(p_dev);                            break;
+//         case USER_AIN_IS_ON:          value = UserAIn_IsOn(p_dev);                                   break;
+//         case USER_AIN_GATE:        value = _UserAIn_IsEdgePinOn(p_dev->P_EDGE_PIN);                                   break;
+//         default: break;
+//     }
+//     return value;
+// }
+
 
 typedef enum UserAIn_ConfigId
 {
@@ -162,3 +175,49 @@ typedef enum UserAIn_ConfigId
     USER_AIN_EDGE_PIN_IS_ENABLE,
 }
 UserAIn_ConfigId_T;
+
+static inline int _UserAIn_Config_Get(const UserAIn_Config_T * p_config, UserAIn_ConfigId_T configId)
+{
+    switch (configId)
+    {
+        case USER_AIN_ZERO_ADCU:            return p_config->AdcZero;
+        case USER_AIN_MAX_ADCU:             return p_config->AdcMax;
+        case USER_AIN_EDGE_PIN_IS_ENABLE:   return p_config->UseEdgePin;
+        default: return 0;
+    }
+}
+
+static inline void _UserAIn_Config_Set(UserAIn_Config_T * p_config, UserAIn_ConfigId_T configId, int value)
+{
+    switch (configId)
+    {
+        case USER_AIN_ZERO_ADCU:            p_config->AdcZero = (uint16_t)value;    break;
+        case USER_AIN_MAX_ADCU:             p_config->AdcMax = (uint16_t)value;     break;
+        case USER_AIN_EDGE_PIN_IS_ENABLE:   p_config->UseEdgePin = (bool)value;     break;
+        default: break;
+    }
+}
+
+/*
+    Config is owned by the device, loaded from P_NVM_CONFIG on init.
+    Set propagates: ADC bounds rescale the linear units, UseEdgePin re-gates the edge pin.
+*/
+static inline int UserAIn_Config_Get(const UserAIn_T * p_dev, UserAIn_ConfigId_T configId) { return _UserAIn_Config_Get(&p_dev->P_STATE->Config, configId); }
+
+static inline void UserAIn_Config_Set(const UserAIn_T * p_dev, UserAIn_ConfigId_T configId, int value)
+{
+    _UserAIn_Config_Set(&p_dev->P_STATE->Config, configId, value);
+    UserAIn_ApplyConfig(p_dev);
+}
+
+static inline int UserAIn_Config_GetInstance(const UserAIn_T * p_array, uint8_t length, uint8_t instance, UserAIn_ConfigId_T configId)
+{
+    if (instance >= length) { return 0; }
+    return UserAIn_Config_Get(&p_array[instance], configId);
+}
+
+static inline void UserAIn_Config_SetInstance(const UserAIn_T * p_array, uint8_t length, uint8_t instance, UserAIn_ConfigId_T configId, int value)
+{
+    if (instance >= length) { return; }
+    UserAIn_Config_Set(&p_array[instance], configId, value);
+}

@@ -53,15 +53,15 @@ void MotorController_Init(MotorController_T * p_dev)
 
     Shifter_InitFrom(&p_dev->SHIFTER, &p_dev->P_MC->Config.ShifterConfig);
 
-    for (uint8_t iAin = 0U; iAin < MOT_USER_AIN_COUNT; iAin++) { UserAIn_InitFrom(&p_dev->AINS[iAin].PIN, &p_dev->P_MC->Config.AInConfigs[iAin]); }
+    for (uint8_t iAin = 0U; iAin < MOT_USER_AIN_COUNT; iAin++) { UserAIn_Init(&p_dev->AINS[iAin].PIN); }
 
     for (uint8_t iDin = 0; iDin < MOT_USER_DIN_COUNT; iDin++)
     {
-        UserDIn_InitFrom(&p_dev->DINS[iDin], &p_dev->P_MC->Config.DInConfigs[iDin]);
-        p_dev->DINS[iDin].P_STATE->OptCmd = _MotorController_OptDinFn(p_dev->P_MC->Config.DInConfigs[iDin].CmdId);
+        UserDIn_Init(&p_dev->DINS[iDin]);
+        p_dev->DINS[iDin].P_STATE->OptCmd = _MotorController_OptDinFn(p_dev->DINS[iDin].P_STATE->Config.CmdId);
     }
-    OptDin_ResolveBindings(&p_mc->OptDinState, p_dev->DINS, &p_mc->Config.DInConfigs[0], MOT_USER_DIN_COUNT);
-    // OptDin_ResolveCallbacks( p_dev->DINS, &p_mc->Config.DInConfigs[0], MOT_USER_DIN_COUNT);
+    OptDin_ResolveBindings(&p_mc->OptDinState, p_dev->DINS, MOT_USER_DIN_COUNT);
+    // OptDin_ResolveCallbacks(p_dev->DINS, MOT_USER_DIN_COUNT);
 
     VBus_InitFrom(p_dev->P_VBUS, p_dev->P_VBUS_NVM_CONFIG);
 

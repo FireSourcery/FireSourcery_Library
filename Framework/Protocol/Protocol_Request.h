@@ -88,17 +88,28 @@ Protocol_Substate_T;
     Everything the handler may read or write, and nothing about the transport.
     Protocol_ReqParams_T
 */
+/*!
+    p_RxMeta describes the frame that caused THIS invocation, which is not always a data frame.
+    However Protocol_ProcReqResp_T is only called when p_RxMeta is filled with a data frame.
+*/
 typedef struct Packet_Xfer
 {
-    const Packet_Meta_T * const p_RxMeta;     /* Virtual header of the frame just delivered */
+    const Packet_Meta_T * const p_RxMeta;     /* Header of the frame that caused this call - may be a control frame */
     Packet_Meta_T * const p_TxMeta;           /* Handler sets Id and Length; the format builds the header */
     void * const p_Substate;                  /* Handler's own storage, sized by the child protocol */
     // Protocol_Substate_T * p_Substate;   /* Handler's own storage, sized by the child protocol */
 }
 Packet_Xfer_T;
 
+
 /*
-    Table can cast payload with exact type for handling ergonomics
+    This function signature exposes the void * payloads so they can be cast through the function pointer for ergonomics.
+    Whereas the following would not
+    struct
+    {
+        const Packet_Meta_T * const p_RxMeta;
+        const void * restrict p_rxPayload;
+    }
 */
 typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload);
 
@@ -153,8 +164,6 @@ Protocol_Req_T;
 }
 
 
-
-
 #ifndef __containerof
 #define __containerof(x, s, m) ((s *)(const void *)((const char *)(x) - offsetof(s, m)))
 #endif
@@ -178,7 +187,12 @@ typedef struct Protocol_ReqState
     Protocol_ReqStateId_T StateId;
     Protocol_Req_T * p_ReqActive;     /* Bound by Select, retained while ACTIVE */
     Packet_Id_T * p_ReqId; /* The most recently arrived id, which may differ from the active handler processing */
-    uint32_t ReqTimeStart;      /* Exchange deadline base */
+    /*
+        No deadline base here. The exchange outlives the binding - a handler returning DONE
+        unbinds while its response is still outstanding - so the base is latched in
+        Protocol_SyncState_T beside RetryMax and p_RetryFormat, which outlive it for the same
+        reason. Protocol_ResetReq would otherwise clear the clock on a frame still in flight.
+    */
 }
 Protocol_ReqState_T;
 
@@ -203,16 +217,16 @@ static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req
 
     @return false when the id has no handler.
 */
+/*
+    Only a data frame reaches here - PROTOCOL_SYNC_EVENT_REQUEST is raised for
+    PACKET_CLASS_DATA alone, so an ack never rebinds.
+*/
 static inline bool Protocol_CaptureReqOfTable(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
 {
     /* Stay on the same outer request even if the rx id changes. */
     if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE)
     {
         if (id == p_state->p_ReqActive->ID.ID) { p_state->p_ReqId = &p_state->p_ReqActive->ID; return true; }
-        /*
-            Only a data frame reaches here - PROTOCOL_SYNC_EVENT_REQUEST is raised for
-            PACKET_CLASS_DATA alone, so an ack never rebinds.
-        */
         const Protocol_Req_T * p_req = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
         p_state->p_ReqId = (p_req != NULL) ? &p_req->ID : NULL;
         return(p_state->p_ReqId != NULL);
@@ -237,7 +251,8 @@ static inline Packet_Id_T * Protocol_ReqActiveId(const Protocol_ReqState_T * p_s
 static inline Packet_Id_T * Protocol_ReqRespId(const Protocol_ReqState_T * p_state)
 {
     if (p_state->p_ReqActive == NULL) { return NULL; }
-    return &p_state->p_ReqActive->ID;
+    return &p_state->p_ReqActive->ID; // the opening id
+    // return Protocol_ReqActiveId(p_state); //using the latest
 // #ifdef PROTOCOL_RESPONSE_FORMAT_SEPARATE
 //     return (p_state->p_ReqActive->RESP_ID.FRAME_FORMAT != NULL) ? &p_state->p_ReqActive->RESP_ID : &p_state->p_ReqActive->ID;
 // #else
@@ -255,9 +270,9 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
 /*!
     @brief  Invoke the bound handler.
 
-            Identical for the opening call and every continuation - the handler distinguishes
-            them by Step, which the engine only clears at Select. Returns to IDLE on DONE and
-            ABORT.
+            Identical for the opening call and every continuation -
+            the handler distinguishes them by Step, which the engine only clears at Select.
+            Returns to IDLE on DONE and ABORT.
 
     @param  p_xfer  handler context. p_Step must point at this state's Step.
 
@@ -292,9 +307,7 @@ static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state
     return reqCode;
 }
 
-/*!
-    Offset both payloads past their headers and invoke the handler.
-*/
+
 /*!
     Offset both payloads past their headers and invoke the handler.
 
@@ -347,31 +360,6 @@ static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState
 //     return (p_state->p_ReqActive != NULL);
 // }
 
-// full map the descriptor at the main.c layer minus buffers
-// typedef const struct Protocol_ReqService
-// {
-//     const Protocol_Req_T * P_TABLE;             /* id -> handler */
-//     uint8_t TABLE_LENGTH;
-
-//     void * P_APP;           /* Passed to every handler */
-//     void * P_SUB_STATE;     /* Handler sub-state buffer */
-
-    /* The request service. Id -> handler */
-    // const Protocol_Req_T * P_REQ_TABLE;
-    // uint8_t REQ_TABLE_LENGTH;
-    // void * P_APP_CONTEXT;                   /* Passed to every handler */
-    // void * P_REQ_CONTEXT;                   /* Handler sub-state. Sized for the largest handler */
-
-    // const volatile uint32_t * P_TIMER;
-    // const uint32_t RX_TIMEOUT;              /* Frame deadline */
-    // const uint32_t REQ_TIMEOUT;             /* Exchange deadline */
-
-    // one lookup without searching
-// typedef Packet_Id_T * (*Packet_ParseRxFrame_T)(Packet_Meta_T * p_meta, const void * p_frame);
-// typedef void (*Packet_BuildTxFrame_T)(const Packet_Meta_T * p_meta, void * p_frame);
-
-// }
-// Protocol_ReqService_T;
 
 
 /******************************************************************************/

@@ -247,17 +247,13 @@ static int _HandleGeneral_Get(MotorController_T * p_dev, MotVarId_T varId)
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    return MotAnalogUser_ConfigId_Get(p_dev, varId.Base);
         case MOT_VAR_TYPE_OPT_DIN_CONFIG:        return OptDin_ConfigId_Get(&p_dev->P_MC->Config.OptDinConfig, varId.Base);
         case MOT_VAR_TYPE_USER_DIN_STATE:        return UserDIn_Var_GetInstance(p_dev->DINS, MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
-        case MOT_VAR_TYPE_USER_DIN_CONFIG:       return UserDIn_Config_GetInstance(&p_dev->P_MC->Config.DInConfigs[0], MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
+        case MOT_VAR_TYPE_USER_DIN_CONFIG:       return UserDIn_Config_GetInstance(p_dev->DINS, MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
         // todowrap with analg user for now
-        // case MOT_VAR_TYPE_USER_AIN_STATE:        return UserAIn_Var_GetInstance(p_dev->AINS, MOT_USER_AIN_COUNT, varId.Instance, varId.Base);
-        // case MOT_VAR_TYPE_USER_AIN_CONFIG:       return UserAIn_Config_GetInstance(&p_dev->P_MC->Config.AInConfigs[0], MOT_USER_AIN_COUNT, varId.Instance, varId.Base);
+        // case MOT_VAR_TYPE_USER_AIN_STATE:         return UserAIn_Var_GetInstance(p_dev->AINS, MOT_USER_AIN_COUNT, varId.Instance, varId.Base);
+        // case MOT_VAR_TYPE_USER_AIN_CONFIG:        return UserAIn_Config_GetInstance(p_dev->AINS, MOT_USER_AIN_COUNT, varId.Instance, varId.Base);
         default: return 0;
     }
 }
-
-
-
-
 
 static MotVarId_Status_T _HandleGeneral_Set(MotorController_T * p_dev, MotVarId_T varId, int value)
 {
@@ -273,9 +269,10 @@ static MotVarId_Status_T _HandleGeneral_Set(MotorController_T * p_dev, MotVarId_
         /* Pin function [OptDin_T] */
         case MOT_VAR_TYPE_OPT_DIN_CONFIG:           OptDin_ConfigId_Set(&p_dev->P_MC->Config.OptDinConfig, varId.Base, value);         break;
         case MOT_VAR_TYPE_USER_DIN_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_USER_DIN_CONFIG:          UserDIn_Config_SetInstance(&p_dev->P_MC->Config.DInConfigs[0], MOT_USER_DIN_COUNT, varId.Instance, varId.Base, value);                        break;
-        case MOT_VAR_TYPE_USER_AIN_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        // case MOT_VAR_TYPE_USER_AIN_CONFIG:
+        case MOT_VAR_TYPE_USER_DIN_CONFIG:          UserDIn_Config_SetInstance(p_dev->DINS, MOT_USER_DIN_COUNT, varId.Instance, varId.Base, value);                                             break;
+        // case MOT_VAR_TYPE_USER_DIN_CONFIG:         array_set_instance(sizeof(UserDIn_T), p_dev->DINS, MOT_USER_DIN_COUNT, UserDIn_Config_Get, varId.Instance, varId.Base, value);     break;
+        case MOT_VAR_TYPE_USER_AIN_STATE:          return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        // case MOT_VAR_TYPE_USER_AIN_CONFIG:         UserAIn_Config_SetInstance(p_dev->AINS->PIN, MOT_USER_AIN_COUNT, varId.Instance, varId.Base, value);                                             break;
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
     return MOT_VAR_STATUS_OK;

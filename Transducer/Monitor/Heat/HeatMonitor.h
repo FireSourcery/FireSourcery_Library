@@ -142,6 +142,7 @@ extern void HeatMonitor_Init(const HeatMonitor_T * p_context);
 */
 /******************************************************************************/
 /* Handle FanIn */
+/* alternatively keep functions on arrays and handle VarId uint8_t instance, Monitor_VarId_T id with generic form`*/
 typedef const struct HeatMonitor_Group
 {
     /* Array of HeatMonitor_T */

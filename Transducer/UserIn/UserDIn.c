@@ -41,6 +41,7 @@
 */
 /******************************************************************************/
 // static inline bool ReadPin(UserDIn_T * p_dev) { return Pin_Input_Read(&p_dev->PIN); }
+/* Polarity composes: board wiring (PIN.IS_INVERT, compile time) then user preference (Config.Invert, persisted) */
 static inline bool ReadPin(UserDIn_T * p_dev) { return Pin_Input_Read(&p_dev->PIN) ^ p_dev->P_STATE->Config.Invert; }
 static inline uint32_t GetTime(UserDIn_T * p_dev) { return *p_dev->P_TIMER; }
 
@@ -103,17 +104,18 @@ void _UserDIn_Modal_PollEdgeCmd(UserDIn_T * p_dev, void * p_context)
 /*
     Disable skips init, Modal Poll always returns 0
 */
-void UserDIn_InitFrom(UserDIn_T * p_dev, UserDIn_Config_T * p_config)
+void UserDIn_InitFrom(UserDIn_T * p_dev, const UserDIn_Config_T * p_config)
 {
     if (p_dev->PIN.P_HAL_PIN == NULL) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; } /* runtime config for no pin connected. read as 0 */
     else
     {
         Pin_Input_Init(&p_dev->PIN);
 
-        // alternativel copy to local then resolve
+        /* A pin with no user config is fixed-function: on by default, its owner gates it via Modal_Disable */
         if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
+        else { p_dev->P_STATE->Config.Mode = USER_DIN_MODE_NORMAL; }
 
-        p_dev->P_STATE->Mode = p_config->Mode; /*  */
+        p_dev->P_STATE->Mode = p_dev->P_STATE->Config.Mode;
         p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
         p_dev->P_STATE->Debounce.DebounceTime = p_dev->DEBOUNCE_TIME;
 

@@ -66,7 +66,7 @@ static inline bool MotorController_IsParkPinMapped(MotorController_T * p_dev)
 {
     for (uint8_t iDin = 0U; iDin < MOT_USER_DIN_COUNT; iDin++)
     {
-        if (p_dev->P_MC->Config.DInConfigs[iDin].CmdId == MOTOR_CONTROLLER_OPT_DIN_PARK) { return true; }
+        if (p_dev->DINS[iDin].P_STATE->Config.CmdId == MOTOR_CONTROLLER_OPT_DIN_PARK) { return true; }
     }
     return false;
 }

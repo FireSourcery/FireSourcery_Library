@@ -164,7 +164,6 @@ MotorController_StandbyExitMode_T;
 // }
 // MotorController_InitFlags_T;
 
-
 typedef struct MotorController_Config
 {
     // MotorController_MainMode_T InitMode;
@@ -173,12 +172,8 @@ typedef struct MotorController_Config
 
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
-
     OptDin_Config_T OptDinConfig;
     Shifter_Config_T ShifterConfig;
-    // optionally move to Din P_VM
-    UserDIn_Config_T DInConfigs[MOT_USER_DIN_COUNT]; /* stores cmd id */
-    UserAIn_Config_T AInConfigs[MOT_USER_AIN_COUNT];
 }
 MotorController_Config_T;
 
@@ -199,11 +194,6 @@ typedef struct MotorController_Context
 
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine. Unused for now */
     // MotorController_InputMode_T ActiveInput;
-
-    /* AIN state — parallel to MotorController_T.AINS[] / .AIN_CONVERSIONS[] */
-    /* alternatively ain wraper handle */
-    UserAIn_State_T AInStates[MOT_USER_AIN_COUNT];
-    UserDIn_State_T AInGateStates[MOT_USER_AIN_COUNT];
 
     OptDin_State_T OptDinState;
 
@@ -255,6 +245,7 @@ typedef const struct MotorController
     */
     /* Transducer */
     Shifter_T SHIFTER;              /* Direction shifter pins */
+    /* AIn/DIn runtime state is owned by the board layer, alongside the device instances */
     UserDIn_T DINS[MOT_USER_DIN_COUNT];
     struct { UserAIn_T PIN; Analog_Conversion_T CONVERSION; } AINS[MOT_USER_AIN_COUNT];
 
@@ -283,6 +274,7 @@ typedef const struct MotorController
     const VBus_Config_T * P_VBUS_NVM_CONFIG;    /* hold vbus config */
     Analog_Conversion_T VBUS_CONVERSION;
 
+    /* Keep as named rather than an array */
     VMonitor_T V_ACCESSORIES;   /* ~12V */
     Analog_Conversion_T V_ACCESSORIES_CONVERSION;
 

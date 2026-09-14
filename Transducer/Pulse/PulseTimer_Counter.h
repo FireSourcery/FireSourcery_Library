@@ -40,22 +40,40 @@
 */
 /******************************************************************************/
 /* Count only. Angle supplied externally (sector LUT, Hall snap, etc.) */
-// static inline void PulseTimer_Counter_CaptureEdge(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
-// {
-//     PulseTimer_CaptureEdge(p_timer);
-//     _AngleCounter_CaptureCount(p_counter, sign);
-// }
+static inline void PulseTimer_CaptureCount(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
+{
+    PulseTimer_CaptureEdge(p_timer);
+    _AngleCounter_CaptureCount(p_counter, sign);
+}
 
-// /* Count + wrap angle. Angle derived from counter (Timer-style) */
-// static inline void PulseTimer_Counter_CaptureEdgeWrap(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
-// {
-//     PulseTimer_CaptureEdge(p_timer);
-//     AngleCounter_CaptureCount(p_counter, sign);
-// }
+/* Count + wrap angle. Angle derived from counter (Timer-style) */
+static inline void PulseTimer_CaptureAngleCount(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
+{
+    PulseTimer_CaptureEdge(p_timer);
+    AngleCounter_CaptureCount(p_counter, sign);
+}
 
-// static inline void PulseTimer_Counter_CaptureFreq(PulseTimer_T * p_timer, AngleCounter_T * p_counter)
+static inline void PulseTimer_CaptureFreq(PulseTimer_T * p_timer, AngleCounter_T * p_counter)
+{
+    if (PulseTimer_IsExtendedStop(p_timer))
+    {
+        p_counter->FreqD = 0; /* Stop => 0 speed */
+    }
+    else
+    {
+        AngleCounter_CaptureFreq(p_counter, PulseTimer_CaptureSampleTk_Freq(p_timer));
+    }
+}
+
+static inline void PulseTimer_AngleCounter_Init(PulseTimer_T * p_encoder, AngleCounter_T * p_counter, const AngleCounter_Config_T * p_config)
+{
+    PulseTimer_Init(p_encoder);
+    AngleCounter_InitFrom(p_counter, p_config);
+}
+
+// static inline void PulseTimer_SetInitial(PulseTimer_T * p_encoder)
 // {
-//     AngleCounter_CaptureFreq(p_counter, PulseTimer_CaptureSampleTk_Freq(p_timer));
+//     PulseTimer_SetInitial(p_timer);
 // }
 
 

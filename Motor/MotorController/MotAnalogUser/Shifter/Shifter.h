@@ -134,12 +134,15 @@ Shifter_T;
 
 #define SHIFTER_STATE_ALLOC() (&(Shifter_State_T){0})
 
-#define SHIFTER_INIT_FROM(p_State, ForwardHal, ForwardId, ReverseHal, ReverseId, NeutralHal, NeutralId, IsInvert, p_Timer) (Shifter_T) \
-{                                                                                                                                                 \
-    .P_STATE = (p_State),                                                                                                                         \
-    .FORWARD_DIN = USER_DIN_INIT_FROM((ForwardHal), (ForwardId), (IsInvert), &(p_State)->ForwardState, (p_Timer), 10U),                          \
-    .REVERSE_DIN = USER_DIN_INIT_FROM((ReverseHal), (ReverseId), (IsInvert), &(p_State)->ReverseState, (p_Timer), 10U),                          \
-    .NEUTRAL_DIN = USER_DIN_INIT_FROM((NeutralHal), (NeutralId), (IsInvert), &(p_State)->NeutralState, (p_Timer), 10U),                          \
+#define SHIFTER_DIN_INIT(PinHal, PinId, IsInvert, p_State, p_Timer)                                                                         \
+    { .PIN = PIN_INIT_INVERT((PinHal), (PinId), (IsInvert)), .P_STATE = (p_State), .P_TIMER = (p_Timer), .DEBOUNCE_TIME = 10U, }
+
+#define SHIFTER_INIT_FROM(p_State, ForwardHal, ForwardId, ReverseHal, ReverseId, NeutralHal, NeutralId, IsInvert, p_Timer) (Shifter_T)      \
+{                                                                                                                                           \
+    .P_STATE = (p_State),                                                                                                                   \
+    .FORWARD_DIN = SHIFTER_DIN_INIT((ForwardHal), (ForwardId), (IsInvert), &(p_State)->ForwardState, (p_Timer)),                            \
+    .REVERSE_DIN = SHIFTER_DIN_INIT((ReverseHal), (ReverseId), (IsInvert), &(p_State)->ReverseState, (p_Timer)),                            \
+    .NEUTRAL_DIN = SHIFTER_DIN_INIT((NeutralHal), (NeutralId), (IsInvert), &(p_State)->NeutralState, (p_Timer)),                            \
 }
 
 /******************************************************************************/

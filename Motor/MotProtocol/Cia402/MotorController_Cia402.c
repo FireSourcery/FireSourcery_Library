@@ -67,7 +67,7 @@ static Cia402_Adapter_T * Cia402_AdapterIfAddressed(MotorController_T * p_mc, co
 {
     Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, 0);
     // return (CIA402_COB_NODE(p_rx->CanId.Id) == p_adapter->Config.NodeId) ? p_adapter : NULL;
-    return (Cia402_Adapter_T *)(p_mc->MOTORS.P_DEVS[0].P_MOTOR->AdapterBuffer); // fixed for now
+    return p_adapter; // fixed for now
 }
 
 /******************************************************************************/

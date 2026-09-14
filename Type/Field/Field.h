@@ -42,18 +42,7 @@
 
 static inline int get_field(const void * p_context, size_t size, size_t offset)
 {
-    const uint8_t * p_base = (const uint8_t *)p_context + offset;
-    // return pointer_as_value(size, (const uint8_t *)p_context + offset);
-
-    int value;
-    switch (size)
-    {
-        case 1U: value = (int32_t)(*(const int8_t *)p_base);   break;
-        case 2U: value = (int32_t)(*(const int16_t *)p_base);  break;
-        case 4U: value = *(const int32_t *)p_base;             break;
-        default: value = 0;                                    break;
-    }
-    return value;
+    return pointer_value_as(size, (const uint8_t *)p_context + offset);
 }
 
 // static inline int try_get_field(const void * p_context, size_t context_size, size_t value_size, size_t offset)
@@ -64,14 +53,7 @@ static inline int get_field(const void * p_context, size_t size, size_t offset)
 
 static inline void set_field(void * p_context, size_t size, size_t offset, int value)
 {
-    uint8_t * p_base = (uint8_t *)p_context + offset;
-    switch (size)
-    {
-        case 1U: *(int8_t *)p_base = (int8_t)value;     break;
-        case 2U: *(int16_t *)p_base = (int16_t)value;   break;
-        case 4U: *(int32_t *)p_base = value;            break;
-        default:                                        break;
-    }
+    pointer_assign_value_as(size, (uint8_t *)p_context + offset, value);
 }
 
 /* Field Descriptor */
@@ -139,6 +121,9 @@ static inline bool VarAccess_TrySet(VarAccess_T * p_varAccess, void * p_context,
     if (p_varAccess->ON_SET != NULL) { p_varAccess->ON_SET(p_context); }
     return true;
 }
+
+// typedef value_t(*field_getter_t)(const void * p_context, size_t indexId);
+// typedef void (*field_setter_t)(void * p_context, size_t indexId, value_t value);
 
 /*
     compatibility with sub modules using switch()

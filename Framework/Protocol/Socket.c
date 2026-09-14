@@ -41,7 +41,7 @@ void Socket_Disable(const Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
-    Protocol_Reset(&p_state->Protocol, *p_socket->PROTOCOL.P_TIMER);
+    Protocol_Reset(&p_socket->PROTOCOL, &p_state->Protocol);
     p_state->IsEnabled = false;
 }
 
@@ -55,7 +55,7 @@ bool Socket_Enable(const Socket_T * p_socket)
     if ((p_state->p_Xcvr == NULL) || (p_state->p_Format == NULL)) { return false; }
 
     Xcvr_ConfigBaudRate(p_state->p_Xcvr, p_state->Config.BaudRate);
-    Protocol_Reset(&p_state->Protocol, *p_socket->PROTOCOL.P_TIMER);
+    Protocol_Reset(&p_socket->PROTOCOL, &p_state->Protocol);
     p_state->IsEnabled = true;
     return true;
 }
@@ -126,7 +126,7 @@ void Socket_Init(const Socket_T * p_socket)
     p_state->IsEnabled = false;
     p_state->p_Xcvr = NULL;
     p_state->p_Format = NULL;
-    Protocol_Reset(&p_state->Protocol, *p_socket->PROTOCOL.P_TIMER);
+    Protocol_Reset(&p_socket->PROTOCOL, &p_state->Protocol);
 
     /* Select before enabling, so an out of range stored id leaves the socket down rather than bound to nothing. */
     (void)Socket_SetXcvr(p_socket, p_state->Config.XcvrId);
