@@ -34,4 +34,16 @@
 #include "Framework/Protocol/Protocol.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 
+/******************************************************************************/
+/*!
+    Fixed flash loader - Flash_T bound directly, no generic DataMode interface.
+
+    Handler shaped: register through PROTOCOL_REQ with the Flash_T as P_APP_CONTEXT. Typed
+    parameters, cast once at the row. P_SUB_STATE must hold a Protocol_DataMode_State_T.
+*/
+/******************************************************************************/
+extern Protocol_ReqCode_T MotProtocol_FlashLoader_Read(Flash_T * p_flash, Packet_Xfer_T * p_xfer, const void * restrict p_rx, void * restrict p_resp);
+extern Protocol_ReqCode_T MotProtocol_FlashLoader_Write(Flash_T * p_flash, Packet_Xfer_T * p_xfer, const void * restrict p_rx, void * restrict p_resp);
+extern Protocol_ReqCode_T MotProtocol_FlashLoader_Erase_Blocking(Flash_T * p_flash, Packet_Xfer_T * p_xfer, const Protocol_DataMode_Req_T * p_req, Protocol_DataMode_Resp_T * p_resp);
+
 
