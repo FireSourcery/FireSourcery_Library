@@ -37,25 +37,25 @@
     Lifecycle
 */
 /******************************************************************************/
-void Socket_Disable(const Socket_T * p_socket)
+void Socket_Disable(Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
-    Protocol_Reset(&p_socket->PROTOCOL, &p_state->Protocol);
+    Protocol_Reset(&p_state->Protocol);
     p_state->IsEnabled = false;
 }
 
 /*!
     @return false when no binding is selected. An enabled socket always has both.
 */
-bool Socket_Enable(const Socket_T * p_socket)
+bool Socket_Enable(Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
     if ((p_state->p_Xcvr == NULL) || (p_state->p_Format == NULL)) { return false; }
 
     Xcvr_ConfigBaudRate(p_state->p_Xcvr, p_state->Config.BaudRate);
-    Protocol_Reset(&p_socket->PROTOCOL, &p_state->Protocol);
+    Protocol_Reset(&p_state->Protocol);
     p_state->IsEnabled = true;
     return true;
 }
@@ -68,7 +68,7 @@ bool Socket_Enable(const Socket_T * p_socket)
     Xcvr swap orphans the bytes already in the frame buffer. Disable first to force it.
 */
 /******************************************************************************/
-bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId)
+bool Socket_SetXcvr(Socket_T * p_socket, uint8_t xcvrId)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -83,7 +83,7 @@ bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId)
     return true;
 }
 
-bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
+bool Socket_SetFormat(Socket_T * p_socket, uint8_t formatId)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -102,7 +102,7 @@ bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId)
     return true;
 }
 
-bool Socket_SetBaudRate(const Socket_T * p_socket, uint32_t baudRate)
+bool Socket_SetBaudRate(Socket_T * p_socket, uint32_t baudRate)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -117,7 +117,7 @@ bool Socket_SetBaudRate(const Socket_T * p_socket, uint32_t baudRate)
     Init
 */
 /******************************************************************************/
-void Socket_Init(const Socket_T * p_socket)
+void Socket_Init(Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
@@ -126,7 +126,7 @@ void Socket_Init(const Socket_T * p_socket)
     p_state->IsEnabled = false;
     p_state->p_Xcvr = NULL;
     p_state->p_Format = NULL;
-    Protocol_Reset(&p_socket->PROTOCOL, &p_state->Protocol);
+    Protocol_Init(&p_state->Protocol, *p_socket->P_TIMER);
 
     /* Select before enabling, so an out of range stored id leaves the socket down rather than bound to nothing. */
     (void)Socket_SetXcvr(p_socket, p_state->Config.XcvrId);
@@ -168,12 +168,12 @@ void _Socket_ConfigId_Set(Socket_State_T * p_socket, Socket_ConfigId_T id, int v
     }
 }
 
-int Socket_ConfigId_Get(const Socket_T * p_socket, Socket_ConfigId_T id)
+int Socket_ConfigId_Get(Socket_T * p_socket, Socket_ConfigId_T id)
 {
     return (p_socket != NULL) ? _Socket_ConfigId_Get(p_socket->P_SOCKET_STATE, id) : 0;
 }
 
-void Socket_ConfigId_Set(const Socket_T * p_socket, Socket_ConfigId_T id, int value)
+void Socket_ConfigId_Set(Socket_T * p_socket, Socket_ConfigId_T id, int value)
 {
     if (p_socket != NULL) { _Socket_ConfigId_Set(p_socket->P_SOCKET_STATE, id, value); }
 }

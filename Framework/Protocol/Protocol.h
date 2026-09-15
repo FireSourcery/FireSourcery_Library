@@ -43,11 +43,11 @@
 /*
     Layer   Module              In              Out                     I/O
     -----   ------------------  --------------  ----------------------  ---
-    2       Packet_RxParser     bytes           Packet_RxCode_T         no
-    -       Packet_ClassOf      packet_id_t     Packet_ClassId_T        no
-    4       Protocol_Sync       Packet_ClassId  Protocol_SyncEvent_T    no
-    5       Protocol_Request    the floor       Protocol_ReqCode_T      no
-    -       here                                bytes                   YES
+               Packet_RxParser     bytes           Packet_RxCode_T         no
+               Packet_ClassOf      packet_id_t     Packet_ClassId_T        no
+               Protocol_Sync       Packet_ClassId  Protocol_SyncEvent_T    no
+               Protocol_Request    the floor       Protocol_ReqCode_T      no
+               here                                bytes                   YES
 
     Every layer below is a pure function of its state and its input. This file is where the
     Xcvr, the buffers and the clock live, and it is the only place a byte moves or a deadline
@@ -71,30 +71,6 @@
     the arm lives with the transition.
 */
 /******************************************************************************/
-/*
-    Everything constant for the duration of a pass, except the two things the socket selects
-    at runtime. The Xcvr and the format travel as arguments precisely because they change:
-    holding them here would mean rebuilding the whole struct to swap a port.
-*/
-typedef const struct Protocol_Base
-{
-    Packet_Context_T * P_RX_PACKET;         /* Meta + contiguous frame buffer */
-    Packet_Context_T * P_TX_PACKET;
-    uint8_t PACKET_BUFFER_LENGTH;           /* Must be >= FORMAT->LENGTH_MAX */
-
-    /* The request service. Id -> handler, plus the storage handlers run against. */
-    // Packet_ReqIdResolver_T REQ_ID_RESOLVER; /* Function to resolve request IDs */
-    const Protocol_Req_T * P_REQ_TABLE;
-    uint8_t REQ_TABLE_LENGTH;
-    void * P_APP_CONTEXT;                   /* Passed to every handler */
-    void * P_REQ_CONTEXT;                   /* Handler sub-state. Sized for the largest handler */
-
-    const volatile uint32_t * P_TIMER;
-    const uint32_t REQ_TIMEOUT;             /* Exchange deadline. The frame deadline is the codec's RX_TIMEOUT. */
-}
-Protocol_Base_T;
-
-
 #ifndef PROTOCOL_CHECK_RX_FRAME_CONSISTENCY
 #define PROTOCOL_CHECK_RX_FRAME_CONSISTENCY (0)
 #endif
@@ -102,6 +78,112 @@ Protocol_Base_T;
 #ifndef PROTOCOL_CHECK_TX_FRAME_BOUNDS
 #define PROTOCOL_CHECK_TX_FRAME_BOUNDS (0)
 #endif
+
+
+/******************************************************************************/
+/*!
+    Helpers
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    Tx - every byte out of this engine passes through here
+*/
+/******************************************************************************/
+static inline bool Protocol_TxResponse(Xcvr_T * p_xcvr, Packet_Codec_T * p_codec, Packet_FrameFormat_T * p_format, Packet_Context_T * p_tx)
+{
+    Packet_BuildTxFrame(p_codec, &p_tx->Meta, p_tx->Packet);
+    return Xcvr_TxN(p_xcvr, p_tx->Packet, Packet_FrameLengthOf(p_format, &p_tx->Meta));
+}
+
+/*!
+    Transmit a control frame. A control frame is an ordinary frame with a control id and no payload
+
+    Built into a local frame so the staged response survives for retransmission.
+
+    The bound on frame[] is admission-time, in Socket_SetFormat: a format whose zero-payload
+    frame exceeds PACKET_CONTROL_LENGTH_MAX is refused before it can ever be selected.
+*/
+static inline void Protocol_TxControl(Xcvr_T * p_xcvr, Packet_Codec_T * p_codec, Packet_ClassId_T txClass)
+{
+    uint8_t frame[PACKET_CONTROL_LENGTH_MAX];
+    Packet_Meta_T meta = { .Id = Packet_ControlIdOf(p_codec, txClass), .Length = 0U };
+    Packet_BuildTxFrame(p_codec, &meta, frame);
+    Xcvr_TxN(p_xcvr, frame, p_codec->CONTROL_FRAME_LENGTH);
+}
+
+/******************************************************************************/
+/*!
+    Rx - drive the sans-IO parser from the Xcvr
+*/
+/******************************************************************************/
+/*
+    Drain the Xcvr into the frame buffer. The parser only ever asks for what the current
+    frame still needs, so a burst is consumed without reading into the following frame.
+
+    Zero remaining skips the read and advances anyway, which is the phase boundary that lands
+    exactly on the frame end. Termination: every AWAIT path out of the parser either leaves
+    NextIndex > Index, so the next turn needs bytes and the Xcvr eventually runs dry, or
+    changes state, which cannot repeat - START to HEADER to PAYLOAD resolves.
+*/
+static inline Packet_RxCode_T Protocol_CaptureRx(Xcvr_T * p_xcvr, Packet_Codec_T * p_codec, Packet_RxParser_T * p_parser, uint8_t * p_rxFrame)
+{
+    Packet_RxCode_T rxCode = PACKET_RX_AWAIT;
+
+    while (rxCode == PACKET_RX_AWAIT)
+    {
+        packet_size_t remaining = Packet_RxRemaining(p_parser);
+
+        /* Nothing moves until the whole target is available. */
+        if (remaining > 0U)
+        {
+            if (Xcvr_RxN(p_xcvr, &p_rxFrame[p_parser->Index], remaining) == false) { break; }
+            p_parser->Index += remaining;
+        }
+
+        rxCode = Packet_ProcRxParser(p_parser, p_codec, p_rxFrame);
+    }
+
+    return rxCode;
+}
+
+
+static inline void _Protocol_TickStat(uint16_t * p_counter)
+{
+#ifndef NDEBUG
+    (*p_counter)++;
+#else
+    (void)p_counter;
+#endif
+}
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+/*
+    Everything constant for the duration of a pass, except the two things the socket selects
+    at runtime. The Xcvr and the c
+*/
+// typedef const struct Protocol_Base
+// {
+//     Packet_Context_T * P_RX_PACKET;         /* Meta + contiguous frame buffer */
+//     Packet_Context_T * P_TX_PACKET;
+//     uint8_t PACKET_BUFFER_LENGTH;           /* Must be >= FORMAT->LENGTH_MAX */
+
+//     // Packet_ReqIdResolver_T REQ_ID_RESOLVER; /* Function to resolve request IDs */
+//     /* The request service. Id -> handler, plus the storage handlers run against. */
+//     const Protocol_Req_T * P_REQ_TABLE;
+//     uint8_t REQ_TABLE_LENGTH;
+//     void * P_APP_CONTEXT;                   /* Passed to every handler */
+//     void * P_SUB_STATE;                   /* Handler sub-state. Sized for the largest handler */
+//     const uint32_t REQ_TIMEOUT;             /* Exchange deadline. The frame deadline is the codec's RX_TIMEOUT. */
+
+//     const volatile uint32_t * P_TIMER;
+// }
+// Protocol_Base_T;
+
 
 /*
     P_RX_PACKET and P_TX_PACKET must be distinct buffers - the handler's two payload pointers
@@ -114,12 +196,7 @@ typedef struct Protocol_State
     Packet_RxParser_T RxParser;
     Protocol_SyncState_T Sync; /* Sync already holds everything that outlives the [Req] binding */
     Protocol_ReqState_T Req;
-    /*
-        Previous pass's clock reading, and the only timestamp left in this struct. The Rx
-        deadline counts durations, so the delta has to be derived once somewhere; doing it
-        here keeps every layer below free of a clock. Written once per Protocol_Proc.
-    */
-    uint32_t LastTime;
+    uint32_t LastCompleteTime;
     // Xcvr_T * p_xcvr;
     // Packet_Codec_T * p_format;
 
@@ -142,17 +219,6 @@ typedef struct Protocol_State
 }
 Protocol_State_T;
 
-
-static inline void _Protocol_TickStat(uint16_t * p_counter)
-{
-#ifndef NDEBUG
-    (*p_counter)++;
-#else
-    (void)p_counter;
-#endif
-}
-
-
 static inline void Protocol_ResetReqSync(Protocol_State_T * p_state)
 {
     Protocol_ResetReq(&p_state->Req);
@@ -162,82 +228,24 @@ static inline void Protocol_ResetReqSync(Protocol_State_T * p_state)
 }
 
 /*! Full reset. Drops any frame in progress along with the exchange. Counters survive. */
-static inline void Protocol_Reset(Protocol_Base_T * p_base, Protocol_State_T * p_state)
+static inline void Protocol_Reset(Protocol_State_T * p_state)
 {
     Packet_ResetRx(&p_state->RxParser);
     Protocol_ResetReqSync(p_state);
-    Packet_ResetRxTime(&p_state->RxParser);
-    p_state->LastTime = *p_base->P_TIMER;
-    Protocol_MarkSyncTime(&p_state->Sync, *p_base->P_TIMER);
 }
 
-
-/******************************************************************************/
-/*!
-    Tx - every byte out of this engine passes through here
-*/
-/******************************************************************************/
-static inline bool Protocol_TxResponse(const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec, const Packet_FrameFormat_T * p_format, Packet_Context_T * p_tx)
+static inline void Protocol_Init(Protocol_State_T * p_state, uint32_t timerNow)
 {
-    Packet_BuildTxFrame(p_codec, &p_tx->Meta, p_tx->Packet);
-    return Xcvr_TxN(p_xcvr, p_tx->Packet, Packet_FrameLengthOf(p_format, &p_tx->Meta));
-}
-
-/*!
-    Transmit a control frame. A control frame is an ordinary frame with a control id and no payload
-
-    Built into a local frame so the staged response survives for retransmission.
-
-    The bound on frame[] is admission-time, in Socket_SetFormat: a format whose zero-payload
-    frame exceeds PACKET_CONTROL_LENGTH_MAX is refused before it can ever be selected.
-*/
-static inline void Protocol_TxControl(const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec, Packet_ClassId_T txClass)
-{
-    uint8_t frame[PACKET_CONTROL_LENGTH_MAX];
-    Packet_Meta_T meta = { .Id = Packet_ControlIdOf(p_codec, txClass), .Length = 0U };
-    Packet_BuildTxFrame(p_codec, &meta, frame);
-    Xcvr_TxN(p_xcvr, frame, p_codec->CONTROL_FRAME_FORMAT.HEADER_LENGTH);
-}
-
-/******************************************************************************/
-/*!
-    Rx - drive the sans-IO parser from the Xcvr
-*/
-/******************************************************************************/
-/*
-    Drain the Xcvr into the frame buffer. The parser only ever asks for what the current
-    frame still needs, so a burst is consumed without reading into the following frame.
-
-    Zero remaining skips the read and advances anyway, which is the phase boundary that lands
-    exactly on the frame end. Termination: every AWAIT path out of the parser either leaves
-    NextIndex > Index, so the next turn needs bytes and the Xcvr eventually runs dry, or
-    changes state, which cannot repeat - START to HEADER to PAYLOAD resolves.
-*/
-static inline Packet_RxCode_T Protocol_CaptureRx(const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec, Packet_RxParser_T * p_parser, uint8_t * p_rxFrame)
-{
-    Packet_RxCode_T rxCode = PACKET_RX_AWAIT;
-
-    while (rxCode == PACKET_RX_AWAIT)
-    {
-        packet_size_t remaining = Packet_RxRemaining(p_parser);
-
-        /* Nothing moves until the whole target is available. */
-        if (remaining > 0U)
-        {
-            if (Xcvr_RxN(p_xcvr, &p_rxFrame[p_parser->Index], remaining) == false) { break; }
-            p_parser->Index += remaining;
-        }
-
-        rxCode = Packet_ProcRxParser(p_parser, p_codec, p_rxFrame);
-    }
-
-    return rxCode;
+    p_state->RxParser.TimeStart = timerNow;
+    p_state->Sync.AckTimeStart = timerNow;
+    p_state->LastCompleteTime = timerNow;
 }
 
 
 /******************************************************************************/
 /*!
     Proc Protocol_Base_T buffer context
+    optionally move to socket
 */
 /******************************************************************************/
 /*!
@@ -247,37 +255,39 @@ static inline Packet_RxCode_T Protocol_CaptureRx(const Xcvr_T * p_xcvr, const Pa
     up on every complete frame is what would nack an arriving ACK - the id belongs to the
     request block, which is the only block that needs a handler.
 */
-static inline Packet_RxCode_T Protocol_ProcRxFrame(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec, uint32_t deltaTime)
+static inline Packet_RxCode_T Protocol_ProcRxFrame(Protocol_State_T * p_state, Xcvr_T * p_xcvr, Packet_Codec_T * p_codec, const Packet_Context_T * p_rx, uint32_t timerNow)
 {
-    Packet_RxCode_T rxCode = Protocol_CaptureRx(p_xcvr, p_codec, &p_state->RxParser, p_link->P_RX_PACKET->Packet);
-
-    /* Aged after draining, so expiry means the line really did go quiet. */
-    if (rxCode == PACKET_RX_AWAIT) { rxCode = Packet_ProcRxTimeout(&p_state->RxParser, p_codec, deltaTime); }
+    Packet_RxCode_T timeoutStatus = Packet_ProcRxTimeout(&p_state->RxParser, p_codec, timerNow);
+    Packet_RxCode_T parserStatus = Protocol_CaptureRx(p_xcvr, p_codec, &p_state->RxParser, p_rx->Packet);
+    Packet_RxCode_T rxCode = (parserStatus != PACKET_RX_AWAIT) ? parserStatus : timeoutStatus;
 
     switch (rxCode)
     {
         /* Stores Meta with either Request or Ack format */
         case PACKET_RX_COMPLETE:
-            Packet_ParseRxFrame(p_codec, &p_link->P_RX_PACKET->Meta, p_link->P_RX_PACKET->Packet);
+            p_state->LastCompleteTime = timerNow;
+            Packet_ParseRxFrame(p_codec, &p_rx->Meta, p_rx->Packet);
             p_state->Stat.Frames++;
             break;
 
-        /* Unusable frame. No id was learned, so no handler policy can apply. */
+            /* Unusable frame. No id was learned, so no handler policy can apply. */
         case PACKET_RX_ERROR_FRAME:     Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_NACK); p_state->Stat.FrameErrors++;    break;
         case PACKET_RX_ERROR_DATA:      Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_NACK); p_state->Stat.DataErrors++;     break;
         case PACKET_RX_ERROR_TIMEOUT:   Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_NACK); p_state->Stat.RxTimeouts++;     break;
-        /* Frame still open, deadline intact. */
-        case PACKET_RX_AWAIT:           break;
-        default:            break;
+            /* Frame still open, deadline intact. */
+            /* Checked after draining, so expiry means the line really did go quiet. */
+        case PACKET_RX_AWAIT: break;
+        default: break;
     }
 
     return rxCode;
 }
 
-
-/*
+/******************************************************************************/
+/*!
 
 */
+/******************************************************************************/
 /*! true while an exchange occupies the socket, in either layer. */
 static inline bool Protocol_IsReqSyncActive(const Protocol_State_T * p_state) { return Protocol_IsReqActive(&p_state->Req) || Protocol_IsAckWaiting(&p_state->Sync); }
 
@@ -288,9 +298,9 @@ static inline bool Protocol_IsReqSyncActive(const Protocol_State_T * p_state) { 
     because "received" and "processed" are different claims.
 */
 /*! @return false when the id has no handler - the caller must not go on to dispatch. */
-static inline bool Protocol_StartRequest(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec)
+static inline bool Protocol_StartRequest(Protocol_State_T * p_state, Xcvr_T * p_xcvr, Packet_Codec_T * p_codec, Protocol_Req_T * p_table, size_t tableLength, const Packet_Context_T * p_rx)
 {
-    if (Protocol_CaptureReqOfTable(&p_state->Req, p_link->P_REQ_TABLE, p_link->REQ_TABLE_LENGTH, p_link->P_RX_PACKET->Meta.Id) == false)
+    if (Protocol_CaptureReqOfTable(&p_state->Req, p_table, tableLength, p_rx->Meta.Id) == false)
     {
         Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_NACK);     /* no handler for this id */
         p_state->Stat.NoHandler++;
@@ -305,7 +315,7 @@ static inline bool Protocol_StartRequest(const Protocol_Base_T * p_link, Protoco
         Packet_RxRemaining, and IS_RX_VALID covered exactly the bytes collected.
     */
 #if PROTOCOL_CHECK_RX_FRAME_CONSISTENCY
-    if (Packet_IsFrameConsistent(Protocol_ReqId(&p_state->Req)->FRAME_FORMAT, &p_link->P_RX_PACKET->Meta, Packet_RxFrameLength(&p_state->RxParser)) == false)
+    if (Packet_IsFrameConsistent(Protocol_ReqId(&p_state->Req)->FRAME_FORMAT, &p_rx->Meta, Packet_RxFrameLength(&p_state->RxParser)) == false)
     {
         Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_NACK);
         p_state->Stat.FrameErrors++;
@@ -325,16 +335,16 @@ static inline bool Protocol_StartRequest(const Protocol_Base_T * p_link, Protoco
     Both payloads start past the header of the bound row's shape. The binding is fixed for the
     life of the exchange, so neither a control frame nor a foreign id can move them.
 */
-static Protocol_ReqCode_T Protocol_ProcRequest(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec, uint32_t timerNow)
+static Protocol_ReqCode_T Protocol_ProcRequest(Protocol_State_T * p_state, Xcvr_T * p_xcvr, Packet_Codec_T * p_codec, void * p_appContext, const Protocol_ReqContext_T * p_xfer, int32_t timerNow)
 {
-    Packet_Xfer_T xfer = { .p_RxMeta = &p_link->P_RX_PACKET->Meta, .p_TxMeta = &p_link->P_TX_PACKET->Meta, .p_Substate = p_link->P_REQ_CONTEXT, };
+    // Packet_Xfer_T xfer = { .p_RxMeta = &p_rx->Meta, .p_TxMeta = &p_tx->Meta, .p_Substate = p_state->Req.p_Substate, };
 
     Protocol_AckPolicy_T policy = Protocol_ReqAckPolicy(&p_state->Req); /* PROTOCOL_REQ_DONE unbinds Req */
     /* The shape the row ANSWERS with - the same lookup Protocol_ProcReqState offsets tx by. */
     Packet_FrameFormat_T * p_respFormat = Protocol_ReqRespId(&p_state->Req)->FRAME_FORMAT;
 
     /* PROTOCOL_REQ_RESPOND or PROTOCOL_REQ_DONE unbinds the requesy Id */
-    Protocol_ReqCode_T reqCode = Protocol_ProcReqState(&p_state->Req, p_link->P_APP_CONTEXT, &xfer, p_link->P_RX_PACKET->Packet, p_link->P_TX_PACKET->Packet);
+    Protocol_ReqCode_T reqCode = Protocol_ProcReqState(&p_state->Req, p_appContext, p_xfer);
 
     /*
         The handler's Length, before the frame builder indexes by it. A constant at most call
@@ -349,7 +359,7 @@ static Protocol_ReqCode_T Protocol_ProcRequest(const Protocol_Base_T * p_link, P
 #if PROTOCOL_CHECK_TX_FRAME_BOUNDS
     if ((reqCode == PROTOCOL_REQ_RESPOND) || (reqCode == PROTOCOL_REQ_DONE))
     {
-        if (Packet_IsFrameWithin(p_respFormat, &p_link->P_TX_PACKET->Meta, p_link->PACKET_BUFFER_LENGTH) == false)
+        if (Packet_IsFrameWithin(p_respFormat, &p_tx->Meta, p_tx->PACKET_BUFFER_LENGTH) == false)
         {
             Protocol_ResetReqSync(p_state);
             return PROTOCOL_REQ_ABORT;      /* dropped, not nacked - a nack would invite the same frame back */
@@ -362,10 +372,14 @@ static Protocol_ReqCode_T Protocol_ProcRequest(const Protocol_Base_T * p_link, P
         /* Act on the handler's verdict. The only place a request's output reaches the wire. */
         case PROTOCOL_REQ_RESPOND:
         case PROTOCOL_REQ_DONE:
-            if (Protocol_TxResponse(p_xcvr, p_codec, p_respFormat, p_link->P_TX_PACKET))
+            if (Protocol_TxResponse(p_xcvr, p_codec, p_respFormat, p_xfer->p_TxBuffer))
             {
                 if (policy.EXPECT_ACK_RESP) { Protocol_ExpectAck(&p_state->Sync, policy, p_respFormat, timerNow); }
                 else { Protocol_ResetSync(&p_state->Sync); }
+            }
+            else
+            {
+                /* Sync State is still OPEN */
             }
             break;
 
@@ -398,34 +412,34 @@ static Protocol_ReqCode_T Protocol_ProcRequest(const Protocol_Base_T * p_link, P
     both layers - a data-paced write is ACTIVE in Request while OPEN in Sync. It cannot be
     dropped: the base does not slide while idle, since Socket's watchdog reads it to see
     silence, so an ungated test would find it expired on every pass of an idle link.
-*/
-static inline Protocol_SyncEvent_T Protocol_ProcSync(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Packet_Codec_T * p_codec, Packet_RxCode_T rxCode, uint32_t timerNow)
-{
-    if (rxCode == PACKET_RX_COMPLETE)               { return Protocol_ProcSyncPacket(&p_state->Sync, Packet_ClassOf(p_codec, p_link->P_RX_PACKET->Meta.Id), timerNow); }
-    if (Protocol_IsReqSyncActive(p_state) == true)  { return Protocol_ProcSyncTimeout(&p_state->Sync, p_link->REQ_TIMEOUT, timerNow); }
-    return PROTOCOL_SYNC_EVENT_NONE;
-}
+// */
+// static inline Protocol_SyncEvent_T Protocol_ProcSync(Protocol_State_T * p_state, Packet_Codec_T * p_codec, Packet_RxCode_T rxCode, uint32_t timerNow)
+// {
+//     if (rxCode == PACKET_RX_COMPLETE) { return Protocol_ProcSyncPacket(&p_state->Sync, Packet_ClassOf(p_codec, p_link->P_RX_PACKET->Meta.Id), timerNow); }
+//     if (Protocol_IsReqSyncActive(p_state) == true) { return Protocol_ProcSyncTimeout(&p_state->Sync, p_link->REQ_TIMEOUT, timerNow); }
+//     return PROTOCOL_SYNC_EVENT_NONE;
+// }
 
 /*
     (PROTOCOL_REQ_STATE_ACTIVE, PROTOCOL_SYNC_AWAIT_ACK) => Await next ACK then returns to PROTOCOL_SYNC_AWAIT_ACK
     (PROTOCOL_REQ_STATE_IDLE, PROTOCOL_SYNC_AWAIT_ACK) => Await final ACK, Req == NULL
 
-    OPEN	IDLE	nothing in progress
-    OPEN	ACTIVE	data-paced exchange, handler awaiting the next frame
-    AWAIT_ACK	IDLE	stateless response outstanding
-    AWAIT_ACK	ACTIVE	staged response outstanding, sequence continues
+    OPEN	    IDLE	Socket idle
+    OPEN	    ACTIVE	handler awaiting the next frame. Data-paced receive stream.
+    AWAIT_ACK	ACTIVE	Await next ACK then sequence continues. Ack-paced response stream.
+    AWAIT_ACK	IDLE	Await final ACK. All stateless with ack
 */
-static inline void Protocol_Proc(const Protocol_Base_T * p_link, Protocol_State_T * p_state, const Xcvr_T * p_xcvr, const Packet_Codec_T * p_codec)
+static inline void Protocol_Proc(Protocol_State_T * p_state, Xcvr_T * p_xcvr, Packet_Codec_T * p_codec, Protocol_ReqTable_T * p_reqTable, const Protocol_ReqContext_T * p_xfer, uint32_t timerNow)
 {
-    uint32_t timerNow = *p_link->P_TIMER;
-    uint32_t deltaTime = timerNow - p_state->LastTime;
-    p_state->LastTime = timerNow;
 
     /* 1. Rx - bytes into one intact frame, or the frame deadline on a line gone quiet. */
-    Packet_RxCode_T rxCode = Protocol_ProcRxFrame(p_link, p_state, p_xcvr, p_codec, deltaTime);
+    Packet_RxCode_T rxCode = Protocol_ProcRxFrame(p_state, p_xcvr, p_codec, p_xfer->p_RxBuffer, timerNow);
 
+    Protocol_SyncEvent_T syncEvent;
     /* 2. Sync - one event, from a frame or from the deadline. */
-    Protocol_SyncEvent_T syncEvent = Protocol_ProcSync(p_link, p_state, p_codec, rxCode, timerNow);
+    if (rxCode == PACKET_RX_COMPLETE) { syncEvent = Protocol_ProcSyncPacket(&p_state->Sync, Packet_ClassOf(p_codec, p_xfer->p_RxBuffer->Meta.Id), timerNow); }
+    else if (Protocol_IsReqSyncActive(p_state) == true) { syncEvent = Protocol_ProcSyncTimeout(&p_state->Sync, p_reqTable->REQ_TIMEOUT, timerNow); }
+    else { syncEvent = PROTOCOL_SYNC_EVENT_NONE; }
 
     /*
         3. Act. One switch, one effect per event, every event handled. Sync has already moved
@@ -440,15 +454,18 @@ static inline void Protocol_Proc(const Protocol_Base_T * p_link, Protocol_State_
             the guard here is the bind result and nothing more.
         */
         case PROTOCOL_SYNC_EVENT_REQUEST:
-            if (Protocol_StartRequest(p_link, p_state, p_xcvr, p_codec) == true) { Protocol_ProcRequest(p_link, p_state, p_xcvr, p_codec, timerNow); }
+            if (Protocol_StartRequest(p_state, p_xcvr, p_codec, p_reqTable->P_REQ_TABLE, p_reqTable->REQ_TABLE_LENGTH, p_xfer->p_RxBuffer) == true)
+            {
+                Protocol_ProcRequest(p_state, p_xcvr, p_codec, p_reqTable->P_APP_CONTEXT, p_xfer, timerNow);
+            }
             break;
 
         /*
             Our frame landed. Resume a sequence, or close a stateless exchange - which has
             already unbound, so here the binding is what must be tested.
         */
-        case PROTOCOL_SYNC_EVENT_RESUME:
-            if (Protocol_IsReqActive(&p_state->Req) == true) { Protocol_ProcRequest(p_link, p_state, p_xcvr, p_codec, timerNow); }
+        case PROTOCOL_SYNC_EVENT_RESUME: // wait for next request packet
+            // if (Protocol_IsReqActive(&p_state->Req) == true) { Protocol_ProcRequest(p_state, p_xcvr, p_codec, timerNow); }
             break;
 
         /*
@@ -456,7 +473,7 @@ static inline void Protocol_Proc(const Protocol_Base_T * p_link, Protocol_State_
             not raised unless a shape is latched to re-send - see _Protocol_CanRetry.
         */
         case PROTOCOL_SYNC_EVENT_RETRANSMIT:
-            Protocol_TxResponse(p_xcvr, p_codec, Protocol_SyncRespFormat(&p_state->Sync), p_link->P_TX_PACKET);
+            Protocol_TxResponse(p_xcvr, p_codec, Protocol_SyncRespFormat(&p_state->Sync), p_xfer->p_TxBuffer);
             p_state->Stat.Retransmits++;
             break;
 

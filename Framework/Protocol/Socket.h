@@ -109,16 +109,52 @@ typedef struct Socket_State
 }
 Socket_State_T;
 
+
 /******************************************************************************/
 /*!
     Instance
 */
 /******************************************************************************/
+
+// typedef const struct Socket_Xfer
+// {
+//     Packet_Context_T * P_RX_PACKET;
+//     Packet_Context_T * P_TX_PACKET;
+//     void * const p_SUB_STATE;
+// }
+// Socket_Xfer_T;
+
+// typedef const struct Socket_Xfer
+// {
+//     union { Packet_Meta_T * const p_RxMeta;     Packet_Context_T * P_RX_BUFFER; };
+//     union { Packet_Meta_T * const p_TxMeta;     Packet_Context_T * P_TX_BUFFER; };
+//     union { void * const p_Substate;            void * const p_SUB_STATE; };
+// }
+// Socket_Xfer_T;
+
+
 typedef const struct Socket
 {
     Socket_State_T * P_SOCKET_STATE;
 
-    Protocol_Base_T PROTOCOL;
+    // Protocol_Base_T PROTOCOL;
+    Protocol_ReqContext_T REQ_CONTEXT;     /* same shape as Packet_Xfer_T, pass compile time defined */
+    Protocol_ReqTable_T REQ_TABLE;
+
+    // union
+    // {
+    //     struct
+    //     {
+    //         Packet_Context_T * P_RX_PACKET;
+    //         Packet_Context_T * P_TX_PACKET;
+    //         void * const p_SUB_STATE;
+    //     };
+    //     Packet_Xfer_T PACKET_XFER;
+    // };
+
+    uint8_t PACKET_BUFFER_LENGTH;
+
+    const volatile uint32_t * P_TIMER;
 
     /* Selectable bindings. Arrays of pointers - neither need be contiguous. */
     const Xcvr_T * const * P_XCVR_TABLE;
@@ -146,13 +182,13 @@ Socket_T;
     deadline pass individually; they are already fields of Socket_T and repackaging them
     would be the same data in a second shape.
 */
-static inline void Socket_Proc(const Socket_T * p_socket)
+static inline void Socket_Proc(Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
     if (p_state->IsEnabled == false) { return; }
 
-    Protocol_Proc(&p_socket->PROTOCOL, &p_state->Protocol, p_state->p_Xcvr, p_state->p_Format);
+    Protocol_Proc(&p_state->Protocol, p_state->p_Xcvr, p_state->p_Format, &p_socket->REQ_TABLE, &p_socket->REQ_CONTEXT, p_socket->P_TIMER);
 }
 
 
@@ -161,21 +197,21 @@ static inline void Socket_Proc(const Socket_T * p_socket)
     Query
 */
 /******************************************************************************/
-static inline bool Socket_IsEnabled(const Socket_T * p_socket) { return p_socket->P_SOCKET_STATE->IsEnabled; }
+static inline bool Socket_IsEnabled(Socket_T * p_socket) { return p_socket->P_SOCKET_STATE->IsEnabled; }
 
 /*! true while an exchange occupies the socket. Selection is refused in this condition. */
-static inline bool Socket_IsBusy(const Socket_T * p_socket)
+static inline bool Socket_IsBusy(Socket_T * p_socket)
 {
     return Protocol_IsReqSyncActive(&p_socket->P_SOCKET_STATE->Protocol);
 }
 
-static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
+static inline Socket_Status_T Socket_StatusOf(Socket_T * p_socket)
 {
     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
     if (p_state->IsEnabled == false) { return SOCKET_STATUS_DISABLED; }
     if (Protocol_IsReqSyncActive(&p_state->Protocol) == true) { return SOCKET_STATUS_BUSY; }
-    if (Packet_IsRxWaiting(&p_state->Protocol.RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
+    if (Packet_IsRxActive(&p_state->Protocol.RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
     return SOCKET_STATUS_IDLE;
 }
 
@@ -187,16 +223,17 @@ static inline Socket_Status_T Socket_StatusOf(const Socket_T * p_socket)
     all, which only the application can act on - MotorController raises FaultFlags.RxLost
     from it. Hence config here rather than in Protocol_Base_T.
 
-    It reads the handshake's own deadline base, which advances only on a frame the engine
-    actually delivered, so line noise cannot feed it.
+    It reads the parser's idle counter, which is zeroed only by a frame that reached
+    COMPLETE - so line noise cannot feed it, and a valid frame the request table has no row
+    for still counts as the host being alive, which for a liveness question it is.
 */
 /*!
     @return true if WatchdogTimeout reached, a successful Req has not occurred
 */
-static inline bool Socket_IsRxLost(const Socket_T * p_socket)
+static inline bool Socket_IsRxLost(Socket_T * p_socket)
 {
     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-    return ((p_state->IsRxWatchdogEnable == true) && Protocol_IsSyncElapsed(&p_state->Protocol.Sync, p_state->Config.WatchdogTimeout, *p_socket->PROTOCOL.P_TIMER));
+    return ((p_state->IsRxWatchdogEnable == true) && (p_state->Protocol.LastCompleteTime > p_state->Config.WatchdogTimeout));
 }
 
 /*! Arming a disabled socket would fault immediately, since nothing can feed the base. */
@@ -220,12 +257,12 @@ static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->
     rather than bound to nothing.
 */
 /******************************************************************************/
-extern void Socket_Init(const Socket_T * p_socket);
-extern bool Socket_Enable(const Socket_T * p_socket);
-extern void Socket_Disable(const Socket_T * p_socket);
-extern bool Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId);
-extern bool Socket_SetFormat(const Socket_T * p_socket, uint8_t formatId);
-extern bool Socket_SetBaudRate(const Socket_T * p_socket, uint32_t baudRate);
+extern void Socket_Init(Socket_T * p_socket);
+extern bool Socket_Enable(Socket_T * p_socket);
+extern void Socket_Disable(Socket_T * p_socket);
+extern bool Socket_SetXcvr(Socket_T * p_socket, uint8_t xcvrId);
+extern bool Socket_SetFormat(Socket_T * p_socket, uint8_t formatId);
+extern bool Socket_SetBaudRate(Socket_T * p_socket, uint32_t baudRate);
 
 
 typedef enum Socket_ConfigId
@@ -238,5 +275,5 @@ typedef enum Socket_ConfigId
 }
 Socket_ConfigId_T;
 
-extern int Socket_ConfigId_Get(const Socket_T * p_socket, Socket_ConfigId_T id);
-extern void Socket_ConfigId_Set(const Socket_T * p_socket, Socket_ConfigId_T id, int value);
+extern int Socket_ConfigId_Get(Socket_T * p_socket, Socket_ConfigId_T id);
+extern void Socket_ConfigId_Set(Socket_T * p_socket, Socket_ConfigId_T id, int value);

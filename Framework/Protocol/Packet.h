@@ -94,6 +94,7 @@ typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Packet_Context
 }
 Packet_Context_T;
 
+
 #define PACKET_CONTEXT_ALLOC_T(BufferLength) union { Packet_Context_T Context; uint8_t Bytes[sizeof(Packet_Meta_T) + (BufferLength)]; }
 
 /*
@@ -134,17 +135,16 @@ Packet_FrameFormat_T;
 /*
     Packet content type, for handling at the protocol layer
     Protocol_Sync decoupled from [Packet_Codec_T]
+    EventId
 */
 typedef enum Packet_ClassId
 {
     PACKET_CLASS_DATA,              /* Regular data packet */
     PACKET_CLASS_ACK,               /* Acknowledgment */
     PACKET_CLASS_NACK,              /* Negative acknowledgment */
-    PACKET_CLASS_ABORT,             /* Abort transmission */
+    PACKET_CLASS_ABORT,             /* Abort transmission. Protocol reset */
     _PACKET_CLASS_LENGTH,             /* Length indication */
-    // PACKET_CLASS_STATUS,
     // PACKET_CLASS_HEARTBEAT,         /* Keep-alive */
-    // PACKET_CLASS_RESET,             /* Protocol reset */
     // PACKET_CLASS_CONFIG,            /* Protocol configuration */
 }
 Packet_ClassId_T;
@@ -252,8 +252,8 @@ typedef const struct Packet_Codec
     /* Tx */
     Packet_BuildTxFrame_T BUILD_TX_FRAME;     // symmetric with Phase 2
 
-    Packet_FrameFormat_T CONTROL_FRAME_FORMAT;
-    // packet_size_t CONTROL_FRAME_LENGTH;
+    // Packet_FrameFormat_T CONTROL_FRAME_FORMAT;
+    packet_size_t CONTROL_FRAME_LENGTH;
     packet_id_t ACK_ID;
     packet_id_t NACK_ID;
     packet_id_t ABORT_ID;

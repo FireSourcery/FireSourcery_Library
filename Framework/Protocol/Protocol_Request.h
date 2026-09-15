@@ -83,6 +83,8 @@ typedef struct Protocol_Substate
 }
 Protocol_Substate_T;
 
+
+
 /*
     Packet Substate Context.
     Everything the handler may read or write, and nothing about the transport.
@@ -92,7 +94,7 @@ Protocol_Substate_T;
     p_RxMeta describes the frame that caused THIS invocation, which is not always a data frame.
     However Protocol_ProcReqResp_T is only called when p_RxMeta is filled with a data frame.
 */
-typedef struct Packet_Xfer
+typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Packet_Xfer
 {
     const Packet_Meta_T * const p_RxMeta;     /* Header of the frame that caused this call - may be a control frame */
     Packet_Meta_T * const p_TxMeta;           /* Handler sets Id and Length; the format builds the header */
@@ -100,7 +102,6 @@ typedef struct Packet_Xfer
     // Protocol_Substate_T * p_Substate;   /* Handler's own storage, sized by the child protocol */
 }
 Packet_Xfer_T;
-
 
 /*
     This function signature exposes the void * payloads so they can be cast through the function pointer for ergonomics.
@@ -110,22 +111,48 @@ Packet_Xfer_T;
         const Packet_Meta_T * const p_RxMeta;
         const void * restrict p_rxPayload;
     }
+    Xfer already in shape of packet buffer alloc
 */
-typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload);
+typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, const Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload);
+
 
 /* Process handles wire header */
 // typedef Protocol_ReqCode_T(*Protocol_ProcReqRespFrame_T) (void * p_context, const void * p_rxFrame, void * p_txFrame);
-
+// typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, void * p_substate, const Packet_Context_T * restrict p_rx, Packet_Context_T * restrict p_tx);
 /* continuity through substate */
 // typedef Protocol_ReqCode_T(*Protocol_ProcStatefulReq_T) (void * p_context, void * p_substate, const Packet_Meta_T * p_rxMeta, const void * p_rxPayload);
 // typedef Protocol_ReqCode_T(*Protocol_ProcStatefulResp_T)(void * p_context, void * p_substate, Packet_Meta_T * p_txMeta, void * p_txPayload);
 
+
+// typedef struct
+// {
+//     union { const Packet_Meta_T * const p_RxMeta;  Packet_Context_T * const p_RxBuffer; };
+//     union { Packet_Meta_T * const p_TxMeta;        Packet_Context_T * const p_TxBuffer; };
+//     void * const p_Substate;
+// }
+// Protocol_ReqContext_T;
+
+typedef union
+{
+    Packet_Xfer_T Xfer;
+    struct
+    {
+        Packet_Context_T * const p_RxBuffer;
+        Packet_Context_T * const p_TxBuffer;
+        void * const p_Substate;
+    };
+}
+Protocol_ReqContext_T;
+
+/*
+
+*/
 typedef Packet_Id_T Packet_ReqId_T;
 
 // typedef const struct Protocol_ReqId
 // {
 //     Packet_Id_T ID; /* Must be embedded for __container_of */
-// #ifdef PROTOCOL_RESPONSE_FORMAT_SEPARATE
+// #ifdef PROTOCOL_RESPONSE_FORMAT_ASYMMETRIC
 //     Packet_Id_T RESP_ID; /* optionally, or assume same as ID if not specified */
 // #endif
 // }
@@ -303,7 +330,7 @@ static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state
     and it cannot change under an active handler because CaptureReq does not re-look-up while
     ACTIVE. A control frame arriving mid-exchange never reaches here at all.
 */
-static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const uint8_t * p_rxFrame, uint8_t * p_txFrame)
+static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, Protocol_ReqContext_T * p_xfer)
 {
     if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
 
@@ -313,7 +340,8 @@ static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_s
     packet_size_t rxOffset = Protocol_ReqId(p_state)->FRAME_FORMAT->HEADER_LENGTH; /* the opening data frame */
     packet_size_t txOffset = Protocol_ReqRespId(p_state)->FRAME_FORMAT->HEADER_LENGTH;   /* the shape the row answers with */
 
-    return _Protocol_ProcReq(p_state, p_app, p_xfer, &p_rxFrame[rxOffset], &p_txFrame[txOffset]);
+    /* &p_xfer->Xfer resolves to itself */
+    return _Protocol_ProcReq(p_state, p_app, &p_xfer->Xfer, &p_xfer->p_RxBuffer->Packet[rxOffset], &p_xfer->p_TxBuffer->Packet[txOffset]);
 }
 
 /******************************************************************************/
@@ -348,6 +376,20 @@ static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState
 //     return (p_state->p_ReqActive != NULL);
 // }
 
+/*
+    Multiple context segments
+*/
+typedef const struct
+{
+    /* The request service. Id -> handler, plus the storage handlers run against. */
+    const Protocol_Req_T * P_REQ_TABLE;
+    uint8_t REQ_TABLE_LENGTH;
+    void * P_APP_CONTEXT;                      /* Passed to every handler */
+    // Packet_ReqIdResolver_T REQ_ID_RESOLVER; /* Function to resolve request IDs */
+    // void * P_SUB_STATE;                    /* Handler sub-state. Sized for the largest handler */
+    const uint32_t REQ_TIMEOUT;              /* Exchange deadline. The frame deadline is the codec's RX_TIMEOUT. */
+}
+Protocol_ReqTable_T;
 
 
 /******************************************************************************/

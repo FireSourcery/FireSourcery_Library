@@ -135,7 +135,7 @@ typedef struct Protocol_SyncState
 
     // Protocol_AckPolicy_T AckPolicy; //alternatively latched policy handle internally
 
-    uint32_t Timeout;
+    // uint32_t Timeout;
 }
 Protocol_SyncState_T;
 
@@ -224,12 +224,10 @@ static inline Protocol_SyncEvent_T _Protocol_ResolveSync(Protocol_SyncState_T * 
     {
         case PROTOCOL_SYNC_EVENT_REQUEST:    p_state->AckTimeStart = timerNow;                            break;
         case PROTOCOL_SYNC_EVENT_RETRANSMIT: p_state->RetryCount++;  p_state->AckTimeStart = timerNow;     break;
-        case PROTOCOL_SYNC_EVENT_RESUME:
+        case PROTOCOL_SYNC_EVENT_RESUME:     Protocol_ResetSync(p_state);  break;
         case PROTOCOL_SYNC_EVENT_ABORT:      Protocol_ResetSync(p_state); p_state->AckTimeStart = timerNow; break;
-
         /* The exchange died. Do NOT re-arm. */
         case PROTOCOL_SYNC_EVENT_FAILED:     Protocol_ResetSync(p_state);                                 break;
-
         case PROTOCOL_SYNC_EVENT_REJECT:
         case PROTOCOL_SYNC_EVENT_NONE:
         default:                                                                                          break;
@@ -304,75 +302,3 @@ static inline Packet_FrameFormat_T * Protocol_SyncRespFormat(const Protocol_Sync
 */
 /******************************************************************************/
 
-// /*
-//     Retransmit while the budget lasts, otherwise abandon. Shared by the nack and deadline
-//     paths, which differ only in what triggered them.
-// */
-// static inline Protocol_SyncEvent_T Protocol_ResolveRetryCount(Protocol_SyncState_T * p_state)
-// {
-//     // if (p_state->RetryCount >= p_state->AckPolicy.RETRANSMIT_MAX)
-//     if (p_state->RetryCount >= p_state->RetryMax)
-//     {
-//         Protocol_ResetSync(p_state);
-//         return PROTOCOL_SYNC_EVENT_FAILED;
-//     }
-
-//     p_state->RetryCount++;
-//     return PROTOCOL_SYNC_EVENT_RETRANSMIT;
-// }
-
-
-// /*!
-//     @brief  Fold one classified frame into the handshake.
-//     @param  rxClass  from Packet_ClassOf. This layer never sees an Id or a format.
-
-//             No policy parameter: the only policy this layer consults is the retransmit budget,
-//             and that was latched at Protocol_ExpectAck. Taking it again here would re-introduce
-//             the lifetime bug, since by now the request may well have closed.
-// */
-// static inline Protocol_SyncEvent_T Protocol_ProcSyncState(Protocol_SyncState_T * p_state, Packet_ClassId_T rxClass)
-// {
-//     /* An abort ends the exchange wherever it was. The caller acks it if policy says so. */
-//     if (rxClass == PACKET_CLASS_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
-
-//     // if (rxClass == PACKET_CLASS_ABORT && p_state->AckPolicy.SEND_ACK_ABORT) { Protocol_ResetSync(p_state); return PROTOCOL_SYNC_EVENT_ABORT; }
-//     // else { return PROTOCOL_SYNC_EVENT_NONE; }
-
-//     switch (p_state->StateId)
-//     {
-//         /*
-//             Nothing outstanding, so an ack or nack refers to nothing - and is DROPPED, not
-//             nacked. Answering a control frame with a control frame is the same storm the abort
-//             path is gated against, one layer down and unbounded: two sockets both in OPEN each
-//             answer the other's nack with a nack, forever, at line rate.
-//             The retransmit budget does not bound it because that budget only exists in AWAIT_ACK.
-
-//             A nack goes out only in answer to a DATA frame or to garbage, never to a control frame.
-//             That is what makes the exchange terminate.
-//         */
-//         case PROTOCOL_SYNC_OPEN:
-//             switch (rxClass)
-//             {
-//                 case PACKET_CLASS_DATA: return PROTOCOL_SYNC_EVENT_REQUEST;
-//                 case PACKET_CLASS_ACK:
-//                 case PACKET_CLASS_NACK:
-//                 case PACKET_CLASS_ABORT:
-//                 default: return PROTOCOL_SYNC_EVENT_NONE;
-//             }
-//         case PROTOCOL_SYNC_AWAIT_ACK:
-//             switch (rxClass)
-//             {
-//                 case PACKET_CLASS_ACK:
-//                     Protocol_ResetSync(p_state);
-//                     return PROTOCOL_SYNC_EVENT_RESUME;
-//                 case PACKET_CLASS_NACK:
-//                     return Protocol_ResolveNackCount(p_state);
-//                 case PACKET_CLASS_DATA: /* A data frame before the ack is out of sequence - the remote is ahead of us. */
-//                     return PROTOCOL_SYNC_EVENT_REJECT;
-//                 case PACKET_CLASS_ABORT:
-//                 default: return PROTOCOL_SYNC_EVENT_REJECT;
-//             }
-
-//         default: return PROTOCOL_SYNC_EVENT_NONE;
-//     }
-// }

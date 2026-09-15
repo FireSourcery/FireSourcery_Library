@@ -1,0 +1,46 @@
+
+    THE ROW'S CAST IS LOAD BEARING - LEVERAGE IT
+
+    PROTOCOL_REQ casts PROC to this type, so a handler declares the types it actually works
+    in and the cast at the row reconciles them. The engine passes void *; the handler never
+    sees one.
+
+        static Protocol_ReqCode_T Var16Write(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const MotPacket_Var16WriteReq_T * p_rxPayload, MotPacket_Var16WriteResp_T * p_txPayload)
+
+    Without it every handler opens by re-declaring the same three things under different
+    names - context, request, response - before it can say anything of its own. Over the
+    fifteen rows in MotorController_MotProtocol.c that is forty-five lines that carry no
+    information: the row already said which types these are, and the locals only repeat it.
+    It also buys expressions a void * cannot host at all - sizeof(p_rxPayload->Pairs[0])
+    reads a field, and needs the parameter to already be the type.
+
+    Typing the parameters gives up NO checking. Nothing connects MOT_PACKET_VAR16_WRITE to
+    MotPacket_Var16WriteReq_T in either form - void * converts to an object pointer
+    implicitly, so a local cast in the body is the author's claim exactly as a parameter
+    declaration is, and the compiler has no more to say about one than the other. The
+    difference is where the claim is written: in the signature, next to the name and visible
+    at the declaration, rather than three lines into the body. That binding is checkable only
+    by emitting the row and the struct from one schema, which is orthogonal to all of this.
+
+    What a handler may narrow, and what it may not:
+
+        may      any object-pointer parameter, to any object-pointer type - p_context to its
+                 own context type, either payload to its own wire struct. const and restrict
+                 on the pointed-to type are free; they do not reach the ABI.
+        may not  arity, argument order, or the return type. Nor a pointer to a non-pointer,
+                 nor variadic - those change how the argument is passed, not just how it is
+                 read.
+
+    WHEN TO KEEP void * ANYWAY
+
+    When the id does not determine the payload type. Protocol_DataMode's transfers carry a
+    request struct on the opening frame and raw bytes on every continuation, so one declared
+    type would be wrong on all but one call. That is a correctness rule, not a safety one.
+
+    Strictly the row's cast is UB - C17 6.5.2.2p9 wants the pointer's type compatible with
+    the function's, and void * is not compatible with MotorController_T *. It holds because
+    every object pointer is one word in r0-r3 under AAPCS, so the call is identical machine
+    code. Note that the exposure is already taken by p_context, which every handler narrows
+    even where the payloads stay void *; typing the payloads adds nothing to it. It is
+    control-flow-integrity instrumentation and -fsanitize=function that would object, not the
+    target.
