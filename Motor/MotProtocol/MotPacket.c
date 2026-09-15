@@ -190,6 +190,11 @@ void MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, MotPacket_T * p_buf
     (void)MotPacket_BuildHeader((MotPacket_T *)p_buffer, (MotPacket_Id_T)p_meta->Id, p_meta->Length);
 }
 
+
+#ifndef MOT_PACKET_RX_TIMEOUT
+#define MOT_PACKET_RX_TIMEOUT         (1000U)     /* Timeout Rx Packet */
+#endif
+
 const Packet_Codec_T MOT_PACKET_CODEC =
 {
     .LENGTH_MIN         = MOT_PACKET_LENGTH_MIN,
@@ -202,13 +207,10 @@ const Packet_Codec_T MOT_PACKET_CODEC =
     .PARSE_RX_FRAME     = (Packet_ParseRxFrame_T)MotProtocol_ParseRxHeader,
     .BUILD_TX_FRAME     = (Packet_BuildTxFrame_T)MotProtocol_BuildTxHeader,
 
-    /* An ack carries no table row, so the shape of one is declared here rather than found. */
-    .CONTROL_FRAME_FORMAT = { .HEADER_LENGTH = sizeof(MotPacket_Control_T), .BODY_LENGTH = 0U, .TRAILER_LENGTH = 0U },
-
+    .CONTROL_FRAME_LENGTH = sizeof(MotPacket_Control_T),
     .ACK_ID             = MOT_PACKET_SYNC_ACK,
     .NACK_ID            = MOT_PACKET_SYNC_NACK,
     .ABORT_ID           = MOT_PACKET_SYNC_ABORT,
 
-    /* Frame deadline, in SysTime_Millis ticks - the units the socket ages the parser by. */
-    .RX_TIMEOUT         = 1000U,
+    .RX_TIMEOUT         = MOT_PACKET_RX_TIMEOUT,
 };

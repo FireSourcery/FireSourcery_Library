@@ -15,6 +15,7 @@
 - Skip this for simple, obvious fixes – don't over-engineer
 - Challenge your own work before presenting it
 - Consider established design patterns to eliminate code duplication
+- Keep comments concise. Summarize with a table or diagram when appropriate
 
 ### Self-Improvement Loop
 - After ANY correction from the user: update `.claude/tasks/lessons.md` with the pattern
@@ -31,7 +32,6 @@
 6. **Capture Lessons**: Update `.claude/tasks/lessons.md` after corrections
 
 ## Build & Toolchain
-
 - **Compiler:** ARM GCC (`arm-none-eabi-gcc` 15.2.1)
 - **Target Architecture:** ARM Cortex-M4/M0+
 - **Build System:** Makefile / IDE project-based (MCUXpresso / VS Code)
@@ -49,6 +49,11 @@
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
     This pattern is only for hardware descriptors and static polymorphism. Do not use it for what could be mutable only structs.
 - **Stateless pure functions layer**: function parameter contain the entire state
+- Utility functions should pass parameters at the closest layer the logic requires. Do not pass a wider context that makes the function less apparent.
+- Don't pass bool.
+- **Function parameters order**: most "constant" first. The parameter least likely to change or is constant at call site goes first.
+- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization.
+- Keep short functions on one line
 <!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
 
 ### Important Rules
@@ -63,16 +68,13 @@
 - **UPPER_SNAKE_CASE** for macros, enum values, and constants: `MOTOR_STATE_RUN`, `HAL_ADC_CHANNEL_COUNT`
 - **camelCase** for local variables and struct fields
 - **snake_case** for pure functions on primitives
-- **Function parameters order**: most "constant" first. The parameter least likely to change or is constant at call site goes first.
-- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization.
-- Keep short functions on one line
 - Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `Serial_`, etc.
 - Files prefixed with `_` (e.g., `_Motor_Config.h`) are internal/private headers not intended for external inclusion
 - Public API headers match the module directory name: `Motor.h`, `StateMachine.h`, `Protocol.h`
 
 ## API Design
 - **Minimize forwarders.** When a wrapper function is a single-line pass-through to a peer module (`Outer_Foo(p) { return Inner_Foo(&p->inner); }`), it duplicates API surface without adding value. Prefer:
-  - **Free-function bridges** (`SubjectPrimary_Collaborator_Verb`) — no wrapper type — when coordination surface is small (≤ ~5 functions) and peers are public vocabulary. Precedent: C stdlib (`fprintf`, `memcpy`).
+  - **Free-function bridges** — no wrapper type — when coordination surface is small (≤ ~5 functions) and peers are public vocabulary. Precedent: C stdlib (`fprintf`, `memcpy`).
   - **Mediator with peer getters** — wrapper keeps only coordination functions; exposes peers via getters — when coordination points are numerous or the wrapper holds its own state.
   - **Full-forwarder facade** — only when peer types must be hidden from callers (rare).
 - Types earn themselves by holding state or enforcing invariants, not by re-exporting another type's API.

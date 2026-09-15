@@ -188,6 +188,20 @@ static inline Protocol_SyncEvent_T _Protocol_EvaluateTimeout(const Protocol_Sync
     Proc
 */
 /******************************************************************************/
+/*!
+    Takes the policy and the shape because this is the moment both must be captured - see
+    RetryMax and p_RetryFormat. Everything a retransmission needs is latched here, so the
+    retransmit paths never consult the request binding.
+*/
+static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy, Packet_FrameFormat_T * p_retryFormat, uint32_t timerNow)
+{
+    p_state->StateId       = PROTOCOL_SYNC_AWAIT_ACK;
+    p_state->RetryCount    = 0U;
+    p_state->RetryMax      = policy.RETRANSMIT_MAX;
+    p_state->p_RetryFormat = p_retryFormat;
+    p_state->AckTimeStart  = timerNow;   /* OPEN -> AWAIT_ACK is where the ack deadline begins */
+}
+
 /*
     After a response is transmitted the caller picks the destination directly:
 
@@ -222,15 +236,17 @@ static inline Protocol_SyncEvent_T _Protocol_ResolveSync(Protocol_SyncState_T * 
 {
     switch (event)
     {
-        case PROTOCOL_SYNC_EVENT_REQUEST:    p_state->AckTimeStart = timerNow;                            break;
-        case PROTOCOL_SYNC_EVENT_RETRANSMIT: p_state->RetryCount++;  p_state->AckTimeStart = timerNow;     break;
-        case PROTOCOL_SYNC_EVENT_RESUME:     Protocol_ResetSync(p_state);  break;
+        case PROTOCOL_SYNC_EVENT_REQUEST:    p_state->AckTimeStart = timerNow;                              break;
+        /* Received Nack */
+        case PROTOCOL_SYNC_EVENT_RETRANSMIT: p_state->RetryCount++; p_state->AckTimeStart = timerNow;       break;
+        /* Received Ack */
+        case PROTOCOL_SYNC_EVENT_RESUME:     Protocol_ResetSync(p_state); p_state->AckTimeStart = timerNow; break;
         case PROTOCOL_SYNC_EVENT_ABORT:      Protocol_ResetSync(p_state); p_state->AckTimeStart = timerNow; break;
-        /* The exchange died. Do NOT re-arm. */
-        case PROTOCOL_SYNC_EVENT_FAILED:     Protocol_ResetSync(p_state);                                 break;
+        /* exceeded [RetryCount] */
+        case PROTOCOL_SYNC_EVENT_FAILED:     Protocol_ResetSync(p_state);                                   break;
         case PROTOCOL_SYNC_EVENT_REJECT:
         case PROTOCOL_SYNC_EVENT_NONE:
-        default:                                                                                          break;
+        default:                                                                                            break;
     }
     return event;
 }
@@ -250,32 +266,9 @@ static inline Protocol_SyncEvent_T Protocol_ProcSyncTimeout(Protocol_SyncState_T
     return _Protocol_ResolveSync(p_state, _Protocol_EvaluateTimeout(p_state), timerNow);
 }
 
-/*!
-    Takes the policy and the shape because this is the moment both must be captured - see
-    RetryMax and p_RetryFormat. Everything a retransmission needs is latched here, so the
-    retransmit paths never consult the request binding.
+/*
+
 */
-static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state, Protocol_AckPolicy_T policy, Packet_FrameFormat_T * p_retryFormat, uint32_t timerNow)
-{
-    p_state->StateId       = PROTOCOL_SYNC_AWAIT_ACK;
-    p_state->RetryCount    = 0U;
-    p_state->RetryMax      = policy.RETRANSMIT_MAX;
-    p_state->p_RetryFormat = p_retryFormat;
-    p_state->AckTimeStart  = timerNow;   /* OPEN -> AWAIT_ACK is where the ack deadline begins */
-}
-
-
-/*! Stamp the base without a transition. For a reset, not for an advance. */
-static inline void Protocol_MarkSyncTime(Protocol_SyncState_T * p_state, uint32_t timerNow) { p_state->AckTimeStart = timerNow; }
-
-/*! The base, for a caller measuring link liveness on a longer scale. */
-// static inline uint32_t Protocol_SyncTimeStart(const Protocol_SyncState_T * p_state) { return p_state->AckTimeStart; }
-
-static inline bool Protocol_IsSyncElapsed(const Protocol_SyncState_T * p_state, uint32_t timeout, uint32_t timerNow)
-{
-    return ((timerNow - p_state->AckTimeStart) > timeout);
-}
-
 static inline bool Protocol_IsAckWaiting(const Protocol_SyncState_T * p_state) { return (p_state->StateId == PROTOCOL_SYNC_AWAIT_ACK); }
 
 /*! The outstanding frame's shape. NULL when nothing is outstanding. */

@@ -138,6 +138,7 @@ typedef const struct Protocol_DataMode_Interface
     packet_id_t READ_ID;        /* Opens a read, and labels its status replies */
     packet_id_t WRITE_ID;       /* Opens a write, and labels its status replies */
     packet_id_t DATA_ID;        /* Carries a raw chunk in either direction */
+    packet_id_t STATUS_ID;
     packet_size_t CHUNK_MAX;    /* Bounded by the format's payload capacity */
 }
 Protocol_DataMode_Interface_T;
@@ -166,11 +167,20 @@ typedef enum Protocol_DataMode_StateId
 }
 Protocol_DataMode_StateId_T;
 
-static_assert(sizeof(Protocol_DataMode_StateId_T) == sizeof(uint32_t), "Protocol_DataMode_StateId_T must be 32 bits");
 
 typedef struct Protocol_DataMode_State
 {
-    Protocol_DataMode_StateId_T StateId;
+    /*!
+        The cursor, held in the socket's P_SUB_STATE buffer.
+
+        Alternatively protocol engine clears P_SUB_STATE.
+        The pass is derived from the arriving id and the cursor for now.
+    */
+    union
+    {
+        Protocol_DataMode_StateId_T StateId;
+        uint32_t StateIndex;
+    };
 
     uintptr_t Address;      /* Transfer base */
     size_t Size;            /* Total bytes declared by the opening request */
@@ -217,28 +227,45 @@ static inline uint16_t Protocol_DataMode_WriteChunk(Protocol_DataMode_Interface_
 /*! Stage one outbound chunk and advance. Labels the tx frame as a chunk, not as a status. */
 static inline uint16_t Protocol_DataMode_ReadChunk(Protocol_DataMode_Interface_T * p_app, Protocol_DataMode_State_T * p_state, Packet_Meta_T * p_txMeta, void * p_chunk)
 {
-    packet_size_t chunk = math_min(p_state->Size - p_state->Count, p_app->CHUNK_MAX);
+    packet_size_t size = math_min(p_state->Size - p_state->Count, p_app->CHUNK_MAX);
 
-    p_state->Status = p_app->P_OPS->READ(p_app->P_MODULE, p_state->Address + p_state->Count, chunk, p_chunk);
+    p_state->Status = p_app->P_OPS->READ(p_app->P_MODULE, p_state->Address + p_state->Count, size, p_chunk);
 
     if (p_state->Status == PROTOCOL_DATA_MODE_STATUS_OK)
     {
-        p_state->Count += chunk;
+        p_state->Count += size;
         p_txMeta->Id = p_app->DATA_ID;
-        p_txMeta->Length = chunk;
+        p_txMeta->Length = size;
     }
 
     return p_state->Status;
 }
 
 
+
+/******************************************************************************/
 /*!
+
+*/
+/******************************************************************************/
+/*! Rewrite the cursor whole. The opening request is the only thing that may do this. */
+static inline void Protocol_DataMode_Begin(Protocol_DataMode_State_T * p_state, const Packet_Meta_T * p_rxMeta, const Protocol_DataMode_Req_T * p_req)
+{
+    p_state->Address = (uintptr_t)p_req->Address;
+    p_state->Size    = (size_t)p_req->Size;
+    p_state->Count   = 0U;
+    p_state->ReqId   = p_rxMeta->Id;
+    p_state->Status  = PROTOCOL_DATA_MODE_STATUS_OK;
+}
+
+/*!
+    convenience wrapper for sending a status reply.
     Stage a status reply and decide how the exchange continues.
 
-    Every exit that carries a status goes through here, so the remote always learns why a
-    transfer stopped rather than waiting out REQ_TIMEOUT. A non-OK status always closes.
-
-    convenience wrapper for sending a status reply.
+    [PROTOCOL_REQ_DONE] responds with a final status, closing the transfer.
+    Every exit that carries a status goes through here,
+    so the remote always learns why a transfer stopped rather than waiting out REQ_TIMEOUT.
+    A non-OK status always closes.
 */
 static inline Protocol_ReqCode_T Protocol_DataMode_Reply(Packet_Meta_T * p_txMeta, Protocol_DataMode_Resp_T * p_resp, uint16_t id, uint16_t status, Protocol_ReqCode_T onOk)
 {
@@ -265,7 +292,6 @@ static inline Protocol_DataMode_StateId_T _DataMode_OpenStateOf(const Packet_Met
 }
 
 
-
 /******************************************************************************/
 /*!
     Tier 2 - step handlers
@@ -278,16 +304,6 @@ static inline Protocol_DataMode_StateId_T _DataMode_OpenStateOf(const Packet_Met
     step whose signature no longer matches cannot be reached through a table.
 */
 /******************************************************************************/
-/*! Rewrite the cursor whole. The opening request is the only thing that may do this. */
-static inline void Protocol_DataMode_Begin(Protocol_DataMode_State_T * p_state, const Packet_Meta_T * p_rxMeta, const Protocol_DataMode_Req_T * p_req)
-{
-    p_state->Address = (uintptr_t)p_req->Address;
-    p_state->Size    = (size_t)p_req->Size;
-    p_state->Count   = 0U;
-    p_state->ReqId   = p_rxMeta->Id;
-    p_state->Status  = PROTOCOL_DATA_MODE_STATUS_OK;
-}
-
 /*!
     Set up a transfer and answer with the result. Shared by both directions.
 
@@ -307,9 +323,8 @@ static inline Protocol_ReqCode_T Protocol_DataMode_Open(Protocol_DataMode_Interf
 /*!
     Read, continuing - stage the next chunk.
 
-    The tx payload is a raw chunk here, not a status, which is why it is typed uint8_t * and
-    the id is set by _ReadChunk rather than by _Reply. A fault swaps the frame for a status
-    and closes, so the remote learns why the stream stopped.
+    The tx payload is a raw chunk here, not a status, id is set by _ReadChunk
+    A fault swaps the frame for a status and closes, so the remote learns why the stream stopped.
 */
 static inline Protocol_ReqCode_T Protocol_DataMode_ReadData(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rx, uint8_t * p_chunk)
 {
@@ -322,9 +337,9 @@ static inline Protocol_ReqCode_T Protocol_DataMode_ReadData(Protocol_DataMode_In
 }
 
 /*! Read, cursor spent - the closing status. */
-static inline Protocol_ReqCode_T Protocol_DataMode_ReadClose(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, Protocol_DataMode_Resp_T * p_resp)
+static inline Protocol_ReqCode_T Protocol_DataMode_ReadClose(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rx, Protocol_DataMode_Resp_T * p_resp)
 {
-    (void)p_app; (void)p_rxPayload;
+    (void)p_app; (void)p_rx;
 
     return Protocol_DataMode_Reply(p_xfer->p_TxMeta, p_resp, _DataMode_StateOf(p_xfer->p_Substate)->ReqId, PROTOCOL_DATA_MODE_STATUS_OK, PROTOCOL_REQ_DONE);
 }
@@ -354,9 +369,9 @@ static inline Protocol_ReqCode_T Protocol_DataMode_WriteClose(Protocol_DataMode_
 }
 
 /*! An opening request too short to be one. */
-static inline Protocol_ReqCode_T Protocol_DataMode_Malformed(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, Protocol_DataMode_Resp_T * p_resp)
+static inline Protocol_ReqCode_T Protocol_DataMode_Malformed(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rx, Protocol_DataMode_Resp_T * p_resp)
 {
-    (void)p_app; (void)p_rxPayload;
+    (void)p_app; (void)p_rx;
 
     /* Begin never ran, so the cursor's ReqId still belongs to the previous transfer. The id
        that just arrived is the only label this reply can honestly carry. */
@@ -364,18 +379,18 @@ static inline Protocol_ReqCode_T Protocol_DataMode_Malformed(Protocol_DataMode_I
 }
 
 /*! A chunk past the size the opening request declared. */
-static inline Protocol_ReqCode_T Protocol_DataMode_Overrun(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, Protocol_DataMode_Resp_T * p_resp)
+static inline Protocol_ReqCode_T Protocol_DataMode_Overrun(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rx, Protocol_DataMode_Resp_T * p_resp)
 {
-    (void)p_app; (void)p_rxPayload;
+    (void)p_app; (void)p_rx;
 
     /* ReqId, not the arriving id - that is DATA_ID, and this is a status frame. */
     return Protocol_DataMode_Reply(p_xfer->p_TxMeta, p_resp, _DataMode_StateOf(p_xfer->p_Substate)->ReqId, PROTOCOL_DATA_MODE_STATUS_OVERRUN, PROTOCOL_REQ_DONE);
 }
 
 /*! Nothing to absorb and nothing owed - the exchange stays open. */
-static inline Protocol_ReqCode_T Protocol_DataMode_Idle(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
+static inline Protocol_ReqCode_T Protocol_DataMode_Idle(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * p_rx, void * p_tx)
 {
-    (void)p_app; (void)p_xfer; (void)p_rxPayload; (void)p_txPayload;
+    (void)p_app; (void)p_xfer; (void)p_rx; (void)p_tx;
 
     return PROTOCOL_REQ_AWAIT;
 }
@@ -392,12 +407,6 @@ static inline Protocol_ReqCode_T Protocol_DataMode_Idle(Protocol_DataMode_Interf
     what makes the switch replaceable by a table without touching a step.
 */
 /******************************************************************************/
-
-/*  Currently an ACK causes Protocol_ProcRequest to call the active handler
-using the same raw payload interface used for a data frame.
-That works for DataMode_Read because it ignores the payload,
-  */
-
 /*!
     Read - the opening request, then one chunk per pacing ack until the cursor runs out.
 
@@ -407,7 +416,7 @@ That works for DataMode_Read because it ignores the payload,
 */
 static inline Protocol_DataMode_StateId_T _DataModeRead_StateOf(Protocol_DataMode_Interface_T * p_app, const Protocol_DataMode_State_T * p_state, const Packet_Meta_T * p_rxMeta)
 {
-    if (p_rxMeta->Id == p_app->READ_ID) { return _DataMode_OpenStateOf(p_rxMeta); }
+    if (p_rxMeta->Id == p_app->READ_ID) { return PROTOCOL_DATA_MODE_STATE_OPEN; }
 
     return (p_state->Count < p_state->Size) ? PROTOCOL_DATA_MODE_STATE_DATA : PROTOCOL_DATA_MODE_STATE_CLOSE;
 }
@@ -420,7 +429,7 @@ static inline Protocol_DataMode_StateId_T _DataModeRead_StateOf(Protocol_DataMod
 */
 static inline Protocol_ReqCode_T Protocol_DataMode_Read(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload)
 {
-    Protocol_DataMode_State_T * p_state = _DataMode_StateOf(p_xfer->p_Substate);
+    Protocol_DataMode_State_T * p_state = _DataMode_StateOf(p_xfer->p_Substate); /* alternatively protocol handles reset index */
 
     p_state->StateId = _DataModeRead_StateOf(p_app, p_state, p_xfer->p_RxMeta);
 
@@ -444,7 +453,7 @@ static inline Protocol_ReqCode_T Protocol_DataMode_Read(Protocol_DataMode_Interf
 */
 static inline Protocol_DataMode_StateId_T _DataModeWrite_StateOf(Protocol_DataMode_Interface_T * p_app, const Protocol_DataMode_State_T * p_state, const Packet_Meta_T * p_rxMeta)
 {
-    if (p_rxMeta->Id == p_app->WRITE_ID) { return _DataMode_OpenStateOf(p_rxMeta); }
+    if (p_rxMeta->Id == p_app->WRITE_ID) { return PROTOCOL_DATA_MODE_STATE_OPEN; }
 
     if (p_rxMeta->Id != p_app->DATA_ID) { return PROTOCOL_DATA_MODE_STATE_IDLE; }
 

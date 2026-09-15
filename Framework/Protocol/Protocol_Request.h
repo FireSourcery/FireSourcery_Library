@@ -60,7 +60,7 @@
 typedef enum Protocol_ReqCode
 {
     PROTOCOL_REQ_DONE,      /* Final. Transmit any staged response, then close. */
-    PROTOCOL_REQ_AWAIT,     /* No response. Wait for the next packet. */
+    PROTOCOL_REQ_AWAIT,     /* No response. Wait for the next packet. Same as Tx Length 0, if Xcvr_TxN length 0 returns true. */
     PROTOCOL_REQ_RESPOND,   /* Response staged. Transmit it, the sequence continues. */
     PROTOCOL_REQ_ACCEPT,    /* Rx validated. Ack it, no response. */
     PROTOCOL_REQ_REJECT,    /* Rx rejected. Nack it, no response. */
@@ -84,9 +84,7 @@ typedef struct Protocol_Substate
 Protocol_Substate_T;
 
 
-
 /*
-    Packet Substate Context.
     Everything the handler may read or write, and nothing about the transport.
     Protocol_ReqParams_T
 */
@@ -99,7 +97,6 @@ typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Packet_Xfer
     const Packet_Meta_T * const p_RxMeta;     /* Header of the frame that caused this call - may be a control frame */
     Packet_Meta_T * const p_TxMeta;           /* Handler sets Id and Length; the format builds the header */
     void * const p_Substate;                  /* Handler's own storage, sized by the child protocol */
-    // Protocol_Substate_T * p_Substate;   /* Handler's own storage, sized by the child protocol */
 }
 Packet_Xfer_T;
 
@@ -115,34 +112,13 @@ Packet_Xfer_T;
 */
 typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, const Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload);
 
-
 /* Process handles wire header */
 // typedef Protocol_ReqCode_T(*Protocol_ProcReqRespFrame_T) (void * p_context, const void * p_rxFrame, void * p_txFrame);
+/*  */
 // typedef Protocol_ReqCode_T(*Protocol_ProcReqResp_T)(void * p_context, void * p_substate, const Packet_Context_T * restrict p_rx, Packet_Context_T * restrict p_tx);
 /* continuity through substate */
-// typedef Protocol_ReqCode_T(*Protocol_ProcStatefulReq_T) (void * p_context, void * p_substate, const Packet_Meta_T * p_rxMeta, const void * p_rxPayload);
-// typedef Protocol_ReqCode_T(*Protocol_ProcStatefulResp_T)(void * p_context, void * p_substate, Packet_Meta_T * p_txMeta, void * p_txPayload);
-
-
-// typedef struct
-// {
-//     union { const Packet_Meta_T * const p_RxMeta;  Packet_Context_T * const p_RxBuffer; };
-//     union { Packet_Meta_T * const p_TxMeta;        Packet_Context_T * const p_TxBuffer; };
-//     void * const p_Substate;
-// }
-// Protocol_ReqContext_T;
-
-typedef union
-{
-    Packet_Xfer_T Xfer;
-    struct
-    {
-        Packet_Context_T * const p_RxBuffer;
-        Packet_Context_T * const p_TxBuffer;
-        void * const p_Substate;
-    };
-}
-Protocol_ReqContext_T;
+// typedef Protocol_ReqCode_T(*Protocol_DecodeReq_T) (void * p_context, void * p_substate, const Packet_Meta_T * p_rxMeta, const void * p_rxPayload);
+// typedef Protocol_ReqCode_T(*Protocol_EncodeResp_T)(void * p_context, void * p_substate, Packet_Meta_T * p_txMeta, void * p_txPayload);
 
 /*
 
@@ -158,10 +134,6 @@ typedef Packet_Id_T Packet_ReqId_T;
 // }
 // Packet_ReqId_T;
 
-/*
-    Req look up by embedded Id
-*/
-// typedef Packet_ReqId_T * (*Packet_ReqIdResolver_T)(packet_id_t id);
 
 /*!
     A request table entry.
@@ -178,7 +150,6 @@ typedef const struct Protocol_Req
 }
 Protocol_Req_T;
 
-
 /*
     Frame shape is per id, so it belongs on the row. RESP_ID defaults to the request's id and
     shape; a response that answers with a different shape names its own.
@@ -189,11 +160,6 @@ Protocol_Req_T;
     .PROC    = (Protocol_ProcReqResp_T)(Proc),                          \
     .ACK     = AckPolicy,                                               \
 }
-
-
-#ifndef __containerof
-#define __containerof(x, s, m) ((s *)(const void *)((const char *)(x) - offsetof(s, m)))
-#endif
 
 
 /******************************************************************************/
@@ -241,7 +207,7 @@ static inline const Protocol_Req_T * _Protocol_SearchReqTable(const Protocol_Req
     Only a data frame reaches here - PROTOCOL_SYNC_EVENT_REQUEST is raised for
     PACKET_CLASS_DATA alone, so an ack never rebinds.
 */
-static inline bool Protocol_CaptureReqOfTable(Protocol_ReqState_T * p_state, const Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
+static inline bool Protocol_CaptureReqOfTable(Protocol_ReqState_T * p_state, Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
 {
     /*
         Stay on the same outer request. A continuation frame does not re-look-up: the bound row owns the exchange until the handler ends it.
@@ -282,6 +248,14 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
     p_state->p_ReqActive = NULL;
 }
 
+static inline bool Protocol_BindReq(Protocol_ReqState_T * p_state, Protocol_Req_T * p_req)
+{
+    if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; }
+    p_state->p_ReqActive = p_req;
+    if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
+    return (p_state->p_ReqActive != NULL);
+}
+
 /*!
     @brief  Invoke the bound handler.
 
@@ -301,7 +275,7 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
     A stateless handler returns DONE on its first call. Anything that does not return
     DONE or ABORT leaves the request bound and the socket busy.
 */
-static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
+static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, const Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
     Protocol_ReqCode_T reqCode;
 
@@ -330,7 +304,7 @@ static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state
     and it cannot change under an active handler because CaptureReq does not re-look-up while
     ACTIVE. A control frame arriving mid-exchange never reaches here at all.
 */
-static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, Protocol_ReqContext_T * p_xfer)
+static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, const Packet_Xfer_T * p_xfer, uint8_t * p_rxFrame, uint8_t * p_txFrame)
 {
     if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
 
@@ -340,8 +314,10 @@ static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_s
     packet_size_t rxOffset = Protocol_ReqId(p_state)->FRAME_FORMAT->HEADER_LENGTH; /* the opening data frame */
     packet_size_t txOffset = Protocol_ReqRespId(p_state)->FRAME_FORMAT->HEADER_LENGTH;   /* the shape the row answers with */
 
-    /* &p_xfer->Xfer resolves to itself */
-    return _Protocol_ProcReq(p_state, p_app, &p_xfer->Xfer, &p_xfer->p_RxBuffer->Packet[rxOffset], &p_xfer->p_TxBuffer->Packet[txOffset]);
+    /*
+        same as p_xfer->p_Meta + HEADER_LENGTH + sizeof(Packet_Meta_T)
+    */
+    return _Protocol_ProcReq(p_state, p_app, p_xfer, &p_rxFrame[rxOffset], &p_txFrame[txOffset]);
 }
 
 /******************************************************************************/
@@ -351,7 +327,7 @@ static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_s
 /******************************************************************************/
 static inline bool Protocol_IsReqActive(const Protocol_ReqState_T * p_state)
 {
-    return (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) && (p_state->p_ReqActive != NULL);
+    return (p_state->p_ReqActive != NULL); /* && (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE)   */
 }
 
 /*! Zeroed when nothing is bound, so an unbound socket acks nothing. */
@@ -367,6 +343,14 @@ static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState
     [Packet_Id_T *] MUST be from the Request Table
             Rx returned Packet_Id_T determines response payload offset.
 */
+/*
+    Req look up by embedded Id
+*/
+// typedef Packet_ReqId_T * (*Packet_ReqIdResolver_T)(packet_id_t id);
+// #ifndef __containerof
+// #define __containerof(x, s, m) ((s *)(const void *)((const char *)(x) - offsetof(s, m)))
+// #endif
+
 // static inline bool Protocol_CaptureReq(Protocol_ReqState_T * p_state, const Packet_Id_T * p_packetId)
 // {
 //     assert(p_packetId != NULL);
@@ -375,85 +359,3 @@ static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState
 //     if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
 //     return (p_state->p_ReqActive != NULL);
 // }
-
-/*
-    Multiple context segments
-*/
-typedef const struct
-{
-    /* The request service. Id -> handler, plus the storage handlers run against. */
-    const Protocol_Req_T * P_REQ_TABLE;
-    uint8_t REQ_TABLE_LENGTH;
-    void * P_APP_CONTEXT;                      /* Passed to every handler */
-    // Packet_ReqIdResolver_T REQ_ID_RESOLVER; /* Function to resolve request IDs */
-    // void * P_SUB_STATE;                    /* Handler sub-state. Sized for the largest handler */
-    const uint32_t REQ_TIMEOUT;              /* Exchange deadline. The frame deadline is the codec's RX_TIMEOUT. */
-}
-Protocol_ReqTable_T;
-
-
-/******************************************************************************/
-/*
-    Flow traces - the four shapes the request table actually uses.
-*/
-/******************************************************************************/
-/*
-    Stateless (VarRead) - PROTOCOL_ACK_NONE
-
-    Parse:      COMPLETE
-    Class:      DATA
-    Sync:       OPEN + DATA -> REQUEST
-    Request:    Select, no ack, PROC -> DONE, TxMeta.Length set
-    Compose:    DONE -> Tx response. OnTx: RX_ACK_OPEN = 0 -> stays OPEN
-    One pass. No state persists.
-*/
-
-/*
-    Stateless with ack (CallExt) - PROTOCOL_ACK_ON_REQ
-
-    Pass 1:
-    Sync:       OPEN + DATA -> REQUEST
-    Request:    Select, TX_ACK_OPEN -> Tx ACK, PROC -> DONE
-    Compose:    Tx response. OnTx: RX_ACK_OPEN -> AWAIT_ACK
-
-    Pass N:
-    Class:      ACK
-    Sync:       AWAIT_ACK + ACK -> RESUME, back to OPEN
-    Request:    IDLE, nothing to resume -> exchange closed
-*/
-
-/*
-    Stateful stream (DataModeRead) - PROTOCOL_ACK_EVERY_STEP, ack-paced
-
-    Pass 1:
-    Request:    Select, Tx ACK, PROC(Step 0) -> RESPOND, chunk staged
-    Compose:    Tx response -> AWAIT_ACK
-
-    Pass N:
-    Sync:       AWAIT_ACK + ACK -> RESUME
-    Request:    ACTIVE, PROC(Step n) -> RESPOND, next chunk
-    Compose:    Tx response -> AWAIT_ACK
-
-    Final:
-    Request:    PROC -> DONE -> IDLE
-*/
-
-/*
-    Stateful sink (DataModeWrite) - data-paced, handler validates
-
-    Pass 1:
-    Request:    Select, PROC(Step 0) -> AWAIT. Nothing transmitted, stays ACTIVE.
-
-    Pass n:
-    Sync:       OPEN + DATA -> REQUEST
-    Request:    ACTIVE, TX_ACK_STEP -> Tx ACK, PROC -> ACCEPT or REJECT
-    Compose:    ACCEPT -> Tx ACK.  REJECT -> Tx NACK.
-
-    With TX_ACK_STEP = 0 the handler's ACCEPT is the only ack, so the remote learns the
-    chunk was not merely received but validated.
-*/
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/

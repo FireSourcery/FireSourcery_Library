@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,27 +26,12 @@
 /*!
     @file   MotProtocol.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef MOT_PROTOCOL_H
-#define MOT_PROTOCOL_H
-
 #include "MotPacket.h"
 #include "Framework/Protocol/Extension/Protocol_FlashLoader.h"
 #include "Framework/Protocol/Protocol.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 
-// #define MOT_PROTOCOL_BAUD_RATE_DEFAULT  (19200U)
-// #define MOT_PROTOCOL_TIMEOUT_RX         (2000U)     /* Timeout Rx Packet */
-// #define MOT_PROTOCOL_TIMEOUT_REQ        (5000U)     /* Timeout Req */
-
-
-// #define MOT_DATA_MODE_CHUNK_MAX ((packet_size_t)(MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)))
-
-// #define MOT_PROTOCOL_FLASH_LOADER(p_Flash) PROTOCOL_FLASH_LOADER(p_Flash, MOT_PACKET_DATA_MODE_DATA, MOT_DATA_MODE_CHUNK_MAX)
-
-
-#endif
 

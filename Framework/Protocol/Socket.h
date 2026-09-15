@@ -115,24 +115,6 @@ Socket_State_T;
     Instance
 */
 /******************************************************************************/
-
-// typedef const struct Socket_Xfer
-// {
-//     Packet_Context_T * P_RX_PACKET;
-//     Packet_Context_T * P_TX_PACKET;
-//     void * const p_SUB_STATE;
-// }
-// Socket_Xfer_T;
-
-// typedef const struct Socket_Xfer
-// {
-//     union { Packet_Meta_T * const p_RxMeta;     Packet_Context_T * P_RX_BUFFER; };
-//     union { Packet_Meta_T * const p_TxMeta;     Packet_Context_T * P_TX_BUFFER; };
-//     union { void * const p_Substate;            void * const p_SUB_STATE; };
-// }
-// Socket_Xfer_T;
-
-
 typedef const struct Socket
 {
     Socket_State_T * P_SOCKET_STATE;
@@ -145,8 +127,8 @@ typedef const struct Socket
     // {
     //     struct
     //     {
-    //         Packet_Context_T * P_RX_PACKET;
-    //         Packet_Context_T * P_TX_PACKET;
+    //         Packet_Context_T * P_RX_BUFFER;
+    //         Packet_Context_T * P_TX_BUFFER;
     //         void * const p_SUB_STATE;
     //     };
     //     Packet_Xfer_T PACKET_XFER;
@@ -162,7 +144,7 @@ typedef const struct Socket
     const Packet_Codec_T * const * P_FORMAT_TABLE;
     uint8_t FORMAT_COUNT;
 
-    const Socket_Config_T * P_NVM_CONFIG;   /* Initial config. The clock lives in PROTOCOL.P_TIMER. */
+    const Socket_Config_T * P_NVM_CONFIG;   /* Initial config. The clock is P_TIMER, above. */
 }
 Socket_T;
 
@@ -188,7 +170,7 @@ static inline void Socket_Proc(Socket_T * p_socket)
 
     if (p_state->IsEnabled == false) { return; }
 
-    Protocol_Proc(&p_state->Protocol, p_state->p_Xcvr, p_state->p_Format, &p_socket->REQ_TABLE, &p_socket->REQ_CONTEXT, p_socket->P_TIMER);
+    Protocol_Proc(&p_state->Protocol, p_state->p_Xcvr, p_state->p_Format, &p_socket->REQ_TABLE, &p_socket->REQ_CONTEXT, *p_socket->P_TIMER);
 }
 
 
@@ -200,10 +182,7 @@ static inline void Socket_Proc(Socket_T * p_socket)
 static inline bool Socket_IsEnabled(Socket_T * p_socket) { return p_socket->P_SOCKET_STATE->IsEnabled; }
 
 /*! true while an exchange occupies the socket. Selection is refused in this condition. */
-static inline bool Socket_IsBusy(Socket_T * p_socket)
-{
-    return Protocol_IsReqSyncActive(&p_socket->P_SOCKET_STATE->Protocol);
-}
+static inline bool Socket_IsBusy(Socket_T * p_socket) { return Protocol_IsReqSyncActive(&p_socket->P_SOCKET_STATE->Protocol); }
 
 static inline Socket_Status_T Socket_StatusOf(Socket_T * p_socket)
 {
@@ -222,10 +201,6 @@ static inline Socket_Status_T Socket_StatusOf(Socket_T * p_socket)
     concerns and both live in the engine. This one asks whether the host is still there at
     all, which only the application can act on - MotorController raises FaultFlags.RxLost
     from it. Hence config here rather than in Protocol_Base_T.
-
-    It reads the parser's idle counter, which is zeroed only by a frame that reached
-    COMPLETE - so line noise cannot feed it, and a valid frame the request table has no row
-    for still counts as the host being alive, which for a liveness question it is.
 */
 /*!
     @return true if WatchdogTimeout reached, a successful Req has not occurred
@@ -233,7 +208,7 @@ static inline Socket_Status_T Socket_StatusOf(Socket_T * p_socket)
 static inline bool Socket_IsRxLost(Socket_T * p_socket)
 {
     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-    return ((p_state->IsRxWatchdogEnable == true) && (p_state->Protocol.LastCompleteTime > p_state->Config.WatchdogTimeout));
+    return ((p_state->IsRxWatchdogEnable == true) && (Protocol_RxLostTime(&p_state->Protocol, *p_socket->P_TIMER) > p_state->Config.WatchdogTimeout));
 }
 
 /*! Arming a disabled socket would fault immediately, since nothing can feed the base. */

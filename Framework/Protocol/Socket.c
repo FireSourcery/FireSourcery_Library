@@ -56,6 +56,9 @@ bool Socket_Enable(Socket_T * p_socket)
 
     Xcvr_ConfigBaudRate(p_state->p_Xcvr, p_state->Config.BaudRate);
     Protocol_Reset(&p_state->Protocol);
+    /* The link starts measuring from now - otherwise the watchdog carries the age of the
+       socket's last enable, and arming it on a long-idle socket faults immediately. */
+    Protocol_Init(&p_state->Protocol, *p_socket->P_TIMER);
     p_state->IsEnabled = true;
     return true;
 }

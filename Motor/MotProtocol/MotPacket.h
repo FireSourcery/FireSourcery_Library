@@ -51,6 +51,8 @@
 
 #define MOT_PACKET_PACKED __attribute__((packed, aligned(4)))
 
+
+
 // #if (__STDC_VERSION__ >= 202311L)
 // #define ENUM8_T (: uint8_t)
 // #else

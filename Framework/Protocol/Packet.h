@@ -338,6 +338,9 @@ static inline bool Packet_IsFrameWithin(Packet_FrameFormat_T * p_format, const P
     return (Packet_FrameLengthOf(p_format, p_meta) <= bufferLength);
 }
 
+/*
+
+*/
 static inline packet_id_t Packet_ControlIdOf(Packet_Codec_T * p_format, Packet_ClassId_T classId)
 {
     switch (classId)
