@@ -36,6 +36,9 @@
 
 
 /*
+DTOs
+*/
+/*
     Q1(fwd, motor)  = 0b11
     Q2(fwd, gen)    = 0b10
     Q3(rev, motor)  = 0b00

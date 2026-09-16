@@ -67,19 +67,19 @@ int MotorController_Var_Output_Get(MotorController_T * p_dev, MotorController_Va
 /* Inputs disabled on Analog Mode */
 void MotorController_Var_Input_Set(MotorController_T * p_dev, MotorController_Var_Input_T id, int value)
 {
-    switch (id)
-    {
-        /* inactive for now */
-        case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_dev, (int16_t)value);                                            break;
-        case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_dev, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
-        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_dev, (int16_t)value);                                            break;
-        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_dev, (Phase_VOutMode_T)value);                                 break;
+    // switch (id)
+    // {
+    //     /* inactive for now */
+    //     // case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_dev, (int16_t)value);                                            break;
+    //     // case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_dev, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
+    //     // case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_dev, (int16_t)value);                                            break;
+    //     // case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_dev, (Phase_VOutMode_T)value);                                 break;
 
-        // case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_SetOptSpeedLimitOnOff(p_dev, (bool)value);        break;
-        // case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_SetOptILimitOnOff(p_dev, (bool)value);            break;
-        // case MOT_VAR_USER_RELAY_TOGGLE:                 break;
-        // case MOT_VAR_USER_METER_TOGGLE:                 break;
-    }
+    //     // case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_SetOptSpeedLimitOnOff(p_dev, (bool)value);        break;
+    //     // case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_SetOptILimitOnOff(p_dev, (bool)value);            break;
+    //     // case MOT_VAR_USER_RELAY_TOGGLE:                 break;
+    //     // case MOT_VAR_USER_METER_TOGGLE:                 break;
+    // }
 }
 
 int MotorController_Var_OutputDebug_Get(MotorController_T * p_dev, MotorController_Var_OutputDebug_T id)

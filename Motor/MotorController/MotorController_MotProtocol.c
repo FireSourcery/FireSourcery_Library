@@ -279,11 +279,3 @@ const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MO
 };
 
 
-// Protocol_Req_T * MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_packet)
-// {
-//     MotProtocol_ParseRxHeader(p_meta, p_packet);
-//     switch (p_packet->Long.Header.Id) // known after MOT_PACKET_LENGTH_MIN
-//     {   case MOT_PACKET_PING: return &MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[0];
-//     }
-//     return NULL;
-// }

@@ -41,12 +41,12 @@
 /******************************************************************************/
 static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_dev)
 {
-    if (Shifter_PollDirectionEdge(&p_dev->SHIFTER)) { MotorController_SetDirection(p_dev, (Motor_Direction_T)Shifter_GetDirection(&p_dev->SHIFTER)); }
-    MotorController_SetCmdValue(p_dev, UserAIn_GetValue(&p_dev->AINS[MOT_AIN_THROTTLE].PIN));
-    // if (p_dev->P_MC->CmdInput.CmdValue == 0U)
-    // {
-    //     MotorController_SetControlState(p_dev, PHASE_VOUT_Z);
-    // }
+    // if (Shifter_PollDirectionEdge(&p_dev->SHIFTER)) { MotorController_SetDirection(p_dev, (Motor_Direction_T)Shifter_GetDirection(&p_dev->SHIFTER)); }
+    // MotorController_SetCmdValue(p_dev, UserAIn_GetValue(&p_dev->AINS[MOT_AIN_THROTTLE].PIN));
+    // // if (p_dev->P_MC->CmdInput.CmdValue == 0U)
+    // // {
+    // //     MotorController_SetControlState(p_dev, PHASE_VOUT_Z);
+    // // }
 }
 
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)

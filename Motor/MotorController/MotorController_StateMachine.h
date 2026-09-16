@@ -182,28 +182,28 @@ static Motor_Direction_T MotorController_GetDirection(MotorController_T * p_dev)
     Motor Cmd Generalized Input
 */
 /******************************************************************************/
-typedef enum MotorController_MotorCmd
-{
-    MOTOR_CONTROLLER_USER_CMD_SETPOINT, /* user calls are less frequent than motor module */
-    MOTOR_CONTROLLER_USER_CMD_PHASE,
-    MOTOR_CONTROLLER_USER_CMD_FEEDBACK,
-    MOTOR_CONTROLLER_USER_CMD_DIRECTION,
-}
-MotorController_MotorCmd_T;
+// typedef enum MotorController_MotorCmd
+// {
+//     MOTOR_CONTROLLER_USER_CMD_SETPOINT, /* user calls are less frequent than motor module */
+//     MOTOR_CONTROLLER_USER_CMD_PHASE,
+//     MOTOR_CONTROLLER_USER_CMD_FEEDBACK,
+//     MOTOR_CONTROLLER_USER_CMD_DIRECTION,
+// }
+// MotorController_MotorCmd_T;
 
-/* Combination Input */
-typedef union MotorController_MotorCmdInput
-{
-    struct { uint16_t CmdValue; uint16_t CmdId; };
-    uint32_t Value;
-}
-MotorController_MotorCmdInput_T;
+// /* Combination Input */
+// typedef union MotorController_MotorCmdInput
+// {
+//     struct { uint16_t CmdValue; uint16_t CmdId; };
+//     uint32_t Value;
+// }
+// MotorController_MotorCmdInput_T;
 
-static inline void MotorController_ApplyUserCmd(MotorController_T * p_dev, MotorController_MotorCmd_T cmd, int16_t value)
-{
-    MotorController_MotorCmdInput_T input = (MotorController_MotorCmdInput_T) { .CmdId = cmd, .CmdValue = value };
-    _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_MOTOR_CMD, input.Value);
-}
+// static inline void MotorController_ApplyUserCmd(MotorController_T * p_dev, MotorController_MotorCmd_T cmd, int16_t value)
+// {
+//     MotorController_MotorCmdInput_T input = (MotorController_MotorCmdInput_T) { .CmdId = cmd, .CmdValue = value };
+//     _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_MOTOR_CMD, input.Value);
+// }
 
 
 /*
@@ -211,11 +211,11 @@ static inline void MotorController_ApplyUserCmd(MotorController_T * p_dev, Motor
     Proc on input, optionally proc with sync buffer
     Input 10ms-50ms, Proc 1ms
 */
-static inline void _MotorController_ApplyUserCmd(MotorController_T * p_dev, MotorController_MotorCmd_T cmd) { _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_MOTOR_CMD, cmd); }
-static inline void MotorController_SetCmdValue(MotorController_T * p_dev, int16_t userCmd) { p_dev->P_MC->CmdInput.CmdValue = userCmd; _MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_SETPOINT); }
-static inline void MotorController_SetDirection(MotorController_T * p_dev, Motor_Direction_T direction) { p_dev->P_MC->CmdInput.Direction = direction; _MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
-static inline void MotorController_SetControlState(MotorController_T * p_dev, Phase_VOutMode_T controlState) { p_dev->P_MC->CmdInput.PhaseOutput = controlState; _MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_PHASE); }
-static inline void MotorController_SetFeedbackMode(MotorController_T * p_dev, Motor_FeedbackMode_T feedbackMode) { p_dev->P_MC->CmdInput.FeedbackMode = feedbackMode; _MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
+// static inline void _MotorController_ApplyUserCmd(MotorController_T * p_dev, MotorController_MotorCmd_T cmd) { _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_MOTOR_CMD, cmd); }
+// static inline void MotorController_SetCmdValue(MotorController_T * p_dev, int16_t userCmd) { p_dev->P_MC->CmdInput.CmdValue = userCmd; _MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_SETPOINT); }
+// static inline void MotorController_SetDirection(MotorController_T * p_dev, Motor_Direction_T direction) { p_dev->P_MC->CmdInput.Direction = direction; _MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
+// static inline void MotorController_SetControlState(MotorController_T * p_dev, Phase_VOutMode_T controlState) { p_dev->P_MC->CmdInput.PhaseOutput = controlState; _MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_PHASE); }
+// static inline void MotorController_SetFeedbackMode(MotorController_T * p_dev, Motor_FeedbackMode_T feedbackMode) { p_dev->P_MC->CmdInput.FeedbackMode = feedbackMode; _MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
 
 /******************************************************************************/
 /*!

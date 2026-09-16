@@ -35,8 +35,8 @@ typedef int(*compare_t)(const void * a, const void * b);
 /* Shorthand */
 static inline void call_proc(proc_t proc, void * p_context) { if (proc != NULL) { proc(p_context); } }
 
-static inline value_t call_get_at(get_field_t get, void * p_context, enum_t index) { return (get != NULL) ? get(p_context, index) : 0; }
-static inline void call_set_at(set_field_t set, void * p_context, enum_t index, value_t value) { if (set != NULL) { set(p_context, index, value); } }
+static inline value_t call_get_field(get_field_t get, void * p_context, enum_t index) { return (get != NULL) ? get(p_context, index) : 0; }
+static inline void call_set_field(set_field_t set, void * p_context, enum_t index, value_t value) { if (set != NULL) { set(p_context, index, value); } }
 
 static inline bool call_test(test_t test, void * p_context) { return (test != NULL) ? test(p_context) : true; }
 static inline bool call_test_set(test_value_t test, void * p_context, value_t value) { return (test != NULL) ? test(p_context, value) : true; }
@@ -44,10 +44,10 @@ static inline bool call_test_set(test_value_t test, void * p_context, value_t va
 
 #define Call_Accessor(fn, ...) \
     _Generic(fn, \
-        get_t: call_get_at, \
-        set_t: call_set_at, \
-        get_field_t: call_get_at, \
-        set_field_t: call_set_at, \
+        get_t: call_get_field, \
+        set_t: call_set_field, \
+        get_field_t: call_get_field, \
+        set_field_t: call_set_field, \
         test_value_t: call_test_set, \
         test_t: call_test, \
         try_proc_t: call_try_proc, \

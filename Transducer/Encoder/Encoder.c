@@ -89,10 +89,8 @@ void Encoder_SetCounterInitial(const Encoder_T * p_encoder)
 void Encoder_StartHoming(Encoder_State_T * p_encoder)
 {
     p_encoder->IndexCount = 0U;
-    p_encoder->HomingCounterD = 0;
     p_encoder->IndexAngleError = 0U;
     p_encoder->IsHomed = false;
-    p_encoder->IsHoming = true;
     AngleCounter_Zero(&p_encoder->AngleCounter);
     Angle_ZeroCaptureState(&p_encoder->AngleCounter.Base);
 }
@@ -105,12 +103,12 @@ uint16_t Encoder_GetHomingAngle(const Encoder_State_T * p_encoder)
 bool Encoder_IsHomingIndexFound(const Encoder_State_T * p_encoder)
 {
     return p_encoder->IndexCount > 0U;
-//     return p_encoder->Angle32 == p_encoder->Config.IndexAngleRef;
+    //     return p_encoder->Angle32 == p_encoder->Config.IndexAngleRef;
 }
 
 bool Encoder_IsHomingIndexError(const Encoder_State_T * p_encoder)
 {
-    return (math_abs(p_encoder->HomingCounterD) > (int32_t)p_encoder->Config.CountsPerRevolution);
+    return (math_abs(p_encoder->AngleCounter.CounterD) > (int32_t)p_encoder->Config.CountsPerRevolution);
 }
 
 //enum Encoder_HomingStatus { Encoder_HomingStatus_None, Encoder_HomingStatus_Found, Encoder_HomingStatus_Error };
@@ -122,7 +120,6 @@ bool Encoder_PollHomingComplete(Encoder_State_T * p_encoder)
     {
         // p_encoder->IndexCount = 0U;
         // p_encoder->AngleCounter.CounterD = 0U;
-        p_encoder->IsHoming = false;
         p_encoder->IsHomed = true;
         isComplete = true;
     }
@@ -130,7 +127,6 @@ bool Encoder_PollHomingComplete(Encoder_State_T * p_encoder)
     {
         // p_encoder->IndexCount = 0U;
         // p_encoder->AngleCounter.CounterD = 0U;
-        p_encoder->IsHoming = false;
         p_encoder->IsHomed = false;
         isComplete = true;
     }
@@ -158,9 +154,9 @@ void Encoder_CalibrateIndexZeroRef(Encoder_State_T * p_encoder)
         p_encoder->IndexAngleError = 0U;
     }
 }
-// // Encoder_SetIndexZeroRef(p_encoder, p_encoder->Angle32);
-// // p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->IndexAngleRef;
-// // p_encoder->IndexAngleRef = p_encoder->Config.IndexAngleRef;
+// Encoder_SetIndexZeroRef(p_encoder, p_encoder->Angle32);
+// p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->IndexAngleRef;
+// p_encoder->IndexAngleRef = p_encoder->Config.IndexAngleRef;
 // p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->Config.IndexAngleRef;
 // p_encoder->Angle32 = 0U;
 
@@ -316,11 +312,10 @@ int32_t _Encoder_ConfigId_Get(const Encoder_Config_T * p_encoder, Encoder_Config
         case ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED:     value = p_encoder->IsQuadratureCaptureEnabled;     break;
         case ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE:              value = p_encoder->IsALeadBPositive;               break;
         case ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP:       value = p_encoder->ExtendedDeltaTStop;             break;
-        case ENCODER_CONFIG_INTERPOLATE_ANGLE_SCALAR:          value = 0;    break;
         case ENCODER_CONFIG_INDEX_ZERO_REF:                    value = Encoder_GetIndexZeroRef(p_encoder);             break;
         // case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                value = p_encoder->IndexAngleRef;                  break;
         case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                break; /* write-only command */
-        case ENCODER_CONFIG_RUN_HOMING:                        break; /* write-only command */
+        // case ENCODER_CONFIG_RUN_HOMING:                        break; /* write-only command */
     }
     return value;
 }
@@ -333,12 +328,11 @@ void _Encoder_ConfigId_Set(Encoder_Config_T * p_encoder, Encoder_ConfigId_T varI
         case ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED:     p_encoder->IsQuadratureCaptureEnabled = varValue;     break;
         case ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE:              p_encoder->IsALeadBPositive = varValue;               break;
         case ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP:       p_encoder->ExtendedDeltaTStop = varValue;             break;
-        case ENCODER_CONFIG_INTERPOLATE_ANGLE_SCALAR:          break;
 
         case ENCODER_CONFIG_INDEX_ZERO_REF:                    Encoder_SetIndexZeroRef(p_encoder, varValue);              break;
         // case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                Motor_Encoder_CalibrateHomeOffset(p_motor);                  break;
         case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                break; /* not yet implemented */
-        case ENCODER_CONFIG_RUN_HOMING:                        break; /* not yet implemented */
+        // case ENCODER_CONFIG_RUN_HOMING:                        break; /* not yet implemented */
     }
 }
 

@@ -50,7 +50,7 @@ static void Encoder_RotorSensor_CaptureSpeed(const Encoder_RotorSensor_T * p_sen
     RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
     Encoder_ModeDT_CaptureFreqD(&p_sensor->ENCODER);
     Encoder_ModeDT_ResolveInterpolation(&p_sensor->ENCODER);
-    p_state->Speed_Fract16 = Encoder_ModeDT_GetScalarSpeed(p_sensor->ENCODER.P_STATE);
+    p_state->Speed_Fract16 = Encoder_ModeDT_GetSpeed_PerUnit(p_sensor->ENCODER.P_STATE);
 }
 
 

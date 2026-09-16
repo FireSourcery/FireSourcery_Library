@@ -81,8 +81,7 @@ static inline angle16_t Encoder_ModeDT_InterpolateAngle(const Encoder_T * p_enco
 */
 /******************************************************************************/
 /* Signed with capture reference */
-static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_State_T * p_encoder) { return AngleCounter_GetSpeed_Fract16(&p_encoder->AngleCounter); }
-
+static inline int32_t Encoder_ModeDT_GetSpeed_PerUnit(Encoder_State_T * p_encoder) { return AngleCounter_GetSpeed_Fract16(&p_encoder->AngleCounter); }
 
 
 /******************************************************************************/
@@ -91,6 +90,7 @@ static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_State_T * p_encoder)
 */
 /******************************************************************************/
 static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder) { return rpm_of_count_freq(p_encoder->Config.CountsPerRevolution, p_encoder->AngleCounter.FreqD); }
+
 
 /******************************************************************************/
 /*
@@ -103,6 +103,7 @@ extern void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T *);
 
 extern void Encoder_ModeDT_SetInitial(const Encoder_T *);
 
+
 /******************************************************************************/
 /*
 */
@@ -110,6 +111,7 @@ extern void Encoder_ModeDT_SetInitial(const Encoder_T *);
 extern int32_t Encoder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId);
 
 #endif
+
 /*
     Capture [FreqD] Pulse Frequency
     Call at SAMPLE_FREQ ~1ms

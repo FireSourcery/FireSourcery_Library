@@ -1,7 +1,4 @@
 {
-
-
-
     "C_Cpp.default.defines": [
         "__GNUC__"
     ],
@@ -47,7 +44,6 @@
     "C_Cpp.vcFormat.space.betweenEmptyLambdaBrackets": false,
 
     "C_Cpp.vcFormat.indent.multiLineRelativeTo": "innermostParenthesis",
-
     "C_Cpp.vcFormat.indent.lambdaBracesWhenParameter": false,
     "C_Cpp.vcFormat.indent.preserveWithinParentheses": false,
     "C_Cpp.vcFormat.indent.preprocessor": "oneLeft",
@@ -60,18 +56,19 @@
     "C_Cpp.doxygen.generatedStyle": "/*!",
 
     "editor.defaultFormatter": "ms-vscode.cpptools",
-    "editor.rulers": [
-        160
-    ],
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
-    "editor.detectIndentation": false,
-    "editor.formatOnPaste": true,
+    "editor.formatOnPaste": false,
     "editor.indentSize": "tabSize",
+    "editor.detectIndentation": false,
     "editor.semanticHighlighting.enabled": "configuredByTheme",
+    "editor.rulers": [
+        80,
+        160,
+        200,
+    ],
 
     "files.trimTrailingWhitespace": true,
-
 
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features",

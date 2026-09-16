@@ -134,25 +134,21 @@ typedef struct Encoder_State
 // #endif
 
     AngleCounter_T AngleCounter;
-    PulseTimer_State_T TimerState;
+    // PulseTimer_State_T TimerState;
 
     int32_t DirectionComp;
 
     /* Homing */
     uint32_t IndexCount;
-    volatile int32_t HomingCounterD;
     uint32_t IndexAngleRef; /* 32 */
     uint32_t IndexAngleError;
     Encoder_Align_T Align;
     uint32_t AlignOffsetRef;
     uint32_t AlignAngle; /* angle at last align */
     // int32_t AbsoluteOffset;
-    volatile bool IsHoming;
     bool IsHomed;
 }
 Encoder_State_T;
-
-// #define ENCODER_STATE_ALLOC() (&(Encoder_State_T){0})
 
 typedef const struct Encoder
 {
@@ -210,7 +206,7 @@ Encoder_T;
     Does not wrap in HW_EMULATED case
         = p_encoder->Angle32 / p_encoder->UnitAngleD;
 */
-static inline int32_t Encoder_GetCounterD(const Encoder_T * p_encoder)
+static inline int32_t Encoder_GetCounterD(Encoder_T * p_encoder)
 {
 #if     defined(ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
@@ -219,7 +215,7 @@ static inline int32_t Encoder_GetCounterD(const Encoder_T * p_encoder)
 #endif
 }
 
-static inline void _Encoder_SetCounterD(const Encoder_T * p_encoder, int32_t counterD)
+static inline void _Encoder_SetCounterD(Encoder_T * p_encoder, int32_t counterD)
 {
     p_encoder->P_STATE->AngleCounter.CounterD = counterD;
 #if     defined(ENCODER_HW_DECODER)
@@ -227,7 +223,7 @@ static inline void _Encoder_SetCounterD(const Encoder_T * p_encoder, int32_t cou
 #endif
 }
 
-static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
+static inline uint32_t _Encoder_GetAngle32(Encoder_T * p_encoder)
 {
 #if     defined(ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->P_STATE->AngleCounter.Ref.Angle32PerCount;
@@ -237,16 +233,14 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
 }
 
 
-static inline uint16_t Encoder_GetAngle(const Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
+static inline uint16_t Encoder_GetAngle(Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 
 /*  */
-static inline void _Encoder_ZeroPulseCount(const Encoder_T * p_encoder)
+static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
 {
     AngleCounter_Zero(&p_encoder->P_STATE->AngleCounter);
     Angle_ZeroCaptureState(&p_encoder->P_STATE->AngleCounter.Base);
     p_encoder->P_STATE->IndexCount = 0U;
-    p_encoder->P_STATE->HomingCounterD = 0;
-    p_encoder->P_STATE->IsHoming = false;
 #if     defined(ENCODER_HW_DECODER)
     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
     HAL_Encoder_ClearCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER);
@@ -296,7 +290,7 @@ static inline int32_t Encoder_GetDirectionRef(const Encoder_State_T * p_encoder)
     @brief
 */
 /******************************************************************************/
-static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { (void)p_encoder; /* Angle_ZeroAngle(&p_encoder->AngleCounter.Base); */ }
+static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { Angle_ZeroAngle(&p_encoder->AngleCounter.Base); }
 
 /******************************************************************************/
 /*!
@@ -326,10 +320,10 @@ static inline void Encoder_ClearIndexZeroRef(Encoder_Config_T * p_encoder) { p_e
     @brief Extern Declarations
 */
 /******************************************************************************/
-extern void Encoder_InitCounter(const Encoder_T * p_encoder);
+extern void Encoder_InitCounter(Encoder_T * p_encoder);
 
 #if defined(ENCODER_HW_EMULATED)
-extern void Encoder_InitInterrupts_Quadrature(const Encoder_T * p_encoder);
+extern void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder);
 #endif
 
 void Encoder_StartHoming(Encoder_State_T * p_encoder);
@@ -344,15 +338,15 @@ extern void Encoder_CheckAlignRef(Encoder_State_T * p_encoder);
 extern void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder);
 extern uint16_t Encoder_GetAngleAligned(const Encoder_State_T * p_encoder);
 extern bool Encoder_ProcAlignValidate(Encoder_State_T * p_encoder);
-extern void Encoder_CompleteAlignValidate(const Encoder_T * p_encoder);
+extern void Encoder_CompleteAlignValidate(Encoder_T * p_encoder);
 extern void Encoder_ClearAlign(Encoder_State_T * p_encoder);
 
 #if defined(ENCODER_QUADRATURE_MODE_ENABLE)
 extern void Encoder_SetQuadratureMode(Encoder_State_T * p_encoder, bool isEnabled);
 extern void Encoder_EnableQuadratureMode(Encoder_State_T * p_encoder);
 extern void Encoder_SetQuadratureDirection(Encoder_State_T * p_encoder, bool isALeadBPositive);
-extern void Encoder_CaptureQuadratureReference(const Encoder_T * p_encoder);
-extern void Encoder_CalibrateQuadraturePositive(const Encoder_T * p_encoder);
+extern void Encoder_CaptureQuadratureReference(Encoder_T * p_encoder);
+extern void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder);
 #endif
 
 extern void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t countsPerRevolution);
@@ -383,19 +377,16 @@ typedef enum Encoder_ConfigId
 {
     ENCODER_CONFIG_COUNTS_PER_REVOLUTION,
     ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP,
-    ENCODER_CONFIG_INTERPOLATE_ANGLE_SCALAR,
     ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED,
     ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE,
-
     ENCODER_CONFIG_INDEX_ZERO_REF,
     ENCODER_CONFIG_CALIBRATE_ZERO_REF,
-
-    ENCODER_CONFIG_RUN_HOMING,
+    // ENCODER_CONFIG_RUN_HOMING,
 }
 Encoder_ConfigId_T;
 
 extern int32_t _Encoder_ConfigId_Get(const Encoder_Config_T * p_encoder, Encoder_ConfigId_T varId);
 extern void _Encoder_ConfigId_Set(Encoder_Config_T * p_encoder, Encoder_ConfigId_T varId, int32_t value);
 
-extern void Encoder_ConfigId_Set(const Encoder_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue);
+extern void Encoder_ConfigId_Set(Encoder_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue);
 

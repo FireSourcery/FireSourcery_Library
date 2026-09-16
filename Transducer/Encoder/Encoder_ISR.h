@@ -54,22 +54,15 @@ static inline uint8_t _Encoder_CaptureStateOf(Encoder_State_T * p_encoder, Encod
     return p_encoder->Phases.Value;
 }
 
-static inline uint8_t _Encoder_CapturePhasesState(const Encoder_T * p_encoder)
-{
-    return _Encoder_CaptureStateOf(p_encoder->P_STATE, _Encoder_ReadPins(p_encoder));
-}
+static inline uint8_t _Encoder_CapturePhasesState(const Encoder_T * p_encoder) { return _Encoder_CaptureStateOf(p_encoder->P_STATE, _Encoder_ReadPins(p_encoder)); }
 
 /*!
     Determine Speed and Angle
     @param[in] count { -2, -1, 0, +1, +2 }
     caller handle Direction comp on get
 */
-static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count)
-{
-    /* instead of imitating the hw decoder case, capture a separate Angle32 */
-    AngleCounter_CaptureCount(&p_encoder->AngleCounter, count);
-    if (p_encoder->IsHoming == true) { p_encoder->HomingCounterD += count; }
-}
+/* instead of imitating the hw decoder case, capture a separate Angle32 */
+static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count) { AngleCounter_CaptureCount(&p_encoder->AngleCounter, count); }
 
 /******************************************************************************/
 /*
@@ -80,9 +73,8 @@ static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t cou
 #define _ENCODER_TABLE_INC_2 (2)
 #define _ENCODER_TABLE_DEC_2 (-2)
 
-static inline int8_t _Encoder_Quadrature_CountOf(const Encoder_T * p_encoder, uint8_t phasesState)
+static inline int8_t _Encoder_Quadrature_CountOf(uint8_t phasesState)
 {
-    (void)p_encoder;
     /* Phase in XXXXBABA order, ALeadB as increment */
     static const int8_t ENCODER_TABLE[] =
     {
@@ -97,16 +89,16 @@ static inline int8_t _Encoder_Quadrature_CountOf(const Encoder_T * p_encoder, ui
 static inline void _Encoder_Quadrature_CapturePulse(const Encoder_T * p_encoder)
 {
     // if (count == +2||-2) { p_encoder->ErrorCount++; }
-    _Encoder_CaptureCount(p_encoder->P_STATE, _Encoder_Quadrature_CountOf(p_encoder, _Encoder_CapturePhasesState(p_encoder)));
+    _Encoder_CaptureCount(p_encoder->P_STATE, _Encoder_Quadrature_CountOf(_Encoder_CapturePhasesState(p_encoder)));
 }
 
 /* Alternatively, single phase signed capture or combine with B */
-static inline void _Encoder_Quadrature_CapturePulse_PhaseA(const Encoder_T * p_encoder)
+static inline void _Encoder_Quadrature_CapturePhaseA(const Encoder_T * p_encoder)
 {
     _Encoder_CaptureCount(p_encoder->P_STATE, ((Pin_Input_ReadPhysical(&p_encoder->PIN_B) == false) ? 1 : -1));
 }
 
-static inline void _Encoder_Quadrature_CapturePulse_PhaseB(const Encoder_T * p_encoder)
+static inline void _Encoder_Quadrature_CapturePhaseB(const Encoder_T * p_encoder)
 {
     _Encoder_CaptureCount(p_encoder->P_STATE, ((Pin_Input_ReadPhysical(&p_encoder->PIN_A) == true) ? 1 : -1));
 }

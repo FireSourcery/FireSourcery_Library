@@ -240,12 +240,16 @@ typedef const struct MotorController
     uint8_t CAN_SOCKET_COUNT;
 #endif
 
+    /* Motor Services Context */
+    Motor_Table_T MOTORS; /* Motor Array Context */
+    uint8_t * P_MOTOR_ADAPTER_BUFFER; /* parallel for now */
+
     /*
         Peripheral Services Context
     */
     /* Transducer */
     Shifter_T SHIFTER;              /* Direction shifter pins */
-    /* AIn/DIn runtime state is owned by the board layer, alongside the device instances */
+
     UserDIn_T DINS[MOT_USER_DIN_COUNT];
     struct { UserAIn_T PIN; Analog_Conversion_T CONVERSION; } AINS[MOT_USER_AIN_COUNT];
 
@@ -259,17 +263,7 @@ typedef const struct MotorController
 
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
-    /* Motor Services Context */
-    Motor_Table_T MOTORS; /* Motor Array Context */
-    uint8_t * P_MOTOR_ADAPTER_BUFFER; /* parallel for now */
-
     /* Monitor - Detection + response with full context */
-    HeatMonitor_T HEAT_PCB;
-    Analog_Conversion_T HEAT_PCB_CONVERSION;
-
-    HeatMonitor_Group_T HEAT_MOSFETS;
-    Analog_Conversion_T * P_HEAT_MOSFET_CONVERSIONS;
-
     VBus_T * P_VBUS;                    /* DC bus — owns live fract16, derate config, monitor */
     const VBus_Config_T * P_VBUS_NVM_CONFIG;    /* hold vbus config */
     Analog_Conversion_T VBUS_CONVERSION;
@@ -278,9 +272,14 @@ typedef const struct MotorController
     VMonitor_T V_ACCESSORIES;   /* ~12V */
     Analog_Conversion_T V_ACCESSORIES_CONVERSION;
 
-    // reference for AINS
-    VMonitor_T V_ANALOG;        /* V Analog Sensors ~5V */
+    VMonitor_T V_ANALOG;        /* V Analog Sensors ~5V, reference for AINS */
     Analog_Conversion_T V_ANALOG_CONVERSION;
+
+    HeatMonitor_T HEAT_PCB;
+    Analog_Conversion_T HEAT_PCB_CONVERSION;
+
+    HeatMonitor_Group_T HEAT_MOSFETS;
+    Analog_Conversion_T * P_HEAT_MOSFET_CONVERSIONS;
 
     /* State */
     TimerT_T MILLIS_TIMER; /* Timer Context */

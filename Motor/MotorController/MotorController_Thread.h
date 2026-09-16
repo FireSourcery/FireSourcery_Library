@@ -234,7 +234,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         {
             /* AnalogUser is drive functions only */
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:                _MotorController_ProcAnalogUser(p_dev);                 break;
-            /* Only active when Serial is selected as drive input */
+                /* Only active when Serial is selected as drive input */
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: // if (MotorController_PollRxLost(p_dev) == true)     MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_RX_LOST);
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_CAN:  break;

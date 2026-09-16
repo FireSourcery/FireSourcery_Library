@@ -40,8 +40,6 @@
 static inline Encoder_T * GetEncoder(Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.ENCODER.ENCODER; }
 static inline Encoder_State_T * GetEncoderState(Motor_T * p_motor) { return GetEncoder(p_motor)->P_STATE; }
 
-//todo test
-
 /******************************************************************************/
 /*
     Homing States
@@ -145,7 +143,7 @@ static State_T * AlignZeroNext(Motor_T * p_motor)
     else
     {
         /* Reset the timer until speed is 0 */
-        if (Encoder_ModeDT_GetScalarSpeed(GetEncoderState(p_motor)) != 0)
+        if (Encoder_ModeDT_GetSpeed_PerUnit(GetEncoderState(p_motor)) != 0)
         {
             TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
         }
@@ -369,7 +367,7 @@ static State_T * StartUpAlignTransition(Motor_T * p_motor)
     }
     else
     {
-        if (Encoder_ModeDT_GetScalarSpeed(GetEncoderState(p_motor)) != 0)
+        if (Encoder_ModeDT_GetSpeed_PerUnit(GetEncoderState(p_motor)) != 0)
         {
             TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
         }
