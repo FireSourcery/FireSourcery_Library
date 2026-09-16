@@ -176,7 +176,7 @@ static void ValidateAlign(Motor_T * p_motor)
     FOC_SetVd(&p_state->Foc, 0);
     // Motor_FOC_MatchFeedbackState(p_motor);
     Motor_FOC_StartOpenLoop(p_state);
-    p_state->SensorState.MechanicalAngle = Encoder_GetAngle(GetEncoderState(p_motor));
+    p_state->SensorState.MechanicalAngle = Encoder_GetAngle(GetEncoder(p_motor));
 }
 
 static void ProcOpenLoop(Motor_T * p_motor)
@@ -191,7 +191,7 @@ static State_T * ValidateAlignNext(Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        if (Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR->SensorState.MechanicalAngle)
+        if (Encoder_GetAngle(GetEncoder(p_motor)) != p_motor->P_MOTOR->SensorState.MechanicalAngle)
         {
             p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
             p_nextState = &MOTOR_STATE_FAULT;
@@ -239,7 +239,7 @@ static State_T * ValidateClosedLoopTransition(Motor_T * p_motor)
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
         p_state->FeedbackMode.OpenLoop = 0U;
-        Encoder_CompleteAlignValidate(GetEncoderState(p_motor));
+        Encoder_CompleteAlignValidate(GetEncoder(p_motor));
         p_nextState = &MOTOR_STATE_OPEN_LOOP; /* return to parent */
     }
     else
@@ -384,7 +384,7 @@ static State_T * StartUpValidateAlignTransition(Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        if (Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR->SensorState.MechanicalAngle)
+        if (Encoder_GetAngle(GetEncoder(p_motor)) != p_motor->P_MOTOR->SensorState.MechanicalAngle)
         {
             p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
             p_nextState = &MOTOR_STATE_FAULT;
@@ -406,7 +406,7 @@ static State_T * StartUpValidateClosedLoopTransition(Motor_T * p_motor)
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
         p_state->FeedbackMode.OpenLoop = 0U;
-        Encoder_CompleteAlignValidate(GetEncoderState(p_motor));
+        Encoder_CompleteAlignValidate(GetEncoder(p_motor));
         p_nextState = &MOTOR_STATE_RUN;
     }
     else
@@ -461,13 +461,13 @@ static inline bool ProcDirection(Motor_T * p_motor)
         switch (p_motor->P_MOTOR->CalibrationStateIndex)
         {
             case 0U:
-                Encoder_CaptureQuadratureReference(GetEncoderState(p_motor));
+                Encoder_CaptureQuadratureReference(GetEncoder(p_motor));
                 Phase_WriteDuty_Fract16(&p_motor->PHASE, 0U, _Motor_GetVAlign_Duty(p_motor->P_MOTOR), 0U);
                 p_motor->P_MOTOR->CalibrationStateIndex = 1U;
                 break;
 
             case 1U:
-                Encoder_CalibrateQuadraturePositive(GetEncoderState(p_motor));
+                Encoder_CalibrateQuadraturePositive(GetEncoder(p_motor));
                 Phase_Deactivate(&p_motor->PHASE);
                 isComplete = true;
                 break;

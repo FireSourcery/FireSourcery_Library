@@ -72,7 +72,7 @@ typedef struct __attribute__((aligned(2U)))
 }
 Shell_Config_T;
 
-typedef const struct
+typedef struct
 {
     const Cmd_T * const P_CMD_TABLE;    /* Cmds table defined by the user */
     const uint8_t CMD_COUNT;
@@ -80,43 +80,16 @@ typedef const struct
     volatile const uint32_t * const P_TIMER;
     const uint32_t TIMER_FREQ;
     const Shell_Config_T * const P_CONFIG;
-}
-Shell_Const_T;
 
-typedef struct
-{
-    Shell_Const_T CONST;
-    Shell_Config_T Config;
-    Terminal_T Terminal;
-    Shell_State_T State;
-    Cmd_T * p_Cmd;             /*!< Cmd  in process preserve across state change */
-    Cmd_Status_T CmdReturnCode;
-    uint32_t ProcTimeRef;
+    // Shell_Config_T Config;
+    // Terminal_T Terminal;
+    // Shell_State_T State;
+    // Cmd_T * p_Cmd;             /*!< Cmd  in process preserve across state change */
+    // Cmd_Status_T CmdReturnCode;
+    // uint32_t ProcTimeRef;
 }
 Shell_T;
 
-#if defined(SHELL_XCVR_ENABLE)
-    #define _SHELL_INIT_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_INIT(p_XcvrTable, TableLength)
-#else
-    #define _SHELL_INIT_XCVR(p_XcvrTable, TableLength)
-#endif
-
-#define SHELL_INIT(p_CmdTable, CmdCount, p_Context, p_Timer, TimerFreq, p_Config, p_XcvrTable, TableLength)    \
-{                                                            \
-    .CONST =                                                 \
-    {                                                        \
-        .P_CMD_TABLE             = p_CmdTable,                \
-        .CMD_COUNT                 = CmdCount,                    \
-        .P_CMD_CONTEXT             = p_Context,                \
-        .P_TIMER                 = p_Timer,                    \
-        .TIMER_FREQ             = TimerFreq,                \
-        .P_CONFIG                = p_Config                    \
-    },                                                        \
-    .Terminal =                                                \
-    {                                                        \
-        _SHELL_INIT_XCVR(p_XcvrTable, TableLength)             \
-    },                                                        \
-}
 
 static inline void Shell_Disable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_INACTIVE; }
 static inline void Shell_Enable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_PROMPT; Terminal_Reset(&p_shell->Terminal);}

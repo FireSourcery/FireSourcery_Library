@@ -39,7 +39,7 @@
 /* Optionally use Hall ISR */
 static inline void Motor_HallEncoderA_ISR(Motor_T * p_dev)
 {
-#ifdef MOTOR_SENSOR_ENCODER_ENABLE
+#if defined(MOTOR_SENSOR_ENCODER_ENABLE) && defined(ENCODER_HW_EMULATED)
     Encoder_OnPhaseA_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
 #endif
 #if defined(MOTOR_HALL_MODE_ISR)
@@ -49,7 +49,7 @@ static inline void Motor_HallEncoderA_ISR(Motor_T * p_dev)
 
 static inline void Motor_HallEncoderB_ISR(Motor_T * p_dev)
 {
-#ifdef MOTOR_SENSOR_ENCODER_ENABLE
+#if defined(MOTOR_SENSOR_ENCODER_ENABLE) && defined(ENCODER_HW_EMULATED)
     Encoder_OnPhaseB_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
 #endif
 #if defined(MOTOR_HALL_MODE_ISR)
@@ -59,7 +59,7 @@ static inline void Motor_HallEncoderB_ISR(Motor_T * p_dev)
 
 static inline void Motor_HallEncoderAB_ISR(Motor_T * p_dev)
 {
-#ifdef MOTOR_SENSOR_ENCODER_ENABLE
+#if defined(MOTOR_SENSOR_ENCODER_ENABLE) && defined(ENCODER_HW_EMULATED)
     Encoder_OnPhaseAB_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
 #endif
 #if defined(MOTOR_HALL_MODE_ISR)
@@ -71,7 +71,7 @@ static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_dev)
 {
     switch (p_dev->P_MOTOR->Config.SensorMode)
     {
-    #ifdef MOTOR_SENSOR_ENCODER_ENABLE
+    #if defined(MOTOR_SENSOR_ENCODER_ENABLE) && defined(ENCODER_HW_EMULATED)
         case ROTOR_SENSOR_ID_ENCODER:
             Encoder_OnIndex_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
             break;
@@ -79,7 +79,9 @@ static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_dev)
 
         #ifdef MOTOR_HALL_MODE_ISR
         case ROTOR_SENSOR_ID_HALL:
+            #if defined(ENCODER_HW_EMULATED)
             Encoder_OnPhaseC_Hall_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
+            #endif
             Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL);
             break;
         #endif

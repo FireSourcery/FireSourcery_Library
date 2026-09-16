@@ -32,9 +32,9 @@
 
 void Shell_Init(Shell_T * p_shell)
 {
-    if(p_shell->CONST.P_CONFIG != NULL)
+    if(p_shell->P_CONFIG != NULL)
     {
-        memcpy(&p_shell->Config, p_shell->CONST.P_CONFIG, sizeof(Shell_Config_T));
+        memcpy(&p_shell->Config, p_shell->P_CONFIG, sizeof(Shell_Config_T));
     }
 
     // Terminal_Init(&p_shell->Terminal);
@@ -78,11 +78,11 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
         case SHELL_STATE_PROCESS_CMD:
             if(Terminal_ParseCmdline(&p_shell->Terminal) == TERMINAL_SUCCESS)
             {
-                p_shell->p_Cmd = Cmd_Search(p_shell->CONST.P_CMD_TABLE, p_shell->CONST.CMD_COUNT, Terminal_GetCmdlineVar(&p_shell->Terminal, 0U));
+                p_shell->p_Cmd = Cmd_Search(p_shell->P_CMD_TABLE, p_shell->CMD_COUNT, Terminal_GetCmdlineVar(&p_shell->Terminal, 0U));
 
                 if (p_shell->p_Cmd != 0U)
                 {
-                    p_shell->CmdReturnCode = p_shell->p_Cmd->FUNCTION(p_shell->CONST.P_CMD_CONTEXT, Terminal_GetCmdlineArgC(&p_shell->Terminal), Terminal_GetCmdlineArgV(&p_shell->Terminal));
+                    p_shell->CmdReturnCode = p_shell->p_Cmd->FUNCTION(p_shell->P_CMD_CONTEXT, Terminal_GetCmdlineArgC(&p_shell->Terminal), Terminal_GetCmdlineArgV(&p_shell->Terminal));
 
                     switch(p_shell->CmdReturnCode)
                     {
@@ -131,11 +131,11 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
             }
             else
             {
-                if (*p_shell->CONST.P_TIMER - p_shell->ProcTimeRef > p_shell->p_Cmd->PROCESS.PERIOD)
+                if (*p_shell->P_TIMER - p_shell->ProcTimeRef > p_shell->p_Cmd->PROCESS.PERIOD)
                 {
-                    p_shell->CmdReturnCode = p_shell->p_Cmd->PROCESS.FUNCTION(p_shell->CONST.P_CMD_CONTEXT);
+                    p_shell->CmdReturnCode = p_shell->p_Cmd->PROCESS.FUNCTION(p_shell->P_CMD_CONTEXT);
                     if (p_shell->CmdReturnCode == CMD_STATUS_PROCESS_END) { p_shell->State = SHELL_STATE_PROMPT; }
-                    p_shell->ProcTimeRef = *p_shell->CONST.P_TIMER;
+                    p_shell->ProcTimeRef = *p_shell->P_TIMER;
                 }
             }
             break;

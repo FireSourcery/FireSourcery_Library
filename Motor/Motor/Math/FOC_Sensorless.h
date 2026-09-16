@@ -38,7 +38,11 @@
         4. After SVPWM, FOC_Sensorless_CaptureVoltage(p, v_α, v_β) — stores v applied this cycle for next cycle's observer.
 
     All gains are in the per-unit basis defined by motor_params_math.h
-    (Rs_pu, Ls_pu, Psi_pu).
+        v_pu   = V / V_max
+        i_pu   = I / I_max
+        Rs_pu  = Rs · I_max / V_max
+        ψ_pu = ψ · ω_base / V_base
+        L_pu = L · I_base / ψ_base = L · ω_base · I_base / V_base
 */
 /******************************************************************************/
 #include "foc_sensorless_math.h"
@@ -241,7 +245,6 @@ static void FOC_Sensorless_ResetState(FOC_Sensorless_T * p_obs)
 static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, const FOC_SensorlessConfig_T * p_config)
 {
     if (p_config != NULL) { p_obs->Config = *p_config; }
-    // p_obs->G_pu = math_min((int32_t)((uint64_t)FRACT16_PI * FRACT16_SCALE / p_foc->Electrical.Lq), FRACT16_MAX);
     PID_InitFrom(&p_obs->PllPid, &p_obs->Config.PllPid);
     FOC_Sensorless_ResetState(p_obs);
 }

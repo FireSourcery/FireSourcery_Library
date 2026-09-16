@@ -37,6 +37,7 @@
     Init
 */
 /******************************************************************************/
+#if defined(ENCODER_HW_EMULATED)
 void Encoder_InitInterrupts_Quadrature(const Encoder_T * p_encoder)
 {
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
@@ -48,6 +49,7 @@ void Encoder_InitInterrupts_Incremental(const Encoder_T * p_encoder)
 {
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
 }
+#endif
 
 
 
@@ -75,7 +77,7 @@ void Encoder_SetCounterInitial(const Encoder_T * p_encoder)
     p_encoder->P_STATE->IndexCount = 0U;
 #elif   defined(ENCODER_HW_EMULATED)
 #endif
-    _Encoder_ZeroPulseCount(p_encoder->P_STATE);
+    _Encoder_ZeroPulseCount(p_encoder);
 }
 
 
@@ -87,8 +89,10 @@ void Encoder_SetCounterInitial(const Encoder_T * p_encoder)
 void Encoder_StartHoming(Encoder_State_T * p_encoder)
 {
     p_encoder->IndexCount = 0U;
+    p_encoder->HomingCounterD = 0;
     p_encoder->IndexAngleError = 0U;
     p_encoder->IsHomed = false;
+    p_encoder->IsHoming = true;
     AngleCounter_Zero(&p_encoder->AngleCounter);
     Angle_ZeroCaptureState(&p_encoder->AngleCounter.Base);
 }
@@ -106,7 +110,7 @@ bool Encoder_IsHomingIndexFound(const Encoder_State_T * p_encoder)
 
 bool Encoder_IsHomingIndexError(const Encoder_State_T * p_encoder)
 {
-    return (math_abs(p_encoder->AngleCounter.CounterD) > (int32_t)p_encoder->Config.CountsPerRevolution);
+    return (math_abs(p_encoder->HomingCounterD) > (int32_t)p_encoder->Config.CountsPerRevolution);
 }
 
 //enum Encoder_HomingStatus { Encoder_HomingStatus_None, Encoder_HomingStatus_Found, Encoder_HomingStatus_Error };
@@ -118,6 +122,7 @@ bool Encoder_PollHomingComplete(Encoder_State_T * p_encoder)
     {
         // p_encoder->IndexCount = 0U;
         // p_encoder->AngleCounter.CounterD = 0U;
+        p_encoder->IsHoming = false;
         p_encoder->IsHomed = true;
         isComplete = true;
     }
@@ -125,6 +130,7 @@ bool Encoder_PollHomingComplete(Encoder_State_T * p_encoder)
     {
         // p_encoder->IndexCount = 0U;
         // p_encoder->AngleCounter.CounterD = 0U;
+        p_encoder->IsHoming = false;
         p_encoder->IsHomed = false;
         isComplete = true;
     }
@@ -222,9 +228,9 @@ bool Encoder_ProcAlignValidate(Encoder_State_T * p_encoder)
     return true;
 }
 
-void Encoder_CompleteAlignValidate(Encoder_State_T * p_encoder)
+void Encoder_CompleteAlignValidate(const Encoder_T * p_encoder)
 {
-    p_encoder->Align = ENCODER_ALIGN_PHASE;
+    p_encoder->P_STATE->Align = ENCODER_ALIGN_PHASE;
     _Encoder_ZeroPulseCount(p_encoder);
 }
 
@@ -240,45 +246,41 @@ void Encoder_ClearAlign(Encoder_State_T * p_encoder)
     Determine the values initially
 */
 /******************************************************************************/
-void Encoder_SetQuadratureMode(Encoder_State_T * p_encoder, bool isEnabled) { p_encoder->Config.IsQuadratureCaptureEnabled = isEnabled; }
-void Encoder_EnableQuadratureMode(Encoder_State_T * p_encoder) { p_encoder->Config.IsQuadratureCaptureEnabled = true; }
-void Encoder_DisableQuadratureMode(Encoder_State_T * p_encoder) { p_encoder->Config.IsQuadratureCaptureEnabled = false; }
+void Encoder_SetQuadratureMode(Encoder_State_T * p_encoder, bool isEnabled)
+{
+    p_encoder->Config.IsQuadratureCaptureEnabled = isEnabled;
+    p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
+}
+void Encoder_EnableQuadratureMode(Encoder_State_T * p_encoder) { Encoder_SetQuadratureMode(p_encoder, true); }
+void Encoder_DisableQuadratureMode(Encoder_State_T * p_encoder) { Encoder_SetQuadratureMode(p_encoder, false); }
 /*! isALeadBPositive - User runtime calibrate */
-void Encoder_SetQuadratureDirection(Encoder_State_T * p_encoder, bool isALeadBPositive) { p_encoder->Config.IsALeadBPositive = isALeadBPositive; }
+void Encoder_SetQuadratureDirection(Encoder_State_T * p_encoder, bool isALeadBPositive)
+{
+    p_encoder->Config.IsALeadBPositive = isALeadBPositive;
+    p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
+}
 
 /*
     Run on calibration routine start
 */
-void Encoder_CaptureQuadratureReference(Encoder_State_T * p_encoder)
+void Encoder_CaptureQuadratureReference(const Encoder_T * p_encoder)
 {
-#if     defined(ENCODER_HW_DECODER)
-    p_encoder->AngleCounter.CounterD = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-    HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
-#elif   defined(ENCODER_HW_EMULATED)
-    p_encoder->AngleCounter.CounterD = 0;
-#endif
+    _Encoder_SetCounterD(p_encoder, 0);
 }
 
 /*
     Call after having moved in the positive direction
 */
-void Encoder_CalibrateQuadraturePositive(Encoder_State_T * p_encoder)
+void Encoder_CalibrateQuadraturePositive(const Encoder_T * p_encoder)
 {
-#if     defined(ENCODER_HW_DECODER)
-    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-    // #ifdef ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-    p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->AngleCounter.CounterD);
-    // #elif defined(ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-    // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->AngleCounter.CounterD);
-    // #endif
-#elif   defined(ENCODER_HW_EMULATED)
-    p_encoder->Config.IsALeadBPositive = (p_encoder->AngleCounter.CounterD > 0);
-#endif
+    p_encoder->P_STATE->Config.IsALeadBPositive = (Encoder_GetCounterD(p_encoder) > 0);
+    p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
 }
 
-void Encoder_CalibrateQuadratureDirection(Encoder_State_T * p_encoder, bool isPositive)
+void Encoder_CalibrateQuadratureDirection(const Encoder_T * p_encoder, bool isPositive)
 {
-    p_encoder->Config.IsALeadBPositive = ((Encoder_GetCounterD(p_encoder) > 0) == isPositive);
+    p_encoder->P_STATE->Config.IsALeadBPositive = ((Encoder_GetCounterD(p_encoder) > 0) == isPositive);
+    p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
 }
 
 /******************************************************************************/
@@ -299,49 +301,6 @@ void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef)
     // Angle_SetSpeedRef_Rpm(&p_encoder->Base, speedRef);
 }
 
-/*
-    gearRatio as Surface/Encoder
-*/
-// void Encoder_SetSurfaceRatio(Encoder_State_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatioSurface, uint32_t gearRatioDrive)
-// {
-//     p_encoder->Config.SurfaceDiameter = surfaceDiameter;
-//     p_encoder->Config.GearRatioOutput = gearRatioSurface;
-//     p_encoder->Config.GearRatioInput = gearRatioDrive;
-//     // _Encoder_ResetUnitsLinearSpeed(p_encoder);
-// }
-
-// void Encoder_SetGroundRatio_US(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio)
-// {
-//     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelRatio, motorRatio);
-// }
-
-// void Encoder_SetGroundRatio_Metric(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio)
-// {
-//     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelRatio, motorRatio);
-// }
-
-/*
-
-*/
-// void _Encoder_ResetUnits(const Encoder_T * p_encoder)
-// {
-//     // AngleCounterConfig_T angleCounterConfig = {
-//     //     .CountsPerRevolution = p_encoder->Config.CountsPerRevolution,
-//     //     .TimerFreq = p_encoder->
-//     //     .SampleFreq = p_encoder->
-//     //     .PollingFreq = p_encoder->
-//     //     .FractSpeedRef_Rpm = p_encoder->Config.ScalarSpeedRef_Rpm
-//     // };
-
-//     // AngleCounter_InitFrom(&p_encoder->AngleCounter, &angleCounterConfig);
-
-//     // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
-// //     _Encoder_ResetUnitsAngle(p_encoder);
-// //     _Encoder_ResetUnitsPollingAngle(p_encoder);
-// //     _Encoder_ResetUnitsScalarSpeed(p_encoder);
-// //     _Encoder_ResetUnitsAngularSpeed(p_encoder);
-// //     _Encoder_ResetUnitsLinearSpeed(p_encoder);
-// }
 
 /******************************************************************************/
 /*!
@@ -389,5 +348,13 @@ void _Encoder_ConfigId_Set(Encoder_Config_T * p_encoder, Encoder_ConfigId_T varI
 void Encoder_ConfigId_Set(const Encoder_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue)
 {
     _Encoder_ConfigId_Set(&p_encoder->P_STATE->Config, varId, varValue);
+    if (varId == ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP)
+    {
+        PulseTimer_SetExtendedWatchStop_Millis(&p_encoder->TIMER, p_encoder->P_STATE->Config.ExtendedDeltaTStop);
+    }
+    if ((varId == ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED) || (varId == ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE))
+    {
+        p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
+    }
     // _Encoder_ResetUnits(p_encoder);
 }

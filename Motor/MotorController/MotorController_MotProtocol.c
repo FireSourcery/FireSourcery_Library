@@ -228,20 +228,10 @@ static Protocol_ReqCode_T WriteMem_Blocking(MotorController_T * p_dev, Packet_Xf
     Stateful Data Mode - the engine's resumable path, delegated to MotProtocol
 
     These two keep void payload pointers where every handler above is typed, because their
-    payload type is a function of Step rather than of the id: the opening frame carries a
-    MotPacket_DataModeReq_T, every continuation carries raw bytes, and the response alternates
-    between MotPacket_DataModeResp_T and a data chunk. A single declared type would be wrong
-    on all but one call.
+    payload type is a function of Step rather than of the id
 */
 /******************************************************************************/
 #if defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-/*
-    The transfers are generic; only the binding is local. The interface is four pointers, so
-    it is built per call rather than forcing the Flash instance to be a file-scope constant.
-
-    Protocol_ProcReqResp_T fixes the context as void *, which cannot carry the interface's
-    const, so the cast is at the boundary rather than hidden in the handler.
-*/
 static Protocol_ReqCode_T ReadData(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
     Protocol_DataMode_Interface_T dataMode = MOT_PROTOCOL_FLASH_LOADER(p_dev->MOT_NVM.P_FLASH);

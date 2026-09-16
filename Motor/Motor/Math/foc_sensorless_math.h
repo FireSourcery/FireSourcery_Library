@@ -33,12 +33,6 @@
     position observer; state is owned by the caller. All signals share the
     fract16 per-unit basis used by foc_math.h / motor_params_math.h:
 
-        v_pu   = V / V_max
-        i_pu   = I / I_max
-        Rs_pu  = Rs · I_max / V_max
-        Ls_pu = Ls · I_max · Fs / V_max            (multiplies Δi_pu → v_pu)
-        Psi_pu = ψ_f · π · Fs · 32768 / V_max       (psi_vfract16_per_angle16)
-
     Two families are included, distinguished by working frame:
 
       αβ stationary  — voltage-model and SMO; signals sinusoidal at ω_e;

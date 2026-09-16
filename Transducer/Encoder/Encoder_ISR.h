@@ -32,6 +32,8 @@
 #include "Encoder.h"
 #include "Encoder_ModeDT.h"
 
+#if defined(ENCODER_HW_EMULATED)
+
 /******************************************************************************/
 /*!
     @brief     SW Capture Functions -
@@ -66,6 +68,7 @@ static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t cou
 {
     /* instead of imitating the hw decoder case, capture a separate Angle32 */
     AngleCounter_CaptureCount(&p_encoder->AngleCounter, count);
+    if (p_encoder->IsHoming == true) { p_encoder->HomingCounterD += count; }
 }
 
 /******************************************************************************/
@@ -204,19 +207,29 @@ static inline void Encoder_OnIndex_ISR(const Encoder_T * p_encoder)
     Encoder_CaptureIndex(p_encoder->P_STATE);
 }
 
+/*
+    The quadrature table already represents a two-edge jump, such as 00 -> 11, as 2 counts
+    Clear every pending A/B flag avoids a redundant second Encoder_CapturePulse(), which would produce a zero-count transition
+*/
 /* Shared A, B ISR */
 static inline void Encoder_OnPhaseAB_ISR(const Encoder_T * p_encoder)
 {
-    if         (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }
-    else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
+    HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
+    HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID);
+    Encoder_CapturePulse(p_encoder);
 }
 
 /* Shared A, B, Index ISR */
 static inline void Encoder_OnPhaseABZ_ISR(const Encoder_T * p_encoder)
 {
-    if         (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }
-    else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
-    else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID) == true) { Encoder_OnIndex_ISR(p_encoder); }
+    if(HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID) == true)
+    {
+        Encoder_OnIndex_ISR(p_encoder);
+    }
+    else /*  */
+    {
+        Encoder_OnPhaseAB_ISR(p_encoder);
+    }
 }
 
 static inline void Encoder_OnPhaseC_Hall_ISR(const Encoder_T * p_encoder)
@@ -225,18 +238,5 @@ static inline void Encoder_OnPhaseC_Hall_ISR(const Encoder_T * p_encoder)
     Encoder_CapturePulse(p_encoder);
 }
 
-/******************************************************************************/
-/*!
-    Upper layer configures ISRs
-*/
-/******************************************************************************/
-static inline void _Encoder_OnPhaseA_ISR(const Encoder_T * p_encoder) { HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID); }
-static inline void _Encoder_OnPhaseB_ISR(const Encoder_T * p_encoder) { HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID); }
-static inline void _Encoder_OnPhaseZ_ISR(const Encoder_T * p_encoder) { HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID); }
 
-/* Shared A, B ISR */
-static inline void _Encoder_OnPhaseAB_ISR(const Encoder_T * p_encoder)
-{
-    if      (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
-    else if (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
-}
+#endif

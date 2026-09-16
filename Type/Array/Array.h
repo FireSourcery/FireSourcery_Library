@@ -61,6 +61,7 @@ typedef struct { void * P_BUFFER; size_t LENGTH; } ArraySpan_T;
     A contiguous run of LENGTH units of TYPE_SIZE at P_BUFFER. A view, not a descriptor:
     it is returned by value, so it is NOT const-qualified (a qualifier on a by-value return is ignored, and warns under -Wextra).
 */
+// typedef struct typed_span { size_t type; void * p_buffer; size_t length; } typed_span_t; //returnable record
 typedef struct ArraySpanT { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; } ArraySpanT_T;
 
 static inline size_t ArraySpan_Size(ArraySpanT_T span) { return span.LENGTH * span.TYPE_SIZE; }

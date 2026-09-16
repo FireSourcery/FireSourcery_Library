@@ -196,9 +196,9 @@ typedef const union
     Packet_Xfer_T Xfer;
     struct
     {
-        Packet_Context_T * const p_RxBuffer;
-        Packet_Context_T * const p_TxBuffer;
-        void * const p_Substate;
+        Packet_Context_T * p_RxBuffer;
+        Packet_Context_T * p_TxBuffer;
+        void * p_Substate;
     };
 }
 Protocol_ReqContext_T;
@@ -208,9 +208,11 @@ Protocol_ReqContext_T;
     //     {
     //         Packet_Context_T * P_RX_BUFFER;
     //         Packet_Context_T * P_TX_BUFFER;
-    //         void * const p_SUB_STATE;   /* Handler sub-state. Sized for the largest handler */
+    //         void * p_SUB_STATE;   /* Handler sub-state. Sized for the largest handler */
     //     };
     //     Packet_Xfer_T PACKET_XFER;
+    // P_TIMER
+    // P_PACKET_LENGTH
 // }
 // Protocol_Binding_T;
 
@@ -277,10 +279,6 @@ static inline void Protocol_Init(Protocol_State_T * p_state, uint32_t timerNow)
 
 /*!
     Time since the last intact frame was delivered - what link liveness is measured on.
-
-    LastCompleteTime is an absolute stamp, so the elapsed interval is what a timeout may be
-    compared against. Handing out the stamp itself invites the comparison to be written
-    against the raw value, which is true for any uptime past the threshold.
 */
 static inline uint32_t Protocol_RxLostTime(const Protocol_State_T * p_state, uint32_t timerNow)
 {

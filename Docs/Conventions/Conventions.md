@@ -81,11 +81,14 @@ typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
         - Conceptually a "fat register" or "named scalar".
         - Functions use snake_case: module_verb(type_t a, type_t b) -> type_t
         - No pointers, callbacks, ownership, or lifecycle.
+        - Records, not descriptors
 
     CamelCase_T: Aggregate types, > 64 bits, OR has associated behavioral functions.
         - Passed by pointer: Module_Verb(Module_T * p_module)
         - May have _Init, _Capture, _Set, _Get functions.
         - Used for runtime state, descriptors, config objects, interfaces.
+
+    CamelCast_T.CAPS: compile time constant descriptors.
 
     Boundary: 64 bits hard limit (ARM AAPCS returns r0+r1).
         Structs ≤ 64 bits MAY use snake_case IF they are pure values

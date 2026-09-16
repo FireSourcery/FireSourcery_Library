@@ -83,11 +83,11 @@
 
     ψ and L are dependent on ω_base:
     ψ == v_emf / ω:
-    ψ_pu = ψ / ψ_base = ψ · ω_base / V_base
+    ψ_pu = ψ · ω_base / V_base
     ψ_pu = (v_emf / ω) · (ω_base / V_base) = (v_emf / V_base) / (ω / ω_base)
 
     L == v_L / (ω · I):
-    L_pu = L / L_base   = L · I_base / ψ_base    = L · ω_base · I_base / V_base
+    L_pu = L · I_base / ψ_base = L · ω_base · I_base / V_base
     L_pu = (v_L / (ω · I)) · (ω_base · I_base / V_base)
 
     v_emf_pu terms:

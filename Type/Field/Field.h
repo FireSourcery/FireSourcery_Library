@@ -91,6 +91,16 @@ typedef const struct VField
 }
 VField_T;
 
+// typedef const struct
+// {
+//     union
+//     {
+//         VField_T CALL;
+//         Field_T FIELD;
+//     };
+// }
+// VarAccessor_T;
+
 /*
     Grouped Implementation
     Single layer of wraping with generically typed function pointers

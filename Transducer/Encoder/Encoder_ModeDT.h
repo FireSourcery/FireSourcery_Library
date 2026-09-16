@@ -81,18 +81,8 @@ static inline angle16_t Encoder_ModeDT_InterpolateAngle(const Encoder_T * p_enco
 */
 /******************************************************************************/
 /* Signed with capture reference */
-/*
-    Speed is signed without direction comp for quadrature, unsigned single phase
-*/
 static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_State_T * p_encoder) { return AngleCounter_GetSpeed_Fract16(&p_encoder->AngleCounter); }
 
-/*
-    Direction Comp signed with user reference
-*/
-// static inline int32_t Encoder_ModeDT_GetScalarVelocity(Encoder_State_T * p_encoder)
-// {
-//     return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetScalarSpeed(p_encoder);
-// }
 
 
 /******************************************************************************/
@@ -101,13 +91,6 @@ static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_State_T * p_encoder)
 */
 /******************************************************************************/
 static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder) { return rpm_of_count_freq(p_encoder->Config.CountsPerRevolution, p_encoder->AngleCounter.FreqD); }
-// static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(const Encoder_State_T * p_encoder) { return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder); }
-
-// static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPS(const Encoder_State_T * p_encoder) { return p_encoder->FreqD / p_encoder->Config.CountsPerRevolution; }
-
-// /* Degs/S */
-// static inline int32_t Encoder_ModeDT_GetAngularSpeed(const Encoder_State_T * p_encoder) { return p_encoder->FreqD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift; }
-// static inline int32_t Encoder_ModeDT_GetSurfaceSpeed(const Encoder_State_T * p_encoder) { return p_encoder->FreqD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift; }
 
 /******************************************************************************/
 /*
@@ -117,7 +100,6 @@ extern void Encoder_ModeDT_Init(const Encoder_T *);
 extern void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Config_T * p_config);
 extern void Encoder_ModeDT_Init_Polling(const Encoder_T *);
 extern void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T *);
-extern void Encoder_ModeDT_Init_InterruptAbc(const Encoder_T *);
 
 extern void Encoder_ModeDT_SetInitial(const Encoder_T *);
 

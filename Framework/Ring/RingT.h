@@ -55,6 +55,8 @@ RingT_T;
 #define RING_T_INIT(UnitSize, Length, p_State) { .TYPE = RING_TYPE_INIT(UnitSize, Length), .P_STATE = (p_State), }
 #define RING_T_ALLOC(UnitSize, Length) RING_T_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
 
+#define RING_T_INIT_AS(T, Length)  { .TYPE = RING_TYPE_INIT(sizeof(T), Length), .P_STATE = RING_STATE_ALLOC(sizeof(T), Length), }
+
 /*
     The (TYPE, P_STATE) argument pair every RingT_ operation takes, drawn from one RingT_T.
     This is the Correct-Pairing guarantee in practice: a descriptor and a state taken from

@@ -70,7 +70,7 @@ typedef PACKET_SIZE_TYPE    packet_size_t;
 /******************************************************************************/
 /*
     Effectively VirtualHeader for unknown Packet struct
-    denotation and semsntics
+    denotation and semantics
     Extracted Field Values
 */
 typedef struct Packet_Meta
@@ -252,23 +252,13 @@ typedef const struct Packet_Codec
     /* Tx */
     Packet_BuildTxFrame_T BUILD_TX_FRAME;     // symmetric with Phase 2
 
-    // Packet_FrameFormat_T CONTROL_FRAME_FORMAT;
     packet_size_t CONTROL_FRAME_LENGTH;
     packet_id_t ACK_ID;
     packet_id_t NACK_ID;
     packet_id_t ABORT_ID;
-
     // packet_id_t CONTROL_IDS[_PACKET_CLASS_LENGTH];
 
-    /*
-        Frame deadline, in the same units as the deltaTime the caller ages the parser by.
-        0 disables it. Here rather than in Protocol_Base_T because the bound is a property of
-        this format and its baud - LENGTH_MAX bytes take as long as they take - and because
-        Socket_SetFormat swaps the pointer and resets the parser together, so the period and
-        the progress can never disagree.
-    */
     uint32_t RX_TIMEOUT;
-    // uint32_t BAUD_RATE_DEFAULT;
 }
 Packet_Codec_T;
 
