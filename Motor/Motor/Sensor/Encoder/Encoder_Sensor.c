@@ -51,6 +51,8 @@ static void Encoder_RotorSensor_CaptureSpeed(const Encoder_RotorSensor_T * p_sen
     Encoder_ModeDT_CaptureFreqD(&p_sensor->ENCODER);
     Encoder_ModeDT_ResolveInterpolation(&p_sensor->ENCODER);
     p_state->Speed_Fract16 = Encoder_ModeDT_GetSpeed_PerUnit(p_sensor->ENCODER.P_STATE);
+    /* Promote on any index edge, not only during a homing sweep - an ordinary open loop start up reaches Z too */
+    Encoder_PollIndexCapture(p_sensor->ENCODER.P_STATE);
 }
 
 
@@ -61,12 +63,17 @@ static bool Encoder_RotorSensor_VerifyCalibration(const Encoder_RotorSensor_T * 
     return true;
 }
 
+/*
+    Resets pulse accumulation and speed state only. Reached on a direction change, where counting
+    stays continuous - the position reference survives. Encoder_ClearPositionRef is for a real
+    discontinuity: fault, sensor loss, power on.
+*/
 static void Encoder_RotorSensor_ZeroSensor(const Encoder_RotorSensor_T * p_sensor)
 {
     Encoder_ModeDT_SetInitial(&p_sensor->ENCODER);
 }
 
-/* From Stop and after Align */
+/* Commutation needs the electrical datum only - ALIGNED or better */
 static bool Encoder_RotorSensor_IsSensorAvailable(const Encoder_RotorSensor_T * p_sensor)
 {
     return Encoder_IsAligned(p_sensor->ENCODER.P_STATE);
@@ -77,7 +84,7 @@ static bool Encoder_RotorSensor_IsSensorAvailable(const Encoder_RotorSensor_T * 
 // counts per electrical revolution = cpr/polepairs
 static void Encoder_RotorSensor_InitFrom(const Encoder_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
-    p_sensor->ENCODER.P_STATE->Config.ScalarSpeedRef_Rpm = p_config->SpeedTypeMax_Rpm;
+    p_sensor->ENCODER.P_STATE->Config.SpeedPerUnitRef_Rpm = p_config->SpeedTypeMax_Rpm;
     Encoder_ModeDT_InitValuesFrom(&p_sensor->ENCODER, &p_sensor->ENCODER.P_STATE->Config);
 }
 

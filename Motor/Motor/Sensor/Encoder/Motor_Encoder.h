@@ -36,8 +36,7 @@
 */
 /******************************************************************************/
 void Motor_Encoder_StartHoming(Motor_T * p_motor);
-void Motor_Encoder_CalibrateHomeOffset(Motor_T * p_motor);
-void Motor_Encoder_StartVirtualHome(Motor_T * p_motor);
+void Motor_Encoder_CalibrateIndexAngleOffset(Motor_T * p_motor);
 
 void Motor_Encoder_StartAlignZero(Motor_T * p_motor);
 void Motor_Encoder_StartValidateAlign(Motor_T * p_motor);

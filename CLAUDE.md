@@ -8,15 +8,20 @@
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
-
+- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization.
+-
 ### Demand Elegance
+- Consider established or published design patterns to eliminate code duplication
 - For non-trivial changes: pause and ask "is there a more elegant way?"
 - If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
 - Skip this for simple, obvious fixes – don't over-engineer
 - Challenge your own work before presenting it
-- Consider established design patterns to eliminate code duplication
-- Keep comments concise. When a concept is already modeled by a type or struct in code, refer to that type using `[]` e.g. `[Type_T]`.
-- Summarize comments with a table or diagram when appropriate.
+
+### Documentation
+- When refering to a concept that is already modeled by a type or struct in code, refer to that type using `[]` e.g. `[TypeName_T]`.
+- Keep comments concise. Comments are reserved for points that the code cannot express, not what the code is doing.
+- Use visualizations with mermaid diagrams for describing what the code is doing
+- Extensive descriptions go in a separate markdown file, such as architecture notes.
 
 ### Self-Improvement Loop
 - After ANY correction from the user: update `.claude/tasks/lessons.md` with the pattern
@@ -36,9 +41,9 @@
 - **Compiler:** ARM GCC (`arm-none-eabi-gcc` 15.2.1)
 - **Target Architecture:** ARM Cortex-M4/M0+
 - **Build System:** Makefile / IDE project-based (MCUXpresso / VS Code)
-- **C Standard:** C11 (gnu11)
+- **C Standard:** C23
 - **No dynamic allocation** — all memory is statically allocated
-- **No standard library dependencies** beyond `<stdint.h>`, `<stdbool.h>`, `<stddef.h>`, `<string.h>`
+<!-- - **No standard library dependencies** beyond `<stdint.h>`, `<stdbool.h>`, `<stddef.h>`, `<string.h>` -->
 
 ## Key Conventions
 
@@ -50,7 +55,6 @@
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
     This pattern is only for hardware descriptors and static polymorphism. Do not use it for what could be mutable only structs.
 - **Stateless pure functions layer**: function parameter contain the entire state
-- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization.
 - Utility functions pass context that is the closest layer the logic requires. Don't pass bool.
 <!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
 

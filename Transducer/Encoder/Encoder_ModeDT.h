@@ -1,3 +1,5 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -24,26 +26,22 @@
 /*!
     @file   Encoder_ModeDT.h
     @author FireSourcery
-
-    @brief  Mixed Frequency Sampling
+    @brief  Bridge to speed. Mixed Frequency Sampling
 */
 /******************************************************************************/
-#ifndef ENCODER_MODE_DT_H
-#define ENCODER_MODE_DT_H
-
 #include "Encoder.h"
 
 /******************************************************************************/
 /*
-
+    Speed
+    at SAMPLE_FREQ ~1ms
 */
 /******************************************************************************/
 /*
     Capture [FreqD] Pulse Frequency
-    Call at SAMPLE_FREQ ~1ms
     Delegates to AngleCounter_CaptureFreq + PulseTimer_CaptureSampleTk_Freq
 */
-static inline void Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
+static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 {
     if (PulseTimer_IsExtendedStop(&p_encoder->TIMER) == false)
     {
@@ -53,10 +51,11 @@ static inline void Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
     {
         p_encoder->P_STATE->AngleCounter.FreqD = 0;
     }
+    // PulseTimer_CaptureFreq(&p_encoder->TIMER, &p_encoder->P_STATE->AngleCounter);
 }
 
 
-static inline angle16_t Encoder_ModeDT_ResolveInterpolation(const Encoder_T * p_encoder)
+static inline angle16_t Encoder_ModeDT_ResolveInterpolation(Encoder_T * p_encoder)
 {
     return AngleCounter_ResolveAngleDelta(&p_encoder->P_STATE->AngleCounter);
 }
@@ -66,13 +65,17 @@ static inline angle16_t Encoder_ModeDT_ResolveInterpolation(const Encoder_T * p_
     At POLLING_FREQ
 */
 /******************************************************************************/
-/* |DeltaD| <= 1 */
-static inline angle16_t Encoder_ModeDT_InterpolateAngle(const Encoder_T * p_encoder)
+/* Write to a seperate angle or  */
+static inline angle16_t _Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-    (void)p_encoder;
-    // return (math_abs(p_encoder->P_STATE->AngleCounter.FreqD) < p_encoder->POLLING_FREQ / 2U) ? AngleCounter_Interpolate(&p_encoder->P_STATE->AngleCounter) : 0;
-    // return (math_abs(p_encoder->P_STATE->AngleCounter.FreqD) < p_encoder->POLLING_FREQ / 2U) ? AngleCounter_Interpolate(&p_encoder->P_STATE->AngleCounter) : Angl.Angle;
-    return 0;
+    return Encoder_GetAngle(p_encoder) ;
+}
+
+/* |DeltaD| <= 1 */
+static inline angle16_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
+{
+    // return (math_abs(p_encoder->P_STATE->AngleCounter.FreqD) < p_encoder->POLLING_FREQ / 2U) ?
+    return Encoder_GetAngle(p_encoder);
 }
 
 
@@ -96,27 +99,24 @@ static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_State_
 /*
 */
 /******************************************************************************/
-extern void Encoder_ModeDT_Init(const Encoder_T *);
-extern void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Config_T * p_config);
-extern void Encoder_ModeDT_Init_Polling(const Encoder_T *);
-extern void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T *);
+extern void Encoder_ModeDT_Init(Encoder_T *);
+extern void Encoder_ModeDT_InitValuesFrom(Encoder_T * p_encoder, const Encoder_Config_T * p_config);
+extern void Encoder_ModeDT_Init_Polling(Encoder_T *);
+extern void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T *);
 
-extern void Encoder_ModeDT_SetInitial(const Encoder_T *);
+extern void Encoder_ModeDT_SetInitial(Encoder_T *);
 
 
 /******************************************************************************/
 /*
 */
 /******************************************************************************/
-extern int32_t Encoder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId);
-
-#endif
 
 /*
     Capture [FreqD] Pulse Frequency
     Call at SAMPLE_FREQ ~1ms
 */
-// static inline void _Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
+// static inline void _Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 // {
 //     // const uint32_t sampleFreq = p_encoder->SAMPLE_FREQ; /* periodTs = 1 / SAMPLE_FREQ */
 //     const uint32_t timerFreq = p_encoder->TIMER_FREQ;

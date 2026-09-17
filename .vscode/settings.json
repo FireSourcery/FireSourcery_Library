@@ -1,8 +1,10 @@
 {
-    "C_Cpp.default.defines": [
-        "__GNUC__"
-    ],
-    "C_Cpp.default.intelliSenseMode": "gcc-arm",
+    // "C_Cpp.default.defines": [
+    //     "${default}",
+    //     "__GNUC__",
+    // ],
+
+    "C_Cpp.default.intelliSenseMode": "windows-gcc-arm",
     "C_Cpp.default.cStandard": "c23",
     "C_Cpp.default.cppStandard": "c++23",
     "C_Cpp.default.mergeConfigurations": true,

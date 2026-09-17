@@ -43,13 +43,13 @@ void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Co
     {
         .CountsPerRevolution = p_encoder->P_STATE->Config.CountsPerRevolution,
         .PollingFreq = p_encoder->POLLING_FREQ,
-        .FractSpeedRef_Rpm = p_encoder->P_STATE->Config.ScalarSpeedRef_Rpm,
+        .SpeedPuRef_Rpm = p_encoder->P_STATE->Config.SpeedPerUnitRef_Rpm,
     };
 
     AngleCounter_InitFrom(&p_encoder->P_STATE->AngleCounter, &angleCounterConfig);
     PulseTimer_SetExtendedWatchStop_Millis(&p_encoder->TIMER, p_encoder->P_STATE->Config.ExtendedDeltaTStop);
 
-    p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
+    p_encoder->P_STATE->DirectionComp = _Encoder_ResolveDirectionComp(p_encoder->P_STATE);
     Encoder_ModeDT_SetInitial(p_encoder);
 }
 
@@ -67,7 +67,7 @@ void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T * p_encoder)
     PulseTimer_Init(&p_encoder->TIMER);
     Encoder_ModeDT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
     p_encoder->P_STATE->Config.IsQuadratureCaptureEnabled = true;
-    p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
+    p_encoder->P_STATE->DirectionComp = _Encoder_ResolveDirectionComp(p_encoder->P_STATE);
 #if defined(ENCODER_HW_DECODER)
     Encoder_InitCounter(p_encoder);
 #elif defined(ENCODER_HW_EMULATED)
@@ -86,24 +86,3 @@ void Encoder_ModeDT_SetInitial(const Encoder_T * p_encoder)
 }
 
 
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-int32_t Encoder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId)
-{
-    int32_t value = 0;
-    switch (varId)
-    {
-        case ENCODER_VAR_FREQ:            value = p_encoder->AngleCounter.FreqD;     break;
-        case ENCODER_VAR_COUNTER_D:       value = p_encoder->AngleCounter.CounterD;  break;
-        case ENCODER_VAR_RPM:             value = Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder);     break;
-        // case ENCODER_VAR_DELTA_T_SPEED:   value = Encoder_DeltaT_GetRotationalSpeed_RPM(p_encoder);     break;
-        // case ENCODER_VAR_DELTA_D_SPEED:   value = Encoder_DeltaD_GetRotationalSpeed_RPM(p_encoder);     break;
-        case ENCODER_VAR_DELTA_T_SPEED:   break; /* not yet implemented */
-        case ENCODER_VAR_DELTA_D_SPEED:   break; /* not yet implemented */
-    }
-    return value;
-}

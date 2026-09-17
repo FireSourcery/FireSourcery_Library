@@ -91,6 +91,8 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
     AngleCounter_T * p_counter = PulseEncoder_Counter(&p_sensor->PULSE);
+
+    // PulseTimer_CaptureFreq(&p_sensor->PULSE.TIMER, AngleCounter_Angle(p_counter));
     PulseEncoder_CaptureFreq(&p_sensor->PULSE); /* Gradual decay when no pulses */
     /* Propagate FreqD for interpolation */
     AngleCounter_ResolveAngleDelta(p_counter);
@@ -107,7 +109,7 @@ static void Hall_RotorSensor_ZeroInitial(const Hall_RotorSensor_T * p_sensor)
     AngleCounter_T * p_counter = PulseEncoder_Counter(&p_sensor->PULSE);
 
     Hall_ZeroInitial(&p_sensor->HALL);
-    AngleCounter_Zero(p_counter);
+    AngleCounter_ZeroCount(p_counter);
     Angle_ZeroCaptureState(&p_counter->Base);
     PulseTimer_SetInitial(&p_sensor->PULSE.TIMER);
 }
@@ -125,11 +127,11 @@ static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_se
     {
         .CountsPerRevolution = 6U * p_config->PolePairs, /* Mechanical CPR for speed/RPM */
         .PollingFreq = p_sensor->POLLING_FREQ,
-        .FractSpeedRef_Rpm = p_config->SpeedTypeMax_Rpm,
+        .SpeedPuRef_Rpm = p_config->SpeedTypeMax_Rpm,
     };
     AngleCounter_InitFrom(p_counter, &config);
     /* Override angle delta factor for electrical interpolation: 6 edges per electrical cycle */
-    p_counter->Ref.AngleSpeed32PerCount = angle32_speed_per_count_cpr(p_sensor->POLLING_FREQ, 6U);
+    p_counter->UnitRef.AngleSpeed32PerCount = angle32_speed_per_count_cpr(p_sensor->POLLING_FREQ, 6U);
 }
 
 static void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
@@ -138,7 +140,7 @@ static void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sens
     {
         .CountsPerRevolution = 6U,
         .PollingFreq = p_sensor->POLLING_FREQ,
-        .FractSpeedRef_Rpm = p_config->SpeedTypeMax_Rpm * p_config->PolePairs,
+        .SpeedPuRef_Rpm = p_config->SpeedTypeMax_Rpm * p_config->PolePairs,
     };
     AngleCounter_InitFrom(PulseEncoder_Counter(&p_sensor->PULSE), &config);
 }

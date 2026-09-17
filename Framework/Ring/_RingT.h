@@ -100,13 +100,13 @@ typedef const struct Ring_Type { size_t TYPE_SIZE; size_t LENGTH; } Ring_Type_T;
 #define RING_IS_ALIGNED(x, align) (((x) & ((align) - 1U)) == 0U)
 
 /* Evaluates to 0. Fails the translation for a non-power-of-2 LENGTH, which array_index_of_counter would silently corrupt. */
-#define _RING_ASSERT_POW2(Length) (0U * sizeof(struct { static_assert(RING_IS_POW2(Length), "Ring LENGTH must be a non-zero power of 2"); int _; }))
+#define _RING_LENGTH_POW2(Length) ((Length) + 0U * sizeof(struct { static_assert(RING_IS_POW2(Length), "Ring LENGTH must be a non-zero power of 2"); }))
 
-#define RING_TYPE_INIT(UnitSize, Length) { .TYPE_SIZE = (UnitSize), .LENGTH = (Length) + _RING_ASSERT_POW2(Length) }
+#define RING_TYPE_INIT(UnitSize, Length) { .TYPE_SIZE = (UnitSize), .LENGTH = _RING_LENGTH_POW2(Length) }
 
 #define RING_VALIDATE_PARAMS(TypeSize, Length) \
     static_assert(_RING_POW2_DEF(RING_IS_POW2(Length), true), "POW2 mode requires power-of-2 Length"); \
-    static_assert(RING_IS_ALIGNED(TypeSize, sizeof(uintptr_t)) || RING_IS_ALIGNED(Length, sizeof(uintptr_t)), "Ring unit size must be aligned to uintptr_t size"); \
+    static_assert(RING_IS_ALIGNED(TypeSize, sizeof(uintptr_t)), "Ring unit size must be aligned to uintptr_t size"); \
 
 
 /*
@@ -127,12 +127,14 @@ typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Ring_State
 }
 Ring_State_T;
 
+typedef struct { Ring_State_T State; uintptr_t Words[1]; } Ring_Test_T;
+
 /* Round up: plain division truncates, which would short the Buffer whenever BytesSize is not a multiple of the word size */
 #define _RING_BUFFER_ALLOC(BytesSize) ((uintptr_t[((BytesSize) + sizeof(uintptr_t) - 1U) / sizeof(uintptr_t)]){}) /* guarantees align and no ascii fill */
 // #define RING_STATE_ALLOC(UnitSize, Length) ((Ring_State_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_State_T) + ((UnitSize) * (Length)))))
 
 #define RING_STATE_ALLOC(UnitSize, Length) \
-    (&(union { Ring_State_T State; uintptr_t Words[(sizeof(Ring_State_T) + ((UnitSize) * (Length)) + sizeof(uintptr_t) - 1U) / sizeof(uintptr_t)]; }){ }.State)
+    (&(struct { Ring_State_T State; uintptr_t Words[((UnitSize) * (Length) + (sizeof(uintptr_t) - 1U)) / sizeof(uintptr_t)]; }){ }.State)
 
 static inline size_t _RingT_ArrayIndexOf(Ring_Type_T type, size_t index) { return array_index_of_counter(type.LENGTH, index); }
 static inline size_t _RingT_IndexOnAccess(Ring_Type_T type, size_t index) { return ring_index_on_access(type.LENGTH, index); }

@@ -57,9 +57,6 @@ typedef PACKET_SIZE_TYPE    packet_size_t;
 #define PACKET_CONTROL_LENGTH_MAX 16U
 #endif
 
-/* Ensure alignment for packet buffers */
-#define PACKET_BUFFER_ALLOC(BufferLength) (alignas(4U) uint8_t[BufferLength]){0}
-
 
 /******************************************************************************/
 /*!
@@ -94,8 +91,10 @@ typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Packet_Context
 }
 Packet_Context_T;
 
+/* Ensure alignment for packet buffers */
+#define PACKET_BUFFER_ALLOC(BufferLength) (alignas(4U) uint8_t[BufferLength]){0}
 
-#define PACKET_CONTEXT_ALLOC_T(BufferLength) union { Packet_Context_T Context; uint8_t Bytes[sizeof(Packet_Meta_T) + (BufferLength)]; }
+#define _PACKET_CONTEXT_T(BufferLength) struct { Packet_Context_T Context; uint32_t Bytes[BufferLength / sizeof(uint32_t)]; }
 
 /*
     The literal is declared as a union containing Packet_Context_T, so the storage's effective

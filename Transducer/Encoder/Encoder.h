@@ -48,16 +48,13 @@
 /*
     Compile time define if chip supports decoder/counter.
 */
-#if     defined(ENCODER_HW_DECODER)
-#elif   defined(ENCODER_HW_EMULATED)
-#else
-// #define ENCODER_HW_DECODER
+#if (!defined(ENCODER_HW_DECODER) && !defined(ENCODER_HW_EMULATED))
+#define ENCODER_HW_EMULATED
 #endif
 
-#if     defined(ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
-#elif   defined(ENCODER_QUADRATURE_MODE_DISABLE)
-#else
-#define ENCODER_QUADRATURE_MODE_ENABLE
+/* Emulated and Decoder */
+#if !defined(ENCODER_QUADRATURE_MODE_ENABLE) && !defined(ENCODER_QUADRATURE_MODE_DISABLE)
+#define ENCODER_QUADRATURE_MODE_ENABLE true
 #endif
 
 
@@ -65,13 +62,17 @@
 /*!
 */
 /******************************************************************************/
-
 #ifndef ENCODER_ANGLE_BITS
 #define ENCODER_ANGLE_BITS      (16U)
 #define ENCODER_ANGLE_DEGREES   ((uint32_t)1UL << ENCODER_ANGLE_BITS)
 #define ENCODER_ANGLE_SHIFT     (32U - ENCODER_ANGLE_BITS)
 #endif
 
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 typedef union Encoder_Phases
 {
     struct
@@ -87,36 +88,61 @@ typedef union Encoder_Phases
 Encoder_Phases_T;
 
 
-// typedef enum Encoder_PositionRef
-// {
-//     ENCODER_REF_STATE_NONE,
-//     ENCODER_REF_STATE_ALIGN,
-//     ENCODER_REF_STATE_INDEX_HOME,
-// };
-
-typedef enum Encoder_Align
+/*
+    Monotonic. Promotion is unconditional, only fault demotes.
+    Written by the polling thread only - never from an ISR, so a fault demote cannot be lost.
+    PositionRef
+    struct { uint8_t IsAligned: 1U; uint8_t IsHomed: 1U; };
+*/
+typedef enum Encoder_RefState
 {
-    ENCODER_ALIGN_NONE,
-    ENCODER_ALIGN_PHASE,    /* Calibrate Aligned */
-    ENCODER_ALIGN_ABSOLUTE,
+    ENCODER_REF_STATE_NONE,      /* delta only. speed valid, angle arbitrary */
+    ENCODER_REF_STATE_ALIGNED,   /* theta_el valid. theta_mech unknown when PolePairs > 1 */
+    ENCODER_REF_STATE_HOMED,     /* theta_mech and theta_el valid */
 }
-Encoder_Align_T;
+Encoder_RefState_T;
+
+typedef enum Encoder_HomingStatus
+{
+    ENCODER_HOMING_SEARCHING,
+    ENCODER_HOMING_FOUND,
+    ENCODER_HOMING_TIMEOUT,     /* travel budget spent without an index edge */
+}
+Encoder_HomingStatus_T;
+
+/*
+    Reserved value of IndexAngleCapture. Armed by the polling thread, overwritten by the Index ISR.
+    The ISR writes this only when the pre-snap angle lands exactly a half revolution from
+    IndexAngleOffset - 1 in 2^32, costing one extra search revolution, then self-correcting.
+*/
+#define ENCODER_INDEX_NOT_CAPTURED (INT32_MIN)
 
 
+/*
+    Reference Frames - stacked, fixed order. Base.Angle accumulates in the d-axis frame.
+    Aligned:
+        d-axis  : zero at the rotor pole.  Set by Align.                        Read by commutation.
+    Index Homed:
+        Index   : zero at the Z marker.    Config.IndexAngleOffset from d-axis. The bridge.
+        User    : zero at the application. Config.VirtualHomeOffset from Z.     Read by position.
+
+    Two independent constants, and neither can do the other's job. IndexAngleOffset is fixed by how
+    the encoder was bolted to the motor - measured by calibration, never chosen. VirtualHomeOffset is
+    chosen by the application - arbitrary, settable at any time. Folding them loses a frame: keep only
+    the first and there is no application zero, keep only the second and commutation no longer knows
+    where the d-axis is.
+
+    Base.Angle stays in the d-axis frame so commutation reads it with no offset at 20kHz; the
+    application frame costs one subtraction of a derived constant on the position read path.
+*/
 typedef struct Encoder_Config
 {
-    uint16_t CountsPerRevolution;        /* Derive Angular Units. */
-    uint32_t ScalarSpeedRef_Rpm;         /* Derive Fract16 Units. */
-
-    uint32_t IndexAngleRef;             /* Virtual Index - Index, VirtualIndexOffset */
-    uint32_t AlignOffsetRef;            /* Align - Index */
-
-    uint16_t ExtendedDeltaTStop;         /* ExtendedTimer time read as deltaT stopped, default as 1s */
-    // move to extension
-    // uint16_t SurfaceDiameter;            /* Derive Linear Units. */
-    // uint16_t GearRatioInput;             /* Derivce Surface Units. DistancePerRevolution_Divider */
-    // uint16_t GearRatioOutput;            /* DistancePerRevolution_Factor */
-
+    uint16_t CountsPerRevolution;           /* Derive Angular Units. */
+    uint32_t SpeedPerUnitRef_Rpm;           /* Derive Fract16 Units. */
+    uint32_t IndexAngleOffset;              /* AngleZ. Commutation offset - d-axis to Z. Calibrated, not user set. */
+    uint32_t VirtualHomeOffset;             /* Home offset - Z to application zero. User set, arbitrary. */
+    uint16_t ExtendedDeltaTStop;            /* ExtendedTimer time read as deltaT stopped, default as 1s */
+    bool IsIndexCalibrated;                 /* IndexAngleOffset determined by a calibration pass. Angle 0 is a legal value. */
 #if defined(ENCODER_QUADRATURE_MODE_ENABLE)
     bool IsQuadratureCaptureEnabled;    /* Quadrature Mode - enable hardware/emulated quadrature speed capture */
     bool IsALeadBPositive;              /* User runtime calibration for encoder install direction. Accounts for LUT calibration */
@@ -132,21 +158,16 @@ typedef struct Encoder_State
     Encoder_Phases_T Phases; /* Prev State */
     uint32_t ErrorCount;
 // #endif
-
     AngleCounter_T AngleCounter;
+    // Angle_T InterpolationAngle;
     // PulseTimer_State_T TimerState;
-
     int32_t DirectionComp;
 
-    /* Homing */
-    uint32_t IndexCount;
-    uint32_t IndexAngleRef; /* 32 */
-    uint32_t IndexAngleError;
-    Encoder_Align_T Align;
-    uint32_t AlignOffsetRef;
-    uint32_t AlignAngle; /* angle at last align */
-    // int32_t AbsoluteOffset;
-    bool IsHomed;
+    /* Position Reference */
+    int32_t IndexAngleCapture;      /* Base.Angle at the last index edge, raw. ISR writes. ENCODER_INDEX_NOT_CAPTURED when armed. */
+    uint32_t UserZeroAngle;         /* Derived: IndexAngleOffset + VirtualHomeOffset. Application zero in the d-axis frame. */
+    uint32_t HomingStepsRemaining;  /* Search travel budget, counted down by Encoder_ProcHoming */
+    Encoder_RefState_T RefState;
 }
 Encoder_State_T;
 
@@ -185,21 +206,11 @@ Encoder_T;
     #define _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)
 #endif
 
-#define ENCODER_INIT(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_State, p_Config)    \
-{                                                                                                               \
-    _ENCODER_INIT_HW_COUNTER(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId) \
-    _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)                                                 \
-    .TIMER = PULSE_TIMER_INIT_EXTENDED(p_TimerHal, TimerFreq, SpeedSampleFreq, &((p_State)->TimerState), p_ExtendedTimer, ExtendedTimerFreq), \
-    .POLLING_FREQ           = PollingFreq,                                  \
-    .P_STATE                = (p_State),                                      \
-    .P_NVM_CONFIG           = p_Config,                                      \
-}
-
-
 
 /******************************************************************************/
 /*!
     @brief Hal Abstraction
+    Handle the AngleCounter
 */
 /******************************************************************************/
 /*
@@ -232,19 +243,112 @@ static inline uint32_t _Encoder_GetAngle32(Encoder_T * p_encoder)
 #endif
 }
 
-
-static inline uint16_t Encoder_GetAngle(Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
-
-/*  */
+/*
+    Reset pulse accumulation and speed state. Retains Base.Angle - the position datum is
+    owned by Align and Index, not by a counter reset.
+*/
 static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
 {
-    AngleCounter_Zero(&p_encoder->P_STATE->AngleCounter);
-    Angle_ZeroCaptureState(&p_encoder->P_STATE->AngleCounter.Base);
-    p_encoder->P_STATE->IndexCount = 0U;
+    AngleCounter_ZeroCount(&p_encoder->P_STATE->AngleCounter);
+    Angle_StopDelta(&p_encoder->P_STATE->AngleCounter.Base);
 #if     defined(ENCODER_HW_DECODER)
     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
     HAL_Encoder_ClearCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER);
 #endif
+}
+
+/******************************************************************************/
+/*!
+    @brief Angle by frame. Base.Angle is the d-axis frame.
+*/
+/******************************************************************************/
+static inline uint16_t Encoder_GetAngle(Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
+
+/* Application frame - zero at virtual home. Valid when Encoder_IsHomed. */
+static inline uint16_t Encoder_GetAngle_User(const Encoder_State_T * p_encoder) { return (p_encoder->AngleCounter.Base.Angle - p_encoder->UserZeroAngle) >> ENCODER_ANGLE_SHIFT; }
+
+/******************************************************************************/
+/*
+    Index
+*/
+/******************************************************************************/
+/*
+    Assert theta := IndexAngleOffset. Two stores, no branch, no mode dispatch.
+
+    Captures raw and interprets nothing - the polling thread subtracts IndexAngleOffset to get
+    either the calibration delta or the per revolution count drift, and promotes RefState.
+
+    IndexAngleCapture doubles as the armed sentinel, so no third field is written here:
+    two writes carry two values, and a latch would be a third.
+*/
+static inline void Encoder_CaptureIndex(Encoder_State_T * p_encoder)
+{
+// #if defined(ENCODER_HW_DECODER)
+//     // HAL_Encoder_ClearCounter(p_encoder->P_HAL_ENCODER_COUNTER);
+// #endif
+    // p_encoder->IndexAngleError = p_encoder->AngleCounter.Base.Angle - p_encoder->Config.IndexAngleOffset;
+    p_encoder->IndexAngleCapture = p_encoder->AngleCounter.Base.Angle;
+    p_encoder->AngleCounter.Base.Angle = p_encoder->Config.IndexAngleOffset; /* Snap to Z */
+}
+
+/* Signed count drift over the last revolution. Calibration delta while IndexAngleOffset is uncalibrated. */
+static inline int32_t _Encoder_GetIndexAngleError(const Encoder_State_T * p_encoder) { return p_encoder->IndexAngleCapture - (int32_t)p_encoder->Config.IndexAngleOffset; }
+static inline int32_t Encoder_GetIndexAngleError(const Encoder_State_T * p_encoder) { return _Encoder_GetIndexAngleError(p_encoder) >> ENCODER_ANGLE_SHIFT; }
+
+/* An index edge has landed since the capture was last armed. IndexAngleError is meaningless until then. */
+static inline bool Encoder_IsIndexCaptured(const Encoder_State_T * p_encoder) { return (p_encoder->IndexAngleCapture != ENCODER_INDEX_NOT_CAPTURED); }
+
+/*
+    Call at the sensor poll rate, on every path - not only while searching.
+    An index edge reached during an ordinary open loop start up promotes the same way a
+    deliberate homing sweep does; only the travel budget belongs to the search.
+*/
+static inline void Encoder_PollIndexCapture(Encoder_State_T * p_encoder)
+{
+    if (Encoder_IsIndexCaptured(p_encoder) == true) { p_encoder->RefState = ENCODER_REF_STATE_HOMED; }
+}
+
+/******************************************************************************/
+/*!
+    @brief Position Reference State
+*/
+/******************************************************************************/
+static inline Encoder_RefState_T Encoder_GetRefState(const Encoder_State_T * p_encoder) { return p_encoder->RefState; }
+
+/* theta_e valid - commutation available */
+static inline bool Encoder_IsAligned(const Encoder_State_T * p_encoder) { return (p_encoder->RefState >= ENCODER_REF_STATE_ALIGNED); }
+/* theta_m valid - absolute position available */
+static inline bool Encoder_IsHomed(const Encoder_State_T * p_encoder) { return (p_encoder->RefState >= ENCODER_REF_STATE_HOMED); }
+
+static inline bool Encoder_IsPositionRefSet(const Encoder_State_T * p_encoder) { return Encoder_IsAligned(p_encoder); }
+
+
+/******************************************************************************/
+/*!
+    Align to the rotor d-axis. Electrical datum only.
+*/
+/******************************************************************************/
+/*
+    Assert theta := 0 at the d-axis. Call after energizing phase A and waiting for the shaft to settle.
+    Skipped once homed - a mechanical datum is strictly stronger and must not be demoted to an
+    electrical one, which would also discard the calibrated frame on every ordinary start up.
+
+    Re-arms the capture: the frame restarts here, so only an index edge seen after this align
+    may promote. A stale capture from a previous run refers to a frame that no longer exists.
+*/
+static inline void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder)
+{
+    if (Encoder_IsHomed(p_encoder) == false)
+    {
+        p_encoder->AngleCounter.Base.Angle = 0;
+        p_encoder->IndexAngleCapture = ENCODER_INDEX_NOT_CAPTURED;
+        p_encoder->RefState = ENCODER_REF_STATE_ALIGNED;
+    }
+}
+
+static inline void Encoder_CompleteAlignValidate(const Encoder_T * p_encoder)
+{
+    _Encoder_ZeroPulseCount(p_encoder);
 }
 
 
@@ -253,12 +357,6 @@ static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
     @brief Direction
 */
 /******************************************************************************/
-/* Direction set by outer module */
-/* SinglePhase Capture is always positive. assign direction comp */
-static inline void Encoder_SinglePhase_CaptureDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
-/* 0 until set */
-static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
-
 static inline bool _Encoder_IsQuadratureCaptureEnabled(const Encoder_State_T * p_encoder)
 {
 #if     defined(ENCODER_QUADRATURE_MODE_ENABLE)
@@ -267,6 +365,13 @@ static inline bool _Encoder_IsQuadratureCaptureEnabled(const Encoder_State_T * p
     return false;
 #endif
 }
+
+/* 0 until set */
+static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
+/* Direction set by outer module */
+/* SinglePhase Capture is always positive. assign direction comp */
+static inline void Encoder_SinglePhase_CaptureDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
+
 /*
     Convert signed capture to user reference. Captured as ALeadB is positive by default
 */
@@ -274,45 +379,14 @@ static inline int32_t _Encoder_Quadrature_GetDirection(const Encoder_State_T * p
 
 /* On Init */
 /* Select using IsQuadratureCaptureEnabled */
-static inline int32_t _Encoder_GetDirectionComp(const Encoder_State_T * p_encoder)
+static inline int32_t _Encoder_ResolveDirectionComp(const Encoder_State_T * p_encoder)
 {
-    return (_Encoder_IsQuadratureCaptureEnabled(p_encoder)) ? _Encoder_Quadrature_GetDirection(p_encoder) : _Encoder_SinglePhase_GetDirection(p_encoder);
+    return _Encoder_IsQuadratureCaptureEnabled(p_encoder) ? _Encoder_Quadrature_GetDirection(p_encoder) : _Encoder_SinglePhase_GetDirection(p_encoder);
 }
 
 /* Query for Comp */
 /* return value assigned at Init */
 static inline int32_t Encoder_GetDirectionRef(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
-
-
-
-/******************************************************************************/
-/*!
-    @brief
-*/
-/******************************************************************************/
-static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { Angle_ZeroAngle(&p_encoder->AngleCounter.Base); }
-
-/******************************************************************************/
-/*!
-    todo align state
-*/
-/******************************************************************************/
-static inline bool Encoder_IsAligned(const Encoder_State_T * p_encoder)
-{
-    return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_PHASE);
-}
-
-static inline bool Encoder_IsPositionRefSet(Encoder_State_T * p_encoder) { return (p_encoder->IsHomed || Encoder_IsAligned(p_encoder)); }
-
-
-/******************************************************************************/
-/*!
-    @brief inline config
-*/
-/******************************************************************************/
-static inline uint16_t Encoder_GetIndexZeroRef(const Encoder_Config_T * p_encoder) { return p_encoder->IndexAngleRef >> ENCODER_ANGLE_SHIFT; }
-static inline void Encoder_SetIndexZeroRef(Encoder_Config_T * p_encoder, uint16_t angle) { p_encoder->IndexAngleRef = angle << ENCODER_ANGLE_SHIFT; }
-static inline void Encoder_ClearIndexZeroRef(Encoder_Config_T * p_encoder) { p_encoder->IndexAngleRef = 0U; }
 
 
 /******************************************************************************/
@@ -326,20 +400,24 @@ extern void Encoder_InitCounter(Encoder_T * p_encoder);
 extern void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder);
 #endif
 
-void Encoder_StartHoming(Encoder_State_T * p_encoder);
-uint16_t Encoder_GetHomingAngle(const Encoder_State_T * p_encoder);
-bool Encoder_IsHomingIndexFound(const Encoder_State_T * p_encoder);
-bool Encoder_IsHomingIndexError(const Encoder_State_T * p_encoder);
-bool Encoder_PollHomingComplete(Encoder_State_T * p_encoder);
-void Encoder_CalibrateIndexZeroRef(Encoder_State_T * p_encoder);
-// void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder);
+extern void Encoder_PollIndexCapture(Encoder_State_T * p_encoder);
 
-extern void Encoder_CheckAlignRef(Encoder_State_T * p_encoder);
-extern void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder);
-extern uint16_t Encoder_GetAngleAligned(const Encoder_State_T * p_encoder);
-extern bool Encoder_ProcAlignValidate(Encoder_State_T * p_encoder);
-extern void Encoder_CompleteAlignValidate(Encoder_T * p_encoder);
-extern void Encoder_ClearAlign(Encoder_State_T * p_encoder);
+/* Homing - acquire the mechanical datum from the index */
+extern uint16_t Encoder_GetHomingDelta(const Encoder_State_T * p_encoder);
+extern void Encoder_StartHoming(Encoder_State_T * p_encoder);
+extern void Encoder_ProcHoming(Encoder_State_T * p_encoder);
+extern Encoder_HomingStatus_T Encoder_GetHomingStatus(const Encoder_State_T * p_encoder);
+extern Encoder_HomingStatus_T Encoder_PollHoming(Encoder_State_T * p_encoder);
+
+extern void Encoder_CalibrateIndexAngleOffset(Encoder_State_T * p_encoder);
+extern void Encoder_CalibrateVirtualHomeOffset(Encoder_State_T * p_encoder);
+
+/* Align - acquire the electrical datum from the rotor d-axis */
+// extern void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder);
+// extern void Encoder_CompleteAlignValidate(const Encoder_T * p_encoder);
+
+extern void Encoder_ClearPositionRef(Encoder_State_T * p_encoder);
+extern void Encoder_ResolveUserZero(Encoder_State_T * p_encoder);
 
 #if defined(ENCODER_QUADRATURE_MODE_ENABLE)
 extern void Encoder_SetQuadratureMode(Encoder_State_T * p_encoder, bool isEnabled);
@@ -350,23 +428,39 @@ extern void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder);
 #endif
 
 extern void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t countsPerRevolution);
-extern void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef);
-// extern void Encoder_SetDistancePerRevolution(Encoder_State_T * p_encoder, uint16_t distance, uint16_t rotation);
-// extern void Encoder_SetSurfaceRatio(Encoder_State_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatioSurface, uint32_t gearRatioDrive);
-// extern void Encoder_SetGroundRatio_US(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio);
-// extern void Encoder_SetGroundRatio_Metric(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio);
+extern void Encoder_SetSpeedPerUnitRef(Encoder_State_T * p_encoder, uint16_t speedRef);
 
 /******************************************************************************/
 /*!
 */
 /******************************************************************************/
+/*
+    Read-only diagnostics. Everything here is derived from existing state - no field exists for
+    the sake of the interface.
+*/
 typedef enum Encoder_VarId
 {
+    /* Speed */
     ENCODER_VAR_FREQ,
     ENCODER_VAR_RPM,
     ENCODER_VAR_DELTA_T_SPEED,
     ENCODER_VAR_DELTA_D_SPEED,
     ENCODER_VAR_COUNTER_D,
+
+    /* Position - the same shaft in each of the two readable frames */
+    ENCODER_VAR_ANGLE,              /* angle16, d-axis frame. What commutation reads. */
+    ENCODER_VAR_ANGLE_USER,         /* angle16, application frame. Meaningful once HOMED. */
+
+    /* Reference acquisition - answers "why will it not run" and "is position trustworthy" */
+    ENCODER_VAR_REF_STATE,          /* Encoder_RefState_T: NONE / ALIGNED / HOMED */
+    ENCODER_VAR_HOMING_STATUS,      /* Encoder_HomingStatus_T: SEARCHING / FOUND / TIMEOUT */
+    ENCODER_VAR_IS_INDEX_CAPTURED,  /* an index edge has landed since the capture was armed */
+
+    /* Signal integrity */
+    ENCODER_VAR_INDEX_ANGLE_ERROR,  /* signed angle16 drift over the last revolution. 0 when no counts lost. */
+    ENCODER_VAR_ERROR_COUNT,        /* illegal quadrature transitions */
+    ENCODER_VAR_DIRECTION_COMP,     /* resolved install direction, +1 / -1 / 0 before calibration */
+    ENCODER_VAR_PHASES,             /* raw A/B state, XXXXBABA. Wiring check at standstill. */
 }
 Encoder_VarId_T;
 
@@ -379,9 +473,9 @@ typedef enum Encoder_ConfigId
     ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP,
     ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED,
     ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE,
-    ENCODER_CONFIG_INDEX_ZERO_REF,
-    ENCODER_CONFIG_CALIBRATE_ZERO_REF,
-    // ENCODER_CONFIG_RUN_HOMING,
+    ENCODER_CONFIG_INDEX_ANGLE_OFFSET,      /* Commutation offset - d-axis to Z */
+    ENCODER_CONFIG_VIRTUAL_HOME_OFFSET,     /* Home offset - Z to application zero */
+    ENCODER_CONFIG_IS_INDEX_CALIBRATED,
 }
 Encoder_ConfigId_T;
 
@@ -389,4 +483,6 @@ extern int32_t _Encoder_ConfigId_Get(const Encoder_Config_T * p_encoder, Encoder
 extern void _Encoder_ConfigId_Set(Encoder_Config_T * p_encoder, Encoder_ConfigId_T varId, int32_t value);
 
 extern void Encoder_ConfigId_Set(Encoder_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue);
+
+extern int32_t Encoder_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId);
 

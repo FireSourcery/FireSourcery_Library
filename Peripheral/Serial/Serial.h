@@ -35,6 +35,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 typedef const struct Serial
 {
     HAL_Serial_T * P_HAL_SERIAL;
@@ -42,30 +47,6 @@ typedef const struct Serial
     RingT_T TX_RING;
 }
 Serial_T;
-
-
-
-/*
-    Serial rings are byte rings: the unit is what HAL_Serial_ReadRxChar returns.
-    Buffer sizes are in bytes and must each be a power of 2 (RING_TYPE_INIT static_asserts).
-
-    SERIAL_INIT  caller supplies the two Ring_State_T allocations
-    SERIAL_ALLOC allocates them inline - file scope only, the compound literals
-                 inside RING_STATE_ALLOC need static storage duration
-*/
-#define SERIAL_INIT(p_Hal, p_TxState, TxBufferSize, p_RxState, RxBufferSize)    \
-{                                                                               \
-    .P_HAL_SERIAL = p_Hal,                                                      \
-    .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, p_TxState),           \
-    .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxState),           \
-}
-
-#define SERIAL_ALLOC(p_Hal, TxBufferSize, RxBufferSize)    \
-{                                                          \
-    .P_HAL_SERIAL = p_Hal,                                            \
-    .TX_RING = RING_T_ALLOC(sizeof(uint8_t), TxBufferSize),     \
-    .RX_RING = RING_T_ALLOC(sizeof(uint8_t), RxBufferSize),     \
-}
 
 /******************************************************************************/
 /*!

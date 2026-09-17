@@ -52,9 +52,7 @@ typedef const struct RingT
 RingT_T;
 
 /* Caller validates that p_State was allocated for (UnitSize, Length) */
-#define RING_T_INIT(UnitSize, Length, p_State) { .TYPE = RING_TYPE_INIT(UnitSize, Length), .P_STATE = (p_State), }
-#define RING_T_ALLOC(UnitSize, Length) RING_T_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
-
+#define RING_T_INIT(UnitSize, Length) RING_T_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
 #define RING_T_INIT_AS(T, Length)  { .TYPE = RING_TYPE_INIT(sizeof(T), Length), .P_STATE = RING_STATE_ALLOC(sizeof(T), Length), }
 
 /*

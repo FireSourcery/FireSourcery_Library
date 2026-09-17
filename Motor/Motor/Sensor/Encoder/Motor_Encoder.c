@@ -45,6 +45,22 @@ static inline Encoder_State_T * GetEncoderState(Motor_T * p_motor) { return GetE
     Homing States
 */
 /******************************************************************************/
+/*
+    Hold the align vector until the shaft stops moving, then let the caller capture.
+    Restarts the settle window on any measured motion.
+*/
+static bool PollAlignSettled(Motor_T * p_motor)
+{
+    bool isSettled = TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER);
+
+    if ((isSettled == false) && (Encoder_ModeDT_GetSpeed_PerUnit(GetEncoderState(p_motor)) != 0))
+    {
+        TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    }
+
+    return isSettled;
+}
+
 static void StartHoming(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
@@ -60,27 +76,40 @@ static void ProcHoming(Motor_T * p_motor)
     /* alternatively openloop speed/angle ramp */
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        angle16_t angle = Encoder_GetHomingAngle(GetEncoderState(p_motor)) * p_state->Config.SpeedRating.PolePairs;
+        angle16_t angle = Encoder_GetHomingDelta(GetEncoderState(p_motor)) * p_state->Config.SpeedRating.PolePairs;
         Angle_Integrate(&p_state->OpenLoopAngle, angle);
         Motor_FOC_ProcAngleFeedforwardV(p_state, Angle_Value(&p_state->OpenLoopAngle), _Motor_GetVAlign_Duty(p_state), 0);
         //Motor_FOC_WriteDuty(p_motor);
+        Encoder_ProcHoming(GetEncoderState(p_motor)); /* spend one step of the search travel budget */
     }
 }
 
+/*
+    A spent travel budget is a missing index channel, not a completed home.
+*/
 static State_T * HomingTransition(Motor_T * p_motor)
 {
     State_T * p_nextState = NULL;
 
-    if (Encoder_PollHomingComplete(GetEncoderState(p_motor)) == true)
+    switch (Encoder_GetHomingStatus(GetEncoderState(p_motor)))
     {
-        Phase_Deactivate(&p_motor->PHASE);
-        p_nextState = &MOTOR_STATE_CALIBRATION;
+        case ENCODER_HOMING_FOUND:
+            Phase_Deactivate(&p_motor->PHASE);
+            p_nextState = &MOTOR_STATE_CALIBRATION;
+            break;
+
+        case ENCODER_HOMING_TIMEOUT:
+            Phase_Deactivate(&p_motor->PHASE);
+            p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
+            p_nextState = &MOTOR_STATE_FAULT;
+            break;
+
+        case ENCODER_HOMING_SEARCHING: break;
     }
 
     return p_nextState;
 }
 
-//todo add align
 static const State_T STATE_ENCODER_HOMING =
 {
     // .ID         = MOTOR_STATE_ID_CALIBRATION,
@@ -92,23 +121,63 @@ static const State_T STATE_ENCODER_HOMING =
     .NEXT       = (State_Input0_T)HomingTransition,
 };
 
+/*
+    Align must precede the sweep. Encoder_CalibrateIndexAngleOffset commits the captured angle as
+    the d-axis to Z offset, so the sweep has to start from an established d-axis zero - otherwise
+    the captured value is measured in no frame at all and the calibration is meaningless.
+*/
+static void HomingAlignEntry(Motor_T * p_motor)
+{
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR);
+}
+
+static void HomingAlignLoop(Motor_T * p_motor)
+{
+    Motor_FOC_ProcStartUpAlign(p_motor);
+}
+
+static State_T * HomingAlignTransition(Motor_T * p_motor)
+{
+    State_T * p_nextState = NULL;
+
+    if (PollAlignSettled(p_motor) == true)
+    {
+        Angle_ZeroCaptureState(&p_motor->P_MOTOR->OpenLoopAngle);
+        Encoder_CaptureAlignZero(GetEncoderState(p_motor));
+        p_nextState = (State_T *)&STATE_ENCODER_HOMING;
+    }
+
+    return p_nextState;
+}
+
+static const State_T STATE_ENCODER_HOMING_ALIGN =
+{
+    .P_TOP      = &MOTOR_STATE_CALIBRATION,
+    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
+    .DEPTH      = 1U,
+    .ENTRY      = (State_Action_T)HomingAlignEntry,
+    .LOOP       = (State_Action_T)HomingAlignLoop,
+    .NEXT       = (State_Input0_T)HomingAlignTransition,
+};
+
 
 void Motor_Encoder_StartHoming(Motor_T * p_motor)
 {
-    StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
+    StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING_ALIGN);
 }
 
-/*  */
-void Motor_Encoder_CalibrateHomeOffset(Motor_T * p_motor)
+/* Commit the measured index position. Valid only after a homing pass started from a fresh align. */
+void Motor_Encoder_CalibrateIndexAngleOffset(Motor_T * p_motor)
 {
-    Encoder_CalibrateIndexZeroRef(GetEncoderState(p_motor));
+    Encoder_CalibrateIndexAngleOffset(GetEncoderState(p_motor));
 }
 
-void Motor_Encoder_StartVirtualHome(Motor_T * p_motor)
-{
-    (void)p_motor;
-    // Motor_Calibration_StartHome(p_motor);
-}
+/*
+    Virtual home is a read frame, not a datum - Config.VirtualHomeOffset shifts the reported zero
+    and needs no acquisition of its own. Moving to it is a position command once homed,
+    and waits on closed loop position control (FeedbackMode.Position).
+*/
 
 /******************************************************************************/
 /*
@@ -134,19 +203,11 @@ static State_T * AlignZeroNext(Motor_T * p_motor)
 {
     State_T * p_nextState = NULL;
 
-    if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
+    if (PollAlignSettled(p_motor) == true)
     {
         Angle_ZeroCaptureState(&p_motor->P_MOTOR->OpenLoopAngle);
         Encoder_CaptureAlignZero(GetEncoderState(p_motor));
         p_nextState = &VALIDATE_ALIGN;
-    }
-    else
-    {
-        /* Reset the timer until speed is 0 */
-        if (Encoder_ModeDT_GetSpeed_PerUnit(GetEncoderState(p_motor)) != 0)
-        {
-            TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
-        }
     }
 
     return p_nextState;
@@ -359,18 +420,11 @@ static State_T * StartUpAlignTransition(Motor_T * p_motor)
 {
     State_T * p_nextState = NULL;
 
-    if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
+    if (PollAlignSettled(p_motor) == true)
     {
         Angle_ZeroCaptureState(&p_motor->P_MOTOR->OpenLoopAngle);
         Encoder_CaptureAlignZero(GetEncoderState(p_motor));
         p_nextState = &START_UP_VALIDATE_ALIGN;
-    }
-    else
-    {
-        if (Encoder_ModeDT_GetSpeed_PerUnit(GetEncoderState(p_motor)) != 0)
-        {
-            TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
-        }
     }
 
     return p_nextState;

@@ -232,8 +232,7 @@ typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angl
 typedef uint16_t uangle16_t;    /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
 typedef uint32_t angle32_t; /* fract32 */
-// typedef int32_t nangle32_t; /* rev.angle */
-// typedef int32_t turn32_t;
+// typedef int32_t nangle32_t; /* rev.angle16 */
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
 static const angle16_t ANGLE16_30 = 0x1555U;   /*! 5461 */
@@ -249,20 +248,18 @@ static const angle16_t ANGLE16_270 = 0xC000U;  /*! 49152, -16384, 270 == -90 */
 static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
-
 /*
     radian si scaled
     [0:1.0f/2pi] ~0.16 of rev
 */
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / (2 * PI) */
 
-// #define ANGLE16(radians) ((angle16_t)((radians) * ANGLE16_PER_RADIAN))
-// #define ANGLE16_OF_TURNS(turns) ((angle16_t)((turns) * 65536.0F))
+#define ANGLE16(radians) ((angle16_t)((radians) * ANGLE16_PER_REVOLUTION / (2.0F * PI_FLOAT)))
+#define ANGLE16_OF_TURNS(turns) ((angle16_t)((turns) * 65536.0F))
 
 /* from scaled storage */
-static inline angle16_t angle16_of_rad_fract16(fract16_t rad) { return (angle16_t)fract16_mul(rad, ANGLE16_PER_RADIAN); }
-/*  */
 static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) >> FRACT16_N_BITS); }
+// static inline angle16_t angle16_of_radians(int32_t rad, int32_t scaling) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) / scaling); }
 
 /*
 

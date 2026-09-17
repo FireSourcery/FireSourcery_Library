@@ -280,20 +280,21 @@ int Motor_Var_Board_Get(Motor_Var_Board_T varId)
 
 */
 /******************************************************************************/
-int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T varId)
-{
-    int value = 0;
-    switch (varId)
-    {
-        // case MOTOR_VAR_SPEED_RATED_RPM:                 value = _Motor_GetSpeedRated_Rpm(p_motor);             break;
-        // case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVNominalRef_Rpm(p_motor);              break;
-        // case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVNominalRef_Angle(p_motor);             break;
-        // case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
-        // case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = _Motor_GetVSpeedRated_Fract16(p_motor);               break;
-        default: break;
-    }
-    return value;
-}
+//diagnostics
+// int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T varId)
+// {
+//     int value = 0;
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_SPEED_RATED_RPM:                 value = Motor_SpeedRated_Rpm(p_motor);             break;
+//         case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVNominalRef_Rpm(p_motor);              break;
+//         case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVNominalRef_Angle(p_motor);             break;
+//         case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
+//         case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = _Motor_GetVSpeedRated_Fract16(p_motor);               break;
+//         default: break;
+//     }
+//     return value;
+// }
 
 
 /******************************************************************************/
@@ -458,7 +459,7 @@ int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, i
         case MOTOR_VAR_TYPE_HALL_CMD:       return 0;
         // #endif
         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
-        case MOTOR_VAR_TYPE_ENCODER_STATE:  return Encoder_ModeDT_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId);
+        case MOTOR_VAR_TYPE_ENCODER_STATE:  return Encoder_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId);
         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return _Encoder_ConfigId_Get(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId);
         #endif
         default: return 0;

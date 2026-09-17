@@ -26,12 +26,18 @@
 /*!
     @file   Encoder_ISR.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Pin function threads
 */
 /******************************************************************************/
 #include "Encoder.h"
 #include "Encoder_ModeDT.h"
 
+
+/******************************************************************************/
+/*!
+    Pin function threads
+*/
+/******************************************************************************/
 #if defined(ENCODER_HW_EMULATED)
 
 /******************************************************************************/
@@ -40,21 +46,15 @@
     ENCODER_HW_EMULATED mode DeltaD, ModeDT; DeltaT ISR Mode
 */
 /******************************************************************************/
-static inline Encoder_Phases_T _Encoder_ReadPins(const Encoder_T * p_encoder)
+static inline Encoder_Phases_T _Encoder_ReadPins(Encoder_T * p_encoder)
 {
     return (Encoder_Phases_T) { .A = Pin_Input_ReadPhysical(&p_encoder->PIN_A), .B = Pin_Input_ReadPhysical(&p_encoder->PIN_B) };
 }
 
-static inline uint8_t _Encoder_CaptureStateOf(Encoder_State_T * p_encoder, Encoder_Phases_T phases)
+static inline Encoder_Phases_T _Encoder_NextStateOf(const Encoder_State_T * p_encoder, Encoder_Phases_T phases)
 {
-    p_encoder->Phases.PrevA = p_encoder->Phases.A;
-    p_encoder->Phases.PrevB = p_encoder->Phases.B;
-    p_encoder->Phases.A = phases.A;
-    p_encoder->Phases.B = phases.B;
-    return p_encoder->Phases.Value;
+    return  (Encoder_Phases_T) { .PrevA = p_encoder->Phases.PrevA, .PrevB = p_encoder->Phases.PrevB, .A = p_encoder->Phases.A, .B = p_encoder->Phases.B };
 }
-
-static inline uint8_t _Encoder_CapturePhasesState(const Encoder_T * p_encoder) { return _Encoder_CaptureStateOf(p_encoder->P_STATE, _Encoder_ReadPins(p_encoder)); }
 
 /*!
     Determine Speed and Angle
@@ -62,7 +62,17 @@ static inline uint8_t _Encoder_CapturePhasesState(const Encoder_T * p_encoder) {
     caller handle Direction comp on get
 */
 /* instead of imitating the hw decoder case, capture a separate Angle32 */
-static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count) { AngleCounter_CaptureCount(&p_encoder->AngleCounter, count); }
+static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count)
+{
+    // p_encoder->P_STATE->ErrorCount += (uint32_t)math_abs(count) >> 1U; (count == +2||-2)
+    AngleCounter_CaptureCount(&p_encoder->AngleCounter, count);
+}
+
+static inline uint8_t _Encoder_CapturePhasesState(Encoder_State_T * p_encoder, Encoder_Phases_T phases)
+{
+    p_encoder->Phases = _Encoder_NextStateOf(p_encoder, phases);
+    return p_encoder->Phases.Value;
+}
 
 /******************************************************************************/
 /*
@@ -86,19 +96,20 @@ static inline int8_t _Encoder_Quadrature_CountOf(uint8_t phasesState)
     return ENCODER_TABLE[phasesState];
 }
 
-static inline void _Encoder_Quadrature_CapturePulse(const Encoder_T * p_encoder)
+
+static inline void _Encoder_Quadrature_CapturePulse(Encoder_T * p_encoder)
 {
-    // if (count == +2||-2) { p_encoder->ErrorCount++; }
-    _Encoder_CaptureCount(p_encoder->P_STATE, _Encoder_Quadrature_CountOf(_Encoder_CapturePhasesState(p_encoder)));
+    _Encoder_CapturePhasesState(p_encoder->P_STATE, _Encoder_ReadPins(p_encoder));
+    _Encoder_CaptureCount(p_encoder->P_STATE, _Encoder_Quadrature_CountOf(p_encoder->P_STATE->Phases.Value));
 }
 
 /* Alternatively, single phase signed capture or combine with B */
-static inline void _Encoder_Quadrature_CapturePhaseA(const Encoder_T * p_encoder)
+static inline void _Encoder_Quadrature_CapturePhaseA(Encoder_T * p_encoder)
 {
     _Encoder_CaptureCount(p_encoder->P_STATE, ((Pin_Input_ReadPhysical(&p_encoder->PIN_B) == false) ? 1 : -1));
 }
 
-static inline void _Encoder_Quadrature_CapturePhaseB(const Encoder_T * p_encoder)
+static inline void _Encoder_Quadrature_CapturePhaseB(Encoder_T * p_encoder)
 {
     _Encoder_CaptureCount(p_encoder->P_STATE, ((Pin_Input_ReadPhysical(&p_encoder->PIN_A) == true) ? 1 : -1));
 }
@@ -108,7 +119,7 @@ static inline void _Encoder_Quadrature_CapturePhaseB(const Encoder_T * p_encoder
     Single Phase, Non-Directional
 */
 /******************************************************************************/
-static inline void _Encoder_SinglePhase_CapturePulse(const Encoder_T * p_encoder)
+static inline void _Encoder_SinglePhase_CapturePulse(Encoder_T * p_encoder)
 {
     _Encoder_CaptureCount(p_encoder->P_STATE, 1);
 }
@@ -118,57 +129,36 @@ static inline void _Encoder_SinglePhase_CapturePulse(const Encoder_T * p_encoder
     User compile time implement mode
 */
 /******************************************************************************/
-static inline void Encoder_Quadrature_CapturePulse(const Encoder_T * p_encoder)
+static inline void Encoder_Quadrature_CapturePulse(Encoder_T * p_encoder)
 {
     _Encoder_Quadrature_CapturePulse(p_encoder);
     PulseTimer_CaptureEdge(&p_encoder->TIMER);
-    Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
-static inline void Encoder_SinglePhase_CapturePulse(const Encoder_T * p_encoder)
+static inline void Encoder_SinglePhase_CapturePulse(Encoder_T * p_encoder)
 {
     _Encoder_SinglePhase_CapturePulse(p_encoder);
     PulseTimer_CaptureExtendedDeltaT(&p_encoder->TIMER);
-    Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
 /*
     Default call from ISR. Quadrature and Single Phase select via IsQuadratureMode flag
 */
-static inline void Encoder_CapturePulse(const Encoder_T * p_encoder)
+static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 {
     if (_Encoder_IsQuadratureCaptureEnabled(p_encoder->P_STATE) == true) { _Encoder_Quadrature_CapturePulse(p_encoder); }
     else { _Encoder_SinglePhase_CapturePulse(p_encoder); }
     PulseTimer_CaptureExtendedDeltaT(&p_encoder->TIMER);
-    Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
 /* Signed capture external */
 /* -1, 0, 1 */
-static inline void Encoder_CaptureCount(const Encoder_T * p_encoder, int sign)
+static inline void Encoder_CaptureCount(Encoder_T * p_encoder, int sign)
 {
     _Encoder_CaptureCount(p_encoder->P_STATE, sign);
     PulseTimer_CaptureExtendedDeltaT(&p_encoder->TIMER);
-    Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
-/******************************************************************************/
-/*
-    Index
-*/
-/******************************************************************************/
-static inline void Encoder_CaptureIndex(Encoder_State_T * p_encoder)
-{
-#if defined(ENCODER_HW_DECODER)
-    // HAL_Encoder_ClearCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-    // sync Angle with count
-#elif defined(ENCODER_HW_EMULATED)
-    // _Encoder_SetCounterD(p_encoder, 0);
-#endif
-    p_encoder->IndexAngleError = p_encoder->AngleCounter.Base.Angle - p_encoder->Config.IndexAngleRef;
-    p_encoder->AngleCounter.Base.Angle = p_encoder->Config.IndexAngleRef;
-    p_encoder->IndexCount++;
-}
 
 /******************************************************************************/
 /*!
@@ -180,20 +170,20 @@ static inline void Encoder_CaptureIndex(Encoder_State_T * p_encoder)
     Configured using IsQuadratureMode flag
 */
 /******************************************************************************/
-static inline void Encoder_OnPhaseA_ISR(const Encoder_T * p_encoder)
+static inline void Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
 {
     HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
     Encoder_CapturePulse(p_encoder);
 }
 
-static inline void Encoder_OnPhaseB_ISR(const Encoder_T * p_encoder)
+static inline void Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
 {
     HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID);
     Encoder_CapturePulse(p_encoder);
 }
 
 /* Index Pin */
-static inline void Encoder_OnIndex_ISR(const Encoder_T * p_encoder)
+static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
     HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID);
     Encoder_CaptureIndex(p_encoder->P_STATE);
@@ -204,7 +194,7 @@ static inline void Encoder_OnIndex_ISR(const Encoder_T * p_encoder)
     Clear every pending A/B flag avoids a redundant second Encoder_CapturePulse(), which would produce a zero-count transition
 */
 /* Shared A, B ISR */
-static inline void Encoder_OnPhaseAB_ISR(const Encoder_T * p_encoder)
+static inline void Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
 {
     HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
     HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID);
@@ -212,7 +202,7 @@ static inline void Encoder_OnPhaseAB_ISR(const Encoder_T * p_encoder)
 }
 
 /* Shared A, B, Index ISR */
-static inline void Encoder_OnPhaseABZ_ISR(const Encoder_T * p_encoder)
+static inline void Encoder_OnPhaseABZ_ISR(Encoder_T * p_encoder)
 {
     if(HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID) == true)
     {
@@ -224,7 +214,7 @@ static inline void Encoder_OnPhaseABZ_ISR(const Encoder_T * p_encoder)
     }
 }
 
-static inline void Encoder_OnPhaseC_Hall_ISR(const Encoder_T * p_encoder)
+static inline void Encoder_OnPhaseC_Hall_ISR(Encoder_T * p_encoder)
 {
     HAL_Encoder_ClearPinInterrupt(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID);
     Encoder_CapturePulse(p_encoder);

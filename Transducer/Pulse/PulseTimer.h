@@ -60,6 +60,8 @@ typedef struct PulseTimer_State
     uint32_t ExtendedTimer;
     uint16_t ExtendedTimerStop;        /* Extended timer ticks to determine stopped */
     /* Optional Ref */
+
+    // AngleCounter_T
 }
 PulseTimer_State_T;
 
