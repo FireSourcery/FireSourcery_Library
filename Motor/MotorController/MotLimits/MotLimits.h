@@ -33,17 +33,17 @@
 #include "Framework/LimitArray/LimitArray.h"
 
 /*
-    System-scope arbitration ids.
-    Slot values are unitless Q15 ufract16 derate factors in [0, FRACT16_MAX] ≡ [0, 1] of rated.
+    System-scope derate arbitration ids.
+    Slot values are unitless Q15 ufract16 derate factors in [0, FRACT16_MAX] ≡ [0, 1] of Config.
     Sources push their derate directly (no rated multiplication at the source).
     Active derate = LimitArray_Upper(...) = min of stored derates = most-restrictive source.
-    Consumer multiplies by rated once: physical = fract16_mul(rated, active_derate).
+    Pushed to each motor via Motor_Set*LimitDerate; Motor compares against its physical value channel.
+    Physical value limits (user/OptDin/protocol) are per motor, not arbitrated here.
 */
 typedef enum MotILimitId
 {
     MOT_I_LIMIT_HEAT_MC,        /* thermal — MCU/PCB (shared, both directions) */
     MOT_I_LIMIT_V_BUS,          /* power — VBus undervoltage droop OR overvoltage chop (mutually exclusive) */
-    MOT_I_LIMIT_USER,           /* user / protocol (single derate ratio) */
     MOT_I_LIMIT_COUNT,
 }
 MotILimitId_T;
@@ -52,7 +52,6 @@ typedef enum MotSpeedLimitId
 {
     MOT_SPEED_LIMIT_MC,          /* generic system cap */
     MOT_SPEED_LIMIT_V_BUS,       /* power — back-EMF ceiling from VBus */
-    MOT_SPEED_LIMIT_USER,
     MOT_SPEED_LIMIT_COUNT,
 }
 MotSpeedLimitId_T;

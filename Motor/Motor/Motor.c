@@ -61,6 +61,14 @@ void Motor_Init(Motor_T * p_dev)
     TimerT_Periodic_Init(&p_dev->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);
 
+    /* Limit inputs are upper layer owned. Init once, retained across Motor_Reset/Motor_Reinit */
+    p_dev->P_MOTOR->ILimit.Motoring = FRACT16_MAX;
+    p_dev->P_MOTOR->ILimit.Generating = FRACT16_MAX;
+    p_dev->P_MOTOR->ILimit.Derate = FRACT16_MAX;
+    p_dev->P_MOTOR->SpeedLimit.Forward = FRACT16_MAX;
+    p_dev->P_MOTOR->SpeedLimit.Reverse = FRACT16_MAX;
+    p_dev->P_MOTOR->SpeedLimit.Derate = FRACT16_MAX;
+
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
@@ -219,15 +227,13 @@ void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
 
     p_dev->P_MOTOR->FeedbackMode.Value = mode.Value;
 
-    if (p_motor->FeedbackMode.Speed == 1U)
+    /* Current mode: resolve from inputs, TorqueRamp may hold V limits from voltage mode. */
+    if (p_motor->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor); }
+    else
     {
-        if (p_motor->FeedbackMode.Current == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); } /* SpeedPid Output is I */
-        else                                     { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
+        if (p_motor->FeedbackMode.Speed == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
+        Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
     }
-
-    if (p_motor->FeedbackMode.Current == 1U)    { Ramp_SetLimits(&p_motor->TorqueRamp, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
-    else                                        { Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); } /* alternatively use Vramp */
-    // else                                        { Ramp_SetLimits(&p_motor->VRamp, v.low, v.high); }
 }
 
 
@@ -240,8 +246,8 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
     p_dev->P_MOTOR->Direction = direction;
     RotorSensor_ZeroInitial(p_dev->P_MOTOR->p_ActiveSensor);
-    Motor_ResolveSpeedLimits(p_dev);
-    Motor_ResolveILimits(p_dev);
+    Motor_ResolveSpeedLimits(p_dev->P_MOTOR);
+    Motor_ResolveILimits(p_dev->P_MOTOR);
 }
 
 
@@ -327,56 +333,38 @@ void _Motor_Tuning_SetIKi_Fixed16(Motor_Context_T * p_state, uint32_t value)
 /*!
     Active Limits — push interface
 
-    The alternative to holding a pointer to system state (P_SYSTEM_I_LIMIT/P_SYSTEM_SPEED_LIMIT):
-    the upper layer pushes resolved magnitudes down, rather than Motor pulling derate up.
-        push:   Motor_Set*Limits(magnitudes)  => _Motor_Apply*Limits => Ramp/PID
-        pull:   Config * SystemDerate         => Motor_Resolve*Limits(Motor_T *) => Ramp/PID
+    The upper layer pushes two independent inputs; Motor owns the comparison and the direction resolve.
+        Value:  physical cap in PU, per motor, single user channel.       Motor_Set*Limit*()
+        Derate: system arbitration result, ratio of Config, shared.       Motor_Set*LimitDerate()
+        limit = min(Value, Derate * Config)  => Motor_Resolve*Limits => Ramp/PID
 
-    Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. Config is the ceiling — a push
-    only ever narrows. Motor_Context_T scoped throughout; no Motor_T handle, no system pointer.
-
-    Not cached: Motor_SetDirection re-resolves from Config, so a push is transient by the same rule
-    the pull path is. The upper layer re-asserts on its update cycle.
+    Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. Config is the ceiling via Derate * Config.
 */
 /******************************************************************************/
 /*
     I Limits. Motoring aligns with Direction, Generating opposes.
-    Direction NULL collapses the interval to [0:0] — no torque until direction is set.
 */
 void Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_ufract16, uint16_t generating_ufract16)
 {
-    _Motor_ApplyILimits(p_motor, interval_of_sign_pair((sign_t)p_motor->Direction,
-        math_min(motoring_ufract16, p_motor->Config.ILimitMotoring_Fract16),
-        math_min(generating_ufract16, p_motor->Config.ILimitGenerating_Fract16)));
+    p_motor->ILimit.Motoring = motoring_ufract16;
+    p_motor->ILimit.Generating = generating_ufract16;
+    Motor_ResolveILimits(p_motor);
 }
 
-/* One side, the other read back from the applied pair */
-void Motor_SetILimitMotoring(Motor_Context_T * p_motor, uint16_t motoring_ufract16)
-{
-    Motor_SetILimits(p_motor, motoring_ufract16, interval_opposed(Motor_ILimits(p_motor), (sign_t)p_motor->Direction));
-}
-
-void Motor_SetILimitGenerating(Motor_Context_T * p_motor, uint16_t generating_ufract16)
-{
-    Motor_SetILimits(p_motor, interval_aligned(Motor_ILimits(p_motor), (sign_t)p_motor->Direction), generating_ufract16);
-}
+void Motor_SetILimitMotoring(Motor_Context_T * p_motor, uint16_t motoring_ufract16) { Motor_SetILimits(p_motor, motoring_ufract16, p_motor->ILimit.Generating); }
+void Motor_SetILimitGenerating(Motor_Context_T * p_motor, uint16_t generating_ufract16) { Motor_SetILimits(p_motor, p_motor->ILimit.Motoring, generating_ufract16); }
 
 /* Both sides to a common magnitude */
-void Motor_SetILimit(Motor_Context_T * p_motor, uint16_t i_ufract16)
-{
-    Motor_SetILimits(p_motor, i_ufract16, i_ufract16);
-}
+void Motor_SetILimit(Motor_Context_T * p_motor, uint16_t i_ufract16) { Motor_SetILimits(p_motor, i_ufract16, i_ufract16); }
 
-/* Derate form — the push equivalent of Motor_GetIDerate() on the pull path */
+/* Clear the value channel. Derate remains. */
+void Motor_ResetILimit(Motor_Context_T * p_motor) { Motor_SetILimits(p_motor, FRACT16_MAX, FRACT16_MAX); }
+
+/* System derate. Ratio of Config, compared against the value channel. */
 void Motor_SetILimitDerate(Motor_Context_T * p_motor, uint16_t scalar_ufract16)
 {
-    Motor_SetILimits(p_motor, fract16_mul(scalar_ufract16, p_motor->Config.ILimitMotoring_Fract16), fract16_mul(scalar_ufract16, p_motor->Config.ILimitGenerating_Fract16));
-}
-
-/* Clear derating — restore full Config scale */
-void Motor_ResetILimit(Motor_Context_T * p_motor)
-{
-    Motor_SetILimits(p_motor, p_motor->Config.ILimitMotoring_Fract16, p_motor->Config.ILimitGenerating_Fract16);
+    p_motor->ILimit.Derate = scalar_ufract16;
+    Motor_ResolveILimits(p_motor);
 }
 
 /*
@@ -385,35 +373,22 @@ void Motor_ResetILimit(Motor_Context_T * p_motor)
 */
 void Motor_SetSpeedLimits(Motor_Context_T * p_motor, uint16_t forward_ufract16, uint16_t reverse_ufract16)
 {
-    _Motor_ApplySpeedLimits(p_motor, interval_of_sign_pair((sign_t)p_motor->Config.DirectionForward,
-        math_min(forward_ufract16, p_motor->Config.SpeedLimitForward_Fract16),
-        math_min(reverse_ufract16, p_motor->Config.SpeedLimitReverse_Fract16)));
+    p_motor->SpeedLimit.Forward = forward_ufract16;
+    p_motor->SpeedLimit.Reverse = reverse_ufract16;
+    Motor_ResolveSpeedLimits(p_motor);
 }
 
-void Motor_SetSpeedLimitForward(Motor_Context_T * p_motor, uint16_t forward_ufract16)
-{
-    Motor_SetSpeedLimits(p_motor, forward_ufract16, interval_opposed(Motor_SpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward));
-}
+void Motor_SetSpeedLimitForward(Motor_Context_T * p_motor, uint16_t forward_ufract16) { Motor_SetSpeedLimits(p_motor, forward_ufract16, p_motor->SpeedLimit.Reverse); }
+void Motor_SetSpeedLimitReverse(Motor_Context_T * p_motor, uint16_t reverse_ufract16) { Motor_SetSpeedLimits(p_motor, p_motor->SpeedLimit.Forward, reverse_ufract16); }
 
-void Motor_SetSpeedLimitReverse(Motor_Context_T * p_motor, uint16_t reverse_ufract16)
-{
-    Motor_SetSpeedLimits(p_motor, interval_aligned(Motor_SpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward), reverse_ufract16);
-}
+void Motor_SetSpeedLimit(Motor_Context_T * p_motor, uint16_t speed_ufract16) { Motor_SetSpeedLimits(p_motor, speed_ufract16, speed_ufract16); }
 
-/* or set active direction only */
-void Motor_SetSpeedLimit(Motor_Context_T * p_motor, uint16_t speed_ufract16)
-{
-    Motor_SetSpeedLimits(p_motor, speed_ufract16, speed_ufract16);
-}
+void Motor_ResetSpeedLimit(Motor_Context_T * p_motor) { Motor_SetSpeedLimits(p_motor, FRACT16_MAX, FRACT16_MAX); }
 
 void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, uint16_t scalar_ufract16)
 {
-    Motor_SetSpeedLimits(p_motor, fract16_mul(scalar_ufract16, p_motor->Config.SpeedLimitForward_Fract16), fract16_mul(scalar_ufract16, p_motor->Config.SpeedLimitReverse_Fract16));
-}
-
-void Motor_ResetSpeedLimit(Motor_Context_T * p_motor)
-{
-    Motor_SetSpeedLimits(p_motor, p_motor->Config.SpeedLimitForward_Fract16, p_motor->Config.SpeedLimitReverse_Fract16);
+    p_motor->SpeedLimit.Derate = scalar_ufract16;
+    Motor_ResolveSpeedLimits(p_motor);
 }
 
 

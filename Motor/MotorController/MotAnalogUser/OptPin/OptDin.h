@@ -48,8 +48,8 @@ MotorController_OptDinMode_T;
 typedef struct OptDin_Config
 {
     uint16_t       SpeedPreset_Fract16; // unimplemented
-    uint16_t       SpeedLimit_Fract16;   //as derate for now
-    uint16_t       TorqueLimit_Fract16; //as derate for now
+    uint16_t       SpeedLimit_Fract16;  /* Physical PU of SpeedTypeMax. Writes the motor user value channel */
+    uint16_t       TorqueLimit_Fract16; /* Physical PU of I_TYPE_MAX. Writes the motor user value channel */
     uint16_t       SwitchBrakeFloor_Percent16;
 }
 OptDin_Config_T;

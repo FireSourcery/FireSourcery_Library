@@ -18,7 +18,7 @@
 - Challenge your own work before presenting it
 
 ### Documentation
-- When refering to a concept that is already modeled by a type or struct in code, refer to that type using `[]` e.g. `[TypeName_T]`.
+- When referring to a concept that is already modeled by a type or struct in code, refer to that type using `[]` e.g. `[TypeName_T]`.
 - Keep comments concise. Comments are reserved for points that the code cannot express, not what the code is doing.
 - Use visualizations with mermaid diagrams for describing what the code is doing
 - Extensive descriptions go in a separate markdown file, such as architecture notes.

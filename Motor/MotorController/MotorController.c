@@ -133,37 +133,35 @@ MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorCo
 */
 /******************************************************************************/
 /*
-    System-side setters
+    System-side derate setters
     Use _LimitArray parameters form (augments + values + length explicit) since there's no LimitArray_T descriptor to wrap them.
-
-    input percent derate
-    todo reconcile with user set limits in speed_pu
+    On arbitration change, push the active derate to every motor. Motor compares against its physical value channel.
 */
-bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t speed_fract16)
+bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t derate_fract16)
 {
     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    if (_LimitArray_TestSetUpper(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS); return true; }
+    if (_LimitArray_TestSetUpper(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, id, derate_fract16) == true) { Motor_Table_SetSpeedLimitDerate(&p_dev->MOTORS, MotLimits_SpeedDerate(p_lim)); return true; }
     return false;
 }
 
 bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id)
 {
     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    if (_LimitArray_TestClearEntry(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS); return true; }
+    if (_LimitArray_TestClearEntry(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id) == true) { Motor_Table_SetSpeedLimitDerate(&p_dev->MOTORS, MotLimits_SpeedDerate(p_lim)); return true; }
     return false;
 }
 
-bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t i_fract16)
+bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t derate_fract16)
 {
     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    if (_LimitArray_TestSetUpper(&p_lim->ILimitState, p_lim->ILimitValues, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS); return true; }
+    if (_LimitArray_TestSetUpper(&p_lim->ILimitState, p_lim->ILimitValues, id, derate_fract16) == true) { Motor_Table_SetILimitDerate(&p_dev->MOTORS, MotLimits_IDerate(p_lim)); return true; }
     return false;
 }
 
 bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id)
 {
     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    if (_LimitArray_TestClearEntry(&p_lim->ILimitState, p_lim->ILimitValues, MOT_I_LIMIT_COUNT, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS); return true; }
+    if (_LimitArray_TestClearEntry(&p_lim->ILimitState, p_lim->ILimitValues, MOT_I_LIMIT_COUNT, id) == true) { Motor_Table_SetILimitDerate(&p_dev->MOTORS, MotLimits_IDerate(p_lim)); return true; }
     return false;
 }
 

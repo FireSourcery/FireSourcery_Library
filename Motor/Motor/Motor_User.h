@@ -114,10 +114,10 @@ static inline fract16_t Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor) 
 // static inline bool Motor_IsSpeedRampEnabled(const Motor_Context_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
 
 /* quick derive view - unsigned magnitudes of the applied pair. Inverse of the Motor_Set*Limits resolve. */
-static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return interval_aligned(Motor_ILimits(p_motor), (sign_t)p_motor->Direction); }
-static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return interval_opposed(Motor_ILimits(p_motor), (sign_t)p_motor->Direction); }
-static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return interval_aligned(Motor_SpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
-static inline ufract16_t Motor_User_SpeedLimitReverse(const Motor_Context_T * p_motor) { return interval_opposed(Motor_SpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
+static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return interval_aligned(Motor_RampILimits(p_motor), (sign_t)p_motor->Direction); }
+static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return interval_opposed(Motor_RampILimits(p_motor), (sign_t)p_motor->Direction); }
+static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return interval_aligned(Motor_RampSpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
+static inline ufract16_t Motor_User_SpeedLimitReverse(const Motor_Context_T * p_motor) { return interval_opposed(Motor_RampSpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
 
 /*
 

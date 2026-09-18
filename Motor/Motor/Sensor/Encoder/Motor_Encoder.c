@@ -78,7 +78,7 @@ static void ProcHoming(Motor_T * p_motor)
     {
         angle16_t angle = Encoder_GetHomingDelta(GetEncoderState(p_motor)) * p_state->Config.SpeedRating.PolePairs;
         Angle_Integrate(&p_state->OpenLoopAngle, angle);
-        Motor_FOC_ProcAngleFeedforwardV(p_state, Angle_Value(&p_state->OpenLoopAngle), _Motor_GetVAlign_Duty(p_state), 0);
+        Motor_FOC_ProcAngleFeedforwardV(p_state, Angle_Value(&p_state->OpenLoopAngle), _Motor_GetVAlign(p_state), 0);
         //Motor_FOC_WriteDuty(p_motor);
         Encoder_ProcHoming(GetEncoderState(p_motor)); /* spend one step of the search travel budget */
     }

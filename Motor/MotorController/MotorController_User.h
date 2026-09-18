@@ -95,14 +95,14 @@ static inline void MotorController_ForceDisableControl(MotorController_T * p_dev
 /******************************************************************************/
 /*
     User Setting Speed/I Limit
-    derate_fract16: Q15 ufract16 in [0, FRACT16_MAX] ≡ [0, 1] of rated.
-    Caller passes a unitless ratio; rated multiplication happens at the Motor_Table_Apply* boundary
+    Physical value in PU: speed_ufract16 of SpeedTypeMax, i_ufract16 of I_TYPE_MAX.
+    Writes each motor's single value channel — user/OptDin/protocol overwrite the same channel.
 */
 /******************************************************************************/
-static inline bool MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t derate_fract16) { return _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER, derate_fract16); }
-static inline bool MotorController_ClearUserSpeedLimitAll(MotorController_T * p_dev) { return _MotorController_ClearSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER); }
-static inline bool MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t derate_fract16) { return _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_USER, derate_fract16); }
-static inline bool MotorController_ClearUserILimitAll(MotorController_T * p_dev) { return _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_USER); }
+static inline void MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t speed_ufract16) { Motor_Table_SetSpeedLimit(&p_dev->MOTORS, speed_ufract16); }
+static inline void MotorController_ClearUserSpeedLimitAll(MotorController_T * p_dev) { Motor_Table_ResetSpeedLimit(&p_dev->MOTORS); }
+static inline void MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t i_ufract16) { Motor_Table_SetILimit(&p_dev->MOTORS, i_ufract16); }
+static inline void MotorController_ClearUserILimitAll(MotorController_T * p_dev) { Motor_Table_ResetILimit(&p_dev->MOTORS); }
 
 
 /******************************************************************************/
