@@ -148,8 +148,8 @@ NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
 
     for (size_t i = 0U; i < p_motNvm->PARTITION_COUNT; i++)
     {
-        status = SaveEntry_Blocking(p_motNvm, &p_motNvm->P_PARTITIONS[i]);
-        if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
+       NvMemory_Status_T entrystatus = SaveEntry_Blocking(p_motNvm, &p_motNvm->P_PARTITIONS[i]);
+       if (entrystatus != NV_MEMORY_STATUS_SUCCESS) { status = entrystatus; }
     }
 //   Critical_EnableIrq();
     return status;

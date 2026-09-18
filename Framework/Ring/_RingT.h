@@ -127,7 +127,6 @@ typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Ring_State
 }
 Ring_State_T;
 
-typedef struct { Ring_State_T State; uintptr_t Words[1]; } Ring_Test_T;
 
 /* Round up: plain division truncates, which would short the Buffer whenever BytesSize is not a multiple of the word size */
 #define _RING_BUFFER_ALLOC(BytesSize) ((uintptr_t[((BytesSize) + sizeof(uintptr_t) - 1U) / sizeof(uintptr_t)]){}) /* guarantees align and no ascii fill */
