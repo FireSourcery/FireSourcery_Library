@@ -87,11 +87,6 @@ static inline bool RingT_IsFull(Ring_Type_T type, const Ring_State_T * p_ring) {
 static inline bool RingT_IsEmpty(Ring_Type_T type, const Ring_State_T * p_ring) { (void)type; return (p_ring->Tail == p_ring->Head); }
 
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
 static inline void RingT_Clear(Ring_Type_T type, Ring_State_T * p_ring) { (void)type; p_ring->Head = 0U; p_ring->Tail = 0U; }
 
 /******************************************************************************/
@@ -99,18 +94,14 @@ static inline void RingT_Clear(Ring_Type_T type, Ring_State_T * p_ring) { (void)
     Boundary-Checked Operations - Compile-Time Optimized
 */
 /******************************************************************************/
-static inline bool RingT_PushBack(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)   { if (RingT_IsFull(type, p_ring)) { return false; } else { _RingT_PushBack(type, p_ring, p_unit); return true; } }
-static inline bool RingT_PopFront(Ring_Type_T type, Ring_State_T * p_ring, void * p_result)       { if (RingT_IsEmpty(type, p_ring)) { return false; } else { _RingT_PopFront(type, p_ring, p_result); return true; } }
-static inline bool RingT_PushFront(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)  { if (RingT_IsFull(type, p_ring)) { return false; } else { _RingT_PushFront(type, p_ring, p_unit); return true; } }
-static inline bool RingT_PopBack(Ring_Type_T type, Ring_State_T * p_ring, void * p_result)        { if (RingT_IsEmpty(type, p_ring)) { return false; } else { _RingT_PopBack(type, p_ring, p_result); return true; } }
-static inline bool RingT_RemoveFront(Ring_Type_T type, Ring_State_T * p_ring, size_t count)       { if (count > RingT_GetFullCount(type, p_ring)) { return false; } else { _RingT_RemoveFront(type, p_ring, count); return true; } }
-static inline bool RingT_RemoveBack(Ring_Type_T type, Ring_State_T * p_ring, size_t count)        { if (count > RingT_GetFullCount(type, p_ring)) { return false; } else { _RingT_RemoveBack(type, p_ring, count); return true; } }
-/*
-    returns the popped pointer
-    concurrent push/pop may overwrite contents
+/******************************************************************************/
+/*!
+    Pointer Access Operations - Compile-Time Optimized
 */
-// inline void * _Ring_PopFront(Ring_State_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopFront(p_ring)) : NULL; }
-// inline void * _Ring_PopBack(Ring_State_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopBack(p_ring)) : NULL; }
+/******************************************************************************/
+static inline void * RingT_At(Ring_Type_T type, const Ring_State_T * p_ring, size_t index) { return (index >= RingT_GetFullCount(type, p_ring)) ? NULL : _RingT_At(type, p_ring, index); }
+static inline void * RingT_Front(Ring_Type_T type, const Ring_State_T * p_ring) { return RingT_IsEmpty(type, p_ring) ? NULL : _RingT_Front(type, p_ring); }
+static inline void * RingT_Back(Ring_Type_T type, const Ring_State_T * p_ring)  { return RingT_IsEmpty(type, p_ring) ? NULL :_RingT_Back(type, p_ring); }
 
 /******************************************************************************/
 /*!
@@ -123,27 +114,35 @@ static inline bool RingT_PeekFront(Ring_Type_T type, const Ring_State_T * p_ring
 
 /******************************************************************************/
 /*!
-    Pointer Access Operations - Compile-Time Optimized
+    Queue Operations - Compile-Time Optimized
 */
 /******************************************************************************/
-static inline void * RingT_At(Ring_Type_T type, const Ring_State_T * p_ring, size_t index) { return (index >= RingT_GetFullCount(type, p_ring)) ? NULL : _RingT_At(type, p_ring, index); }
-static inline void * RingT_Front(Ring_Type_T type, const Ring_State_T * p_ring) { return RingT_IsEmpty(type, p_ring) ? NULL : _RingT_Front(type, p_ring); }
-static inline void * RingT_Back(Ring_Type_T type, const Ring_State_T * p_ring)  { return RingT_IsEmpty(type, p_ring) ? NULL :_RingT_Back(type, p_ring); }
+static inline bool RingT_PushBack(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)   { if (RingT_IsFull(type, p_ring)) { return false; } else { _RingT_PushBack(type, p_ring, p_unit); return true; } }
+static inline bool RingT_PopFront(Ring_Type_T type, Ring_State_T * p_ring, void * p_result)       { if (RingT_IsEmpty(type, p_ring)) { return false; } else { _RingT_PopFront(type, p_ring, p_result); return true; } }
+static inline bool RingT_PushFront(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)  { if (RingT_IsFull(type, p_ring)) { return false; } else { _RingT_PushFront(type, p_ring, p_unit); return true; } }
+static inline bool RingT_PopBack(Ring_Type_T type, Ring_State_T * p_ring, void * p_result)        { if (RingT_IsEmpty(type, p_ring)) { return false; } else { _RingT_PopBack(type, p_ring, p_result); return true; } }
+static inline bool RingT_RemoveFront(Ring_Type_T type, Ring_State_T * p_ring, size_t count)       { if (count > RingT_GetFullCount(type, p_ring)) { return false; } else { _RingT_RemoveFront(type, p_ring, count); return true; } }
+static inline bool RingT_RemoveBack(Ring_Type_T type, Ring_State_T * p_ring, size_t count)        { if (count > RingT_GetFullCount(type, p_ring)) { return false; } else { _RingT_RemoveBack(type, p_ring, count); return true; } }
+
+/*
+    returns the popped pointer
+    concurrent push/pop may overwrite contents
+*/
+// inline void * _Ring_PopFront(Ring_State_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopFront(p_ring)) : NULL; }
+// inline void * _Ring_PopBack(Ring_State_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopBack(p_ring)) : NULL; }
 
 
 /******************************************************************************/
 /*!
     Overwrite Operations
 
-    Full-policy: evict instead of reject. The counterpart to the reject policy above,
+    Full-policy: evict instead of reject. The counterpart to the reject policy above.
+
     for latest-data-wins buffers (telemetry, scope traces) where a stalled consumer
     must not stall the producer.
 
-    SINGLE CONTEXT ONLY. Eviction makes the producer advance Head, which breaks the
+    SINGLE THREADED ONLY. Eviction makes the producer advance Head, which breaks the
     single-writer-per-cursor invariant the lock-free SPSC contract depends on.
-    Never call these on a ring shared across an ISR boundary.
-
-    Cited: boost::circular_buffer::push_back; std::ring_span (P0059) overwrite semantics.
 */
 /******************************************************************************/
 /*! @return true if a unit was evicted to make room */
@@ -164,26 +163,6 @@ static inline bool RingT_PushFrontOverwrite(Ring_Type_T type, Ring_State_T * p_r
     return isEvict;
 }
 
-/*!
-    Always accepts the whole array. Only the last [Capacity] units can survive,
-    so a count above Capacity discards the leading source units rather than the ring.
-    @return units lost - evicted from the ring plus source units skipped
-*/
-static inline size_t RingT_PushBackOverwriteArray(Ring_Type_T type, Ring_State_T * p_ring, const void * p_array, size_t count)
-{
-    size_t capacity = RingT_GetCapacity(type, p_ring);
-    size_t keep = (count < capacity) ? count : capacity;    /* units of p_array that fit */
-    size_t skip = count - keep;                             /* leading source units the ring cannot hold */
-    size_t empty = RingT_GetEmptyCount(type, p_ring);
-    size_t evict = (keep > empty) ? keep - empty : 0U;
-
-    _RingT_RemoveFront(type, p_ring, evict);
-    _RingT_PlaceBackWrap(type, p_ring, void_array_at(type.TYPE_SIZE, p_array, skip), keep);
-    _RingT_AddBack(type, p_ring, keep);
-    return skip + evict;
-}
-
-
 /******************************************************************************/
 /*!
     Contiguous Segment Access - zero copy
@@ -196,13 +175,7 @@ static inline size_t RingT_PushBackOverwriteArray(Ring_Type_T type, Ring_State_T
         DMA_Send(span.P_BUFFER, ArraySpan_Size(span));
         RingT_RemoveFront(TYPE, p_ring, span.LENGTH);            // finish
 
-    The second segment is empty (LENGTH 0) whenever the run does not wrap, so a caller
-    that handles both unconditionally is always correct.
-
     The spans are only valid until the ring is next modified.
-
-    Cited: boost::circular_buffer array_one()/array_two(); kfifo_dma_in_prepare();
-    Zephyr ring_buf_put_claim()/get_claim().
 */
 /******************************************************************************/
 /* Occupied units, to read out. Front then its wrapped remainder. */
@@ -261,6 +234,7 @@ static inline size_t RingT_PushBackMax(Ring_Type_T type, Ring_State_T * p_ring, 
     return pushCount;
 }
 
+// static inline size_t RingT_PopFrontMax(Ring_Type_T type, Ring_State_T * p_ring, size_t maxCount, void * p_array)
 static inline size_t RingT_PopFrontMax(Ring_Type_T type, Ring_State_T * p_ring, void * p_array, size_t maxCount)
 {
     size_t fullCount = RingT_GetFullCount(type, p_ring);
@@ -270,6 +244,25 @@ static inline size_t RingT_PopFrontMax(Ring_Type_T type, Ring_State_T * p_ring, 
     return popCount;
 }
 
+
+/*!
+    Always accepts the whole array. Only the last [Capacity] units can survive,
+    so a count above Capacity discards the leading source units rather than the ring.
+    @return units lost - evicted from the ring plus source units skipped
+*/
+static inline size_t RingT_PushBackArrayOverwrite(Ring_Type_T type, Ring_State_T * p_ring, const void * p_array, size_t count)
+{
+    size_t capacity = RingT_GetCapacity(type, p_ring);
+    size_t keep = (count < capacity) ? count : capacity;    /* units of p_array that fit */
+    size_t skip = count - keep;                             /* leading source units the ring cannot hold */
+    size_t empty = RingT_GetEmptyCount(type, p_ring);
+    size_t evict = (keep > empty) ? keep - empty : 0U;
+
+    _RingT_RemoveFront(type, p_ring, evict);
+    _RingT_PlaceBackWrap(type, p_ring, void_array_at(type.TYPE_SIZE, p_array, skip), keep);
+    _RingT_AddBack(type, p_ring, keep);
+    return skip + evict;
+}
 
 
 /*

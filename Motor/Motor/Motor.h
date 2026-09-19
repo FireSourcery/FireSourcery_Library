@@ -1,3 +1,4 @@
+#pragma once
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -27,9 +28,6 @@
     @brief  Per Motor State Control.
 */
 /******************************************************************************/
-#ifndef MOTOR_H
-#define MOTOR_H
-
 #include "Phase/Phase_VOut.h"
 #include "Phase_Input/Phase_Input.h"
 #include "Phase_Input/Phase_Analog.h"
@@ -283,7 +281,7 @@ typedef struct Motor_Context
     uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, state counter. Overflow 20Khz: 59 hours */
 
     /* Effectively Substates StateMachine Controlled */
-    Motor_Direction_T Direction;            /* Direction of applied/cmd V. now shadoes FOC.VLimit */
+    Motor_Direction_T Direction;            /* Direction of applied/cmd V. now shadows FOC.VLimit */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
 
@@ -308,8 +306,8 @@ typedef struct Motor_Context
     */
     Ramp_T TorqueRamp;                      /* { Target, Output, Limit, Coefficient } — full torque setpoint contract */
     FOC_T Foc;                              /* d-q vectors AND inner-loop PIDs (Foc.PidIq, Foc.PidId) */
-    // PID_T PidIPhase;         /* Align, or use getter */
-    // Ramp_T VRamp; /* Optional VRamp */
+    // PID_T PidIPhase; /* Align, or use getter */
+    // Ramp_T VRamp;    /* Optional VRamp */
 
     /*
         Active Limit inputs. Unsigned user frame. Ramp.Limits holds the materialized [Cw:Ccw] output.
@@ -339,16 +337,7 @@ typedef struct Motor_Context
     uint8_t AdapterBuffer[MOTOR_ADAPTER_BUFFER_SIZE]; /* per instance buffer, alternatively wrap outer context */
     uint8_t CalibrationBuffer[MOTOR_CALIBRATION_BUFFER_SIZE]; /* Opaque buffer for one-shot calibration procedures. */
 
-#if defined(MOTOR_LOCAL_UNIT_CONVERSION_ENABLE)
-    /*
-        Local Unit Conversion
-    */
-    // Linear_T UnitsIa;           /* Fract16 and Amps */
-    // Linear_T UnitsIb;
-    // Linear_T UnitsIc;
-    // Linear_T UnitsVabc;         /* Vbemf/VPhase Fract16 conversion of adcu */
-    // Linear_T UnitsVSpeed;       /* VbemfSpeed. Vbemf_Fract16 of Speed_Fract16. Resume voltage, calculated Vbemf */
-#endif
+
     /* Jog */
     // uint32_t JogIndex;
 
@@ -448,6 +437,9 @@ static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return Motor_Ge
 static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); } /* VBus handles sync V / VPu */
 static inline uint16_t Motor_SpeedRated_Fract16(Motor_T * p_motor) { return Motor_GetSpeedVNominalRef_Fract16(p_motor); }
 
+static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
+static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
+
 /******************************************************************************/
 /*
     Resolve Limits - Materialize virtual fields for hot path access
@@ -489,8 +481,6 @@ static inline ufract16_t Motor_SpeedLimitReverse(const Motor_Context_T * p_motor
 */
 static inline interval_t Motor_GetILimits(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)); }
 static inline interval_t Motor_GetSpeedLimits(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->Config.DirectionForward, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
-static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_of_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS), 0); }
-static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 
 /*
     Materialize — the single write point into the hot path. Ccw/Cw signed interval is what Ramp/PID consume.
@@ -517,10 +507,12 @@ static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t
 static inline void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, Motor_GetILimits(p_motor)); }
 static inline void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, Motor_GetSpeedLimits(p_motor)); }
 
+
+/******************************************************************************/
 /*
-    Keep forwards as virtual getters, in case implementation changes.
+    Resolved Ramp Limits
 */
-/* Getters read through to the Ramp — no shadow fields. */
+/******************************************************************************/
 static inline fract16_t Motor_ILimitCcw(const Motor_Context_T * p_motor) { return Ramp_GetLimitUpper(&p_motor->TorqueRamp); }
 static inline fract16_t Motor_ILimitCw(const Motor_Context_T * p_motor) { return Ramp_GetLimitLower(&p_motor->TorqueRamp); }
 static inline fract16_t Motor_SpeedLimitCcw(const Motor_Context_T * p_motor) { return Ramp_GetLimitUpper(&p_motor->SpeedRamp); }
@@ -703,11 +695,3 @@ extern void Motor_SetSpeedLimitReverse(Motor_Context_T * p_motor, uint16_t rever
 extern void Motor_SetSpeedLimit(Motor_Context_T * p_motor, uint16_t speed_ufract16);
 extern void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, uint16_t scalar_ufract16);
 extern void Motor_ResetSpeedLimit(Motor_Context_T * p_motor);
-
-#endif
-
-
-
-
-
-

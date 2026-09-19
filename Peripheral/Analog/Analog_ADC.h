@@ -84,8 +84,8 @@ typedef union Analog_ConversionState
     struct
     {
         uint32_t Result : 16U;
-        uint32_t IsMarked : 1U; /* depreciate */
-        uint32_t Reserved : 15U;
+        // uint32_t IsMarked : 1U; /* depreciate */
+        // uint32_t Reserved : 15U;
         // uint32_t IsNewResult : 1U; // new result sync flag
         // volatile bool IsActive; // allow mark while active /* !IsComplete */
     };
@@ -95,7 +95,7 @@ Analog_ConversionState_T;
 
 #define ANALOG_CONVERSION_STATE_ALLOC() (&(Analog_ConversionState_T){})
 
-/* AdcChannel */
+/* AdcChannel on complete context */
 typedef const struct Analog_ConversionChannel
 {
     analog_channel_t ID;  /* Virtual Channel Index. Index into ADC.P_CHANNELS */
@@ -112,47 +112,18 @@ Analog_ConversionChannel_T;
 #define ANALOG_CONVERSION_CHANNEL_INIT(ChannelId, PinId, p_State, p_Context, CaptureFn) (Analog_ConversionChannel_T) \
     { .ID = ChannelId, .PIN = PinId , .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = p_State, }
 
-// #define ANALOG_CONVERSION_CHANNEL_INIT_ALLOC(ChannelId, PinId, p_Context, CaptureFn, ...) (Analog_ConversionChannel_T)
+// #define ADC_CHANNEL_INIT(ChannelId, PinId, p_Context, CaptureFn )
 //     { .ID = ChannelId, .PIN = PinId , .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = ANALOG_CONVERSION_STATE_ALLOC(), }
-
-
-
-
-// // typedef struct Analog_ChannelContext / Substription
-// // Analog_ConversionChannel_T Analog_ConversionContext_T
-// typedef struct Analog_OnComplete
-// {
-//     analog_channel_t CHANNEL;
-//     Analog_Capture_T CAPTURE;
-//     void * P_CONTEXT;
-// }
-// Analog_OnComplete_T;
-// static inline void _ADC_OnComplete(Analog_OnComplete_T * p_conversion, adc_result_t * p_buffer, adc_result_t result)
-// {
-//     /* eliminate double buffer, at additional interrupt time */
-//     if (p_conversion->CAPTURE != NULL) { p_conversion->CAPTURE(p_conversion->P_CONTEXT, result); }
-//     else { p_buffer[p_conversion->CHANNEL] = result; }
-// }
 
 /******************************************************************************/
 /*
-    Per ADC batch part
-    todo
+    Per ADC Batch
+    Hw sequenced channel set. Defined in Analog_ADC_Batch.h
 */
 /******************************************************************************/
-typedef void (*Analog_CaptureBatch_T)(void * p_context, Analog_ConversionChannel_T * p_states);
-typedef const struct
-{
-    uint32_t CHANNELS_MASK;  /* directly maps to adc so no batch state is needed, adc holds batch operator  */
-    // *PINS
-    // struct {ID, PIN} * P_CHANNELS;
-    adc_result_t * P_RESULTS;
-    Analog_Callback_T ON_COMPLETE;
-    void * P_CONTEXT;
-}
-Analog_AdcBatch_T;
-
-
+struct ADC_ConversionBatch;
+// struct Analog_ConversionChannel;
+// typedef struct Analog_ConversionChannel Analog_ConversionChannel_T;
 
 /******************************************************************************/
 /*
@@ -179,15 +150,17 @@ typedef struct Analog_ADC_State
     /* Batch/Queue State */
     /* If left non atomic. a mark channel call may be missed. */
     volatile uint32_t ChannelMarkers; /* Bitmask of selected channels. 1 << ChannelIndex */
-    // void * ChannelContexts[ADC_CHANNEL_COUNT_MAX];
 
     /* ActiveBatch Const context */
     /* Selectable conversions context */
     /* Separate execution from per channel operation */
     // full context include call back in context
     // const Analog_ConversionContext_T * p_ActiveContext;
-
     // const Analog_ConversionChannel_T * p_BatchChannels;
+
+    /* Hw Sequenced Batch. Active is set only in the complete ISR window, Next by any thread */
+    const struct ADC_ConversionBatch * volatile p_ActiveBatch;
+    const struct ADC_ConversionBatch * volatile p_NextBatch;
 
 #ifndef NDEBUG
     uint32_t ErrorCount;
@@ -197,15 +170,12 @@ typedef struct Analog_ADC_State
 }
 Analog_ADC_State_T;
 
-#define ANALOG_ADC_STATE_ALLOC() (&(Analog_ADC_State_T){})
-
-
 /******************************************************************************/
 /*
     ADC Peripheral Control
         - Context Per Thread
         - Wraps HAL_ADC with State, callback context
-    ADConverter_T ADC_Module_T
+    ADC_Module_T
 */
 /******************************************************************************/
 typedef const struct Analog_ADC
@@ -217,13 +187,11 @@ typedef const struct Analog_ADC
 
     /* map by adc_channel_t. handle with parallel arrays for DMA compatibility */
     const adc_pin_t * P_CHANNEL_PINS;
-    adc_result_t * P_CHANNEL_RESULTS;
-    // const struct { const adc_pin_t PIN; Analog_Capture_T CAPTURE; void * P_CONTEXT; } * P_CHANNELS;  optionally, overrides P_RESULT */
+    volatile adc_result_t * P_CHANNEL_RESULTS; /* Hw transfer destination. [Channel ID] == [Slot] */
 }
 Analog_ADC_T;
 
-#define ANALOG_ADC_INIT(p_HalAnalog, ChannelCount, p_ConvChannels, p_AdcState) (Analog_ADC_T) \
-    { .P_HAL_ADC = p_HalAnalog, .CHANNEL_COUNT = ChannelCount, .P_CONVERSION_CHANNELS = p_ConvChannels, .P_ADC_STATE = p_AdcState, }
+
 
 
 /******************************************************************************/

@@ -3,13 +3,11 @@
     //     "${default}",
     //     "__GNUC__",
     // ],
-
     "C_Cpp.default.intelliSenseMode": "windows-gcc-arm",
     "C_Cpp.default.cStandard": "c23",
     "C_Cpp.default.cppStandard": "c++23",
     "C_Cpp.default.mergeConfigurations": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cpptools",
-
     "C_Cpp.formatting": "vcFormat",
     "C_Cpp.vcFormat.wrap.preserveBlocks": "allOneLineScopes",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
@@ -21,7 +19,6 @@
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "newLine",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.lambda": "newLine",
     "C_Cpp.vcFormat.newLine.beforeWhileInDoWhile": true,
-
     "C_Cpp.vcFormat.space.pointerReferenceAlignment": "center",
     "C_Cpp.vcFormat.space.aroundAssignmentOperator": "insert",
     "C_Cpp.vcFormat.space.beforeConstructorColon": false,
@@ -33,18 +30,15 @@
     "C_Cpp.vcFormat.space.withinLambdaBrackets": true,
     "C_Cpp.vcFormat.space.removeAroundUnaryOperator": true,
     "C_Cpp.vcFormat.space.removeAroundMemberOperators": true,
-
     "C_Cpp.vcFormat.space.betweenEmptyBraces": false,
     "C_Cpp.vcFormat.space.beforeBlockOpenBrace": false,
     "C_Cpp.vcFormat.space.withinInitializerListBraces": true,
     "C_Cpp.vcFormat.space.beforeInitializerListOpenBrace": false,
     "C_Cpp.vcFormat.space.preserveInInitializerList": true,
-
     "C_Cpp.vcFormat.space.beforeLambdaOpenParenthesis": true,
     "C_Cpp.vcFormat.space.afterCastCloseParenthesis": false,
     "C_Cpp.vcFormat.space.withinCastParentheses": false,
     "C_Cpp.vcFormat.space.betweenEmptyLambdaBrackets": false,
-
     "C_Cpp.vcFormat.indent.multiLineRelativeTo": "innermostParenthesis",
     "C_Cpp.vcFormat.indent.lambdaBracesWhenParameter": false,
     "C_Cpp.vcFormat.indent.preserveWithinParentheses": false,
@@ -54,9 +48,7 @@
     "C_Cpp.vcFormat.indent.caseLabels": true,
     "C_Cpp.vcFormat.indent.caseContents": true,
     "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
-
     "C_Cpp.doxygen.generatedStyle": "/*!",
-
     "editor.defaultFormatter": "ms-vscode.cpptools",
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
@@ -64,18 +56,16 @@
     "editor.indentSize": "tabSize",
     "editor.detectIndentation": false,
     "editor.semanticHighlighting.enabled": "configuredByTheme",
+    // "editor.semanticHighlighting.enabled": false,
     "editor.rulers": [
         80,
         160,
         200,
     ],
-
     "files.trimTrailingWhitespace": true,
-
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features",
     },
-
     "cSpell.words": [
         "Accs",
         "adcu",

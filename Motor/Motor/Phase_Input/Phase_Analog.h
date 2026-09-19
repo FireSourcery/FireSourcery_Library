@@ -117,18 +117,6 @@ typedef const struct Phase_Analog
 }
 Phase_Analog_T;
 
-/*
-    Pass Struct and Index
-*/
-#define PHASE_ANALOG_INIT(AdcVa, IndexVa, AdcVb, IndexVb, AdcVc, IndexVc, AdcIa, IndexIa, AdcIb, IndexIb, AdcIc, IndexIc) \
-{ \
-    .VA = ANALOG_CONVERSION_INIT_FROM(AdcVa, IndexVa), \
-    .VB = ANALOG_CONVERSION_INIT_FROM(AdcVb, IndexVb), \
-    .VC = ANALOG_CONVERSION_INIT_FROM(AdcVc, IndexVc), \
-    .IA = ANALOG_CONVERSION_INIT_FROM(AdcIa, IndexIa), \
-    .IB = ANALOG_CONVERSION_INIT_FROM(AdcIb, IndexIb), \
-    .IC = ANALOG_CONVERSION_INIT_FROM(AdcIc, IndexIc), \
-}
 
 static void Phase_Analog_MarkVabc(Phase_Analog_T * p_analog)
 {

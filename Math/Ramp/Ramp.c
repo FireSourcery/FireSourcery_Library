@@ -34,7 +34,7 @@
 
 /*
     Next
-    target - clammped input
+    target - clamped input
     Settles on target when |target - s| <= rate
 */
 static inline int32_t ramp_next(uint32_t ramp_rate, int32_t output, int32_t target) { return output + math_clamp(target - output, -(int32_t)ramp_rate, (int32_t)ramp_rate); }
@@ -52,7 +52,7 @@ static inline int32_t ramp_next_branch(uint32_t ramp_rate, int32_t output, int32
     Unified Ramp_ProcNextOf
     Hard clamp output on SetLimits
     Limits are applied to the target. Ramp smoothing applies on limit update
-    an out of bounds output state is gradually brough back into bounds.
+    an out of bounds output state is gradually brought back into bounds.
 */
 /******************************************************************************/
 static inline int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)

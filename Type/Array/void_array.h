@@ -84,6 +84,7 @@ static inline value_t array_get_instance(size_t type, void * p_buffer, size_t ma
     if (instance < max) { return getter(void_array_at(type, p_buffer, instance), field_id); }
     return 0;
 }
+
 static inline void array_set_instance(size_t type, void * p_buffer, size_t max, set_field_t setter, uint8_t instance, int field_id, value_t value)
 {
     if (instance < max) { setter(void_array_at(type, p_buffer, instance), field_id, value); }
@@ -230,7 +231,7 @@ static inline void * void_array_max(size_t type, const void * p_buffer, size_t l
 static inline value_t void_array_min_value(size_t type, const void * p_buffer, size_t length) { return pointer_value_as(type, void_array_min(type, p_buffer, length)); }
 static inline value_t void_array_max_value(size_t type, const void * p_buffer, size_t length) { return pointer_value_as(type, void_array_max(type, p_buffer, length)); }
 
-struct range { value_t min; value_t max; };
+// struct range { value_t min; value_t max; };
 
 // static inline struct range void_array_min_max(size_t type, const void * p_buffer, size_t length)
 // {

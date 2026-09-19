@@ -69,6 +69,17 @@ static void _ADC_ActivateFrom(HAL_ADC_T * p_hal, Analog_ConversionChannel_T * co
 /*
     Unified Interface implementation independent
 */
+static inline void _ADC_Capture(const HAL_ADC_T * p_hal, const Analog_ADC_State_T * p_state)
+{
+#ifdef ANALOG_ADC_HW_FIFO_ENABLE
+    _ADC_CaptureTo(p_hal, &p_state->ActiveConversions[0U], p_state->ActiveConversionCount);
+#else
+    _ADC_CaptureResult(p_state->ActiveConversions[0U], HAL_ADC_ReadResult(p_hal, p_state->ActiveConversions[0U]->PIN));
+#endif
+    // _ADC_CaptureTo(p_adc->P_HAL_ADC, &p_state->ActiveConversions[0U], ADC_ReadActiveCount());
+}
+
+
 static inline void ADC_Capture(Analog_ADC_T * p_adc, const Analog_ADC_State_T * p_state)
 {
 #ifdef ANALOG_ADC_HW_FIFO_ENABLE
@@ -182,7 +193,18 @@ static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionC
 /*!
 */
 /******************************************************************************/
-
+// typedef struct Analog_Options
+// {
+//     uint32_t HwTriggerConversion      : 1U;
+//     uint32_t ContinuousConversion     : 1U;
+//     uint32_t CaptureLocalPeak         : 1U; /* for now, conversion stops on 1 local peak in channel set, user must also set ContinuousConversion */
+//     uint32_t HwAveraging              : 1U;
+//     uint32_t HwTriggerChannel         : 1U; /* Per Hw buffer complete. Per Channel if both are set*/
+//     uint32_t Interrupt                : 1U;
+//     uint32_t Dma                      : 1U;
+//     uint8_t Priority
+// }
+// Analog_Options_T;
 
 // void ADC_WriteOptions(Analog_ADC_T * p_adc, const Analog_Options_T * p_options)
 // {
@@ -196,26 +218,3 @@ static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionC
 //     if(p_options->ON_OPTIONS != 0U) { p_options->ON_OPTIONS(p_options->P_CALLBACK_CONTEXT); }
 // }
 
-
-// static inline uint32_t _ADC_FillActiveConversions(const Analog_ConversionChannel_T ** pp_buffer, uint8_t * p_count, const Analog_ConversionChannel_T * p_handles, uint32_t markers)
-// {
-//     for (uint8_t count = 0U; (count < ADC_FIFO_LENGTH_MAX) && (markers != 0UL); count++)
-//     {
-//         pp_buffer[count] = &p_handles[__builtin_ctz(markers)];
-//         markers &= (markers - 1);
-//     }
-//     *p_count = count;
-// }
-
-
-
-
-
-// static inline uint8_t ADC_ReadActiveCount(const Analog_ADC_T * p_adc, const Analog_ADC_State_T * p_state)
-// {
-// #ifdef ANALOG_ADC_HW_FIFO_ENABLE
-//     return HAL_ADC_ReadFifoCount(p_adc->P_HAL_ADC);
-// #else
-//     return 1U;
-// #endif
-// }

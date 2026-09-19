@@ -460,11 +460,11 @@ static void FOC_ResetFeedbackState(FOC_T * p_foc)
 static inline void FOC_SetVSymmetric(FOC_T * p_foc, uint16_t vq) { p_foc->VLimit = interval_symmetric(0, vq); }
 
 /* Half-plane anti-plugging */
-static inline void FOC_SetVAntiPlugging(FOC_T * p_foc, sign_t sign, uint16_t vq) { p_foc->VLimit = interval_of_sign(sign, vq); }
+static inline void FOC_SetVAntiPlugging(FOC_T * p_foc, sign_t sign, uint16_t vq) { p_foc->VLimit = interval_half_plane(sign, vq); }
 
 static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPhaseLimit)
 {
-    interval_t v = interval_of_sign(direction, vPhaseLimit);
+    interval_t v = interval_half_plane(direction, vPhaseLimit);
     FOC_SetVAntiPlugging(p_foc, direction, vPhaseLimit);
     PID_SetOutputLimits(&p_foc->PidIq, v.low, v.high);  /* overwritten on loop */
     PID_SetOutputLimits(&p_foc->PidId, 0 - vPhaseLimit, vPhaseLimit);
@@ -778,20 +778,20 @@ static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int valu
 // {
 //     sign_t motionSign = _FOC_VMotionSignOf(omega_psi, iqReq);
 //     /* Only narrow the band when the request is braking/generating. */
-//     if (motionSign * iqReq < 0) { return interval_of_sign(motionSign, vqLimit); }
+//     if (motionSign * iqReq < 0) { return interval_half_plane(motionSign, vqLimit); }
 //     return interval_symmetric(0, vqLimit);
 // }
 
 // /* symmetric by default. dynamic half-plane anti-plugging derived per cycle */
 // static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vqLimit)
 // {
-//     if (omega_psi * iqReq <= 0) { return interval_of_sign(omega_psi * iqReq, vqLimit); }
+//     if (omega_psi * iqReq <= 0) { return interval_half_plane(omega_psi * iqReq, vqLimit); }
 //     return interval_symmetric(0, vqLimit);
 // }
 
-// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_of_sign(_FOC_VMotionSignOf(omega_psi, iqReq), vq); }
+// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane(_FOC_VMotionSignOf(omega_psi, iqReq), vq); }
 /* Applied Vq is forced opposite to EEMF for explicit plugging behavior. */
-// static inline interval_t _FOC_VPluggingOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_of_sign((sign_t)(0 - _FOC_VMotionSignOf(omega_psi, iqReq)), vq); }
+// static inline interval_t _FOC_VPluggingOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane((sign_t)(0 - _FOC_VMotionSignOf(omega_psi, iqReq)), vq); }
 
 // static inline interval_t _FOC_VDynamicBand(const FOC_T * p_foc, accum32_t omega_psi, int32_t iqReq, ufract16_t vqCircleLimit)
 // {

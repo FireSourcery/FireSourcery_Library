@@ -42,6 +42,7 @@
     Wrapper around values array, preset functions for int types and operations
 */
 /******************************************************************************/
+// typedef struct { uint8_t * p_buffer; size_t size; } buffer_span_t;
 typedef struct { void * P_BUFFER; size_t LENGTH; } ArraySpan_T;
 
 // static allocation only, for inline convenience
@@ -61,7 +62,7 @@ typedef struct { void * P_BUFFER; size_t LENGTH; } ArraySpan_T;
     A contiguous run of LENGTH units of TYPE_SIZE at P_BUFFER. A view, not a descriptor:
     it is returned by value, so it is NOT const-qualified (a qualifier on a by-value return is ignored, and warns under -Wextra).
 */
-// typedef struct typed_span { size_t type; void * p_buffer; size_t length; } typed_span_t; //returnable record
+// typedef struct typed_span { size_t type; void * p_buffer; size_t length; } array_span_t; // returnable record
 typedef struct ArraySpanT { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; } ArraySpanT_T;
 
 static inline size_t ArraySpan_Size(ArraySpanT_T span) { return span.LENGTH * span.TYPE_SIZE; }
@@ -77,7 +78,7 @@ static inline ArraySpanT_T ArraySpanT_Cast(size_t type, ArraySpan_T arrayBuffer)
     compiler optimization to inline type size
 */
 static inline intptr_t _ArrayT_GetV(size_t type, ArraySpan_T array, size_t index) { return void_array_get(type, array.P_BUFFER, index); }
-static inline void _ArrayT_SetV(size_t type, ArraySpan_T array, size_t index, value_t value) { void_array_set(type, array.P_BUFFER, index, value); }
+static inline void _ArrayT_SetV(size_t type, ArraySpan_T array, size_t index, intptr_t value) { void_array_set(type, array.P_BUFFER, index, value); }
 
 static inline void _ArrayT_Set(size_t type, ArraySpan_T array, size_t index, const void * p_value) { switch_copy(void_array_at(type, array.P_BUFFER, index), p_value, type); }
 static inline void _ArrayT_Get(size_t type, ArraySpan_T array, size_t index, void * p_value) { switch_copy(p_value, void_array_at(type, array.P_BUFFER, index), type); }
@@ -89,13 +90,13 @@ static inline void ArrayT_CopyFrom(size_t type, ArraySpan_T arrayBuffer, const v
 /*
 
 */
-typedef const struct
-{
-    void * P_BUFFER;
-    size_t LENGTH;
-    void * P_AUGMENTS; // P_HEADER/P_STATE
-}
-ArrayContiguous_T;
+// typedef const struct
+// {
+//     void * P_BUFFER;
+//     size_t LENGTH;
+//     void * P_AUGMENTS; // P_HEADER/P_STATE
+// }
+// ArrayContiguous_T;
 
-#define _ARRAY_CONTIG_ALLOC(AugmentsSize, Length) _BUFFER_ALLOC((AugmentsSize) + (Length))
-#define ARRAY_CONTIG_INIT(p_Alloc, AugmentsSize, Length) { .P_BUFFER = ((uint8_t *)(p_Alloc) + (AugmentsSize)), .LENGTH = (Length), .P_AUGMENTS = (p_Alloc) }
+// #define _ARRAY_CONTIG_ALLOC(AugmentsSize, Length) _BUFFER_ALLOC((AugmentsSize) + (Length))
+// #define ARRAY_CONTIG_INIT(p_Alloc, AugmentsSize, Length) { .P_BUFFER = ((uint8_t *)(p_Alloc) + (AugmentsSize)), .LENGTH = (Length), .P_AUGMENTS = (p_Alloc) }

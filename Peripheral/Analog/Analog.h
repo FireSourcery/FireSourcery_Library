@@ -47,19 +47,15 @@
 typedef const struct Analog_Conversion
 {
     Analog_ADC_T * P_ADC;
-
     analog_channel_t CHANNEL;
+    // analog_mask_t
     // Analog_Capture_T CAPTURE;
     // void * P_CONTEXT;
-
     /* reserve interface for extension */
     // Analog_Options_T OPTIONS;
 }
 Analog_Conversion_T;
 
-#define ANALOG_CONVERSION_INIT(p_AdcStruct, ChannelIndex) (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (ChannelIndex)  }
-#define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) (Analog_Conversion_T) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, /* .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), */ }
-// #define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (p_ConversionChannel)->CHANNEL.ID, .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
 
 static inline void Analog_Conversion_Mark(const Analog_Conversion_T * p_conv) { Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL); }
 static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv) { return Analog_ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }
@@ -93,84 +89,9 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
 // }
 
 
-/******************************************************************************/
-/*
-    Export
-*/
-/******************************************************************************/
-// #include "Analog_ADC.h"
-// #include "Analog_Conversion.h"
-// global table or batch
+
 // typedef struct
 // {
-//     Analog_Conversion_T * P_CONVERSIONS; /* [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3] */
-//     uint8_t COUNT;
-// } Analog_ChannelTable_T; /* [adc_channel] → Analog_Conversion_T * */
-
-/******************************************************************************/
-/*
-    Conversion Batch
-    interface across multiple ADCs.
-    Synchronized start with 1 callback, seperate state buffer
-*/
-/******************************************************************************/
-typedef struct Analog_AdcBatchState
-{
-    volatile uint32_t ChannelMarkers; /* Bitmask of active channels. 1 << ChannelIndex */
-    // volatile uint32_t CompleteMarkers; /* marked on complete. channel markers 0 may indicate not started */
-    // adc_result_t Results[ADC_CHANNEL_COUNT_MAX];
-}
-Analog_BatchState_T;
-
-typedef const struct Analog_Batch
-{
-    Analog_BatchState_T * P_BATCH_STATE;    // Context for batch completion
-    uint8_t COUNT;                          // Number of conversions in the batch
-    struct
-    {
-        Analog_ADC_T * P_ADC;
-        Analog_AdcBatch_T BATCH;
-        uint32_t BATCH_MASK;
-    }
-    ADC_BATCHS[];
-
-    // struct { Analog_ADC_T * P_ADC; Analog_AdcBatch_T BATCH; } ADC_BATCHS[]; //
-    // Analog_Callback_T ON_COMPLETE;
-}
-Analog_Batch_T;
-
-// // #define ANALOG_BATCH_INIT(p_First, Count) { .P_CONVERSIONS = (p_First), .COUNT = (Count), }
-
-// static inline void Analog_Batch_Mark(const Analog_Batch_T * p_batch)
-// {
-//     for (uint8_t i = 0; i < ADC_COUNT; i++)
-//     {
-//         Analog_ADC_MarkAll(p_batch->ADC_BATCHS[i].P_ADC, p_batch->ADC_BATCHS[i].ADC_MASK);
-//     }
-// }
-
-// static inline bool Analog_Batch_IsComplete(const Analog_Batch_T * p_batch)
-// {
-//     p_batch->P_BATCH_STATE->ChannelMarkers = 0U;
-//     // for (uint8_t i = 0; i < p_batch->COUNT; i++)
-//     // {
-//     //     if (p_batch->P_CONVERSIONS[i].P_CONVERSION_CHANNEL->P_CONVERSION_STATE->IsMarked != 0U) return false;
-//     // }
-//     // return true;
-// }
-
-// typedef struct Analog_Options
-// {
-//     uint32_t HwTriggerConversion      : 1U;
-//     uint32_t ContinuousConversion     : 1U;
-//     uint32_t CaptureLocalPeak         : 1U; /* for now, conversion stops on 1 local peak in channel set, user must also set ContinuousConversion */
-//     uint32_t HwAveraging              : 1U;
-//     uint32_t HwTriggerChannel         : 1U; /* Per Hw buffer complete. Per Channel if both are set*/
-//     uint32_t Interrupt                : 1U;
-//     uint32_t Dma                      : 1U;
-//     uint8_t Priority
-// }
-// Analog_Options_T;
-
-
-
+//     Analog_Conversion_T * P_ADC_BATCHES;
+//     uint8_t ADC_COUNT;
+// } Analog_BatchTable_T;

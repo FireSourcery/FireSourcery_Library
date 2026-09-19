@@ -293,14 +293,11 @@ typedef struct MOT_PACKET_PACKED MotPacket_Var16WriteResp { uint8_t VarStatus[8U
 typedef struct MOT_PACKET_PACKED MotPacket_Var32ReadReq { MotPacket_VarReadFixedReq_T Read[8U]; } MotPacket_Var32ReadReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_Var32ReadResp { uint32_t Values[8U]; } MotPacket_Var32ReadResp_T;
 
-
 typedef struct MOT_PACKET_PACKED MotPacket_Var32WriteReq { MotPacket_VarWriteFixedReq_T Write[4U]; }    MotPacket_Var32WriteReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_Var32WriteResp { uint8_t VarStatus[4U]; }                    MotPacket_Var32WriteResp_T;
 
-/* Request reponse common */
-// static inline uint8_t MotPacket_Var32Read_ParseCount(const Packet_Meta_T * p_packet) { return p_packet->Length / sizeof(MotPacket_VarReadFixedReq_T); }
-// static inline uint8_t MotPacket_Var32Read_ParseCount(const MotPacket_T * p_packet) { return _MotPacket_PayloadLength(p_packet) / sizeof(MotPacket_VarReadFixedReq_T); }
-// static inline uint8_t MotPacket_Var32WriteReq_ParseCount(const MotPacket_T * p_packet) { return _MotPacket_PayloadLength(p_packet) / sizeof(MotPacket_VarWriteFixedReq_T); }
+static inline uint8_t MotPacket_Var32ReadReq_Count(const Packet_Meta_T * p_packet) { return p_packet->Length / sizeof(MotPacket_VarReadFixedReq_T); }
+static inline uint8_t MotPacket_Var32WriteReq_Count(const Packet_Meta_T * p_packet) { return p_packet->Length / sizeof(MotPacket_VarWriteFixedReq_T); }
 
 /******************************************************************************/
 /*! Mem Address Read */

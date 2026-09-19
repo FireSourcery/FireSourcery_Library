@@ -98,7 +98,7 @@ static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /*
     interval
 */
 /******************************************************************************/
-/* signed alsigned interval, defined as [low:high] */
+/* signed aligned interval, defined as [low:high] */
 typedef struct { int32_t low; int32_t high; } interval_t;
 
 /* [0:value] or [value:0] keyed by value sign */
@@ -106,19 +106,18 @@ static inline interval_t interval_of(int32_t value) { return (interval_t) { .low
 static inline interval_t interval_symmetric(int32_t center, uint32_t magnitude) { return (interval_t) { .low = center - magnitude, .high = center + magnitude }; }
 static inline interval_t interval_offset(int32_t center, uint32_t magnitude) { return (interval_t) { .low = center - magnitude, .high = center - magnitude }; }
 
-/* interval_of_magnitude */
+
 /* sign-keyed half-plane: magnitude on the matching side, zero on the other */
-static inline interval_t interval_of_sign(sign_t sign, uint32_t magnitude)
+static inline interval_t interval_half_plane(sign_t sign, int32_t alignedMag)
 {
     switch (sign)
     {
-        case SIGN_POSITIVE: return (interval_t) { .low = 0, .high = +magnitude };
-        case SIGN_NEGATIVE: return (interval_t) { .low = -magnitude, .high = 0 };
+        case SIGN_POSITIVE: return (interval_t) { .low = 0, .high = +alignedMag };
+        case SIGN_NEGATIVE: return (interval_t) { .low = -alignedMag, .high = 0 };
         default:            return (interval_t) { .low = 0, .high = 0 };
     }
 }
 
-/* interval_of_magnitude_pair */
 /* sign-keyed asymmetric pair: aligned magnitude goes with the sign, opposed goes against */
 static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, int32_t opposedMag)
 {
@@ -130,15 +129,6 @@ static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, 
     }
 }
 
-static inline interval_t interval_of_half_plane(sign_t sign, int32_t alignedMag, int32_t opposedMag)
-{
-    switch (sign)
-    {
-        case SIGN_POSITIVE: return (interval_t) { .low = 0, .high = +alignedMag };
-        case SIGN_NEGATIVE: return (interval_t) { .low = -alignedMag, .high = 0 };
-        default:            return (interval_t) { .low = 0, .high = 0 };
-    }
-}
 
 
 /*
@@ -150,7 +140,7 @@ static inline int32_t interval_opposed(interval_t interval, sign_t sign) { retur
 
 
 static inline int32_t interval_clamp(interval_t b, int32_t v) { return math_clamp(v, b.low, b.high); }
-static inline bool interval_contains(interval_t b, int32_t v) { return v >= b.low && v <= b.high; }
+static inline bool interval_contains(interval_t b, int32_t v) { return ((v >= b.low) && (v <= b.high)); }
 static inline interval_t interval_intersect(interval_t a, interval_t b) { return (interval_t) { .low = math_max(a.low, b.low), .high = math_min(a.high, b.high) }; }
 // static inline interval_t interval_scale(interval_t b, fract16_t k) { return (interval_t) { .low = fract16_mul(b.low, k), .high = fract16_mul(b.high, k) }; }
 

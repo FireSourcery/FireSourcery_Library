@@ -425,6 +425,7 @@ void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T ty
     {
         case MOTOR_VAR_TYPE_BOARD_CONST:                break;
         case MOTOR_VAR_TYPE_PHASE:                      break;
+        case MOTOR_VAR_TYPE_PHASE_INPUT:                break;
         case MOTOR_VAR_TYPE_FOC_OUT:                    break;
         case MOTOR_VAR_TYPE_FOC_CONFIG:                 FOC_Config_Set(&p_motor->P_MOTOR->Foc.Config, varId, varValue);          break;
         case MOTOR_VAR_TYPE_ROTOR_OUT:                  break;

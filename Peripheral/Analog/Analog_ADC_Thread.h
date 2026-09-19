@@ -66,23 +66,6 @@ static inline void ADC_OnComplete(const Analog_ADC_T * p_adc, Analog_ADC_State_T
     if (p_state->ActiveConversionCount > 0U)
     {
         ADC_Capture(p_adc, p_state);
-        // p_state->ChannelComplete =
-
-        // if (p_state->p_BatchContext != NULL)
-        // {
-        //     // if (p_state->ChannelMarkers != 0UL)
-        //     *p_state->p_BatchContext->P_BATCH_STATE |= p_state->p_BatchContext->BATCH_MATCH; // mark as completed
-        //     _Analog_BatchContext_Proc(p_state->p_BatchContext);
-        //     // *p_state->p_BatchContext->P_COMPLETE_MARKERS |= p_state->ProcessingMarkers; // sparse channels
-        //     // if (p_state->p_BatchContext->BATCH_COMPLETE != NULL)
-        //     // if (p_state->p_BatchContext->P_ON_COMPLETE != NULL)
-        //     // {
-        //     //     p_state->p_BatchContext->P_ON_COMPLETE(p_state->p_BatchContext);
-        //     //     p_state->p_BatchContext = p_adc->P_CONVERSION_CONTEXT;
-        //     // }
-        //     // ADC_StartFrom(p_adc, p_state-> , p_state->ChannelMarkers); //channel marker maped per adc
-        //     //
-        // }
 
         /* Continue incrementing. Channels do not repeat until all marked channels have completed once */
         if (p_state->ChannelMarkers != 0UL) { ADC_ProcStart(p_adc, p_state); }

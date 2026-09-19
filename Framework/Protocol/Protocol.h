@@ -165,7 +165,7 @@ static inline void _Protocol_TickStat(uint16_t * p_counter)
 
 /*
     Multiple context segments
-    request serivce
+    request service
     alternatively keep sync config here
 */
 typedef const struct
@@ -202,6 +202,12 @@ typedef const union
     };
 }
 Protocol_ReqContext_T;
+
+static_assert(offsetof(Protocol_ReqContext_T, Xfer.p_RxMeta) == offsetof(Protocol_ReqContext_T, p_RxBuffer));
+static_assert(offsetof(Protocol_ReqContext_T, Xfer.p_TxMeta) == offsetof(Protocol_ReqContext_T, p_TxBuffer));
+static_assert(offsetof(Protocol_ReqContext_T, Xfer.p_Substate) == offsetof(Protocol_ReqContext_T, p_Substate));
+
+
 // typedef const struct
 // {
     //     struct
