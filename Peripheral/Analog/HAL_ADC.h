@@ -57,6 +57,16 @@ static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal);
 static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal);
 static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal);
 
+
+// static inline void HAL_ADC_InitDmaBatch(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, volatile adc_result_t * p_results, uint8_t count, uint32_t completeMask) {}
+// static inline void HAL_ADC_ReadBatch(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, uint8_t count, uint32_t completeMask, volatile adc_result_t * p_results){}}
+
+// static inline void HAL_ADC_ClearBatchComplete(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, uint8_t count) {}
+// static inline bool HAL_ADC_ReadBatchComplete(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, uint8_t count) {}
+
+__attribute__((weak)) void HAL_ADC_ActivateDmaBatch(HAL_ADC_T * p_hal, uint32_t start, uint32_t count) {}
+
+
 static inline void HAL_ADC_Init(HAL_ADC_T * p_hal);
 
 #include HAL_PERIPHERAL_PATH(HAL_ADC.h)

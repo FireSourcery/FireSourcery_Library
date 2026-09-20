@@ -54,3 +54,4 @@ extern const Analog_Reference_T ANALOG_REFERENCE;
 
 // #define VSAMPLE_OF_ADCU(Gain, VRef_MilliV, AdcMax, Adcu) ((VRef_MilliV * Adcu / AdcMax) / (Gain))
 // #define AMPS_OF_ADCU(Shunt, Gain, VRef_MilliV, AdcMax, Adcu) (VSAMPLE_OF_ADCU(Gain, VRef_MilliV, AdcMax, Adcu) / (Shunt))
+

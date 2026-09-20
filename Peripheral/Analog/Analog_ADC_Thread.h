@@ -136,17 +136,29 @@ static inline void Analog_ADC_ProcMarked(const Analog_ADC_T * p_adc)
 
 
 
-
-
-
-// static inline uint32_t ADC_BatchComplete(  Analog_Batch_T * p_source)
-// {
-
-// }
-
-/*
+/******************************************************************************/
+/*!
+    @brief  Batch Dma
 */
-// static inline void Analog_ADCN_ProcMarked(const Analog_ADC_T * const p_adcs, uint8_t count)
+/******************************************************************************/
+/*!
+    @brief Sequence complete. e.g. DMA major loop complete. Caller clears the Hw flag.
+
+    ON_COMPLETE runs before the pending selection is applied; a selection made within ON_COMPLETE takes effect on the next trigger.
+    ON_COMPLETE and the selection must finish before the next trigger.
+*/
+static inline void ADC_OnCompleteBatch_ISR(const Analog_ADC_T * p_adc)
+{
+    Analog_ADC_State_T * p_state = p_adc->P_ADC_STATE;
+    const ADC_ConversionBatch_T * p_batch = p_state->p_ActiveBatch;
+    if (p_batch->CAPTURE != NULL) { p_batch->CAPTURE(p_batch->P_CONTEXT, &p_adc->P_CHANNEL_RESULTS[p_batch->ID_START], p_batch->COUNT); }
+
+    /* Stay on the same batch if no new batch is selected */
+    if (p_state->p_NextBatch != p_batch) { _Analog_ADC_ActivateBatch(p_adc, p_state->p_NextBatch); } /* snapshot, written by other threads */
+}
+
+
+// static inline void ADC_N_ProcMarked(const Analog_ADC_T * const p_adcs, uint8_t count)
 // {
 //     for (uint8_t iAdc = 0U; iAdc < count; iAdc++) { Analog_ADC_ProcMarked(&p_adcs[iAdc]); }
 // }

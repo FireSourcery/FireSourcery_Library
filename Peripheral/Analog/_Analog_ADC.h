@@ -30,7 +30,6 @@
 */
 /******************************************************************************/
 #include "Analog_ADC.h"
-#include "Analog.h"
 
 /******************************************************************************/
 /*!
@@ -121,34 +120,27 @@ static inline void ADC_Activate(Analog_ADC_T * p_adc, const Analog_ADC_State_T *
     single threaded access or lock
     In a single thread while ADC is inactive
     In the ADC ISR
+
+    p_state->ChannelMarkers writes in an ISR preempting this function are lost
 */
 static inline uint32_t ADC_SetStateFrom(Analog_ADC_State_T * p_state, Analog_ConversionChannel_T * p_source, uint32_t sourceMarkers)
 {
     uint32_t markers = sourceMarkers;
-    uint8_t count;
+    uint8_t count = 0U;
 
-    for (count = 0U; (count < ADC_FIFO_LENGTH_MAX) && (markers != 0UL); count++)
+    while ((count < ADC_FIFO_LENGTH_MAX) && (markers != 0UL))
     {
         p_state->ActiveConversions[count] = &p_source[__builtin_ctz(markers)];
         markers &= (markers - 1);
+        count++;
     }
+
     p_state->ActiveConversionCount = count;
-    p_state->ChannelMarkers = markers; /* Update ChannelMarkers with remaining markers */
+    p_state->ChannelMarkers = markers;  /* Update ChannelMarkers with remaining markers */
 
     return markers ^ sourceMarkers; /* return processed markers */
 }
 
-// static inline uint32_t ADC_SetStateFrom1(Analog_ADC_State_T * p_state, Analog_ConversionChannel_T * p_source, uint32_t sourceMarkers)
-// {
-//     for (uint32_t markers = sourceMarkers; (markers != 0UL); markers &= (markers - 1))
-//     {
-//         if (p_state->ActiveConversionCount >= ADC_FIFO_LENGTH_MAX) { break; }
-//         p_state->ActiveConversions[p_state->ActiveConversionCount] = &p_source[__builtin_ctz(markers)];
-//         p_state->ActiveConversionCount++;
-//     }
-
-//     return markers ^ sourceMarkers; /* return processed markers */
-// }
 
 static void ADC_StartFrom(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
 {
@@ -166,8 +158,6 @@ static void ADC_StartFrom(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_c
      select from mapped or parameters
 */
 /******************************************************************************/
-static inline void Analog_ADC_StartConversion(Analog_ADC_T * p_adc, analog_channel_t channel) { ADC_StartFrom(p_adc, &p_adc->P_CONVERSION_CHANNELS[channel], (1UL << channel)); }
-
 static void _Analog_ADC_StartConversions(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
 {
     if (Analog_ADC_ReadIsActive(p_adc) == false) { ADC_StartFrom(p_adc, p_conversions, markers); }
@@ -179,15 +169,43 @@ static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionC
     _Analog_ADC_StartConversions(p_adc, p_conversion, (1UL << p_conversion->ID)); // mask as adc fixed
 }
 
-// static void _Analog_ADC_StartConversionBatch(Analog_ADC_T * p_adc, Analog_ConversionBatch_T * p_batch)
-// {
-//     // _Analog_ADC_StartConversions(p_adc->P_ADC_STATE, p_batch->P_CONVERSION_CHANNELS, p_batch->CHANNELS);
-//     _Analog_ADC_StartConversions(p_adc->P_ADC_STATE, p_adc->P_CONVERSION_CHANNELS, p_batch->CHANNELS);
-//     p_adc->P_ADC_STATE->Callback = p_batch->P_CONTEXT;
-// }
+/*
+
+*/
 
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
+static inline void _Analog_ADC_ActivateBatch_Dma(const Analog_ADC_T * p_adc, const ADC_ConversionBatch_T * p_batch)
+{
+    p_adc->P_ADC_STATE->p_ActiveBatch = p_batch;
+    // HAL_ADC_ActivateBatch(p_adc->P_HAL_ADC, p_batch->CHANNELS);
+    HAL_ADC_ActivateDmaBatch(p_adc->P_HAL_ADC, p_batch->ID_START, p_batch->COUNT);
+}
 
+static inline void _Analog_ADC_ActivateBatch_Each(const Analog_ADC_T * p_adc, const ADC_ConversionBatch_T * p_batch)
+{
+    p_adc->P_ADC_STATE->p_ActiveBatch = p_batch;
+    _Analog_ADC_StartConversions(p_adc, &p_adc->P_CONVERSION_CHANNELS[0], p_batch->CHANNELS);
+}
+
+static inline void _Analog_ADC_ActivateBatch(const Analog_ADC_T * p_adc, const ADC_ConversionBatch_T * p_batch)
+{
+    assert(Analog_Mask_IsContiguous(p_batch->CHANNELS) && ((p_batch->CHANNELS >> p_adc->CHANNEL_COUNT) == 0U));
+    _Analog_ADC_ActivateBatch_Dma(p_adc, p_batch);
+}
+
+/*
+    Immediate. On init, or while the trigger source is inactive.
+    Sets Next as well as Active. OnCompleteBatch applies Next, it must not be left unset.
+*/
+static inline void Analog_ADC_ActivateBatch(const Analog_ADC_T * p_adc, uint8_t batchId)
+{
+    p_adc->P_ADC_STATE->p_NextBatch = &p_adc->P_CONVERSION_BATCHS[batchId];
+    _Analog_ADC_ActivateBatch(p_adc, &p_adc->P_CONVERSION_BATCHS[batchId]);
+}
 
 /******************************************************************************/
 /*!

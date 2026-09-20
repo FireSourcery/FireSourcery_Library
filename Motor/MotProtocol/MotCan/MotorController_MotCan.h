@@ -132,109 +132,23 @@ static inline void Req_Traction(MotorController_T * p_mc, const CAN_Frame_T * p_
 /*
     MotVar SDO server — manufacturer object range (0x2000..0x20FF)
 
+    Every MotVarId is a CANopen manufacturer object reachable over the standard
+    SDO server at 0x600 + node:
+
+        index    = 0x2000 | (Prefix << 4) | Type
+        subindex = (Instance << 4) | Base
+
     Kept separate from the CiA 402 profile server: this one owns only the
     MotVarId mapping and MotorController_Var access, and delegates all SDO
     framing, ccs dispatch and abort encoding to the generic engine
     (Cia402_Sdo_HandleRequest) via an OD callback interface.
 
-    (Motor_Cia402_HandleSdo still carries its own copy of that dispatch rather
-    than calling the engine — collapsing it onto the same entry point would
-    leave exactly one SDO state machine in the tree.)
+    Every var is a 32-bit RW object. Read-only and state-refusals are reported
+    by MotorController_Var_Set's status, which MotCan_Od_Status turns into the
+    same abort code a per-id access table would have produced.
 
-    Every var is a 32-bit RW object. There is no per-id access table to consult
-    up front — read-only and state-refusals are reported by MotorController_Var_Set's
-    status, which MotCan_Od_Status turns into the same abort code an access
-    table would have produced.
-
-
-    ---------------------------------------------------------------------------
-    Wire shape of a MotVarId access — expedited SDO, always 8 data bytes
-    ---------------------------------------------------------------------------
-
-    COB-ID (11-bit standard)
-        request   0x600 + nodeId      master -> drive
-        response  0x580 + nodeId      drive  -> master
-
-    The route matches the function code only (ID_MASK 0x780), so any nodeId in
-    the low 7 bits is accepted and echoed back on the response.
-
-     bit    10  9  8  7  6 | 5  4  3  2  1  0
-            +--------------+-------------------+
-            | function 0x600/0x580 |  nodeId   |
-            +--------------+-------------------+
-
-    Payload — 8 bytes, CiA 301 expedited layout
-
-        byte   0        1        2        3        4     5     6     7
-             +--------+--------+--------+--------+-----+-----+-----+-----+
-             |  Cmd   |   Index (LE)    | SubIdx |     Data (LE, i32)    |
-             +--------+--------+--------+--------+-----+-----+-----+-----+
-
-    byte 0 — Cmd (Cia402_SdoCmd_T)
-
-         bit  7  6  5 | 4 | 3  2 | 1 | 0
-             +--------+---+------+---+---+
-             |  ccs   |rsv|  n   | e | s |
-             +--------+---+------+---+---+
-              ccs = command code   n = unused data bytes
-              e   = expedited      s = size indicated
-
-        0x40  upload   init request    (read)         master -> drive
-        0x23  download init request    (write, 4B)    master -> drive
-        0x43  upload   init response   (read reply)   drive  -> master
-        0x60  download init response   (write ack)    drive  -> master
-        0x80  abort                    (either direction)
-
-    bytes 1..2 — Index, little-endian, = 0x2000 | (Prefix << 4) | Type
-    byte 3     — SubIndex,             = (Instance << 4) | Base
-
-        MotVarId_T
-             bit 15 14 | 13 12 | 11 10  9  8 | 7  6  5  4 | 3  2  1  0
-                +------+-------+-------------+------------+------------+
-                | Resv | Inst  |   Prefix    |    Type    |    Base    |
-                +------+-------+-------------+------------+------------+
-                   |       |          |            |            |
-                   |       |          +-- Index ---+            |
-                   |       +------------------- SubIndex -------+
-                   +-- must be 0 (not carried on the wire)
-
-    bytes 4..7 — Data, little-endian
-        read  request   ignored (send zeros)
-        read  response  int32 value
-        write request   int32 value
-        write ack       zeros
-        abort           uint32 CiA 301 abort code (Cia402_OdStatus_T)
-
-
-    Worked example — VBus charge level, node 1
-        Prefix   = MOT_VAR_ID_PREFIX_V_MONITOR        (5)
-        Type     = MOT_VAR_TYPE_VBUS_OUT              (0)
-        Instance = 0
-        Base     = VBUS_VAR_ID_CHARGE_LEVEL_FRACT16   (2)
-        -> index 0x2050, subindex 0x02
-
-        read  req  601  [8]  40  50 20  02  00 00 00 00
-        read  resp 581  [8]  43  50 20  02  <---- i32 LE ---->
-
-        This object is read-only, so a write is refused by Var_Set and the
-        status becomes a CiA 301 abort rather than an ack:
-
-        write req  601  [8]  23  50 20  02  <---- i32 LE ---->
-        abort resp 581  [8]  80  50 20  02  02 00 01 06
-                                            ^^ 0x06010002 LE, "write to RO object"
-
-
-    Engine behaviour worth knowing when writing a host
-
-      - On a write the engine decodes the data field per the object's OD type,
-        ignoring the e/n/s bits. Every MotVar reports as i32, so all four data
-        bytes are consumed — a host must send 4 data bytes (Cmd 0x23), never a
-        width-tagged short form such as 0x2F.
-      - An abort from the master (Cmd 0x80) is consumed with no reply.
-      - Segmented and block transfers are not supported; they abort 0x08000000.
-      - An index or subindex outside the mapped range aborts 0x06020000. An
-        in-range id that no accessor backs is not detectable on read — it
-        returns 0 rather than aborting (see MotCan_OdIf_Get).
+    See README.md in this directory for the full wire shape — COB-ID, frame
+    layout, command bytes, abort codes, and a worked example.
 */
 /******************************************************************************/
 /*

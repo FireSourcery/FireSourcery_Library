@@ -115,15 +115,28 @@ Analog_ConversionChannel_T;
 // #define ADC_CHANNEL_INIT(ChannelId, PinId, p_Context, CaptureFn )
 //     { .ID = ChannelId, .PIN = PinId , .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = ANALOG_CONVERSION_STATE_ALLOC(), }
 
+
 /******************************************************************************/
 /*
     Per ADC Batch
-    Hw sequenced channel set. Defined in Analog_ADC_Batch.h
 */
 /******************************************************************************/
-struct ADC_ConversionBatch;
-// struct Analog_ConversionChannel;
-// typedef struct Analog_ConversionChannel Analog_ConversionChannel_T;
+/* p_results is the Hw transfer destination. const volatile: the batch reads what the transfer wrote */
+typedef void (*Analog_CaptureBatch_T)(void * p_context, const volatile adc_result_t * p_results, uint8_t count);
+
+typedef const struct ADC_ConversionBatch
+{
+    analog_channel_t ID_START;
+    uint8_t COUNT;
+    // pins and buffer ADC common
+    // Analog_ConversionChannel_T * P_CONVERSION_CHANNELS;
+    analog_mask_t CHANNELS;         /* Channel IDs. Contiguous for Hw sequencing */
+    // Analog_Callback_T ON_COMPLETE;  /* Results in P_CHANNEL_RESULTS. NULL for scan only */
+    void * P_CONTEXT;
+    Analog_CaptureBatch_T CAPTURE; /* pulls from the ADC results buffer */
+}
+ADC_ConversionBatch_T;
+
 
 /******************************************************************************/
 /*
@@ -182,30 +195,16 @@ typedef const struct Analog_ADC
 {
     HAL_ADC_T * P_HAL_ADC;              /* ADC register map base address */
     Analog_ADC_State_T * P_ADC_STATE;   /* State data not retained by registers */
-    const Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /*  In this case, ADC Structs must be defined for each Board HAL. */
+    Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /*  In this case, ADC Structs must be defined for each Board HAL. */
     uint8_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
 
     /* map by adc_channel_t. handle with parallel arrays for DMA compatibility */
     const adc_pin_t * P_CHANNEL_PINS;
     volatile adc_result_t * P_CHANNEL_RESULTS; /* Hw transfer destination. [Channel ID] == [Slot] */
+
+    ADC_ConversionBatch_T * P_CONVERSION_BATCHS;
 }
 Analog_ADC_T;
-
-
-
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-static inline void Analog_ADC_MarkConversion(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers |= (1U << channel); }
-static inline bool Analog_ADC_IsMarked(const Analog_ADC_T * p_adc, analog_channel_t channel) { return (p_adc->P_ADC_STATE->ChannelMarkers & (1U << channel)) != 0UL; }
-// static inline void Analog_ADC_ClearMark(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers &= ~(1U << channel); }
-static inline void Analog_ADC_MarkAll(const Analog_ADC_T * p_adc, analog_mask_t mask) { p_adc->P_ADC_STATE->ChannelMarkers |= mask; }
-
-static inline Analog_ConversionChannel_T * Analog_ADC_ConversionOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return &p_adc->P_CONVERSION_CHANNELS[channel]; }
-static inline adc_result_t Analog_ADC_ResultOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return p_adc->P_CONVERSION_CHANNELS[channel].P_CONVERSION_STATE->Result; }
 
 
 /******************************************************************************/
@@ -219,6 +218,51 @@ static inline bool Analog_ADC_ReadIsActive(const Analog_ADC_T * p_adc) { return 
 static inline void Analog_ADC_Deactivate(const Analog_ADC_T * p_adc) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
 
 
+/******************************************************************************/
+/*!
+    API on indexes ensure no adc mismatch
+*/
+/******************************************************************************/
+static inline void Analog_ADC_MarkConversion(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers |= (1U << channel); }
+static inline bool Analog_ADC_IsMarked(const Analog_ADC_T * p_adc, analog_channel_t channel) { return (p_adc->P_ADC_STATE->ChannelMarkers & (1U << channel)) != 0UL; }
+static inline void Analog_ADC_MarkAll(const Analog_ADC_T * p_adc, analog_mask_t mask) { p_adc->P_ADC_STATE->ChannelMarkers |= mask; }
+// static inline void _ADC_ClearMarker(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers &= ~(1U << channel); }
+
+static inline Analog_ConversionChannel_T * Analog_ADC_ConversionOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return &p_adc->P_CONVERSION_CHANNELS[channel]; }
+// static inline adc_result_t Analog_ADC_ResultOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return p_adc->P_CONVERSION_CHANNELS[channel].P_CONVERSION_STATE->Result; }
+
+static inline adc_result_t Analog_ADC_ChannelResultOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return p_adc->P_CHANNEL_RESULTS[channel]; }
+
+
+/******************************************************************************/
+/*!
+    Fixed ADC Batch interface
+*/
+/******************************************************************************/
+#define ANALOG_MASK_RANGE(FirstChannel, Count) ((analog_mask_t)(((1UL << (Count)) - 1UL) << (FirstChannel)))
+
+static inline bool Analog_Mask_IsContiguous(analog_mask_t mask) { return ((mask + (mask & (0U - mask))) & mask) == 0U; }
+
+static inline const ADC_ConversionBatch_T * Analog_ADC_GetActiveBatch(const Analog_ADC_T * p_adc) { return p_adc->P_ADC_STATE->p_ActiveBatch; }
+
+/*
+    Deferred. Applied in the complete ISR of the active batch, before the next trigger.
+    Any thread. Last request wins.
+*/
+static inline void Analog_ADC_SetBatch(const Analog_ADC_T * p_adc, uint8_t batchId) { p_adc->P_ADC_STATE->p_NextBatch = &p_adc->P_CONVERSION_BATCHS[batchId]; }
+
+
+/*
+    Immediate activation is Analog_ADC_ActivateBatch, in _Analog_ADC.h. It resolves the Hw activation.
+    Without dma use Analog_ADC_MarkAll
+*/
+
+
+/******************************************************************************/
+/*! async overwrite*/
+/******************************************************************************/
+// static inline void _ADC_StartConversion(Analog_ADC_T * p_adc, analog_channel_t channel) { ADC_StartFrom(p_adc, &p_adc->P_CONVERSION_CHANNELS[channel], (1UL << channel)); }
+// static inline void _ADC_StartConversions(Analog_ADC_T * p_adc, uint32_t channels) { ADC_StartFrom(p_adc, &p_adc->P_CONVERSION_CHANNELS[0], channels); }
 
 
 /******************************************************************************/
