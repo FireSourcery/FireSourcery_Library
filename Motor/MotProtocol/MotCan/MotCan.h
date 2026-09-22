@@ -128,7 +128,7 @@ typedef union MotCan_VarSdo
             uint32_t Prefix     : 4;    /* index    [7:4]   */
             uint32_t Instance   : 2;    /* index    [9:8]   */
             uint32_t Flags      : 2;    /* index    [11:10] — MotVarId.Resv under the shift */
-            uint32_t OdArea     : 4;    /* index    [15:12] */
+            uint32_t OdArea     : 4;    /* index    [15:12] — bit 12 is unused */
             uint32_t Base       : 4;    /* subindex [3:0]   */
             uint32_t Resv       : 4;    /* subindex [7:4]   */
         }
