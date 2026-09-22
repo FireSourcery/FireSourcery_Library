@@ -51,6 +51,7 @@
 */
 /******************************************************************************/
 #include "Cia402.h"
+#include "Motor/MotProtocol/CANopen/SDO.h"
 #include "Motor/Motor/Motor_User.h"
 
 
@@ -63,14 +64,42 @@
 
 /******************************************************************************/
 /*
+    Inner handlers map Cia402_Adapter_T * p_adapter
+    Outer handler match handler signature
+*/
+/******************************************************************************/
+static inline void Motor_Cia402_ProcControl(Motor_T * p_motor, Cia402_Control_T control)
+{
+    switch (Cia402_DecodeControlCmd(control))
+    {
+        case CIA402_CMD_DISABLE_VOLTAGE:        Motor_Disable(p_motor);             break;
+        case CIA402_CMD_SHUTDOWN:               Motor_ReleaseVZ(p_motor);           break;
+        case CIA402_CMD_SWITCH_ON:              Motor_ReleaseV0(p_motor);           break;
+        case CIA402_CMD_ENABLE_OPERATION:       Motor_ActivateControl(p_motor);     break;
+        case CIA402_CMD_QUICK_STOP:             /* Motor_Disable(p_motor);  */      break;
+        case CIA402_CMD_FAULT_RESET:
+            // if (Cia402_IsFaultResetEdge(p_adapter->Input.Control, control) == true) { Motor_StateMachine_TryClearFaultAll(p_motor); }
+            break;
+        default:
+            break;
+    }
+}
+
+static inline void Motor_Cia402_WriteControl(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, Cia402_Control_T control)
+{
+    p_adapter->Input.Control = control;
+}
+
+/******************************************************************************/
+/*
     Object Dictionary access — by (index, subindex)
 
     Subindex 0 only for the mandatory CiA 402 entries supported here.
-    Returns CIA402_OD_OK on success, otherwise a CiA 301 SDO abort code.
+    Returns OD_OK on success, otherwise a CiA 301 SDO abort code.
 */
 /******************************************************************************/
-extern Cia402_OdStatus_T Motor_Cia402_Od_Get(Motor_T * p_motor, const Cia402_Adapter_T * p_adapter, uint16_t index, uint8_t subindex, int32_t * p_value);
-extern Cia402_OdStatus_T Motor_Cia402_Od_Set(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, uint16_t index, uint8_t subindex, int32_t value);
+extern OD_Status_T Motor_Cia402_Od_Get(Motor_T * p_motor, const Cia402_Adapter_T * p_adapter, uint16_t index, uint8_t subindex, int32_t * p_value);
+extern OD_Status_T Motor_Cia402_Od_Set(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, uint16_t index, uint8_t subindex, int32_t value);
 
 /******************************************************************************/
 /*
@@ -79,7 +108,7 @@ extern Cia402_OdStatus_T Motor_Cia402_Od_Set(Motor_T * p_motor, Cia402_Adapter_T
     (no response is sent for abort requests).
 */
 /******************************************************************************/
-extern bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_resp);
+extern bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const SDO_T * p_req, SDO_T * p_resp);
 
 
 /******************************************************************************/
@@ -107,10 +136,4 @@ extern void Motor_Cia402_BuildTxPdo_SwPosition(Motor_T * p_motor, Cia402_TxPdo_S
 
 
 
-/*
-    Outer handler directly on Motor
-*/
-// extern bool Motor_Cia402_HandleCanRx(Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
-// extern void Motor_Cia402_BuildTxPdo1(Motor_T * p_motor, CAN_Frame_T * p_tx);
-// extern void Motor_Cia402_BuildTxPdo2(Motor_T * p_motor, CAN_Frame_T * p_tx);
 

@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "Cia402.h"
+#include "Motor/MotProtocol/CANopen/CANopen.h"
 #include "Motor/MotorController/MotorController_Var.h"
 #include "Peripheral/CAN/CAN.h"
 #include "Peripheral/CAN/CAN_Service.h"
@@ -48,11 +49,22 @@
 */
 /******************************************************************************/
 
-extern void MotorController_Cia402_HandleRxPdo1(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
-extern void MotorController_Cia402_HandleRxPdo2(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
+extern void MotorController_Cia402_HandleRxPdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
 extern void MotorController_Cia402_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
 
+extern void MotorController_Cia402_BuildTxPdo(MotorController_T * p_mc, CAN_Frame_T * p_tx);
 extern void MotorController_Cia402_BuildTxPdo1(MotorController_T * p_mc, CAN_Frame_T * p_tx);
 extern void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * p_tx);
 
 extern CAN_Service_T MOTOR_CONTROLLER_CIA402_SERVICE;
+
+static inline CAN_RxFilter_T Cia402_RxFilter(uint32_t nodeId)
+{
+    return (CAN_RxFilter_T) { .Id = { .Id = (nodeId) }, .Mask = COB_NODE_MASK };
+}
+
+// static void MotorController_Cia402_SetNodeFilter(MotorController_T * p_mc, uint32_t nodeId)
+// {
+//     CAN_RxFilter_T filter = Cia402_RxFilter(nodeId);
+//     // CAN_SetRxFilters(&p_mc->CAN_SOCKETS[0], &filter);
+// }

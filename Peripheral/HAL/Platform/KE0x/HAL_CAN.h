@@ -200,6 +200,12 @@ static inline void HAL_CAN_WriteTxData(HAL_CAN_T * p_hal, const uint8_t * p_data
     p_hal->CANTFLG = (p_hal->CANTBSEL & MSCAN_CANTBSEL_TX_MASK) & MSCAN_CANTFLG_TXE_MASK;
 }
 
+/* Launch — clear the selected buffer's CANTFLG bit to schedule transmission */
+static inline void HAL_CAN_LaunchTx(HAL_CAN_T * p_hal)
+{
+    p_hal->CANTFLG = (p_hal->CANTBSEL & MSCAN_CANTBSEL_TX_MASK) & MSCAN_CANTFLG_TXE_MASK;
+}
+
 static inline bool HAL_CAN_ReadRxExtendedFlag(const HAL_CAN_T * p_hal)
 {
     IDR1_3_UNION idr1 = { .Bytes = p_hal->REIDR1 };
@@ -354,6 +360,163 @@ static inline void _HAL_CAN_Enable(HAL_CAN_T * p_hal, bool enable)
     else { p_hal->CANCTL1 &= (uint8_t)~MSCAN_CANCTL1_CANE_MASK; }
 }
 
+/******************************************************************************/
+/*!
+    Rx acceptance filters
+
+    MSCAN compares the received IDR0..IDR3 bytes against IDAR0..3 under IDMR0..3.
+    MSCAN mask polarity is 1 = don't care; this HAL takes the opposite, upper-layer
+    convention — 1 = bit must match, the same sense as CAN_ReqRoute_T.ID_MASK — and
+    inverts internally, so a route's (ID_MATCH, ID_MASK) pair can be handed straight
+    to a filter.
+
+    CANIDAC.IDAM selects the filter layout:
+        0b00  two 32-bit filters    <- used here, banks 0 and 1
+        0b01  four 16-bit filters
+        0b10  eight 8-bit filters
+        0b11  closed, accept nothing
+
+    CANIDAC/CANIDAR/CANIDMR are writable only in initialization mode. The HAL_CAN_*
+    entry points make that transition themselves; the _HAL_CAN_* forms assume the
+    caller is already in init mode (HAL_CAN_Init).
+
+    CANopen use: filtering on the node bits alone accepts every function code
+    addressed to this node and rejects every other node in hardware —
+
+        HAL_CAN_SetRxFilterStandard(p_hal, 0U, nodeId, COB_NODE_MASK);
+
+    leaving the software route table to fan out by function code. Bank 1 can then
+    take node 0 for the broadcast COB-IDs (NMT 0x000, SYNC 0x080).
+*/
+/******************************************************************************/
+#define HAL_CAN_RX_FILTER_COUNT     (2U)    /* 32-bit mode — two independent accept windows */
+
+enum
+{
+    HAL_CAN_IDAM_32BIT  = 0U,
+    HAL_CAN_IDAM_16BIT  = 1U,
+    HAL_CAN_IDAM_8BIT   = 2U,
+    HAL_CAN_IDAM_CLOSED = 3U,
+};
+
+#define HAL_CAN_ID_FILTER_BYTES     (4U)        /* IDAR/IDMR bytes per 32-bit filter bank */
+#define HAL_CAN_IDMR_DONT_CARE      (0xFFU)     /* MSCAN mask polarity: 1 = ignore this bit */
+
+static inline volatile uint8_t * _HAL_CAN_BankIdAr(HAL_CAN_T * p_hal, uint8_t bank) { return (bank == 0U) ? p_hal->CANIDAR_BANK_1 : p_hal->CANIDAR_BANK_2; }
+static inline volatile uint8_t * _HAL_CAN_BankIdMr(HAL_CAN_T * p_hal, uint8_t bank) { return (bank == 0U) ? p_hal->CANIDMR_BANK_1 : p_hal->CANIDMR_BANK_2; }
+
+/*
+    Both filters are built as a pair of images in the IDR layout shared with the Tx/Rx
+    encoders — an acceptance image (the value to match) and a care image (which bits
+    are compared). The care image is inverted on write, since MSCAN IDMR is 1 = ignore.
+
+    R_TEIDE carries IDE and is a care bit in both filters, so a standard filter rejects
+    extended frames and vice versa. R_TSRR (RTR/SRR) is left out of the care image, so
+    remote and data frames match alike.
+*/
+static inline void _HAL_CAN_SetRxFilterStandard(HAL_CAN_T * p_hal, uint8_t bank, uint32_t id, uint32_t mask)
+{
+    volatile uint8_t * p_idar = _HAL_CAN_BankIdAr(p_hal, bank);
+    volatile uint8_t * p_idmr = _HAL_CAN_BankIdMr(p_hal, bank);
+
+    union { uint32_t Id; MSCAN_StandardIDType Fields; } acc  = { .Id = id };
+    union { uint32_t Id; MSCAN_StandardIDType Fields; } care = { .Id = mask };
+
+    IDR1_3_UNION accIdr1  = { .IDR1 = {.EID17_15 = 0U, .R_TEIDE = 0U, .R_TSRR = 0U, .EID20_18_OR_SID2_0 = acc.Fields.EID2_0 } };
+    IDR1_3_UNION careIdr1 = { .IDR1 = {.EID17_15 = 0U, .R_TEIDE = 1U, .R_TSRR = 0U, .EID20_18_OR_SID2_0 = care.Fields.EID2_0 } };
+
+    p_hal->CANIDAC = (uint8_t)MSCAN_CANIDAC_IDAM(HAL_CAN_IDAM_32BIT);
+
+    /* IDR2/IDR3 carry no standard-frame identifier bits — ignore them entirely. */
+    p_idar[0] = acc.Fields.EID10_3;     p_idmr[0] = (uint8_t)~care.Fields.EID10_3;
+    p_idar[1] = accIdr1.Bytes;          p_idmr[1] = (uint8_t)~careIdr1.Bytes;
+    p_idar[2] = 0U;                     p_idmr[2] = HAL_CAN_IDMR_DONT_CARE;
+    p_idar[3] = 0U;                     p_idmr[3] = HAL_CAN_IDMR_DONT_CARE;
+}
+
+static inline void _HAL_CAN_SetRxFilterExtended(HAL_CAN_T * p_hal, uint8_t bank, uint32_t id, uint32_t mask)
+{
+    volatile uint8_t * p_idar = _HAL_CAN_BankIdAr(p_hal, bank);
+    volatile uint8_t * p_idmr = _HAL_CAN_BankIdMr(p_hal, bank);
+
+    union { uint32_t Id; MSCAN_ExtendIDType Fields; } acc  = { .Id = id };
+    union { uint32_t Id; MSCAN_ExtendIDType Fields; } care = { .Id = mask };
+
+    IDR1_3_UNION accIdr1  = { .IDR1 = {.EID17_15 = acc.Fields.EID17_15,  .R_TEIDE = 1U, .R_TSRR = 1U, .EID20_18_OR_SID2_0 = acc.Fields.EID20_18 } };
+    IDR1_3_UNION careIdr1 = { .IDR1 = {.EID17_15 = care.Fields.EID17_15, .R_TEIDE = 1U, .R_TSRR = 0U, .EID20_18_OR_SID2_0 = care.Fields.EID20_18 } };
+    IDR1_3_UNION accIdr3  = { .IDR3 = {.ERTR = 0U, .EID6_0 = acc.Fields.EID6_0 } };
+    IDR1_3_UNION careIdr3 = { .IDR3 = {.ERTR = 0U, .EID6_0 = care.Fields.EID6_0 } };
+
+    p_hal->CANIDAC = (uint8_t)MSCAN_CANIDAC_IDAM(HAL_CAN_IDAM_32BIT);
+
+    p_idar[0] = acc.Fields.EID28_21;    p_idmr[0] = (uint8_t)~care.Fields.EID28_21;
+    p_idar[1] = accIdr1.Bytes;          p_idmr[1] = (uint8_t)~careIdr1.Bytes;
+    p_idar[2] = acc.Fields.EID14_7;     p_idmr[2] = (uint8_t)~care.Fields.EID14_7;
+    p_idar[3] = accIdr3.Bytes;          p_idmr[3] = (uint8_t)~careIdr3.Bytes;
+}
+
+/* Both banks fully don't-care — every frame reaches the Rx buffer. */
+static inline void _HAL_CAN_SetRxFilterAcceptAll(HAL_CAN_T * p_hal)
+{
+    p_hal->CANIDAC = (uint8_t)MSCAN_CANIDAC_IDAM(HAL_CAN_IDAM_32BIT);
+
+    for (uint8_t bank = 0U; bank < HAL_CAN_RX_FILTER_COUNT; bank++)
+    {
+        volatile uint8_t * p_idar = _HAL_CAN_BankIdAr(p_hal, bank);
+        volatile uint8_t * p_idmr = _HAL_CAN_BankIdMr(p_hal, bank);
+        for (uint8_t i = 0U; i < HAL_CAN_ID_FILTER_BYTES; i++) { p_idar[i] = 0U; p_idmr[i] = HAL_CAN_IDMR_DONT_CARE; }
+    }
+}
+
+/*
+    Public forms — run the filter write inside an init-mode window.
+
+    MSCAN holds CANRIER in its reset state while in init mode, so the Rx interrupt enable
+    reads back cleared on exit. The window saves and restores it, so a runtime filter
+    change does not silently stop Rx interrupts. Entering init mode also aborts any pending Tx.
+*/
+static inline uint8_t _HAL_CAN_EnterFilterWindow(HAL_CAN_T * p_hal)
+{
+    uint8_t rxIrqEnables = p_hal->CANRIER;
+    _HAL_CAN_EnterInitMode(p_hal);
+    return rxIrqEnables;
+}
+
+static inline void _HAL_CAN_ExitFilterWindow(HAL_CAN_T * p_hal, uint8_t rxIrqEnables)
+{
+    _HAL_CAN_ExitInitMode(p_hal);
+    p_hal->CANRIER = rxIrqEnables;
+}
+
+static inline void HAL_CAN_SetRxFilterStandard(HAL_CAN_T * p_hal, uint8_t bank, uint32_t id, uint32_t mask)
+{
+    uint8_t rxIrqEnables = _HAL_CAN_EnterFilterWindow(p_hal);
+    _HAL_CAN_SetRxFilterStandard(p_hal, bank, id, mask);
+    _HAL_CAN_ExitFilterWindow(p_hal, rxIrqEnables);
+}
+
+static inline void HAL_CAN_SetRxFilterExtended(HAL_CAN_T * p_hal, uint8_t bank, uint32_t id, uint32_t mask)
+{
+    uint8_t rxIrqEnables = _HAL_CAN_EnterFilterWindow(p_hal);
+    _HAL_CAN_SetRxFilterExtended(p_hal, bank, id, mask);
+    _HAL_CAN_ExitFilterWindow(p_hal, rxIrqEnables);
+}
+
+static inline void HAL_CAN_SetRxFilterAcceptAll(HAL_CAN_T * p_hal)
+{
+    uint8_t rxIrqEnables = _HAL_CAN_EnterFilterWindow(p_hal);
+    _HAL_CAN_SetRxFilterAcceptAll(p_hal);
+    _HAL_CAN_ExitFilterWindow(p_hal, rxIrqEnables);
+}
+
+/* IDAM closed — hardware accepts nothing; no Rx interrupt will fire. */
+static inline void HAL_CAN_SetRxFilterAcceptNone(HAL_CAN_T * p_hal)
+{
+    uint8_t rxIrqEnables = _HAL_CAN_EnterFilterWindow(p_hal);
+    p_hal->CANIDAC = (uint8_t)MSCAN_CANIDAC_IDAM(HAL_CAN_IDAM_CLOSED);
+    _HAL_CAN_ExitFilterWindow(p_hal, rxIrqEnables);
+}
+
 #define HAL_CAN_TIME_QUANTA_PER_BIT     8U
 #define HAL_CAN_TSEG1                   3U      /* TSEG1 = 3 → 4 TQ */
 #define HAL_CAN_TSEG2                   2U      /* TSEG2 = 2 → 3 TQ */
@@ -389,15 +552,8 @@ static inline void HAL_CAN_Init(HAL_CAN_T * p_hal)
     /* CTL1: select clock source, disable loopback/listen */
     p_hal->CANCTL1 = ((p_hal->CANCTL1 & (uint8_t)~(MSCAN_CANCTL1_LOOPB_MASK | MSCAN_CANCTL1_LISTEN_MASK | MSCAN_CANCTL1_CLKSRC_MASK)) | MSCAN_CANCTL1_CLKSRC(HAL_CAN_CLOCK_SOURCE_DEFAULT));
 
-    /* Acceptance filters: open (accept all) — 32-bit filter mode with mask = all-don't-care */
-    p_hal->CANIDAC = (uint8_t)MSCAN_CANIDAC_IDAM(0U); /* 32-bit filter mode */
-    for (uint8_t i = 0U; i < 4U; i++)
-    {
-        p_hal->CANIDAR_BANK_1[i] = 0x00U;
-        p_hal->CANIDMR_BANK_1[i] = 0xFFU; /* all bits don't care */
-        p_hal->CANIDAR_BANK_2[i] = 0x00U;
-        p_hal->CANIDMR_BANK_2[i] = 0xFFU;
-    }
+    /* Acceptance filters: open until the application installs a node filter */
+    _HAL_CAN_SetRxFilterAcceptAll(p_hal);
 
     /* Baud rate — function handles its own init mode transition */
     _HAL_CAN_ExitInitMode(p_hal);

@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,36 +24,31 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   HAL_Peripheral.h
+    @file   Cia402_Pdo.h
     @author FireSourcery
-    @brief  Define configurable HAL Peripheral Path
+    @brief  This drive's PDO set — CiA 402 defaults over [PDO_Channel_T]
 */
 /******************************************************************************/
-#ifndef HAL_PERIPHERAL_H
-#define HAL_PERIPHERAL_H
+#include "Motor/MotProtocol/CANopen/PDO.h"
+
 
 /******************************************************************************/
-/*!
-    @brief
-    Dependency inversion by direct inclusion of inline headers
-    Peripheral/HAL_Module.h included by:
-        -> HAL/Platform/HAL_Module.h
-        -> Peripheral/Module.h
+/*
+    This node's PDOs — one set, four each way as in the predefined connection set. RAM starts at the defaults;
+    [Cia402_Pdo_InitFrom] loads a stored copy over them, and the app's NVM map saves them back.
 */
 /******************************************************************************/
-#define XSTR(String) #String
-#define STR(String) XSTR(String)
+#define CIA402_PDO_COUNT                (4U)        /* per direction */
 
-#if     defined(HAL_PERIPHERAL_PATH_DIRECTORY)      /* External directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(HAL_PERIPHERAL_PATH_DIRECTORY/File)
-#elif   defined(HAL_PERIPHERAL_PATH_PLATFORM)       /* Library platform directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(Peripheral/HAL/Platform/HAL_PERIPHERAL_PATH_PLATFORM/File)
-#else
-    #error "HAL_PERIPHERAL_PATH not defined."
-#endif
+typedef struct Cia402_PdoConfig
+{
+    PDO_Channel_T Rx[CIA402_PDO_COUNT];   /* RPDO1..4 */
+    PDO_Channel_T Tx[CIA402_PDO_COUNT];   /* TPDO1..4 */
+}
+Cia402_PdoConfig_T;
 
-#ifndef WEAK
-    #define WEAK __attribute__((weak))
-#endif
 
-#endif
+extern Cia402_PdoConfig_T Cia402_PdoConfig;     /* RAM, named for the app's NVM map */
+extern PDO_Tables_T CIA402_PDO_TABLES;          /* over Cia402_PdoConfig — what the handlers and parameter objects take */
+
+extern void Cia402_Pdo_InitFrom(const Cia402_PdoConfig_T * p_config);

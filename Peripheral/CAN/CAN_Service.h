@@ -35,10 +35,7 @@
 /******************************************************************************/
 /*! Service callbacks */
 /******************************************************************************/
-typedef size_t (*CAN_BuildData_T)(void * p_context, uint8_t * p_txData);
-typedef void (*CAN_BuildFrame_T)(void * p_context, CAN_Frame_T * p_frame);
-
-typedef CAN_BuildFrame_T CAN_BuildBroadcast_T;
+typedef void (*CAN_BuildBroadcast_T)(void * p_context, CAN_Frame_T * p_frame);
 
 // keep for interface
 typedef struct
@@ -81,7 +78,7 @@ static inline void CAN_ProcBroadcast(CAN_T * p_can, CAN_BroadcastEntry_T * p_bro
     CAN_Frame_T frame = { 0U };
     frame.CanId.Id32  = p_broadcast->ID; /* seed default ID; frame builders (e.g. CiA402) may override */
     p_broadcast->BUILD(p_can->P_CONTEXT, &frame);
-    HAL_CAN_WriteTxMessage(p_can->P_HAL, &frame);
+    if (frame.DataLength > 0U) { HAL_CAN_WriteTxMessage(p_can->P_HAL, &frame); } /* empty = nothing due, as the request path */
 }
 
 static inline void _CAN_ProcBroadcastService(CAN_T * p_can, CAN_BroadcastEntry_T * p_table, uint8_t count, uint32_t timer)
@@ -117,16 +114,28 @@ typedef const struct
 }
 CAN_ReqRoute_T;
 
+// typedef const struct CAN_ReqService
+// {
+//     CAN_ReqRoute_T * P_ROUTES;
+//     uint8_t ROUTE_COUNT;
+//     // void * P_CONTEXT;
+// }
+// CAN_ReqService_T;
+
 // alternative to table search
 // typedef CAN_ReqRoute_T * (*CAN_RxRequestMapper_T)(void * p_dev, uint32_t id);
 static inline CAN_ReqRoute_T * CAN_SearchRxTable(CAN_ReqRoute_T * p_routes, uint8_t count, uint32_t id)
 {
-    for (uint8_t i = 0U; i < count; i++)
-    {
-        if ((id & p_routes[i].ID_MASK) == p_routes[i].ID_MATCH) { return &p_routes[i]; }
-    }
+    for (uint8_t i = 0U; i < count; i++) { if ((id & p_routes[i].ID_MASK) == p_routes[i].ID_MATCH) { return &p_routes[i]; } }
     return NULL;
 }
+
+// static inline void _CAN_ProcRequestService(CAN_T * p_can, CAN_ReqRoute_T * p_route, void * p_context)
+// {
+//     CAN_Frame_T txFrame = { 0U };
+//     if (p_found != NULL) { p_found->HANDLER(p_context, p_rxFrame, &txFrame); }
+//     if (txFrame.DataLength > 0U) { HAL_CAN_WriteTxMessage(p_can->P_HAL, &txFrame); }
+// }
 
 static inline void _CAN_ProcRequestService(CAN_T * p_can, CAN_ReqRoute_T * p_table, uint8_t count, const CAN_Frame_T * p_rxFrame)
 {
@@ -137,23 +146,24 @@ static inline void _CAN_ProcRequestService(CAN_T * p_can, CAN_ReqRoute_T * p_tab
 }
 
 
-/* unit of selecion, alternatatively CAN holds seperate tables */
+/*
+ */
+
+
+/* unit of selection, alternatively CAN holds separate tables */
 typedef const struct CAN_Service
 {
     CAN_BroadcastEntry_T * P_BROADCASTS;  uint8_t BROADCAST_COUNT;
     CAN_ReqRoute_T * P_ROUTES; uint8_t ROUTE_COUNT;
-    // CAN_RxRequestMapper_T REQ_MAPPER;
     // const volatile uint32_t * P_TIMER;
-    // void ** P_CONTEXT_MUX;
-    //     const volatile uint32_t * P_TIMER;
-    //     CAN_BroadcastState_T * P_STATES; /* Parallel array of broadcast states */
+    // CAN_BroadcastState_T * P_STATES; /* Parallel array of broadcast states */
 }
 CAN_Service_T;
 
 // CAN_Service_T CAN_SERVICE_EMPTY = { .P_BROADCASTS = NULL, .BROADCAST_COUNT = 0U, .P_ROUTES = NULL, .ROUTE_COUNT = 0U };
 
 /*
-    proc buffered frame, without isr prority
+    proc buffered frame, without isr priority
     poll rx buffer, or call form isr
     Dispatch one inbound frame: route-table match first, else the service-wide REQ_HANDLER.
     Handler fills txFrame (ID/DLC/data); a non-zero DataLength is transmitted as the reply.

@@ -5,11 +5,12 @@
 **FireSourcery_Library** is a modular, layered embedded systems library written in **C** for motor control applications targeting **ARM Cortex-M** microcontrollers (primarily NXP S32K / Kinetis KE0x families). It implements a full motor controller stack including FOC (Field-Oriented Control), sensor feedback, protocol communication, and peripheral abstraction.
 
 ## Core Principles
-- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
+- **Expression through code**: Use code as the language to express what its doing. Favor code that expresses itself over extensive comments.
+- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization. Function body should look like the equation in its docstring, not reconstruct it.
+- **Simplicity First**: Make every change as simple as possible. Impact minimal code. Favor regularity.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
-- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization.
--
+
 ### Demand Elegance
 - Consider established or published design patterns to eliminate code duplication
 - For non-trivial changes: pause and ask "is there a more elegant way?"
@@ -19,8 +20,8 @@
 
 ### Documentation
 - When referring to a concept that is already modeled by a type or struct in code, refer to that type using `[]` e.g. `[TypeName_T]`.
+- Use visualizations with mermaid diagrams for describing what the code is doing, over extensive comments.
 - Keep comments concise. Comments are reserved for points that the code cannot express, not what the code is doing.
-- Use visualizations with mermaid diagrams for describing what the code is doing
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
 
 ### Self-Improvement Loop
@@ -49,14 +50,17 @@
 
 ### Architecture Patterns
 - **HAL abstraction**: Hardware access through `HAL_*.h` headers with platform-specific implementations
+- HAL functions must have focused signatures, few and focused parameters. Split logic into granular blocks.
 - **Thread/ISR separation**: `_Thread.h` files define periodic processing functions; ISR-safe boundaries are explicit
 - **State machines**: Hierarchical state machine framework in `Framework/StateMachine/` used extensively for motor control states
 <!-- - **Fixed-point math**: 16-bit fractional (`fract16`) and Q16 fixed-point arithmetic — no floating point at runtime -->
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
     This pattern is only for hardware descriptors and static polymorphism. Do not use it for what could be mutable only structs.
-- **Stateless pure functions layer**: function parameter contain the entire state
+- **Stateless pure functions layer**: function parameter contain the entire state.
 - Utility functions pass context that is the closest layer the logic requires. Don't pass bool.
 <!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
+- **Expression style**: Prefer concise, declarative expressions over procedural manipulation. Use library primitives (`math_clamp`, `fract16_div`, `fract16_mul`, `math_min/max`) composed into single expressions that mirror the domain formula. Avoid early-return ladders and temporaries that break a formula into steps. Function body should look like the equation in its docstring, not reconstruct it.
+- For functions called with known constant values at compile time, input parameter correctness is a part of the API contract. favor `assert` instead of runtime error checking logic.
 
 ### Important Rules
 - **No heap allocation** (`malloc`/`free` are never used)

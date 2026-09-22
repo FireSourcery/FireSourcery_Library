@@ -234,6 +234,13 @@ static inline Socket_T * SocketAt(MotorController_T * p_dev, uint8_t protocolInd
     return (protocolIndex < p_dev->PROTOCOL_COUNT) ? &p_dev->P_PROTOCOLS[protocolIndex] : NULL;
 }
 
+#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+static inline CAN_T * CanAt(MotorController_T * p_dev, uint8_t canIndex)
+{
+    return (canIndex < p_dev->CAN_SOCKET_COUNT) ? &p_dev->P_CAN_SOCKETS[canIndex] : NULL;
+}
+#endif
+
 static int _HandleGeneral_Get(MotorController_T * p_dev, MotVarId_T varId)
 {
     switch ((MotorController_VarType_General_T)varId.Type)
@@ -365,7 +372,9 @@ static int _HandleCommunication_Get(MotorController_T * p_dev, MotVarId_T varId)
         case MOT_VAR_TYPE_SOCKET_STATE:             return 0;
         case MOT_VAR_TYPE_SOCKET_CONFIG:            return Socket_ConfigId_Get(SocketAt(p_dev, varId.Instance), varId.Base);
         case MOT_VAR_TYPE_CAN_STATE:            return 0;
-        case MOT_VAR_TYPE_CAN_CONFIG:           return 0;
+#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+        case MOT_VAR_TYPE_CAN_CONFIG:           return CAN_ConfigId_Get(CanAt(p_dev, varId.Instance), varId.Base);
+#endif
         default: return 0;
     }
 }
@@ -377,7 +386,9 @@ static MotVarId_Status_T _HandleCommunication_Set(MotorController_T * p_dev, Mot
         case MOT_VAR_TYPE_SOCKET_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_SOCKET_CONFIG:            Socket_ConfigId_Set(SocketAt(p_dev, varId.Instance), varId.Base, value);     break;
         case MOT_VAR_TYPE_CAN_STATE:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_CAN_CONFIG:           break;
+#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+        case MOT_VAR_TYPE_CAN_CONFIG:           CAN_ConfigId_Set(CanAt(p_dev, varId.Instance), varId.Base, value);           break;
+#endif
         case MOT_VAR_TYPE_CIA_402_STATE:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_CIA_402_CONFIG:           break;
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;

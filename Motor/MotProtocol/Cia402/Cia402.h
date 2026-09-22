@@ -33,6 +33,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "Motor/MotProtocol/CANopen/OD.h"
+
 
 /******************************************************************************/
 /*
@@ -206,6 +208,7 @@ typedef enum Cia402_OpMode
     CIA402_MODE_VELOCITY                = 2,  /* vl  */
     CIA402_MODE_PROFILE_VELOCITY        = 3,  /* PV  */
     CIA402_MODE_PROFILE_TORQUE          = 4,  /* TQ  */
+    CIA402_MODE_RESV                    = 5,
     CIA402_MODE_HOMING                  = 6,  /* HM  */
     CIA402_MODE_INTERPOLATED_POSITION   = 7,  /* IP  */
     CIA402_MODE_CYCLIC_SYNC_POSITION    = 8,  /* CSP */
@@ -279,7 +282,46 @@ Cia402_FaultReactionOption_T;
     Object Dictionary Indices (CiA 402)
 */
 /******************************************************************************/
-typedef enum Cia402_OdIndex
+/*
+    Index interpretation — the page view. CiA 402 pages the device profile area per axis.
+*/
+typedef union Cia402_OdIndex
+{
+    struct __attribute__((packed)) { uint16_t Object : 11; uint16_t Page : 5; };    /* page view — axis paging  */
+    uint16_t Index;
+}
+Cia402_OdIndex_T;
+
+#define CIA402_OD_OBJECT_BITS        (11U)
+#define CIA402_OD_OBJECT_MASK        (0x07FFU)   /* [10:0]  object within a page */
+#define CIA402_OD_PAGE_MASK          (0xF800U)   /* [15:11] area + axis */
+
+static inline Cia402_OdIndex_T Cia402_OdIndex(uint16_t index) { return (Cia402_OdIndex_T) { .Index = index }; }
+
+#define CIA402_OD_DEVICE_BASE        (0x6000U)
+#define CIA402_OD_DEVICE_LAST        (0x9FFFU)
+
+#define CIA402_OD_AXIS_OFFSET        (0x800U)    /* one page — axis N is N pages up */
+#define CIA402_OD_AXIS_COUNT         (8U)        /* pages 12..19 */
+
+typedef enum Cia402_OdDeviceAxis
+{
+    /* Profile areas for individual axes */
+    CIA402_OD_DEVICE_AXIS0 = 0x6000U,
+    CIA402_OD_DEVICE_AXIS1 = CIA402_OD_DEVICE_AXIS0 + CIA402_OD_AXIS_OFFSET,
+    CIA402_OD_DEVICE_AXIS2 = CIA402_OD_DEVICE_AXIS1 + CIA402_OD_AXIS_OFFSET,
+    CIA402_OD_DEVICE_AXIS3 = CIA402_OD_DEVICE_AXIS2 + CIA402_OD_AXIS_OFFSET,
+    CIA402_OD_DEVICE_AXIS4 = CIA402_OD_DEVICE_AXIS3 + CIA402_OD_AXIS_OFFSET,
+    CIA402_OD_DEVICE_AXIS5 = CIA402_OD_DEVICE_AXIS4 + CIA402_OD_AXIS_OFFSET,
+    CIA402_OD_DEVICE_AXIS6 = CIA402_OD_DEVICE_AXIS5 + CIA402_OD_AXIS_OFFSET,
+    CIA402_OD_DEVICE_AXIS7 = CIA402_OD_DEVICE_AXIS6 + CIA402_OD_AXIS_OFFSET,
+}
+Cia402_OdDeviceAxis_T;
+
+/*
+    Object dictionary entries for the device profile area (0x6000 - 0x67FF).
+*/
+typedef enum Cia402_OdDeviceIndex
 {
     CIA402_OD_CONTROLWORD               = (0x6040U), /* RW  U16  Master command */
     CIA402_OD_STATUSWORD                = (0x6041U), /* RO  U16  Drive state report */
@@ -301,122 +343,55 @@ typedef enum Cia402_OdIndex
     CIA402_OD_QUICK_STOP_DECELERATION   = (0x6085U), /* RW  U32  Quick-stop ramp rate */
     CIA402_OD_SUPPORTED_DRIVE_MODES     = (0x6502U), /* RO  U32  Bitmask of supported modes */
 }
-Cia402_OdIndex_T;
+Cia402_OdDeviceIndex_T;
 
-typedef enum Cia402_OdType
-{
-    CIA402_OD_TYPE_NONE,
-    CIA402_OD_TYPE_I8,
-    CIA402_OD_TYPE_U8,
-    CIA402_OD_TYPE_I16,
-    CIA402_OD_TYPE_U16,
-    CIA402_OD_TYPE_I32,
-    CIA402_OD_TYPE_U32,
-}
-Cia402_OdType_T;
+#define CIA402_OD_DEVICE_PAGE_OFFSET (CIA402_OD_DEVICE_BASE >> CIA402_OD_OBJECT_BITS)  /* 12 */
 
-static uint8_t Cia402_OdType_Size(Cia402_OdType_T type)
-{
-    switch (type)
-    {
-        case CIA402_OD_TYPE_I8:  return 1U;
-        case CIA402_OD_TYPE_U8:  return 1U;
-        case CIA402_OD_TYPE_I16: return 2U;
-        case CIA402_OD_TYPE_U16: return 2U;
-        case CIA402_OD_TYPE_I32: return 4U;
-        case CIA402_OD_TYPE_U32: return 4U;
-        default: return 0U;
-    }
-}
+/* Axis helpers — meaningful only where Cia402_OdIndex_IsProfile holds. */
+static inline bool Cia402_OdIndex_IsProfile(uint16_t index) { return (OD_Area_Of(index) == OD_AREA_DEVICE_PROFILE); }
 
-typedef enum Cia402_OdAccess
-{
-    CIA402_OD_ACCESS_NONE = 0U,
-    CIA402_OD_ACCESS_RO   = 1U,
-    CIA402_OD_ACCESS_WO   = 2U,
-    CIA402_OD_ACCESS_RW   = 3U,
-}
-Cia402_OdAccess_T;
-
-typedef struct Cia402_OdInfo
-{
-    Cia402_OdType_T   Type;
-    Cia402_OdAccess_T Access;
-    uint8_t           Size; /* in bytes */
-}
-Cia402_OdInfo_T;
-
-/******************************************************************************/
 /*
-    Object Dictionary metadata — common-layer entry point.
-
-    Returns spec-fixed type / access / size for the given (index, subindex).
-    All sizes are compile-time constants (sizeof of the wire type).
-    For unknown entries, returns Type = CIA402_OD_TYPE_NONE.
+    Axis is a biased page: Bits [15:11] = Page 12..19
 */
-/******************************************************************************/
-extern Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex);
-
-/* SDO abort codes per CiA 301 */
-typedef enum Cia402_OdStatus
+static inline uint8_t Cia402_OdIndex_DecodeAxis(uint16_t index)
 {
-    CIA402_OD_OK                    = 0,
-    CIA402_OD_ERR_TOGGLE_BIT        = (int)0x05030000, /* Toggle bit not alternated */
-    CIA402_OD_ERR_TIMEOUT           = (int)0x05040000, /* SDO protocol timed out */
-    CIA402_OD_ERR_INVALID_CCS       = (int)0x05040001, /* Client/server cmd specifier invalid */
-    CIA402_OD_ERR_NO_OBJECT         = (int)0x06020000, /* Object does not exist */
-    CIA402_OD_ERR_NOT_MAPPABLE      = (int)0x06040041, /* Object cannot be mapped to PDO */
-    CIA402_OD_ERR_PDO_LENGTH        = (int)0x06040042, /* Mapped PDO length exceeds */
-    CIA402_OD_ERR_GENERAL_PARAM     = (int)0x06040043, /* General parameter incompatibility */
-    CIA402_OD_ERR_GENERAL_INTERNAL  = (int)0x06040047, /* General internal incompatibility */
-    CIA402_OD_ERR_HARDWARE          = (int)0x06060000, /* Access failed due to hardware error */
-    CIA402_OD_ERR_LENGTH_MISMATCH   = (int)0x06070010, /* Data type / length mismatch */
-    CIA402_OD_ERR_LENGTH_HIGH       = (int)0x06070012, /* Length too high */
-    CIA402_OD_ERR_LENGTH_LOW        = (int)0x06070013, /* Length too low */
-    CIA402_OD_ERR_SUBINDEX          = (int)0x06090011, /* Subindex does not exist */
-    CIA402_OD_ERR_READ_ONLY         = (int)0x06010002, /* Write to RO object */
-    CIA402_OD_ERR_WRITE_ONLY        = (int)0x06010001, /* Read of WO object */
-    CIA402_OD_ERR_VALUE_RANGE       = (int)0x06090030, /* Value out of range */
-    CIA402_OD_ERR_VALUE_HIGH        = (int)0x06090031, /* Value too high */
-    CIA402_OD_ERR_VALUE_LOW         = (int)0x06090032, /* Value too low */
-    CIA402_OD_ERR_GENERAL           = (int)0x08000000, /* General error */
-    CIA402_OD_ERR_DEVICE_STATE      = (int)0x08000022, /* Refused due to present device state */
+    return (uint8_t)(Cia402_OdIndex(index).Page - CIA402_OD_DEVICE_PAGE_OFFSET);
 }
-Cia402_OdStatus_T;
+/* Re-page onto an axis, keeping the object. Taking only .Object is what normalizes — the input may name any axis. */
+/* (index + axis * 0x0800) */
+static inline Cia402_OdIndex_T Cia402_OdIndex_EncodeAxis(Cia402_OdDeviceIndex_T index, uint8_t axis)
+{
+    return (Cia402_OdIndex_T) { .Page = CIA402_OD_DEVICE_PAGE_OFFSET + axis, .Object = index };
+}
+
+/* Axis 0 is the canonical form — the value the Cia402_OdDeviceIndex_T constants name. */
+static inline Cia402_OdDeviceIndex_T Cia402_OdDeviceIndex(uint16_t index)
+{
+    return (Cia402_OdDeviceIndex_T)Cia402_OdIndex_EncodeAxis((Cia402_OdDeviceIndex_T)index, 0U).Index;
+}
 
 
 /******************************************************************************/
 /*
     Adapter context — one per CiA 402 axis.
     Motor_Cia402 / Cia402_MotorAdapter
-
-    Holds:
-      - PrevControl       : previous Controlword for FaultReset rising-edge detection
-      - ActiveMode        : current Modes of Operation (0x6060/0x6061)
-      - QuickStopOption   : 0x605A
-      - ShutdownOption    : 0x605B
-      - DisableOpOption   : 0x605C
-      - HaltOption        : 0x605D
-      - FaultReactOption  : 0x605E
-      - QuickStopDecel    : 0x6085
 */
 /******************************************************************************/
 typedef struct Cia402_Input
 {
-    Cia402_Control_T              PrevControl;
-    Cia402_OpMode_T               ActiveMode;
+    Cia402_Control_T              Control;
+    Cia402_OpMode_T               ActiveMode;       /*  Index : 0x6060 / 0x6061 */
 }
 Cia402_Input_T;
 
 typedef struct Cia402_Config
 {
-    uint8_t                       NodeId;
-    Cia402_QuickStopOption_T      QuickStopOption;
-    Cia402_ShutdownOption_T       ShutdownOption;
-    Cia402_DisableOpOption_T      DisableOpOption;
-    Cia402_HaltOption_T           HaltOption;
-    Cia402_FaultReactionOption_T  FaultReactOption;
-    uint32_t                      QuickStopDecel;
+    Cia402_QuickStopOption_T      QuickStopOption;     /*  Index : 0x605A */
+    Cia402_ShutdownOption_T       ShutdownOption;      /*  Index : 0x605B */
+    Cia402_DisableOpOption_T      DisableOpOption;     /*  Index : 0x605C */
+    Cia402_HaltOption_T           HaltOption;          /*  Index : 0x605D */
+    Cia402_FaultReactionOption_T  FaultReactOption;    /*  Index : 0x605E */
+    uint32_t                      QuickStopDecel;      /*  Index : 0x6085 */
 }
 Cia402_Config_T;
 
@@ -430,18 +405,18 @@ Cia402_Adapter_T;
 
 /******************************************************************************/
 /*
-
+    Object Dictionary metadata (CiA 402)
 */
 /******************************************************************************/
 typedef struct Cia402_OdMeta
 {
-    uint16_t          Index;
-    uint8_t           SubIndex;
-    Cia402_OdType_T   Type;
-    Cia402_OdAccess_T Access;
-    // uint8_t           Size; /* in bytes */
+    uint16_t    Index;
+    uint8_t     SubIndex;
+    OD_Type_T   Type;
+    OD_Access_T Access;
 }
 Cia402_OdMeta_T;
+
 
 /*
     Table Entry
@@ -450,10 +425,10 @@ Cia402_OdMeta_T;
 typedef struct Cia402_OdEntry
 {
     Cia402_OdMeta_T Meta;
-    uint16_t AdapterOffset; /* offsetof(Motor_Cia402_T/Cia402_Adapter_T, ...) — 0xFFFF if not adapter-backed */
+    uint16_t AdapterOffset; /* offsetof(Cia402_Adapter_T, ...) — 0xFFFF if not adapter-backed */
     /* For non-adapter-backed entries, fall back to the function-pointer shape */
     int32_t(*Get)(const void *, const Cia402_Adapter_T *);
-    Cia402_OdStatus_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
+    OD_Status_T(*Set)(const void *, Cia402_Adapter_T *, int32_t);
 }
 Cia402_OdEntry_T;
 
@@ -476,142 +451,14 @@ static const Cia402_OdEntry_T * Cia402_OdTable_Find(const Cia402_OdEntry_T * p_t
     return NULL;
 }
 
-
-/******************************************************************************/
 /*
-    SDO (Service Data Object)
+    Object Dictionary metadata — common-layer entry point.
+
+    Returns spec-fixed type / access / size for the given (index, subindex).
+    All sizes are compile-time constants (sizeof of the wire type).
+    For unknown entries, returns Type = OD_TYPE_NONE.
 */
-/******************************************************************************/
-/*
-    SDO Command Specifier — byte 0 of the SDO payload.
-    GCC packs first-declared bitfield in LSB; layout below matches
-    [bit7..5: ccs][bit4: rsv][bit3..2: n][bit1: e][bit0: s].
-*/
-typedef union Cia402_SdoCmd
-{
-    struct __attribute__((packed))
-    {
-        uint8_t Size      : 1; /* [0]  s    1 = data size indicated by N */
-        uint8_t Expedited : 1; /* [1]  e    1 = data fits in bytes 4..7 */
-        uint8_t N         : 2; /* [2:3] n   number of unused bytes in data field (0..3) */
-        uint8_t Reserved  : 1; /* [4]       always 0 */
-        uint8_t Ccs       : 3; /* [5:7] ccs command code (Cia402_SdoCcs_T) */
-    };
-    uint8_t Byte;
-}
-Cia402_SdoCmd_T;
-
-/*
-    Client/Server Command Specifier (CCS) — top 3 bits of byte 0.
-    Distinguishes request kind (download = write, upload = read, etc).
-*/
-typedef enum Cia402_SdoCcs
-{
-    CIA402_SDO_CCS_DOWNLOAD_SEG_REQ     = 0U, /* segmented download request  (client → server) */
-    CIA402_SDO_CCS_DOWNLOAD_INIT_REQ    = 1U, /* download initiate          (client → server) */
-    CIA402_SDO_CCS_UPLOAD_INIT_REQ      = 2U, /* upload initiate            (client → server) */
-    CIA402_SDO_CCS_UPLOAD_SEG_REQ       = 3U, /* segmented upload request   (client → server) */
-    CIA402_SDO_CCS_ABORT                = 4U, /* abort transfer             (either direction) */
-    CIA402_SDO_CCS_BLOCK_UPLOAD         = 5U, /* block upload               (either direction) */
-    CIA402_SDO_CCS_BLOCK_DOWNLOAD       = 6U, /* block download             (either direction) */
-    /* SCS (server response codes) reuse the same field — context distinguishes */
-    CIA402_SDO_SCS_UPLOAD_INIT_RSP      = 2U, /* upload initiate response   (server → client) */
-    CIA402_SDO_SCS_DOWNLOAD_INIT_RSP    = 3U, /* download initiate response (server → client) */
-}
-Cia402_SdoCcs_T;
-
-/*
-    SDO Data — bytes 4..7 of the SDO frame, viewed as the typed value it carries.
-    Lets handlers read/write the value field by type without manual byte shifts:
-        value = p_req->Data.I16;
-        p_resp->Data.U32 = abortCode;
-*/
-typedef union Cia402_SdoData
-{
-    uint8_t  Bytes[4];
-    int8_t   I8;
-    uint8_t  U8;
-    int16_t  I16;
-    uint16_t U16;
-    int32_t  I32;
-    uint32_t U32;
-    uint32_t AbortCode; /* for abort frames */
-}
-Cia402_SdoData_T;
-
-/*
-    Handles sign extension
-*/
-static int32_t Cia402_SdoData_Decode(Cia402_OdType_T type, Cia402_SdoData_T data)
-{
-    switch (type)
-    {
-        case CIA402_OD_TYPE_I8:  return (int32_t)data.I8;
-        case CIA402_OD_TYPE_U8:  return (int32_t)data.U8;
-        case CIA402_OD_TYPE_I16: return (int32_t)data.I16;
-        case CIA402_OD_TYPE_U16: return data.U16;
-        case CIA402_OD_TYPE_I32: return data.I32;
-        case CIA402_OD_TYPE_U32: return data.U32;
-        default:                 return 0;
-    }
-}
-
-static Cia402_SdoData_T Cia402_SdoData_Encode(Cia402_OdType_T type, int32_t value)
-{
-    switch (type)
-    {
-        case CIA402_OD_TYPE_I8:  return (Cia402_SdoData_T) { .I8 = (int8_t)value };
-        case CIA402_OD_TYPE_U8:  return (Cia402_SdoData_T) { .U8 = (uint8_t)value };
-        case CIA402_OD_TYPE_I16: return (Cia402_SdoData_T) { .I16 = (int16_t)value };
-        case CIA402_OD_TYPE_U16: return (Cia402_SdoData_T) { .U16 = (uint16_t)value };
-        case CIA402_OD_TYPE_I32: return (Cia402_SdoData_T) { .I32 = value };
-        case CIA402_OD_TYPE_U32: return (Cia402_SdoData_T) { .U32 = (uint32_t)value };
-        default:                 return (Cia402_SdoData_T) { .U32 = 0 };
-    }
-}
-
-/*
-    SDO Frame — 8-byte CAN payload for SDO request and response.
-    Fields are little-endian on the wire; the packed layout matches
-    standard CiA 301 byte ordering.
-
-    Use Data.<type> to read/write the value of the indexed object directly.
-    For abort frames, Data.AbortCode holds the U32 abort reason.
-*/
-typedef union Cia402_Sdo
-{
-    struct __attribute__((packed))
-    {
-        Cia402_SdoCmd_T  Cmd;       /* byte 0     */
-        uint16_t         Index;     /* bytes 1..2 little-endian */
-        uint8_t          SubIndex;  /* byte 3     */
-        Cia402_SdoData_T Data;      /* bytes 4..7 little-endian (typed) */
-    };
-    uint8_t Bytes[8];
-}
-Cia402_Sdo_T;
-
-/* less than 2 registers */
-static inline Cia402_Sdo_T Cia402_Sdo_EncodeAbort(uint16_t index, uint8_t subindex, Cia402_OdStatus_T abortCode)
-{
-    return (Cia402_Sdo_T) { .Cmd = { .Ccs = CIA402_SDO_CCS_ABORT, }, .Index = index, .SubIndex = subindex, .Data.AbortCode = (uint32_t)abortCode, };
-}
-
-static inline Cia402_Sdo_T Cia402_Sdo_EncodeDownloadAck(uint16_t index, uint8_t subindex)
-{
-    return (Cia402_Sdo_T) { .Cmd = { .Ccs = CIA402_SDO_SCS_DOWNLOAD_INIT_RSP }, .Index = index, .SubIndex = subindex };
-}
-
-static inline Cia402_Sdo_T Cia402_Sdo_EncodeUploadResponse(uint16_t index, uint8_t subindex, Cia402_OdInfo_T info, int32_t value)
-{
-    return (Cia402_Sdo_T)
-    {
-        .Cmd      = { .Ccs = CIA402_SDO_SCS_UPLOAD_INIT_RSP, .Expedited = 1U, .Size = 1U, .N = (uint8_t)(4U - info.Size) },
-        .Index    = index,
-        .SubIndex = subindex,
-        .Data     = Cia402_SdoData_Encode(info.Type, value),
-    };
-}
+extern OD_Info_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex);
 
 
 /******************************************************************************/
@@ -632,6 +479,13 @@ typedef struct __attribute__((packed)) Cia402_RxPdo_Control
     Cia402_Control_T Controlword;
 }
 Cia402_RxPdo_Control_T;
+
+// typedef struct __attribute__((packed)) Cia402_RxPdo_ControlTarget
+// {
+//     Cia402_Control_T Controlword;
+//     int32_t          Target;
+// }
+// Cia402_RxPdo_ControlTarget_T;
 
 typedef struct __attribute__((packed)) Cia402_RxPdo_ControlTorque
 {
@@ -661,6 +515,13 @@ typedef struct __attribute__((packed)) Cia402_TxPdo_Status
 }
 Cia402_TxPdo_Status_T;
 
+// typedef struct __attribute__((packed)) Cia402_TxPdo_StatusActual
+// {
+//     Cia402_Status_T Statusword;
+//     int32_t         Actual;
+// }
+// Cia402_TxPdo_StatusActual_T;
+
 typedef struct __attribute__((packed)) Cia402_TxPdo_StatusTorque
 {
     Cia402_Status_T Statusword;
@@ -681,108 +542,3 @@ typedef struct __attribute__((packed)) Cia402_TxPdo_StatusPosition
     int32_t         PositionActual;
 }
 Cia402_TxPdo_StatusPosition_T;
-
-
-/*
-    PDO Frame — up to 8 bytes of pre-mapped process data.
-    Layout is set by the PDO mapping objects (0x1A00.., 0x1600..) at startup.
-    Callers cast Bytes to typed PDO mapping structs below per the configured
-    mapping for the COB-ID being received/transmitted.
-*/
-typedef union Cia402_Pdo
-{
-    uint8_t Bytes[8];
-}
-Cia402_Pdo_T;
-
-
-/******************************************************************************/
-/*
-    CAN packet parsing types (CiA 301 base)
-
-    SDO frame layout (8-byte CAN payload):
-      ┌────────┬─────────────┬──────────┬──────────────────────────┐
-      │ Byte 0 │ Byte 1..2   │ Byte 3   │ Byte 4..7                │
-      │ Cmd    │ Index (LE)  │ SubIdx   │ Data (LE, up to 4 bytes) │
-      └────────┴─────────────┴──────────┴──────────────────────────┘
-
-    PDO frame: 0..8 bytes of pre-mapped data — no header, layout is set
-    via the PDO mapping objects (0x1A00..0x1603) at startup.
-
-    COB-ID conventions for default connection set:
-      SDO request   : 0x600 + nodeId   (master → slave)
-      SDO response  : 0x580 + nodeId   (slave  → master)
-      RxPDO1        : 0x200 + nodeId
-      RxPDO2        : 0x300 + nodeId
-      TxPDO1        : 0x180 + nodeId
-      TxPDO2        : 0x280 + nodeId
-      EMCY          : 0x080 + nodeId
-*/
-/******************************************************************************/
-#define CIA402_COB_SDO_REQ_BASE     (0x600U)
-#define CIA402_COB_SDO_RSP_BASE     (0x580U)
-#define CIA402_COB_RXPDO1_BASE      (0x200U)
-#define CIA402_COB_RXPDO2_BASE      (0x300U)
-#define CIA402_COB_TXPDO1_BASE      (0x180U)
-#define CIA402_COB_TXPDO2_BASE      (0x280U)
-#define CIA402_COB_EMCY_BASE        (0x080U)
-// #define CIA402_COB_AXIS_OFFSET        (0x800U)
-
-#define CIA402_COB_FUNCTION_MASK    (0x780U) /* upper 4 bits */
-#define CIA402_COB_NODE_MASK        (0x07FU) /* lower 7 bits */
-#define CIA402_COB_MASK             (CIA402_COB_FUNCTION_MASK | CIA402_COB_NODE_MASK)
-
-#define CIA402_COB_FUNCTION(cob)    ((cob) & CIA402_COB_FUNCTION_MASK)
-#define CIA402_COB_NODE(cob)        ((cob) & CIA402_COB_NODE_MASK)
-
-typedef enum Cia402_CobFunctionCode
-{
-    CIA402_COB_SDO_REQ   = 0x600U,
-    CIA402_COB_SDO_RSP   = 0x580U,
-    CIA402_COB_RXPDO1    = 0x200U,
-    CIA402_COB_RXPDO2    = 0x300U,
-    CIA402_COB_TXPDO1    = 0x180U,
-    CIA402_COB_TXPDO2    = 0x280U,
-    CIA402_COB_EMCY      = 0x080U,
-}
-Cia402_CobFunctionCode_T;
-
-typedef struct Cia402_Cob
-{
-    uint16_t Node     : 7; /* lower 7 bits of COB-ID (node ID) */
-    uint16_t Function : 4; /* upper 4 bits of COB-ID (function code) */
-    uint16_t Reserved : 5; /* upper bits reserved, always 0 */
-}
-Cia402_Cob_T;
-
-
-
-/******************************************************************************/
-/*
-    Optional Interface
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
-    Object Dictionary callback interface
-
-    The protocol-layer SDO server is generic — it parses inbound frames and
-    dispatches reads/writes through these callbacks. The application (e.g.
-    Motor_Cia402) supplies the function pointers and a backing context.
-*/
-/******************************************************************************/
-typedef Cia402_OdInfo_T(*Cia402_OdGetInfoFn_T)(void * p_context, uint16_t index, uint8_t subindex);
-typedef Cia402_OdStatus_T(*Cia402_OdGetFn_T)  (void * p_context, uint16_t index, uint8_t subindex, int32_t * p_value);
-typedef Cia402_OdStatus_T(*Cia402_OdSetFn_T)  (void * p_context, uint16_t index, uint8_t subindex, int32_t value);
-
-typedef const struct Cia402_OdInterface
-{
-    void * p_Context;
-    Cia402_OdGetInfoFn_T GetInfo;
-    Cia402_OdGetFn_T Get;
-    Cia402_OdSetFn_T Set;
-}
-Cia402_OdInterface_T;
-
-extern uint8_t Cia402_Sdo_HandleRequest(const Cia402_OdInterface_T * p_od, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_rsp);
-extern void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter_T * p_adapter, uint16_t cob_id, const Cia402_Pdo_T * p_pdo, uint8_t dlc);

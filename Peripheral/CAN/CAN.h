@@ -37,10 +37,8 @@
 
 /******************************************************************************/
 /*!
-    Wrap additional runtime state and interface to Services structs.
-
-    CAN layer start at higher level, include services layer.
-    since register level hardware already handles transport
+    CAN layer start at the socket level / services layer.
+    Register level hardware already handles transport, frame state minus RTR
 */
 /******************************************************************************/
 /*
@@ -69,7 +67,7 @@ CAN_BufferState_T;
 typedef struct
 {
     CAN_Frame_T Frame;
-    // CAN_Frame_T TxBuffer;
+    CAN_Frame_T TxBuffer;
     CAN_BufferState_T State;
     uint32_t TimeStamp;
     uint32_t HwIndex;
@@ -79,11 +77,11 @@ CAN_Buffer_T;
 /******************************************************************************/
 /*! Rx Callbacks */
 /******************************************************************************/
-// typedef void (*CAN_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data); //, uint32_t length);
 /*
     Full-frame Rx callback — preserves DLC, RTR, and ID metadata.
 */
-// typedef void (*CAN_RxFrame_T)(void * p_dev, const CAN_Frame_T * p_frame);
+typedef void (*CAN_RxHandler_T)(void * p_context, const CAN_Frame_T * p_frame);
+typedef void (*CAN_TxHandler_T)(void * p_context, CAN_Frame_T * p_frame);
 
 
 /******************************************************************************/
@@ -93,25 +91,38 @@ CAN_Buffer_T;
 #define CAN_MESSAGE_BUFFER_COUNT 1U
 #endif
 
+/*
+    Hardware Rx acceptance filter.
+    Id.Eff selects a standard or extended filter; Mask uses 1 = bit must match — the same
+    sense as CAN_ReqRoute_T.ID_MASK, so a route's (ID_MATCH, ID_MASK) pair is a valid filter.
+*/
+typedef struct CAN_RxFilter { can_id_t Id; uint32_t Mask; } CAN_RxFilter_T;
+
+#ifndef CAN_RX_FILTER_COUNT
+#define CAN_RX_FILTER_COUNT HAL_CAN_RX_FILTER_COUNT
+#endif
+
+typedef struct CAN_Config
+{
+    bool IsEnabled;
+    uint8_t RxFilterCount;                          /* 0 = accept all */
+    CAN_RxFilter_T RxFilters[CAN_RX_FILTER_COUNT];
+    // bool IsExtendedId; /* true = use extended CAN IDs */
+}
+CAN_Config_T;
+
 typedef struct
 {
     // CAN_Buffer_T ActiveChannel;
     CAN_Buffer_T Channel[CAN_MESSAGE_BUFFER_COUNT];
     CAN_Service_T * p_Service; /*  */
+    CAN_Config_T Config; /* configuration for this CAN instance */
 }
 CAN_State_T;
-
-// typedef struct CAN_SocketConfig
-// {
-//     //  is enabled / serivce active/ resolve to empty
-//     bool IsEnabled;
-// }
-// CAN_Config_T;
 
 /******************************************************************************/
 /*!
     CAN instance — const config + mutable state pointer
-    Start at the socket level, HAL already handles frame state minus RTR
 */
 /******************************************************************************/
 typedef const struct CAN
@@ -122,6 +133,7 @@ typedef const struct CAN
     CAN_Service_T * P_SERVICE; /* default */
     CAN_Service_T * P_SERVICE_TABLE; /* Protocol selection */
     uint8_t SERVICE_COUNT;
+    const CAN_Config_T * P_NVM_CONFIG; /* config source, copied into P_STATE->Config at init */
     // CAN_RxRequest_T REQ_CALLBACK;
     // const volatile uint32_t * P_TIMER;
 }
@@ -337,6 +349,30 @@ static inline void CAN_RxData_ISR(CAN_T * p_can)
 /******************************************************************************/
 extern void CAN_Init(CAN_T * p_can);
 extern void CAN_InitBaudRate(CAN_T * p_can, uint32_t bitRate);
+extern void CAN_SetRxFilters(CAN_T * p_can, const CAN_RxFilter_T * p_filters, uint8_t count);
+
+/******************************************************************************/
+/*!
+    Var Id interface — Config fields.
+    Writes land in P_STATE->Config and take effect on the next CAN_Init, as with the other
+    config vars; persist through the NVM map. Use CAN_SetRxFilters for an immediate change.
+*/
+/******************************************************************************/
+typedef enum CAN_ConfigId
+{
+    CAN_CONFIG_IS_ENABLED,              /* service active on init */
+    CAN_CONFIG_RX_FILTER_COUNT,         /* 0 = accept all; clamped to CAN_RX_FILTER_COUNT */
+    CAN_CONFIG_RX_FILTER0_ID,
+    CAN_CONFIG_RX_FILTER0_MASK,         /* 1 = bit must match */
+    CAN_CONFIG_RX_FILTER0_IS_EXTENDED,
+    CAN_CONFIG_RX_FILTER1_ID,
+    CAN_CONFIG_RX_FILTER1_MASK,
+    CAN_CONFIG_RX_FILTER1_IS_EXTENDED,
+}
+CAN_ConfigId_T;
+
+extern int CAN_ConfigId_Get(CAN_T * p_can, CAN_ConfigId_T id);
+extern void CAN_ConfigId_Set(CAN_T * p_can, CAN_ConfigId_T id, int value);
 
 /* Tx — polling, no interrupt, fire-and-forget */
 // extern void CAN_TxData(CAN_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length);

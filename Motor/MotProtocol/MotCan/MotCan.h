@@ -42,7 +42,9 @@
 /******************************************************************************/
 #include "Motor/MotProtocol/MotPacket.h"
 #include "Motor/MotProtocol/MotVarId.h"
-#include "Motor/MotProtocol/Cia402/Cia402.h"
+#include "Motor/MotProtocol/CANopen/CANopen.h"
+#include "Motor/MotProtocol/CANopen/OD.h"
+#include "Motor/MotProtocol/CANopen/SDO.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -50,9 +52,112 @@
 /******************************************************************************/
 /*! CAN IDs */
 /******************************************************************************/
-#define MOT_CAN_TX_TELEMETRY1_ID     (0x181U)   /* speed, IPhase, VPhase, VBus */
-#define MOT_CAN_TX_TELEMETRY2_ID     (0x182U)   /* heat, fault flags, state */
-#define MOT_CAN_RX_CONTROL_ID        (0x001U)
+#define MOT_CAN_TX_TELEMETRY1_ID     (COB_TXPDO3_BASE)   /* speed, IPhase, VPhase, VBus */
+#define MOT_CAN_TX_TELEMETRY2_ID     (COB_TXPDO3_BASE)   /* heat, fault flags, state */
+#define MOT_CAN_RX_CONTROL_ID        (COB_RXPDO3_BASE)
+#define MOT_CAN_VAR_SDO_ID           (COB_SDO_REQ_BASE)
+
+/******************************************************************************/
+/*!
+    MotVar objects in the CANopen manufacturer-specific area
+
+    A MotVarId is its index/subindex pair shifted by one nibble:
+
+        index    = 0x2000 | (MotVarId >> 4)     ->  0x2000..0x2FFF
+        subindex = MotVarId & 0xF               ->  Base
+
+    so {Resv, Instance, Prefix, Type} name the object and Base names the
+    member. MotVar owns exactly one area nibble (0x2); 0x3..0x5 stay open.
+
+    Subindex 0 is a real member (Base 0), not the CiA 301 entry count —
+    these are flat accessor records, not arrays.
+*/
+/******************************************************************************/
+#define MOT_CAN_OD_VAR_BASE     (0x2000U)
+#define MOT_CAN_OD_VAR_AREA     (OD_AREA_ID(MOT_CAN_OD_VAR_BASE))  /* 0x2 */
+#define MOT_CAN_OD_VAR_SHIFT    (4U)                                        /* id bits the subindex carries — Base */
+
+static inline bool MotCan_Od_IsVarIndex(uint16_t index) { return (OD_Index(index).Area == MOT_CAN_OD_VAR_AREA); }
+
+static inline MotVarId_T MotCan_Od_VarIdOf(uint16_t index, uint8_t subindex)
+{
+    return (MotVarId_T) { .Value = (uint16_t)((OD_Index(index).Offset << MOT_CAN_OD_VAR_SHIFT) | (subindex & 0x0FU)) };
+}
+
+/* Encode-form counterparts — host/EDS side of the same bijection. */
+static inline uint16_t MotCan_Od_IndexOf(MotVarId_T varId)    { return (uint16_t)(MOT_CAN_OD_VAR_BASE | (varId.Value >> MOT_CAN_OD_VAR_SHIFT)); }
+static inline uint8_t  MotCan_Od_SubIndexOf(MotVarId_T varId) { return (uint8_t)varId.Base; }
+
+/*
+    MotVarId_Status_T -> CiA 301 abort code.
+    State-dependent write refusals all map to 0x08000022, the spec's
+    "cannot be transferred because of the present device state".
+*/
+static inline OD_Status_T MotCan_Od_StatusOf(MotVarId_Status_T status)
+{
+    switch (status)
+    {
+        case MOT_VAR_STATUS_OK:                      return OD_OK;
+        case MOT_VAR_STATUS_ERROR_INVALID_ID:        return OD_ERR_NO_OBJECT;
+        case MOT_VAR_STATUS_ERROR_READ_ONLY:         return OD_ERR_READ_ONLY;
+        case MOT_VAR_STATUS_ERROR_WRITE_ONLY:        return OD_ERR_WRITE_ONLY;
+        case MOT_VAR_STATUS_ERROR_ACCESS_DISABLED:   return OD_ERR_DEVICE_STATE;
+        case MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE:  return OD_ERR_DEVICE_STATE;
+        case MOT_VAR_STATUS_ERROR_NOT_RUNNING_STATE: return OD_ERR_DEVICE_STATE;
+        default:                                     return OD_ERR_GENERAL;
+    }
+}
+
+/******************************************************************************/
+/*!
+    Typed wire overlay — the SDO payload with its address fields expanded into
+    the MotVarId they carry. Same 8 bytes as SDO_T.
+
+    Packed at every level: the overlay is cast onto CAN frame buffers, which
+    are byte-aligned, and Cortex-M0+ faults on an unaligned word load.
+*/
+/******************************************************************************/
+typedef union MotCan_VarSdo
+{
+    struct __attribute__((packed))
+    {
+        struct __attribute__((packed))
+        {
+            uint32_t Cmd        : 8;    /* byte 0 — typed view is .Sdo.Cmd */
+            uint32_t Type       : 4;    /* index    [3:0]   */
+            uint32_t Prefix     : 4;    /* index    [7:4]   */
+            uint32_t Instance   : 2;    /* index    [9:8]   */
+            uint32_t Flags      : 2;    /* index    [11:10] — MotVarId.Resv under the shift */
+            uint32_t OdArea     : 4;    /* index    [15:12] */
+            uint32_t Base       : 4;    /* subindex [3:0]   */
+            uint32_t Resv       : 4;    /* subindex [7:4]   */
+        }
+        VarCmd;
+        OD_Data_T  Data;                /* bytes 4..7 */
+    };
+    SDO_T      Sdo;                     /* generic view — what the engine sees */
+    uint8_t    Bytes[8];
+}
+MotCan_VarSdo_T;
+
+static_assert(sizeof(MotCan_VarSdo_T) == sizeof(SDO_T), "MotVar overlay must be frame-sized");
+static_assert(offsetof(MotCan_VarSdo_T, Data) == 4U, "Data must overlay bytes 4..7");
+static_assert(alignof(MotCan_VarSdo_T) == 1U, "overlay is cast onto byte-aligned CAN buffers");
+static_assert((MOT_CAN_OD_VAR_BASE & 0x0FFFU) == 0U, "MotVar owns exactly one area nibble");
+
+static inline bool MotCan_VarSdo_IsVarId(const MotCan_VarSdo_T * p_frame) { return (p_frame->VarCmd.OdArea == MOT_CAN_OD_VAR_AREA); }
+
+static inline MotVarId_T MotCan_VarSdo_VarId(const MotCan_VarSdo_T * p_frame) { return MotCan_Od_VarIdOf(p_frame->Sdo.Index, p_frame->Sdo.SubIndex); }
+
+static inline OD_Info_T MotCan_Od_GetInfo(uint16_t index, uint8_t subindex)
+{
+    static const OD_Info_T VAR32 = { .Type = OD_TYPE_I32, .Access = OD_ACCESS_RW, .Size = sizeof(int32_t) };
+    static const OD_Info_T ABSENT = { .Type = OD_TYPE_NONE, .Access = OD_ACCESS_NONE, .Size = 0U };
+    const MotCan_VarSdo_T addr = { .Sdo = { .Index = index, .SubIndex = subindex } };
+    /* Flags and subindex Resv have no meaning yet, so any address that sets them does not exist */
+    return ((addr.VarCmd.OdArea == MOT_CAN_OD_VAR_AREA) && (addr.VarCmd.Flags == 0U) && (addr.VarCmd.Resv == 0U)) ? VAR32 : ABSENT;
+}
+
 
 
 /******************************************************************************/
@@ -85,69 +190,6 @@ typedef struct __attribute__((packed))
     uint8_t Resv[5];
 }
 MotCan_StateControl_T;
-
-/******************************************************************************/
-/*!
-    MotVar objects in the CANopen manufacturer-specific range (0x2000-0x5FFF)
-
-    MotVarId_T is already a namespaced struct accessor: {Prefix, Type} names the
-    struct type, {Instance, Base} names the member within it. That is precisely a
-    CANopen record — so the type pair becomes the object index and the member pair
-    its subindex:
-
-        index    = 0x2000 | (Prefix << 4) | Type    -> 0x2000..0x20FF  (256 objects)
-        subindex = (Instance << 4) | Base           -> 0x00..0x3F      (64 members)
-
-    Every var is therefore reachable over the standard SDO route at 0x600 + node,
-    with standard CiA 301 abort codes, and consumes only 256 of the 16384
-    manufacturer indices.
-
-    Note: subindex 0 is a real member here (Instance 0, Base 0), not the CiA 301
-    "number of entries" count — these are flat accessor records, not arrays.
-*/
-/******************************************************************************/
-#define MOT_CAN_OD_VAR_BASE     (0x2000U)
-#define MOT_CAN_OD_VAR_LAST     (MOT_CAN_OD_VAR_BASE | 0x00FFU)
-
-#define MOT_CAN_OD_SUBINDEX_MAX (0x3FU)     /* Instance 2 bits, Base 4 bits */
-
-static inline bool MotCan_Od_IsVarIndex(uint16_t index) { return (index >= MOT_CAN_OD_VAR_BASE) && (index <= MOT_CAN_OD_VAR_LAST); }
-
-static inline MotVarId_T MotCan_Od_ToVarId(uint16_t index, uint8_t subindex)
-{
-    return (MotVarId_T) { .Prefix = (index >> 4U) & 0x0FU, .Type = index & 0x0FU, .Instance = (subindex >> 4U) & 0x03U, .Base = subindex & 0x0FU };
-}
-
-/* Encode-form counterparts — host/EDS side of the same bijection. */
-static inline uint16_t MotCan_Od_IndexOf(MotVarId_T varId)    { return MOT_CAN_OD_VAR_BASE | MOT_VAR_ID_TYPE_ID(varId.Prefix, varId.Type); }
-static inline uint8_t  MotCan_Od_SubIndexOf(MotVarId_T varId) { return (uint8_t)((varId.Instance << 4U) | varId.Base); }
-
-/*
-    MotVarId_Status_T -> CiA 301 abort code.
-    State-dependent write refusals all map to 0x08000022, the spec's
-    "cannot be transferred because of the present device state".
-*/
-static inline Cia402_OdStatus_T MotCan_Od_StatusOf(MotVarId_Status_T status)
-{
-    switch (status)
-    {
-        case MOT_VAR_STATUS_OK:                      return CIA402_OD_OK;
-        case MOT_VAR_STATUS_ERROR_INVALID_ID:        return CIA402_OD_ERR_NO_OBJECT;
-        case MOT_VAR_STATUS_ERROR_READ_ONLY:         return CIA402_OD_ERR_READ_ONLY;
-        case MOT_VAR_STATUS_ERROR_WRITE_ONLY:        return CIA402_OD_ERR_WRITE_ONLY;
-        case MOT_VAR_STATUS_ERROR_ACCESS_DISABLED:   return CIA402_OD_ERR_DEVICE_STATE;
-        case MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE:  return CIA402_OD_ERR_DEVICE_STATE;
-        case MOT_VAR_STATUS_ERROR_NOT_RUNNING_STATE: return CIA402_OD_ERR_DEVICE_STATE;
-        default:                                     return CIA402_OD_ERR_GENERAL;
-    }
-}
-
-static inline Cia402_OdInfo_T MotCan_Od_GetInfo(uint16_t index, uint8_t subindex)
-{
-    return (MotCan_Od_IsVarIndex(index) && (subindex <= MOT_CAN_OD_SUBINDEX_MAX))
-        ? (Cia402_OdInfo_T) { .Type = CIA402_OD_TYPE_I32, .Access = CIA402_OD_ACCESS_RW, .Size = sizeof(int32_t) }
-    : (Cia402_OdInfo_T) { .Type = CIA402_OD_TYPE_NONE, .Access = CIA402_OD_ACCESS_NONE, .Size = 0U };
-}
 
 /******************************************************************************/
 /*! TX broadcasts — call periodically (e.g. every 20 ms) */

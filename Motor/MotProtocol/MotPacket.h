@@ -182,6 +182,7 @@ MotPacket_Long_T;
 
 /* 8-Byte Total handles Fixed Var read/write */
 /* Imm32 */
+/* SubId overlap with framing, handle by frame parser */
 // typedef struct MOT_PACKET_PACKED MotPacket_Fixed64
 // {
 //     MotPacket_Prefix_T Prefix;   /* Imm as SubId, Handled by frame parser */
@@ -268,6 +269,9 @@ typedef struct MOT_PACKET_PACKED MotPacket_VarReadFixedResp { uint32_t Value; } 
 typedef struct MOT_PACKET_PACKED MotPacket_VarWriteFixedReq { uint16_t MotVarId; uint16_t Flags; uint32_t Value; }    MotPacket_VarWriteFixedReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_VarWriteFixedResp { uint8_t Status; }                                      MotPacket_VarWriteFixedResp_T;
 // alternatively return 16-bit status if using shared pool
+
+/* ReadWrite TxRx Symmetric */
+typedef struct MOT_PACKET_PACKED MotPacket_VarAccess { uint16_t MotVarId; uint16_t Flags; uint32_t Value; } MotPacket_VarAccess_T;
 
 /******************************************************************************/
 /*!

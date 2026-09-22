@@ -69,11 +69,10 @@ __attribute__((weak)) void HAL_ADC_ActivateDmaBatch(HAL_ADC_T * p_hal, uint32_t 
 
 static inline void HAL_ADC_Init(HAL_ADC_T * p_hal);
 
-#include HAL_PERIPHERAL_PATH(HAL_ADC.h)
-
 /******************************************************************************/
 /*!
-    Export
+    Value types. Defined before the platform HAL, which uses them in its own signatures.
+    A platform overrides HAL_ADC_VALUE_T / HAL_ADC_PIN_T from HAL_Types.h.
 */
 /******************************************************************************/
 #include <stdint.h>
@@ -91,6 +90,14 @@ typedef HAL_ADC_VALUE_T adc_result_t;
 
 typedef HAL_ADC_PIN_T adc_pin_t;
 
+#include HAL_PERIPHERAL_PATH(HAL_ADC.h)
+
+/******************************************************************************/
+/*!
+    Export
+*/
+/******************************************************************************/
+/* The platform HAL may define its own length */
 #ifndef HAL_ADC_FIFO_LENGTH_MAX
 #define HAL_ADC_FIFO_LENGTH_MAX 1U
 #endif

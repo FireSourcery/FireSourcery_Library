@@ -92,6 +92,16 @@ static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex);
 static inline void HAL_CAN_InitBaudRate(HAL_CAN_T * p_hal, uint32_t baudRate);
 static inline void HAL_CAN_Init(HAL_CAN_T * p_hal);
 
+/*
+    Rx acceptance filters — platform defines HAL_CAN_RX_FILTER_COUNT banks.
+    mask: 1 = bit must match, the same sense as CAN_ReqRoute_T.ID_MASK.
+    Safe at runtime: the platform handles any mode transition and preserves Rx interrupt enables.
+*/
+static inline void HAL_CAN_SetRxFilterStandard(HAL_CAN_T * p_hal, uint8_t bank, uint32_t id, uint32_t mask);
+static inline void HAL_CAN_SetRxFilterExtended(HAL_CAN_T * p_hal, uint8_t bank, uint32_t id, uint32_t mask);
+static inline void HAL_CAN_SetRxFilterAcceptAll(HAL_CAN_T * p_hal);
+static inline void HAL_CAN_SetRxFilterAcceptNone(HAL_CAN_T * p_hal);
+
 #include HAL_PERIPHERAL_PATH(HAL_CAN.h)
 
 /******************************************************************************/
