@@ -41,7 +41,7 @@
 //     {
 //          Motor_T DEV;
 //          HeatMonitor_T HEAT_MONITOR;
-//          Analog_Conversion_T HEAT_MONITOR_CONVERSION;
+//          ADC_Conversion_T HEAT_MONITOR_CONVERSION;
 //          uint8_t * const P_ADAPTER_BUFFER;
 //     } ;
 // }

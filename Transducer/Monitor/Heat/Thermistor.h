@@ -29,8 +29,8 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Peripheral/Analog/Analog_Reference.h"
-#include "Peripheral/Analog/Linear_ADC.h"
+#include "Peripheral/ADC/ADC_Reference.h"
+#include "Peripheral/ADC/Linear_ADC.h"
 
 
 #include <stdint.h>
@@ -224,9 +224,9 @@ static inline uint32_t Thermistor_GetRSeries(const Thermistor_T * p_therm) { ret
 static inline uint32_t Thermistor_GetRParallel(const Thermistor_T * p_therm) { return p_therm->R_PARALLEL; } /* 0 for Disable */
 static inline uint16_t _Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm) { return p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
 
-static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm) { return (p_therm->V_SERIES_MV == 0U) ? ANALOG_REFERENCE.ADC_VREF_MILLIV : p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
-static inline uint16_t Thermistor_GetVAdcRef_MilliV(void) { return ANALOG_REFERENCE.ADC_VREF_MILLIV; }
-static inline uint16_t Thermistor_GetVAdcMax(void) { return ANALOG_REFERENCE.ADC_MAX; }
+static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm) { return (p_therm->V_SERIES_MV == 0U) ? ADC_REFERENCE.ADC_VREF_MILLIV : p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
+static inline uint16_t Thermistor_GetVAdcRef_MilliV(void) { return ADC_REFERENCE.ADC_VREF_MILLIV; }
+static inline uint16_t Thermistor_GetVAdcMax(void) { return ADC_REFERENCE.ADC_MAX; }
 
 /*
     Unchecked setters — caller MUST check Thermistor_IsFixed first.

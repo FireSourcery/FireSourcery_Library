@@ -42,8 +42,8 @@
 // #ifdef
 #include "Math/FOC_Sensorless.h"
 
-#include "Peripheral/Analog/Analog.h"
-#include "Peripheral/Analog/Linear_ADC.h"
+#include "Peripheral/ADC/ADC_Conversion.h"
+#include "Peripheral/ADC/Linear_ADC.h"
 
 #include "Transducer/Encoder/Encoder_ModeDT.h"
 #include "Transducer/Encoder/Encoder_ISR.h"
@@ -388,7 +388,7 @@ typedef const struct Motor
     const FOC_Config_T * P_FOC_NVM_CONFIG; /* config for the FOC struct with a nested config field, without including a 3rd copy in Motor_Config */
     /*  */
     HeatMonitor_T HEAT_MONITOR;
-    Analog_Conversion_T HEAT_MONITOR_CONVERSION;
+    ADC_Conversion_T HEAT_MONITOR_CONVERSION;
 }
 Motor_T;
 

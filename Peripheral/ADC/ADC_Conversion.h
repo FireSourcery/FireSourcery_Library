@@ -27,61 +27,80 @@
     @file   ADC_Conversion.h
     @author FireSourcery
     @brief  The application layer interface. What a feature consumes, and how it is requested.
-
-    The Board layer defines ADC_Channel_T and ADC_Batch_T. The application layer holds conversions
-    only. The same calls serve both forms, so a feature does not know which it was given:
-
-        1 channel   - { P_ADC, CHANNEL }. Read directly from that ADC's results.
-                      Request marks the channel when software activated, a sequence of 1.
-                      When Hw sequenced a lone channel cannot be triggered; it rides the running scan.
-        a batch     - { P_BATCH }. 1..N sequences over 1..N ADCs, read from the joined buffer.
-                      The batch pushes the set to its consumer on each join, and tracks the parts itself.
-
-        .HEAT_PCB_CONVERSION = { .P_ADC = &ADCS[0U], .CHANNEL = ADC0_HEAT_PCB },
-        .PHASE_ANALOG = { .I = { .P_BATCH = &MOTOR0_I_BATCH }, .V = { .P_BATCH = &MOTOR0_V_BATCH } },
-
-    A batch conversion reads in the batch buffer order: parts in declared order, then channel order.
 */
 /******************************************************************************/
 #include "ADC_Batch.h"
 #include "ADC.h"
 
+
+/******************************************************************************/
+/*
+    Application handle
+    Feature module holds the pointer. ADC owns the state.
+    handle requires at least one dereference, either P_ADC or P_CONVERSION_STATE
+*/
+/******************************************************************************/
 typedef const struct ADC_Conversion
 {
-    const ADC_Batch_T * P_BATCH;    /* A set. When set, P_ADC and CHANNEL are unused */
-    const ADC_T * P_ADC;            /* Or 1 channel */
+    const volatile adc_result_t * P_RESULT;
+    // volatile adc_mask_t * P_COMPLETION;
+    /* for starting. */
+    ADC_T * P_ADC;
     adc_channel_t CHANNEL;
+    // adc_mask_t CHANNEL_MASK;
 }
 ADC_Conversion_T;
 
-static inline bool _ADC_Conversion_IsBatch(const ADC_Conversion_T * p_conv) { return (p_conv->P_BATCH != NULL); }
+#define ADC_CONVERSION(AdcArray, AdcId, ChannelIndex) (ADC_Conversion_T) \
+        { .P_ADC = &(AdcArray[AdcId]), .CHANNEL = (ChannelIndex), .P_RESULT = &((AdcArray[AdcId]).P_CHANNEL_RESULTS[ChannelIndex])  }
 
-static inline uint8_t ADC_Conversion_Count(const ADC_Conversion_T * p_conv) { return _ADC_Conversion_IsBatch(p_conv) ? p_conv->P_BATCH->LENGTH : 1U; }
+/* From the ADC by name, where the Board holds it as a struct and not an array. P_RESULT resolves on read */
+#define ADC_CONVERSION_FROM(AdcStruct, ChannelIndex) (ADC_Conversion_T) { .P_ADC = &(AdcStruct), .CHANNEL = (ChannelIndex), }
 
-static inline adc_result_t ADC_Conversion_ResultAt(const ADC_Conversion_T * p_conv, uint8_t index)
+static inline void ADC_Conversion_Mark(ADC_Conversion_T * p_conv) { ADC_MarkChannel(p_conv->P_ADC, p_conv->CHANNEL); }
+static inline bool ADC_Conversion_IsMarked(ADC_Conversion_T * p_conv) { return ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }
+static inline adc_result_t ADC_Conversion_GetResult(ADC_Conversion_T * p_conv) { return ADC_ResultOf(p_conv->P_ADC, p_conv->CHANNEL); }
+static inline void ADC_Conversion_ClearResult(ADC_Conversion_T * p_conv) { p_conv->P_ADC->P_CHANNEL_RESULTS[p_conv->CHANNEL] = 0U; }
+
+
+static inline void ADC_ConversionMap_Resolve(ADC_Conversion_T ** p_conv, uint8_t count, adc_result_t * p_dest)
 {
-    return _ADC_Conversion_IsBatch(p_conv) ? ADC_Batch_ResultAt(p_conv->P_BATCH, index) : ADC_ResultOf(p_conv->P_ADC, p_conv->CHANNEL);
+    for (uint8_t index = 0U; index < count; index++) { p_dest[index] = ADC_Conversion_GetResult(p_conv[index]); }
 }
 
-/* The value, for a single channel. The first, for a set */
-static inline adc_result_t ADC_Conversion_GetResult(const ADC_Conversion_T * p_conv) { return ADC_Conversion_ResultAt(p_conv, 0U); }
 
-/* The channel descriptor behind a position. e.g. its RESULT_SCALING */
-static inline const ADC_Channel_T * ADC_Conversion_ChannelAt(const ADC_Conversion_T * p_conv, uint8_t index)
-{
-    return _ADC_Conversion_IsBatch(p_conv) ? ADC_Batch_ChannelAt(p_conv->P_BATCH, index) : ADC_ChannelOf(p_conv->P_ADC, p_conv->CHANNEL);
-}
 
-/*
-    A batch: selects it, and it converts everything in it.
-    1 channel: marks it when software activated. No op when Hw sequenced, the scan converts it.
-*/
-static inline void ADC_Conversion_Request(const ADC_Conversion_T * p_conv)
-{
-    if (_ADC_Conversion_IsBatch(p_conv)) { ADC_Batch_Select(p_conv->P_BATCH); }
-#if !ADC_HW_SEQUENCER_ENABLE
-    else { ADC_MarkChannel(p_conv->P_ADC, p_conv->CHANNEL); }
-#endif
-}
+/* Destination. The consumer's index */
+/* Source. A slot in any ADC's results buffer */
+// typedef const struct ADC_MapEntry { const volatile adc_result_t * P_RESULT; } ADC_MapEntry_T;
+// typedef const struct ADC_MapEntry { uint8_t INDEX; const volatile adc_result_t * P_RESULT; } ADC_MapEntry_T;
+// typedef const volatile adc_result_t * const ADC_MapEntry_T;
+// typedef ADC_MapEntry_T * const ADC_Map_T;
 
-static inline bool ADC_Conversion_IsActive(const ADC_Conversion_T * p_conv) { return (_ADC_Conversion_IsBatch(p_conv) == false) || ADC_Batch_IsActive(p_conv->P_BATCH); }
+
+/* Map[ConsumerChannel] -> ADC Source */
+/* The index must be one the map names */
+/* Per sequence */
+/* p_dest[ConsumerChannel] -> consumer buffer */
+// static inline void ADC_Map_Resolve(ADC_Map_T map, uint8_t count, adc_result_t * p_dest)
+// {
+//     for (uint8_t index = 0U; index < count; index++) { p_dest[index] = *map[index]; }
+// }
+
+// shared map
+// /* p_dest[INDEX] = *P_RESULT, for each entry. Indexes outside the map are left unchanged */
+// static inline void ADC_Map_Decode(const ADC_Map_T map, uint8_t count, adc_result_t * p_dest)
+// {
+//     for (uint8_t index = 0U; index < count; index++) { p_dest[map[index].INDEX] = *map[index].P_RESULT; }
+// }
+
+
+/* Map[source] -> destination */
+/* ADC_Channel_T.CAPTURE */
+// typedef ADC_Map_T ADC_Demux_T;
+// typedef adc_result_t * const ADC_DemuxEntry_T;
+// typedef ADC_DemuxEntry_T const ADC_Demux_T[];
+// static inline  void ADC_Demux(const ADC_Demux_T map, adc_result_t * p_source, uint8_t count)
+// {
+//     for (uint8_t index = 0U; index < count; index++) { *map[index] = p_source[index]; }
+// }

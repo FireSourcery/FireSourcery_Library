@@ -1,7 +1,7 @@
 
 // #include "Monitor.h"
-// #include "Peripheral/Analog/Analog.h"
-// #include "Peripheral/Analog/Linear_ADC.h"
+// #include "Peripheral/ADC/ADC_Conversion.h"
+// #include "Peripheral/ADC/Linear_ADC.h"
 
 // #include <stdint.h>
 // #include <stdbool.h>
@@ -11,7 +11,7 @@
 //     Monitor_T * P_STATE;
 
 //     /* adc context */
-//     Analog_Conversion_T ANALOG_CONVERSION;
+//     ADC_Conversion_T ANALOG_CONVERSION;
 //     Linear_T * P_LINEAR; /* Optional for local unit conversion */
 
 //     /* Common across instances in a GroupContext */
@@ -25,7 +25,7 @@
 //     Monitor_T * P_MONITORS;
 
 //     /* adc context */
-//     Analog_Conversion_T ANALOG_CONVERSION;
+//     ADC_Conversion_T ANALOG_CONVERSION;
 //     Linear_T * P_LINEAR; /* Optional for local unit conversion */
 
 //     /* Common across instances in a GroupContext */

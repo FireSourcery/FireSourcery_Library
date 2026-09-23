@@ -42,7 +42,7 @@ void MotorController_Init(MotorController_T * p_dev)
     if (p_dev->P_NVM_CONFIG != NULL) { p_mc->Config = *p_dev->P_NVM_CONFIG; }
     if (p_dev->MOT_NVM.P_BOOT_REF != NULL) { p_mc->BootRef.Word = p_dev->MOT_NVM.P_BOOT_REF->Word; }
 
-    for (uint8_t iAnalog = 0U; iAnalog < p_dev->ADC_COUNT; iAnalog++) { Analog_ADC_Init(&p_dev->P_ANALOG_ADCS[iAnalog]); }
+    for (uint8_t iAnalog = 0U; iAnalog < p_dev->ADC_COUNT; iAnalog++) { ADC_Init(&p_dev->P_ADCS[iAnalog]); }
     for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_Init(&p_dev->P_SERIALS[iSerial]); }
 
 #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
@@ -87,11 +87,11 @@ void MotorController_Init(MotorController_T * p_dev)
     MotorController_App_Init(p_dev);
 
     /* Alternatively set nominal on init */
-    for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
-    Analog_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
-    Analog_Conversion_Mark(&p_dev->VBUS_CONVERSION);
-    Analog_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
-    Analog_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
+    for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { ADC_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
+    ADC_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
+    ADC_Conversion_Mark(&p_dev->VBUS_CONVERSION);
+    ADC_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
+    ADC_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
 
     MotLimits_ClearIDerate(&p_dev->P_MC->Limits);
     MotLimits_ClearSpeedDerate(&p_dev->P_MC->Limits);

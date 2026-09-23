@@ -49,8 +49,8 @@
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
 #include "Transducer/UserIn/UserDIn_Cmd.h"
 
-#include "Peripheral/Analog/Analog.h"
-#include "Peripheral/Analog/Analog_ADC.h"
+#include "Peripheral/ADC/ADC_Conversion.h"
+#include "Peripheral/ADC/ADC.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/Serial/Serial.h"
@@ -230,7 +230,7 @@ typedef const struct MotorController
     /*
         Peripheral Init
     */
-    Analog_ADC_T * P_ANALOG_ADCS;
+    ADC_T * P_ADCS;
     uint8_t ADC_COUNT; /* Analog ADCs */
 
     Serial_T * P_SERIALS;
@@ -251,7 +251,7 @@ typedef const struct MotorController
     Shifter_T SHIFTER;              /* Direction shifter pins */
 
     UserDIn_T DINS[MOT_USER_DIN_COUNT];
-    struct { UserAIn_T PIN; Analog_Conversion_T CONVERSION; } AINS[MOT_USER_AIN_COUNT];
+    struct { UserAIn_T PIN; ADC_Conversion_T CONVERSION; } AINS[MOT_USER_AIN_COUNT];
 
     Blinky_T BUZZER;
     Blinky_T METER;
@@ -266,20 +266,20 @@ typedef const struct MotorController
     /* Monitor - Detection + response with full context */
     VBus_T * P_VBUS;                    /* DC bus — owns live fract16, derate config, monitor */
     const VBus_Config_T * P_VBUS_NVM_CONFIG;    /* hold vbus config */
-    Analog_Conversion_T VBUS_CONVERSION;
+    ADC_Conversion_T VBUS_CONVERSION;
 
     /* Keep as named rather than an array */
     VMonitor_T V_ACCESSORIES;   /* ~12V */
-    Analog_Conversion_T V_ACCESSORIES_CONVERSION;
+    ADC_Conversion_T V_ACCESSORIES_CONVERSION;
 
     VMonitor_T V_ANALOG;        /* V Analog Sensors ~5V, reference for AINS */
-    Analog_Conversion_T V_ANALOG_CONVERSION;
+    ADC_Conversion_T V_ANALOG_CONVERSION;
 
     HeatMonitor_T HEAT_PCB;
-    Analog_Conversion_T HEAT_PCB_CONVERSION;
+    ADC_Conversion_T HEAT_PCB_CONVERSION;
 
     HeatMonitor_Group_T HEAT_MOSFETS;
-    Analog_Conversion_T * P_HEAT_MOSFET_CONVERSIONS;
+    ADC_Conversion_T * P_HEAT_MOSFET_CONVERSIONS;
 
     /* State */
     TimerT_T MILLIS_TIMER; /* Timer Context */

@@ -28,7 +28,7 @@
 /******************************************************************************/
 #include "SinCos.h"
 
-#include "Peripheral/Analog/Analog_Reference.h"
+#include "Peripheral/ADC/ADC_Reference.h"
 #include <string.h>
 
 
@@ -59,8 +59,8 @@ void SinCos_Config_SetAdc(SinCos_State_T * p_state, uint16_t min_Adcu, uint16_t 
 
 void SinCos_Config_SetAdc_mV(SinCos_State_T * p_state, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV)
 {
-    uint16_t min_Adcu = (uint32_t)min_mV * ANALOG_REFERENCE.ADC_MAX / adcVref_mV;
-    uint16_t max_Adcu = (uint32_t)max_mV * ANALOG_REFERENCE.ADC_MAX / adcVref_mV;
+    uint16_t min_Adcu = (uint32_t)min_mV * ADC_REFERENCE.ADC_MAX / adcVref_mV;
+    uint16_t max_Adcu = (uint32_t)max_mV * ADC_REFERENCE.ADC_MAX / adcVref_mV;
     SinCos_Config_SetAdc(p_state, min_Adcu, max_Adcu, min_mV, max_mV);
 }
 

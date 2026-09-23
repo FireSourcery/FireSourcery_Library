@@ -33,7 +33,7 @@
 #include "MotorController_StateMachine.h"
 #include "Motor/Motor/Motor_Thread.h"
 
-#include "Peripheral/Analog/Analog_ADC_Thread.h"
+#include "Peripheral/ADC/ADC_Thread.h"
 #include "MotAnalogUser/OptPin/MotorController_OptPin.h"
 
 /******************************************************************************/
@@ -69,7 +69,7 @@
 /******************************************************************************/
 static inline void _MotorController_ProcAnalogUser(MotorController_T * p_dev)
 {
-    for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++) { UserAIn_CaptureValue(&p_dev->AINS[i].PIN, Analog_Conversion_GetResult(&p_dev->AINS[i].CONVERSION)); }
+    for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++) { UserAIn_CaptureValue(&p_dev->AINS[i].PIN, ADC_Conversion_GetResult(&p_dev->AINS[i].CONVERSION)); }
 
     Shifter_Poll(&p_dev->SHIFTER); /* optionally move under app */
     // MotorController_ProcParkPin(p_dev);
@@ -77,7 +77,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_dev)
 
     if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
     {
-        for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++) { Analog_Conversion_Mark(&p_dev->AINS[i].CONVERSION); }
+        for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++) { ADC_Conversion_Mark(&p_dev->AINS[i].CONVERSION); }
     }
 }
 
@@ -96,7 +96,7 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
 // #endif
 
     /* Poll PCB Temperature Monitor */
-    switch (HeatMonitor_Poll(&p_dev->HEAT_PCB, Analog_Conversion_GetResult(&p_dev->HEAT_PCB_CONVERSION)))
+    switch (HeatMonitor_Poll(&p_dev->HEAT_PCB, ADC_Conversion_GetResult(&p_dev->HEAT_PCB_CONVERSION)))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:        MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT);            break;
         case HEAT_MONITOR_STATUS_WARNING_HIGH: break;
@@ -107,7 +107,7 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
     /* Poll each MOSFET sensor individually */
     for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++)
     {
-        HeatMonitor_Poll(&p_dev->HEAT_MOSFETS.P_MONITORS[i], Analog_Conversion_GetResult(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]));
+        HeatMonitor_Poll(&p_dev->HEAT_MOSFETS.P_MONITORS[i], ADC_Conversion_GetResult(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]));
     }
 
     /* Poll MOSFET Temperature Monitors Group Collective */
@@ -134,8 +134,8 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
 
 
     /* Mark analog conversions for next cycle */
-    for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
-    Analog_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
+    for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { ADC_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
+    ADC_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
 
     // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
 }
@@ -172,7 +172,7 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
 
     // if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotBuzzer_MonitorTrigger(MotorController_Buzzer(p_dev)); }
 
-    Analog_Conversion_Mark(&p_dev->VBUS_CONVERSION);
+    ADC_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 }
 
 /******************************************************************************/
@@ -184,16 +184,16 @@ static inline void _MotorController_VMonitorBoard_Thread(MotorController_T * p_d
 {
     MotorController_Context_T * p_mc = p_dev->P_MC;
 
-    RangeMonitor_Poll(p_dev->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_dev->V_ACCESSORIES_CONVERSION));
-    RangeMonitor_Poll(p_dev->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_dev->V_ANALOG_CONVERSION));
+    RangeMonitor_Poll(p_dev->V_ACCESSORIES.P_STATE, ADC_Conversion_GetResult(&p_dev->V_ACCESSORIES_CONVERSION));
+    RangeMonitor_Poll(p_dev->V_ANALOG.P_STATE, ADC_Conversion_GetResult(&p_dev->V_ANALOG_CONVERSION));
 
     if (RangeMonitor_IsAnyFault(p_dev->V_ACCESSORIES.P_STATE) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VACCS_LIMIT); }
     if (RangeMonitor_IsAnyFault(p_dev->V_ANALOG.P_STATE) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VANALOG_LIMIT); }
 
     if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
 
-    Analog_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
-    Analog_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
+    ADC_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
+    ADC_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
 }
 
 
@@ -219,7 +219,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
-        // VBus_Capture(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
+        // VBus_Capture(p_dev->P_VBUS, Phase_Analog_VFract16Of(ADC_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
@@ -304,9 +304,9 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_dev)
     {
         for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
     }
-    Analog_Conversion_Mark(&p_dev->VBUS_CONVERSION);
+    ADC_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 
-    for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_dev->P_ANALOG_ADCS[iAdc]); }
+    for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { ADC_ProcMarked(&p_dev->P_ADCS[iAdc]); }
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
 
     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());

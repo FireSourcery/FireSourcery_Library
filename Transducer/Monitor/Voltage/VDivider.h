@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Peripheral/Analog/Analog_Reference.h"
+#include "Peripheral/ADC/ADC_Reference.h"
 #include "Linear_Voltage.h"
 
 #include <stdint.h>
@@ -54,7 +54,7 @@ VDivider_T;
 /******************************************************************************/
 static inline void VDivider_ToLinear(const VDivider_T * p_voltage, Linear_T * p_linear)
 {
-    Linear_Voltage_Init(p_linear, p_voltage->R1, p_voltage->R2, ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_BITS);
+    Linear_Voltage_Init(p_linear, p_voltage->R1, p_voltage->R2, ADC_REFERENCE.ADC_VREF_MILLIV, ADC_REFERENCE.ADC_BITS);
 }
 
 /******************************************************************************/

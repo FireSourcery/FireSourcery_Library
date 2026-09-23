@@ -107,7 +107,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
 */
 static inline void Motor_Heat_Thread(Motor_T * p_dev)
 {
-    switch (HeatMonitor_Poll(&p_dev->HEAT_MONITOR, Analog_Conversion_GetResult(&p_dev->HEAT_MONITOR_CONVERSION)))
+    switch (HeatMonitor_Poll(&p_dev->HEAT_MONITOR, ADC_Conversion_GetResult(&p_dev->HEAT_MONITOR_CONVERSION)))
     {
         // case HEAT_MONITOR_STATUS_NORMAL:
         // case HEAT_MONITOR_STATUS_WARNING_HIGH:
@@ -115,6 +115,6 @@ static inline void Motor_Heat_Thread(Motor_T * p_dev)
         default: break;
     }
 
-    if (Monitor_IsEnabled(p_dev->HEAT_MONITOR.P_STATE) == true) { Analog_Conversion_Mark(&p_dev->HEAT_MONITOR_CONVERSION); }
+    if (Monitor_IsEnabled(p_dev->HEAT_MONITOR.P_STATE) == true) { ADC_Conversion_Mark(&p_dev->HEAT_MONITOR_CONVERSION); }
 }
 

@@ -32,7 +32,7 @@
 #include "Phase_Calibration.h"
 #include "Phase_Input.h"
 #include "../Phase/Phase_Types.h"
-#include "Peripheral/Analog/Analog.h"
+#include "Peripheral/ADC/ADC_Conversion.h"
 
 
 /******************************************************************************/
@@ -90,8 +90,8 @@ Phase_AnalogBoard_T;
 
 extern const Phase_AnalogBoard_T PHASE_ANALOG_BOARD;
 
-// static inline uint16_t Phase_Analog_VMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ANALOG_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.V_PHASE_R1, PHASE_ANALOG_BOARD.V_PHASE_R2); }
-// static inline uint16_t Phase_Analog_IMax(void) { return PHASE_ANALOG_I_MAX_AMPS(ANALOG_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT, PHASE_ANALOG_BOARD.I_PHASE_GAIN); }
+// static inline uint16_t Phase_Analog_VMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.V_PHASE_R1, PHASE_ANALOG_BOARD.V_PHASE_R2); }
+// static inline uint16_t Phase_Analog_IMax(void) { return PHASE_ANALOG_I_MAX_AMPS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT, PHASE_ANALOG_BOARD.I_PHASE_GAIN); }
 
 
 /******************************************************************************/
@@ -107,12 +107,12 @@ extern const Phase_AnalogBoard_T PHASE_ANALOG_BOARD;
 
 typedef const struct Phase_Analog
 {
-    Analog_Conversion_T VA;
-    Analog_Conversion_T VB;
-    Analog_Conversion_T VC;
-    Analog_Conversion_T IA;
-    Analog_Conversion_T IB;
-    Analog_Conversion_T IC;
+    ADC_Conversion_T VA;
+    ADC_Conversion_T VB;
+    ADC_Conversion_T VC;
+    ADC_Conversion_T IA;
+    ADC_Conversion_T IB;
+    ADC_Conversion_T IC;
     // Phase_Triplet_T * P_IZERO_REFS_ADCU;
 }
 Phase_Analog_T;
@@ -120,16 +120,16 @@ Phase_Analog_T;
 
 static void Phase_Analog_MarkVabc(Phase_Analog_T * p_analog)
 {
-    Analog_Conversion_Mark(&p_analog->VA);
-    Analog_Conversion_Mark(&p_analog->VB);
-    Analog_Conversion_Mark(&p_analog->VC);
+    ADC_Conversion_Mark(&p_analog->VA);
+    ADC_Conversion_Mark(&p_analog->VB);
+    ADC_Conversion_Mark(&p_analog->VC);
 }
 
 static void Phase_Analog_MarkIabc(Phase_Analog_T * p_analog)
 {
-    Analog_Conversion_Mark(&p_analog->IA);
-    Analog_Conversion_Mark(&p_analog->IB);
-    Analog_Conversion_Mark(&p_analog->IC);
+    ADC_Conversion_Mark(&p_analog->IA);
+    ADC_Conversion_Mark(&p_analog->IB);
+    ADC_Conversion_Mark(&p_analog->IC);
 }
 
 /*
@@ -137,9 +137,9 @@ static void Phase_Analog_MarkIabc(Phase_Analog_T * p_analog)
 */
 static void Phase_Analog_Mark(const Phase_Analog_T * p_analog, Phase_Bitmask_T state)
 {
-    Analog_Conversion_Mark((state.A) ? &p_analog->IA : &p_analog->VA);
-    Analog_Conversion_Mark((state.B) ? &p_analog->IB : &p_analog->VB);
-    Analog_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
+    ADC_Conversion_Mark((state.A) ? &p_analog->IA : &p_analog->VA);
+    ADC_Conversion_Mark((state.B) ? &p_analog->IB : &p_analog->VB);
+    ADC_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
 }
 
 
@@ -174,12 +174,12 @@ static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, cons
 // */
 // typedef enum Phase_AnalogChannel
 // {
-//     PHASE_ANALOG_CHANNEL_VA,
-//     PHASE_ANALOG_CHANNEL_VB,
-//     PHASE_ANALOG_CHANNEL_VC,
-//     PHASE_ANALOG_CHANNEL_IA,
-//     PHASE_ANALOG_CHANNEL_IB,
-//     PHASE_ANALOG_CHANNEL_IC,
+//     PHASE_ADC_CHANNEL_VA,
+//     PHASE_ADC_CHANNEL_VB,
+//     PHASE_ADC_CHANNEL_VC,
+//     PHASE_ADC_CHANNEL_IA,
+//     PHASE_ADC_CHANNEL_IB,
+//     PHASE_ADC_CHANNEL_IC,
 // }
 // Phase_AnalogChannel_T;
 

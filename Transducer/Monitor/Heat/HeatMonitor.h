@@ -32,7 +32,7 @@
 #include "Thermistor.h"
 
 #include "../Base/Monitor.h"
-#include "Peripheral/Analog/Linear_ADC.h"
+#include "Peripheral/ADC/Linear_ADC.h"
 
 #include <stdint.h>
 #include <stdbool.h>

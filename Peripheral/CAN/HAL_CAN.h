@@ -102,7 +102,6 @@ static inline void HAL_CAN_SetRxFilterExtended(HAL_CAN_T * p_hal, uint8_t bank, 
 static inline void HAL_CAN_SetRxFilterAcceptAll(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_SetRxFilterAcceptNone(HAL_CAN_T * p_hal);
 
-#include HAL_PERIPHERAL_PATH(HAL_CAN.h)
 
 /******************************************************************************/
 /*
@@ -125,9 +124,9 @@ static inline void HAL_CAN_SetRxFilterAcceptNone(HAL_CAN_T * p_hal);
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadRxStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadErrorStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 
-
 #include "CAN_Frame.h"
 
+#ifndef HAL_CAN_OVERRIDE_DEFAULT_IMPLEMENTATION
 /*
     using data interface [CAN_Frame_T]
     default implementation
@@ -166,9 +165,7 @@ static inline bool HAL_CAN_PollRxMessage(HAL_CAN_T * p_can, CAN_Frame_T * p_rxFr
 {
     if (HAL_CAN_ReadRxFullFlag(p_can))
     {
-        p_rxFrame->CanId = HAL_CAN_ReadRxId(p_can);
-        p_rxFrame->DataLength = HAL_CAN_ReadRxLength(p_can);
-        HAL_CAN_ReadRxData(p_can, &p_rxFrame->Data[0U]);
+        HAL_CAN_ReadRxMessage(p_can, p_rxFrame);
         HAL_CAN_ClearRxFullFlag(p_can);
         return true;
     }
@@ -189,4 +186,9 @@ static inline bool HAL_CAN_PollRxMessage(HAL_CAN_T * p_can, CAN_Frame_T * p_rxFr
 //     *p_rxId = HAL_CAN_ReadRxId(p_can);
 //     return HAL_CAN_ReadRxData(p_can, p_rxData);
 // }
+
+#endif
+
+#include HAL_PERIPHERAL_PATH(HAL_CAN.h)
+
 

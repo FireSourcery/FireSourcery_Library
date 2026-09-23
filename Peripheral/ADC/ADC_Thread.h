@@ -34,48 +34,37 @@
 /******************************************************************************/
 #include "_ADC.h"
 #include "ADC.h"
+#include "ADC_Batch.h"
 
-/******************************************************************************/
-/*
-    Hw sequenced
-*/
-/******************************************************************************/
-/*!
-    @brief  The transfer for the active sequence is complete, the results buffer holds it.
-            Run in the transfer complete ISR. The caller clears the Hw flag.
-
-    ADC ISR priority: a consumer that joins several ADCs needs their ISRs at 1 priority, for its own bookkeeping.
-*/
-static inline void ADC_OnCompleteSequence_ISR(const ADC_T * p_adc)
-{
-    assert(p_adc->P_STATE->p_ActiveSequence != NULL); /* A sequence must be activated before the trigger is enabled */
-    _ADC_CompleteSequence(p_adc);
-}
 
 /******************************************************************************/
 /*
     Software activation
 */
 /******************************************************************************/
-/*!
-    @brief  Capture the active channels, continue with the remaining marked channels.
-            Run in the ADC ISR. Higher priority than the thread calling ADC_ProcMarked.
-*/
-static inline void ADC_OnComplete_ISR(const ADC_T * p_adc)
+static void _ADC_ProcMarked(ADC_T * p_adc, ADC_State_T * p_state)
 {
-    ADC_State_T * p_state = p_adc->P_STATE;
+    _ADC_SetStateFrom(p_state, &p_adc->P_CHANNELS[0U], p_state->ChannelMarkers);
+    _ADC_Activate(p_adc->P_HAL_ADC, p_state);
+}
 
-    HAL_ADC_ClearConversionCompleteFlag(p_adc->P_HAL_ADC);
-
+static inline void _ADC_OnComplete(ADC_T * p_adc, ADC_State_T * p_state)
+{
     if (p_state->ActiveChannelCount > 0U)
     {
-        p_state->PendingMarkers &= ~_ADC_CaptureActive(p_adc);
+    #ifndef NDEBUG
+        if (p_state->ActiveChannelCount != HAL_ADC_ReadFifoCount(p_adc->P_HAL_ADC)) { p_state->FifoMismatch++; }
+    #endif
+
+
+        p_state->ChannelMarkers &= ~_ADC_Capture(p_adc->P_HAL_ADC, p_state, p_adc->P_CHANNEL_RESULTS);
 
         /* The active sequence captured its last channel */
-        if ((p_state->PendingMarkers == 0UL) && (p_state->p_ActiveSequence != NULL)) { _ADC_CompleteSequence(p_adc); }
+        if ((p_state->p_ActiveSequence != NULL) && (_ADC_IsSequenceComplete(p_adc) == true)) { _ADC_CompleteSequence(p_adc); }
 
-        /* Channels do not repeat until all marked channels have completed once */
-        if (p_state->ChannelMarkers != 0UL) { _ADC_StartMarked(p_adc); }
+
+        /* Continue incrementing. Channels do not repeat until all marked channels have completed once */
+        if (p_state->ChannelMarkers != 0UL) { _ADC_ProcMarked(p_adc, p_state); }
         else { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
     }
 #ifndef NDEBUG
@@ -85,6 +74,16 @@ static inline void ADC_OnComplete_ISR(const ADC_T * p_adc)
         p_state->ErrorCount++;
     }
 #endif
+}
+
+/*!
+    @brief  Capture the active channels, continue with the remaining marked channels.
+            Run in the ADC ISR. Higher priority than the thread calling ADC_ProcMarked.
+*/
+static inline void ADC_OnComplete_ISR(ADC_T * p_adc)
+{
+    HAL_ADC_ClearConversionCompleteFlag(p_adc->P_HAL_ADC);
+    _ADC_OnComplete(p_adc, p_adc->P_STATE);
 }
 
 /*!
@@ -107,24 +106,55 @@ static inline void ADC_ProcMarked(const ADC_T * p_adc)
     */
     if ((p_adc->P_STATE->ChannelMarkers != 0UL) && (ADC_ReadIsActive(p_adc) == false))
     {
-        _ADC_StartMarked(p_adc);
+        _ADC_ProcMarked(p_adc, p_adc->P_STATE);
     }
 #ifndef NDEBUG
     else if (ADC_ReadIsActive(p_adc) == true) { p_adc->P_STATE->IncompleteCycles++; }
 #endif
 }
 
+
 /******************************************************************************/
 /*
-    N ADCs. Uniform iteration over an ADC array, not a synchronized set. That is ADC_Batch_T
+    Hw sequenced
 */
 /******************************************************************************/
-static inline void ADC_N_ProcMarked(const ADC_T * p_adcs, uint8_t count)
+/*!
+    @brief  The transfer for the active sequence is complete, the results buffer holds it.
+            Run in the transfer complete ISR. The caller clears the Hw flag.
+
+    ADC ISR priority: a consumer that joins several ADCs needs their ISRs at 1 priority, for its own bookkeeping.
+*/
+static inline void ADC_OnCompleteSequence_ISR(const ADC_T * p_adc)
 {
-    for (uint8_t iAdc = 0U; iAdc < count; iAdc++) { ADC_ProcMarked(&p_adcs[iAdc]); }
+    assert(p_adc->P_STATE->p_ActiveSequence != NULL); /* A sequence must be activated before the trigger is enabled */
+    _ADC_CompleteSequence(p_adc);
 }
 
-static inline void ADC_N_Init(const ADC_T * p_adcs, uint8_t count)
+/******************************************************************************/
+/*
+    Batch
+*/
+/******************************************************************************/
+/*!
+    @brief  Hw sequenced. In the transfer complete ISR, in place of ADC_OnCompleteSequence_ISR.
+            The caller clears the Hw flag.
+
+    Part ISRs must share a priority, the marker update is a read modify write.
+*/
+static inline void ADC_Batch_OnCompleteSequence_ISR(ADC_TriggerState_T * p_trigger, ADC_T * p_adc)
 {
-    for (uint8_t iAdc = 0U; iAdc < count; iAdc++) { ADC_Init(&p_adcs[iAdc]); }
+    // if (ADC_OnCompleteSequence_ISR(p_adc) == true) { _ADC_Batch_OnPartComplete(p_trigger, p_adc); }
 }
+
+/*!
+    @brief  Software activation. In the ADC ISR, in place of ADC_OnComplete_ISR.
+            The sequence completes on its last channel, where the ADC leaves it for the next selection.
+*/
+static inline void ADC_Batch_OnComplete_ISR(ADC_TriggerState_T * p_trigger, ADC_T * p_adc)
+{
+    // if (ADC_OnComplete_ISR(p_adc) == true) { _ADC_Batch_OnPartComplete(p_trigger, p_adc); }
+}
+
+
+

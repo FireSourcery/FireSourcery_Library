@@ -209,14 +209,14 @@ uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t celsiu
 /* Direct calculation without linear precomputed */
 uint32_t Thermistor_ROhmOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
 {
-    uint32_t rNet = r_pulldown_of_adcu(p_therm->R_SERIES, Thermistor_GetVInRef_MilliV(p_therm), ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_MAX, adcu);
+    uint32_t rNet = r_pulldown_of_adcu(p_therm->R_SERIES, Thermistor_GetVInRef_MilliV(p_therm), ADC_REFERENCE.ADC_VREF_MILLIV, ADC_REFERENCE.ADC_MAX, adcu);
     return (p_therm->R_PARALLEL != 0U) ? r_parallel(rNet, p_therm->R_PARALLEL) : rNet;
 }
 
 uint16_t Thermistor_AdcuOfROhm(const Thermistor_T * p_therm, uint32_t rThermistor)
 {
     uint32_t rNet = (p_therm->R_PARALLEL != 0U) ? r_net(p_therm->R_PARALLEL, rThermistor) : rThermistor;
-    return adcu_of_r(ANALOG_REFERENCE.ADC_MAX, ANALOG_REFERENCE.ADC_VREF_MILLIV, Thermistor_GetVInRef_MilliV(p_therm), p_therm->R_SERIES, rNet);
+    return adcu_of_r(ADC_REFERENCE.ADC_MAX, ADC_REFERENCE.ADC_VREF_MILLIV, Thermistor_GetVInRef_MilliV(p_therm), p_therm->R_SERIES, rNet);
 }
 
 

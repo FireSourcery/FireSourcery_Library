@@ -32,7 +32,7 @@
 */
 /******************************************************************************/
 #include "../Motor.h"
-#include "Peripheral/Analog/Analog.h"
+#include "Peripheral/ADC/ADC_Conversion.h"
 
 /* 0 -> 1x, 1 -> 2x, 2 -> 4x, 3 -> 8x */
 #ifndef PHASE_ANALOG_DIVIDER_MASK

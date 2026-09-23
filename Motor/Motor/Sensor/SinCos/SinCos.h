@@ -30,7 +30,7 @@
             Pure decode core; sensor adapter (RotorSensor VTable) lives in SinCos_Sensor.h.
 */
 /******************************************************************************/
-#include "Peripheral/Analog/Linear_ADC.h"
+#include "Peripheral/ADC/Linear_ADC.h"
 #include "Math/Linear/Linear_Q16.h"
 #include "Math/Fixed/fract16.h"
 
