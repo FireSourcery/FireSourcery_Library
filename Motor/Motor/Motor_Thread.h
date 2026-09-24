@@ -71,6 +71,16 @@ static inline void Motor_CaptureSensor(Motor_T * p_motor)
     }
 }
 
+// static inline void Motor_CaptureIBatch(Motor_T * p_motor)
+// {
+//     Motor_Context_T * p_state = p_motor->P_MOTOR;
+// //    p_state->PhaseInput.I = Phase_Analog_Batch(p_state);
+//     // Motor_Analog_CaptureIa(p_state, ADC_Conversion_GetResult(&p_motor->PHASE_ANALOG.IA));
+//     // Motor_Analog_CaptureIb(p_state, ADC_Conversion_GetResult(&p_motor->PHASE_ANALOG.IB));
+//     // Motor_Analog_CaptureIc(p_state, ADC_Conversion_GetResult(&p_motor->PHASE_ANALOG.IC));
+//     // _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
+// }
+
 /*
     ~50us
     Calling function clears interrupt flag

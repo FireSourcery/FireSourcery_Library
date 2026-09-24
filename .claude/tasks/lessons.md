@@ -1,3 +1,4 @@
 - Keep FOC interfaces in FOC vocabulary by passing resolved electrical constraints or FOC-side policies, not supervisor terms.
 - Separate static policy from dynamic authority: store static V bands, resolve speed or EEMF keyed overlays inside FOC each control cycle.
 - Keep one-shot workflow progress in its owning state machine or timer; do not add workflow flags or accumulators to an ISR-hot sensor state unless every pulse-path consumer requires them.
+- For ADC architecture questions, reason from the trigger and batch contract directly; treat vendor register guides as hardware context, not as the generic design model.

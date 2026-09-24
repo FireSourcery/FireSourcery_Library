@@ -99,12 +99,6 @@ extern const Phase_AnalogBoard_T PHASE_ANALOG_BOARD;
 
 */
 /******************************************************************************/
-// #if     defined(PHASE_ANALOG_I_SENSORS_AB)
-// #elif   defined(PHASE_ANALOG_I_SENSORS_ABC)
-// #else
-// #define PHASE_ANALOG_I_SENSORS_ABC
-// #endif
-
 typedef const struct Phase_Analog
 {
     ADC_Conversion_T VA;
@@ -166,6 +160,20 @@ static inline void _Phase_CaptureIAdcu(volatile Phase_Triplet_T * p_triplet, vol
 static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->I.Values, &p_phase->I.Flags, p_zeroRefs, PHASE_INDEX_A, adcu); }
 static inline void Phase_Analog_CaptureIb(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->I.Values, &p_phase->I.Flags, p_zeroRefs, PHASE_INDEX_B, adcu); }
 static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->I.Values, &p_phase->I.Flags, p_zeroRefs, PHASE_INDEX_C, adcu); }
+
+static inline Phase_Data_T Phase_Analog_Batch(const Phase_Triplet_T * p_zeroRefs,  adc_result_t a, adc_result_t b, adc_result_t c)
+{
+    return (Phase_Data_T)
+    {
+        .Values =
+        {
+            .A = Phase_Analog_IFract16Of(p_zeroRefs->Values[PHASE_INDEX_A], a),
+            .B = Phase_Analog_IFract16Of(p_zeroRefs->Values[PHASE_INDEX_B], b),
+            .C = Phase_Analog_IFract16Of(p_zeroRefs->Values[PHASE_INDEX_C], c),
+        },
+        .Flags.Bits = PHASE_ID_ABC,
+    };
+}
 
 
 

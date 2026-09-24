@@ -40,6 +40,7 @@
 */
 /******************************************************************************/
 /* From Iabc to Idq */
+// static inline bool FOC_CaptureIabc_Async(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
 static inline bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
 {
     if (p_iabc->Flags.Bits == PHASE_ID_ABC)  /* alternatively use batch callback */

@@ -161,6 +161,8 @@ Protocol_Req_T;
     .ACK     = AckPolicy,                                               \
 }
 
+/* Passes sizeof(REQS) / sizeof(REQS[0]) from site where the request table is defined */
+// typedef const struct { const Protocol_Req_T * P_REQS; uint8_t LENGTH; } Protocol_ReqTable_T;
 
 /******************************************************************************/
 /*!

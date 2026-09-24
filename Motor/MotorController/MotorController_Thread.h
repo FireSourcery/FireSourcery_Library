@@ -306,7 +306,7 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_dev)
     }
     ADC_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 
-    for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { ADC_ProcMarked(&p_dev->P_ADCS[iAdc]); }
+    for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { ADC_ActivateMarked(&p_dev->P_ADCS[iAdc]); }
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
 
     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());

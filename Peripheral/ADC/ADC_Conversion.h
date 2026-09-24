@@ -77,7 +77,6 @@ static inline void ADC_ConversionMap_Resolve(ADC_Conversion_T ** p_conv, uint8_t
 // typedef const volatile adc_result_t * const ADC_MapEntry_T;
 // typedef ADC_MapEntry_T * const ADC_Map_T;
 
-
 /* Map[ConsumerChannel] -> ADC Source */
 /* The index must be one the map names */
 /* Per sequence */
@@ -86,14 +85,6 @@ static inline void ADC_ConversionMap_Resolve(ADC_Conversion_T ** p_conv, uint8_t
 // {
 //     for (uint8_t index = 0U; index < count; index++) { p_dest[index] = *map[index]; }
 // }
-
-// shared map
-// /* p_dest[INDEX] = *P_RESULT, for each entry. Indexes outside the map are left unchanged */
-// static inline void ADC_Map_Decode(const ADC_Map_T map, uint8_t count, adc_result_t * p_dest)
-// {
-//     for (uint8_t index = 0U; index < count; index++) { p_dest[map[index].INDEX] = *map[index].P_RESULT; }
-// }
-
 
 /* Map[source] -> destination */
 /* ADC_Channel_T.CAPTURE */
@@ -104,3 +95,16 @@ static inline void ADC_ConversionMap_Resolve(ADC_Conversion_T ** p_conv, uint8_t
 // {
 //     for (uint8_t index = 0U; index < count; index++) { *map[index] = p_source[index]; }
 // }
+
+// typedef const struct ADC_Request
+// {
+//     ADC_T * P_ADC;
+//     adc_channel_t CHANNEL;
+//     // adc_mask_t CHANNEL_MASK;
+// }
+// ADC_Req_T;
+// typedef const struct ADC_MultiRequest
+// {
+//
+// }
+// ADC_MultiReq_T;

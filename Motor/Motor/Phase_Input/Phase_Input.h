@@ -32,10 +32,11 @@
 #include "../Phase/Phase_Types.h"
 
 
-// #if     defined(PHASE_V_SENSORS_ISOLATED)
-// #elif   defined(PHASE_V_SENSORS_ANALOG)
-// #else
+// #if !defined(PHASE_V_SENSORS_ISOLATED)  && !defined(PHASE_V_SENSORS_ANALOG)
 // #define PHASE_V_SENSORS_ANALOG
+// #endif
+// #if !defined(PHASE_I_SENSORS_AB) && !defined(PHASE_I_SENSORS_ABC)
+// #define PHASE_I_SENSORS_ABC
 // #endif
 
 /*
@@ -52,16 +53,17 @@ Phase_Input_T;
 
 
 /* light units wrapper */
-static inline int16_t Phase_Input_GetVa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.A; }
-static inline int16_t Phase_Input_GetVb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.B; }
-static inline int16_t Phase_Input_GetVc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.C; }
-static inline int16_t Phase_Input_GetIa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.A; }
-static inline int16_t Phase_Input_GetIb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.B; }
-static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.C; }
+// static inline int16_t Phase_Input_GetVa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.A; }
+// static inline int16_t Phase_Input_GetVb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.B; }
+// static inline int16_t Phase_Input_GetVc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.C; }
+// static inline int16_t Phase_Input_GetIa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.A; }
+// static inline int16_t Phase_Input_GetIb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.B; }
+// static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.C; }
 
 
 static void Phase_Input_ClearI(volatile Phase_Input_T * p_phase) { p_phase->I = (Phase_Data_T){ 0 }; }
 static void Phase_Input_ClearV(volatile Phase_Input_T * p_phase) { p_phase->V = (Phase_Data_T){ 0 }; }
+
 
 /******************************************************************************/
 /*!

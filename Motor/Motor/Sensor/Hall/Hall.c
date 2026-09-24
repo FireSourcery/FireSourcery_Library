@@ -62,7 +62,12 @@ void Hall_Init(Hall_T * p_hall)
     180 Degree Active
     Sensors are aligned to motor phase, 0 degree offset.
 */
-void Hall_StartCalibrate(Hall_T * p_hall) { p_hall->P_STATE->Sensors.Value = 0U; } /* Next poll is edge */
+/* Invalidate the table so a partial run cannot pass validation on entries left from the previous one. */
+void Hall_StartCalibrate(Hall_T * p_hall)
+{
+    p_hall->P_STATE->Sensors.Value = 0U; /* Next poll is edge */
+    p_hall->P_STATE->Config = (Hall_Config_T){ 0 }; /* HALL_ANGLE_ERROR_0 */
+}
 
 /* Call for each known phase */
 void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId)
@@ -80,9 +85,10 @@ void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId)
 /*
     Verify
 */
-bool Hall_Verify(uint8_t sensorsValue)
+/* [Hall_Id_T] parameter matches [Config.SensorsTable] storage - verify and store share one conversion. */
+bool Hall_Verify(Hall_Id_T sensorsValue)
 {
-    return ((sensorsValue != HALL_ANGLE_ERROR_0) && (sensorsValue != HALL_ANGLE_ERROR_7));
+    return ((sensorsValue > HALL_ANGLE_ERROR_0) && (sensorsValue < HALL_ANGLE_ERROR_7));
 }
 
 /* Check wiring */
@@ -91,19 +97,20 @@ bool Hall_IsStateValid(Hall_T * p_hall)
     return Hall_Verify(Hall_ReadSensors(p_hall).Value);
 }
 
+/* Each of the 6 physical codes maps to a distinct virtual Id. [Hall_Verify] bounds the [once] index. */
 bool Hall_IsCalibrationTableValid(const Hall_State_T * p_hall)
 {
-    bool valid = true;
     bool once[HALL_SENSORS_TABLE_LENGTH] = { false };
 
     for (uint8_t index = 1U; index < HALL_SENSORS_TABLE_LENGTH - 1U; index++) /* 1-6 */
     {
-        if (Hall_Verify(p_hall->Config.SensorsTable[index]) == false) { valid = false; break; }
-        if (once[p_hall->Config.SensorsTable[index]] == true) { valid = false; break; }
-        once[p_hall->Config.SensorsTable[index]] = true;
+        Hall_Id_T id = p_hall->Config.SensorsTable[index];
+        if (Hall_Verify(id) == false) { return false; }
+        if (once[id] == true) { return false; }
+        once[id] = true;
     }
 
-    return valid;
+    return true;
 }
 
 /******************************************************************************/
@@ -124,8 +131,11 @@ int Hall_VarId_Get(Hall_T * p_hall, Hall_VarId_T varId)
 }
 
 
+/* Reject out of range - [SensorsTable] entries are the [once] index in [Hall_IsCalibrationTableValid] */
 void _Hall_ConfigId_Set(Hall_Config_T * p_hall, Hall_ConfigId_T varId, int varValue)
 {
+    if (Hall_Verify(varValue) == false) { return; }
+
     switch (varId)
     {
         case HALL_CONFIG_SENSOR_TABLE_1: p_hall->SensorsTable[1U] = varValue; break;

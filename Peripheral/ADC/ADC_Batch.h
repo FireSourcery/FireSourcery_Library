@@ -67,8 +67,7 @@
         void BOARD_ADC1_DMA_ISR(void) { Board_ADC1_ClearComplete(); ADC_Batch_OnCompleteSequence_ISR(&MOTOR0_TRIGGER, &ADCS[1U]); }
 */
 /******************************************************************************/
-#include "_ADC.h"
-#include "ADC.h"
+#include "_ADC.h"  /* The per ADC mechanism a part composes. ADC.h below it */
 
 /******************************************************************************/
 /*
@@ -78,9 +77,8 @@
 /* Where a part converts. The batch activates it, and nothing else reads it */
 typedef const struct ADC_BatchPart
 {
-    const ADC_T * P_ADC;
+    ADC_T * P_ADC;
     uint8_t SEQUENCE_ID;    /* Index into P_ADC->P_SEQUENCES */
-    ADC_Sequence_T SEQUENCE;    /* The sequence this part converts */
 }
 ADC_BatchPart_T;
 
@@ -138,15 +136,12 @@ static inline void _ADC_Batch_ApplyNext(ADC_TriggerState_T * p_state)
     Completion
 */
 /******************************************************************************/
-/*
-    The part on this ADC. PART_COUNT where the active batch has none.
-    1 ADC converts 1 sequence at a time, so a batch holds at most 1 part per ADC and the ADC names it.
-*/
-static inline uint8_t _ADC_Batch_PartIndexOf(const ADC_Batch_T * p_batch, const ADC_T * p_adc)
+/* The part on this ADC and sequence. PART_COUNT where the active batch has none. */
+static inline uint8_t _ADC_Batch_PartIndexOf(const ADC_Batch_T * p_batch, ADC_T * p_adc, const ADC_Sequence_T * p_sequence)
 {
     for (uint8_t index = 0U; index < p_batch->PART_COUNT; index++)
     {
-        if (p_batch->P_PARTS[index].P_ADC == p_adc) { return index; }
+        if ((p_batch->P_PARTS[index].P_ADC == p_adc) && (ADC_SequenceOf(p_adc, p_batch->P_PARTS[index].SEQUENCE_ID) == p_sequence)) { return index; }
     }
     return p_batch->PART_COUNT;
 }
@@ -156,13 +151,12 @@ static inline uint8_t _ADC_Batch_PartIndexOf(const ADC_Batch_T * p_batch, const 
     does not leave the join skewed. An ADC the active batch does not hold is not a part, so an ADC
     the trigger was selected away from cannot advance the join.
 
-    A partial set cannot reach here. The caller only calls on a completion, and a set completes
-    when its last channel lands, or when its transfer does.
+    A partial set cannot reach here. The caller reports only a completed sequence.
 */
-static inline void _ADC_Batch_OnPartComplete(ADC_TriggerState_T * p_state, const ADC_T * p_adc)
+static inline void _ADC_Batch_OnPartComplete(ADC_TriggerState_T * p_state, ADC_T * p_adc, const ADC_Sequence_T * p_sequence)
 {
     const ADC_Batch_T * p_batch = p_state->p_Active;
-    uint8_t index = (p_batch != NULL) ? _ADC_Batch_PartIndexOf(p_batch, p_adc) : 0U;
+    uint8_t index = (p_batch != NULL) ? _ADC_Batch_PartIndexOf(p_batch, p_adc, p_sequence) : 0U;
 
     if ((p_batch != NULL) && (index < p_batch->PART_COUNT))
     {
@@ -218,6 +212,26 @@ static inline bool ADC_Batch_IsActive(const ADC_Batch_T * p_batch) { return (p_b
 
 /* Selected. Active already, or applied at the next join */
 static inline bool ADC_Batch_IsSelected(const ADC_Batch_T * p_batch) { return (p_batch->P_STATE->p_Next == p_batch); }
+
+
+/******************************************************************************/
+/*
+    ISR entry. The Board's, 1 per ADC of the trigger
+*/
+/******************************************************************************/
+/*!
+    @brief  Hw sequenced. In the transfer complete ISR, in place of ADC_OnCompleteSequence_ISR.
+            The caller clears the Hw flag.
+
+    Part ISRs must share a priority, the marker update is a read modify write.
+*/
+static inline void ADC_Batch_OnCompleteSequence_ISR(ADC_TriggerState_T * p_trigger, ADC_T * p_adc)
+{
+    assert(p_adc->P_STATE->p_ActiveSequence != NULL);                           /* A sequence must be activated before the trigger is enabled */
+    assert(p_adc->P_STATE->p_NextSequence == p_adc->P_STATE->p_ActiveSequence); /* A part's selection belongs to its trigger, and applies in the join */
+
+    _ADC_Batch_OnPartComplete(p_trigger, p_adc, _ADC_OnCompleteSequence(p_adc, p_adc->P_STATE));
+}
 
 
 // static inline void _ADC_Batch_OnPartComplete(const ADC_T * p_adc, const ADC_Sequence_T * p_sequence)

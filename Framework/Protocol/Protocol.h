@@ -218,7 +218,11 @@ static_assert(offsetof(Protocol_ReqContext_T, Xfer.p_Substate) == offsetof(Proto
     //     };
     //     Packet_Xfer_T PACKET_XFER;
     // P_TIMER
+
     // P_PACKET_LENGTH
+    // Packet_Codec_T *  P_PACKET_;
+    // const Protocol_Req_T * P_REQ_TABLE;
+    // uint8_t REQ_TABLE_LENGTH;
 // }
 // Protocol_Binding_T;
 
@@ -236,7 +240,6 @@ typedef struct Protocol_State
     Protocol_ReqState_T Req;
     uint32_t LastCompleteTime;
     // Xcvr_T * p_xcvr;
-    // Packet_Codec_T * p_codec;
 
     /*
         Observation only. Nothing reads these back.

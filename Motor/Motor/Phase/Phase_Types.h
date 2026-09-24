@@ -75,10 +75,6 @@ Phase_Bitmask_T;
 static inline Phase_Bitmask_T Phase_Bitmask(Phase_Id_T id) { return (Phase_Bitmask_T) { .Bits = id }; }
 static inline Phase_Id_T Phase_IdOf(Phase_Bitmask_T id) { return (Phase_Id_T)id.Bits; }
 
-// static inline Phase_Id_T Phase_Of(int index) { return (index ^ (index >> 1U)); }
-// static inline int Phase_IndexOf(Phase_Id_T id) { return (id ^ (id >> 1U) ^ (id >> 2U)); }
-
-
 /* Virtual CCW */
 /* +60 degrees */
 static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
@@ -187,6 +183,9 @@ typedef enum Phase_Index
 }
 Phase_Index_T;
 
+// static inline Phase_Id_T Phase_Of(int index) { return (index ^ (index >> 1U)); }
+// static inline int Phase_IndexOf(Phase_Id_T id) { return (id ^ (id >> 1U) ^ (id >> 2U)); }
+
 typedef union Phase_Triplet
 {
     struct
@@ -243,14 +242,20 @@ static inline Phase_Triplet_T Phase_Aligned(Phase_Id_T id, uint16_t value)
 /******************************************************************************/
 typedef struct Phase_Data
 {
-    // union { struct { int16_t A; int16_t B; int16_t C; }; Phase_Triplet_T Vector; }; keep anonymous access for ABC, convinience pass combined values.
     Phase_Triplet_T Values;
     Phase_Bitmask_T Flags;
     uint8_t Resv; /* align to 32 bits */
 }
 Phase_Data_T;
 
+static_assert(sizeof(Phase_Data_T) == 8, "Phase_Data_T size must be 8 bytes");
+
 // static inline void _Phase_ApplyAveraging(volatile int16_t * p_value, int16_t value) { *p_value = ((int32_t)*p_value + value) / 2; }
+
+static inline void _Phase_CaptureValue(volatile Phase_Triplet_T * p_triplet, Phase_Index_T channel, int16_t value)
+{
+    p_triplet->Values[channel] = ((int32_t)p_triplet->Values[channel] + value) / 2;
+}
 
 static inline void _Phase_Capture(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, int16_t value)
 {
@@ -266,3 +271,5 @@ static inline void Phase_Capture(volatile Phase_Data_T * p_data, Phase_Index_T c
 static inline void Phase_CaptureA(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_A, value); }
 static inline void Phase_CaptureB(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_B, value); }
 static inline void Phase_CaptureC(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_C, value); }
+
+static inline Phase_Data_T Phase_Data_Batch(int16_t a, int16_t b, int16_t c) { return (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits = PHASE_ID_ABC }; }

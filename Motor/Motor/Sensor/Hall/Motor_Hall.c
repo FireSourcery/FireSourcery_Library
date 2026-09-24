@@ -65,25 +65,32 @@ typedef struct CalibrationBuffer
 }
 CalibrationBuffer_T;
 
+static_assert(sizeof(CalibrationBuffer_T) <= MOTOR_CALIBRATION_BUFFER_SIZE);
+
 static CalibrationBuffer_T * GetBuffer(Motor_T * p_motor) { return (CalibrationBuffer_T *)p_motor->P_MOTOR->CalibrationBuffer; }
 
 
-/* Include [Phase] and [P_PARENT] State */
+/*
+    [P_PARENT] Entry does not repeat on return from this SubState - reset the full feedback path here.
+
+    [FeedbackMode.Current] by direct write: [Motor_SetFeedbackMode] re-resolves the [TorqueRamp]
+    limits from [Direction], which collapses to [0:0] outside Run and would discard the align window.
+    Align is d-axis - bounded by [IAlign], not by the direction-keyed motoring/generating pair.
+*/
 static void Calibration_Entry(Motor_T * p_motor)
 {
-    CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
-    // *p_buffer = (CalibrationBuffer_T){ 0 };
-    p_buffer->Step = 0U;
-    /* set once by outer calibration state. */
-    Phase_ActivateV0(&p_motor->PHASE);
-    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-    PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
-    FOC_SetVLimits(&p_motor->P_MOTOR->Foc, (sign_t)Motor_GetDirectionForward(p_motor->P_MOTOR), VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS));
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
 
-    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    GetBuffer(p_motor)->Step = 0U;
+
+    Phase_ActivateV0(&p_motor->PHASE);
+    p_context->FeedbackMode.Current = 1U;
+    Motor_FOC_ClearFeedbackState(p_context);
+    FOC_SetVLimits(&p_context->Foc, (sign_t)Motor_GetDirectionForward(p_context), VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS));
+    Ramp_SetLimits(&p_context->TorqueRamp, 0, _Motor_GetIAlign(p_context));
+
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_context->Config.AlignTime_Cycles);
     Hall_StartCalibrate(GetHall(p_motor));
-    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(p_motor->P_MOTOR));
-    Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
 }
 
 /*
@@ -127,16 +134,18 @@ static void Calibration_Proc(Motor_T * p_motor)
     }
 }
 
+/*
+    An unusable table is a Fault, not a completed calibration.
+    [FaultFlags] alone is inert outside [MOTOR_STATE_INIT] - the transition is what gates running on it.
+*/
 static State_T * Calibration_End(Motor_T * p_motor)
 {
-    CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
-    if (p_buffer->Step >= CAL_STEP_COUNT)
-    {
-        Phase_Deactivate(&p_motor->PHASE);
-        p_motor->P_MOTOR->FaultFlags.PositionSensor = !Hall_IsCalibrationTableValid(GetHall(p_motor)->P_STATE);
-        return &MOTOR_STATE_CALIBRATION;
-    }
-    return NULL;
+    if (GetBuffer(p_motor)->Step < CAL_STEP_COUNT) { return NULL; }
+
+    Phase_Deactivate(&p_motor->PHASE);
+    p_motor->P_MOTOR->FaultFlags.PositionSensor = !Hall_IsCalibrationTableValid(GetHall(p_motor)->P_STATE);
+
+    return (p_motor->P_MOTOR->FaultFlags.PositionSensor == 1U) ? &MOTOR_STATE_FAULT : &MOTOR_STATE_CALIBRATION;
 }
 
 static const State_T CALIBRATION_STATE_HALL =

@@ -360,7 +360,7 @@ extern void Hall_Init(Hall_T * p_hall);
 extern void Hall_StartCalibrate(Hall_T * p_hall);
 extern void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId);
 
-extern bool Hall_Verify(uint8_t sensorsValue);
+extern bool Hall_Verify(Hall_Id_T sensorsValue);
 extern bool Hall_IsCalibrationTableValid(const Hall_State_T * p_hall);
 extern bool Hall_IsStateValid(Hall_T * p_hall);
 

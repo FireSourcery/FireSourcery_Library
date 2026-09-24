@@ -68,11 +68,6 @@
 #define ADC_FIFO_LENGTH_MAX 1U
 #endif
 
-/* Software activation, a sparse sequence gathers into a local buffer of this length */
-#ifndef ADC_SEQUENCE_LENGTH_MAX
-#define ADC_SEQUENCE_LENGTH_MAX 16U
-#endif
-
 /******************************************************************************/
 /*
     Channel mask
@@ -95,13 +90,7 @@ static inline uint8_t ADC_ChannelCountOf(adc_mask_t sequence) { return (uint8_t)
 typedef void (*ADC_Callback_T)(void * p_context);
 typedef void (*ADC_Capture_T)(void * p_context, adc_result_t value);
 // typedef void (*ADC_CaptureSeq_T)(void * p_context, const volatile adc_result_t * p_values); /* The sequence's values, in channel order */
-
-/*
-    A setter pulls values
-*/
-typedef void (*ADC_Pull_T)(void * p_context, const volatile adc_result_t * p_values);
-
-typedef const volatile adc_result_t * ADC_DemuxEntry_T;
+// typedef const volatile adc_result_t * ADC_DemuxEntry_T;
 
 /******************************************************************************/
 /*`
@@ -114,8 +103,8 @@ typedef const struct ADC_Channel
     adc_channel_t ID;           /* Index into ADC.P_CHANNELS */
     adc_pin_t PIN;              /* Physical Id of the Pin */
     ADC_Capture_T CAPTURE;      /* Optional. Software activation only, per conversion. The result is stored either way */
-    // ADC_DemuxEntry_T DEMUX;
     void * P_CONTEXT;
+    // ADC_DemuxEntry_T DEMUX;
     // uint32_t RESULT_SCALING;    /* Consumer concern, known at the Board layer */
 }
 ADC_Channel_T;
@@ -141,15 +130,19 @@ typedef const struct ADC_Sequence
     adc_mask_t CHANNELS;
     adc_channel_t START;
     adc_channel_t COUNT;
-    // ADC_CaptureSeq_T CAPTURE;   /* Runs in the completion ISR of its ADC. NULL for scan only */
-    // void * P_CONTEXT;           /* Opaque. A batch join record, or any handler the Board registers */
+    ADC_Callback_T COMPLETE;   /* Runs in the completion ISR of its ADC. NULL for scan only */
+    void * P_CONTEXT;           /* Opaque. A batch join record, or any handler the Board registers */
     // ADC_DemuxEntry_T * DEMUX_MAP; /* [Source] -> [Destination] */
 }
 ADC_Sequence_T;
 
-/* Derives the Hw slot range from the mask, at config time */
-#define ADC_SEQUENCE_INIT(Channels) (ADC_Sequence_T) \
-    { .CHANNELS = (Channels), .START = (adc_channel_t)__builtin_ctz(Channels), .COUNT = (adc_channel_t)__builtin_popcount(Channels), }
+/* Derives the Hw slot range from the mask, at config time. Casts the handler to its registration type */
+#define ADC_SEQUENCE_INIT_COMPLETE(Channels, CompleteFn, p_Context) (ADC_Sequence_T) \
+    { .CHANNELS = (Channels), .START = (adc_channel_t)__builtin_ctz(Channels), .COUNT = (adc_channel_t)__builtin_popcount(Channels), \
+      .COMPLETE = (ADC_Callback_T)(CompleteFn), .P_CONTEXT = (void *)(p_Context), }
+
+/* Scan only. The results stand in the buffer, read by [ID] */
+#define ADC_SEQUENCE_INIT(Channels) ADC_SEQUENCE_INIT_COMPLETE(Channels, NULL, NULL)
 
 static inline adc_channel_t ADC_Sequence_Start(const ADC_Sequence_T * p_sequence) { return p_sequence->START; }
 static inline uint8_t ADC_Sequence_Count(const ADC_Sequence_T * p_sequence) { return p_sequence->COUNT; }
@@ -184,13 +177,17 @@ typedef struct ADC_State
     ADC_Sequence_T * volatile p_ActiveSequence;
     ADC_Sequence_T * volatile p_NextSequence;
 
-    ADC_TriggerState_T * volatile p_TriggerState;
-
     /*
         Software activation. Not used when the sequencer is Hw.
         Markers are the channels still to convert, Pending the active sequence channels still to capture.
     */
     volatile adc_mask_t ChannelMarkers;
+    /*
+        Reg/Fifo State
+        maintained by software where direct channel read is not available.
+        Result buffer outside of ADC_State.
+        ADC state as purely setup control remains unmodified through the entire conversion process.
+    */
     // volatile adc_mask_t PendingMarkers;
     const ADC_Channel_T * ActiveChannels[ADC_FIFO_LENGTH_MAX];
     uint8_t ActiveChannelCount;
@@ -207,8 +204,10 @@ ADC_State_T;
 
 /******************************************************************************/
 /*
-    ADC
+    ADC Peripheral Control
     Wraps HAL_ADC with the channel table, the results buffer, and the sequence table.
+        - Context Per Thread
+        - Wraps HAL_ADC with State, callback context
 */
 /******************************************************************************/
 /* Tag is ADC_Module, not ADC. Vendor headers define ADC as a peripheral base, e.g. MKE06Z4 */
@@ -271,28 +270,6 @@ static inline const ADC_Sequence_T * ADC_SequenceOf(ADC_T * p_adc, uint8_t seque
 static inline const ADC_Sequence_T * ADC_GetActiveSequence(ADC_T * p_adc) { return p_adc->P_STATE->p_ActiveSequence; }
 static inline bool ADC_IsSequenceActive(ADC_T * p_adc, uint8_t sequenceId) { return (p_adc->P_STATE->p_ActiveSequence == ADC_SequenceOf(p_adc, sequenceId)); }
 
-// static inline bool _ADC_IsSequenceComplete(ADC_T * p_adc, uint8_t sequenceId) { return (p_adc->P_STATE->p_ActiveSequence == ADC_SequenceOf(p_adc, sequenceId)); }
-
-// static inline bool _ADC_IsSequenceComplete(ADC_T * p_adc ) { return (p_adc->P_STATE->p_ActiveSequence == NULL); }
-static inline bool _ADC_IsSequenceComplete(ADC_T * p_adc) { return (p_adc->P_STATE->p_ActiveSequence->CHANNELS & p_adc->P_STATE->ChannelMarkers) == 0UL; }
-
-
-/*
-    Request the sequence. Any thread, last request wins.
-
-    Hw sequenced: the completion activates it, before the trigger that follows. The set then converts
-                  on every trigger, until another is selected.
-    Software:     the set is marked here, and converts once per request. A request while the previous
-                  set is in flight merges into it, and that set's completion is dropped.
-*/
-static inline void ADC_SetSequence(ADC_T * p_adc, uint8_t sequenceId)
-{
-    p_adc->P_STATE->p_NextSequence = (ADC_Sequence_T *)ADC_SequenceOf(p_adc, sequenceId);
-#if !ADC_HW_SEQUENCER_ENABLE
-    p_adc->P_STATE->p_ActiveSequence = p_adc->P_STATE->p_NextSequence;
-    ADC_MarkAll(p_adc, p_adc->P_STATE->p_ActiveSequence->CHANNELS);   /* Any set. The thread or the ISR walks them */
-#endif
-}
 
 
 /*

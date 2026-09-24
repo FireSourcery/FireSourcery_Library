@@ -43,6 +43,7 @@
 
 extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH];
 
+// extern constexpr size_t MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH_;
 
 /*  */
 static inline packet_size_t MotorController_ReadVar(MotorController_T * p_dev, const MotPacket_VarReadFixedReq_T * p_rx, MotPacket_VarReadFixedResp_T * p_tx)
