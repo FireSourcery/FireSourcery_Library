@@ -42,18 +42,46 @@
     State Machine Definitions
 */
 /******************************************************************************/
+/* Root states. A sub-state belongs to its parent's namespace, never to this one. */
 typedef enum MotorController_StateId
 {
     MC_STATE_ID_INIT,
     MC_STATE_ID_STANDBY,
     MC_STATE_ID_MAIN,
-    MC_STATE_ID_MOTOR_CMD,    /* Substate under main, for motor control command handling. let it be the only substate using a top level id for simplicity */
     MC_STATE_ID_MOTOR_TUNING, /*  */
     MC_STATE_ID_LOCK,         /* includes calibration */
     MC_STATE_ID_FAULT,        /* includes error handling */
     _MC_STATE_ID_END,
 }
 MotorController_StateId_T;
+
+/*
+    Sub-states of [MC_STATE_MAIN] defined by [MotorController] itself. Depth 1 of the [State_PathId_T].
+
+    An app mounts its own sub-states under MAIN too ([Traction_StateId_T]), numbered in its own
+    header — this enum does not, and should not, know them. That leaves MAIN's depth-1 id space
+    shared between two enums that are unaware of each other, so their values can collide.
+    Unresolved; [MotorController_App_T] is where a base or range would be allocated.
+*/
+typedef enum MotorController_MainSubStateId
+{
+    MC_MAIN_SUB_ID_NONE,       /* bare MAIN. 0 is "no sub-state" at every depth >= 1 */
+    MC_MAIN_SUB_ID_MOTOR_CMD,
+}
+MotorController_MainSubStateId_T;
+
+/*
+    Sub-states of [MC_STATE_LOCK]. Depth 1 of the [State_PathId_T].
+
+    Distinct from [MotorController_LockId_T], which is the *command* enum — only a few lock commands
+    enter a state, and a command id is not a state id.
+*/
+typedef enum MotorController_LockSubStateId
+{
+    MC_LOCK_SUB_ID_NONE,
+    MC_LOCK_SUB_ID_CALIBRATE_ADC,
+}
+MotorController_LockSubStateId_T;
 
 extern const State_T MC_STATE_INIT;
 extern const State_T MC_STATE_STANDBY;
@@ -98,10 +126,15 @@ extern const StateMachine_Machine_T MCSM_MACHINE;
 /******************************************************************************/
 static inline MotorController_StateId_T MotorController_GetStateId(const MotorController_Context_T * p_data) { return StateMachine_GetRootStateId(&p_data->StateMachine); }
 
-/* Host side checks Root state to parse id */
-/* handle with unique handler per type */
+/*
+    The full path, root nibble first. Unambiguous where a bare leaf id is not: sub-state ids are
+    only unique among siblings, so the host cannot tell [MC_MAIN_SUB_ID_MOTOR_CMD] from
+    [MC_LOCK_SUB_ID_CALIBRATE_ADC] without the branch they hang from.
+*/
+static inline state_t MotorController_GetPathId(const MotorController_Context_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
+
+/* Leaf id alone. Retained for callers that already know the branch. */
 static inline state_t _MotorController_GetSubStateId(const MotorController_Context_T * p_data) { return StateMachine_GetLeafStateId(&p_data->StateMachine); }
-// static inline State_PathId_T MotorController_GetSubStateId(const MotorController_Context_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
 
 
 static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_Context_T * p_data) { return p_data->FaultFlags; }
@@ -240,14 +273,16 @@ typedef enum MotorController_LockId
 MotorController_LockId_T;
 
 /*!
-    @retval 0xFF when TopState not in Lock State
-    @retval IsComplete SubState => 0xFF, TopState => MC_STATE_LOCK
-    @retval Processing SubState => id or 0, TopState => MC_STATE_LOCK
+    @retval [STATE_ID_NULL] when the top state is not [MC_STATE_LOCK]
+    @retval [MC_LOCK_SUB_ID_NONE] when in lock with no sub-state — i.e. the lock op has completed
+    @retval otherwise the active [MotorController_LockSubStateId_T]
+
+    Prefer [MotorController_GetPathId] where the branch is not already known: this returns a leaf id,
+    which is only unique among [MC_STATE_LOCK]'s children.
 */
-/* specialized handlers per substateId. alternatively PathId Scheme. */
-static inline MotorController_LockId_T MotorController_GetLockSubstateId(MotorController_T * p_dev)
+static inline MotorController_LockSubStateId_T MotorController_GetLockSubstateId(MotorController_T * p_dev)
 {
-    return (MotorController_LockId_T)StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
+    return (MotorController_LockSubStateId_T)StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
 }
 
 /* split completion status and processing/complete/inactive */

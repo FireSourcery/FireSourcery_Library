@@ -29,8 +29,7 @@
     @brief  The application layer interface. What a feature consumes, and how it is requested.
 */
 /******************************************************************************/
-#include "ADC_Batch.h"
-#include "ADC.h"
+#include "ADC.h"   /* A conversion names a channel on an ADC. A set is ADC_Batch.h, which the Board holds */
 
 
 /******************************************************************************/

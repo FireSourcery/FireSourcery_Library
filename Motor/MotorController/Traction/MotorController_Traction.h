@@ -71,6 +71,11 @@ typedef enum Traction_StateInput
 }
 Traction_StateInput_T;
 
+/*
+    Traction's states are sub-states of [MC_STATE_MAIN] and so are numbered in
+    [MotorController_MainSubStateId_T] with MAIN's other children, rather than in a namespace of
+    their own. A separate enum starting at 0 collided with "no sub-state".
+*/
 typedef enum Traction_StateId
 {
     TRACTION_STATE_ID_DRIVE /* = _MC_STATE_ID_END */,

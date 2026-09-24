@@ -105,7 +105,8 @@ static void AngleAlign_Loop(Motor_T * p_motor)
 */
 static const State_T OPEN_LOOP_STATE_ANGLE_ALIGN =
 {
-    // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
+    .ID = MOTOR_STATE_ID_OPEN_LOOP,
+    .PATH_ID = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP },
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
@@ -152,6 +153,7 @@ static void Run_Proc(Motor_T * p_motor)
 State_T OPEN_LOOP_STATE_RUN =
 {
     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
+    .PATH_ID = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
@@ -204,6 +206,7 @@ State_T * StartUpAlign_Next(Motor_T * p_motor)
 State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 {
     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
+    .PATH_ID = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,

@@ -151,8 +151,16 @@ static inline void _Motor_StateMachine_Thread(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 static inline Motor_StateId_T Motor_GetStateId(const Motor_Context_T * p_motor) { return StateMachine_GetRootState(&p_motor->StateMachine)->ID; }
 
-/* Host side checks Root state to parse id */
-/* handle with unique handler per type */
+/*
+    The full path, root nibble first. Unambiguous where a bare leaf id is not: sub-state ids are
+    only unique among siblings.
+
+    The motor sub-states carry no ids yet, so each reports its root — see the PATH_ID notes on
+    [MOTOR_STATE_OPEN_LOOP]'s and [MOTOR_STATE_CALIBRATION]'s children.
+*/
+static inline state_t Motor_GetPathId(const Motor_Context_T * p_motor) { return StateMachine_GetPathId(&p_motor->StateMachine); }
+
+/* Leaf id alone. Retained for callers that already know the branch. */
 static inline state_t _Motor_GetSubStateId(const Motor_Context_T * p_motor) { return StateMachine_GetLeafState(&p_motor->StateMachine)->ID; }
 
 

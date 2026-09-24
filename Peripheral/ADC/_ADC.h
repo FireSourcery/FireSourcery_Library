@@ -40,6 +40,8 @@
 /******************************************************************************/
 #if ADC_HW_SEQUENCER_ENABLE
 static inline void HAL_ADC_ActivateSequence(HAL_ADC_T * p_hal, uint32_t channelStart, uint32_t count);
+#else
+static inline void HAL_ADC_ActivateSequence(HAL_ADC_T * p_hal, uint32_t channelStart, uint32_t count) { (void)p_hal; (void)channelStart; (void)count; }
 #endif
 
 /******************************************************************************/
@@ -147,32 +149,36 @@ static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, ADC_Channel_T 
 //     _ADC_Activate(p_hal, p_state);
 // }
 
+static void _ADC_ActivateMarked(ADC_T * p_adc, ADC_State_T * p_state)
+{
+    _ADC_SetStateFrom(p_state, &p_adc->P_CHANNELS[0U], p_state->ChannelMarkers);
+    assert(p_state->ActiveChannelCount > 0U); /* Callers gate on ChannelMarkers, so the selection is never empty */
+    _ADC_Activate(p_adc->P_HAL_ADC, p_state);
+}
 
 /******************************************************************************/
 /*
     Sequence
-    The leaf resolves the Hw sequencer against software activation. ADC_Thread.h and ADC_Batch.h
-    compose it, and neither repeats the choice.
+    The leaf resolves the Hw sequencer against software activation.
 */
 /******************************************************************************/
+// static inline ADC_Sequence_T * _ADC_OnCompleteSequenceCommon(ADC_State_T * p_state)
+// {
+//     ADC_Sequence_T * p_completed = p_state->p_ActiveSequence;
+//     ADC_Sequence_T * p_next = p_state->p_NextSequence;
+//     if (p_completed->COMPLETE != NULL) { p_completed->COMPLETE(p_completed->P_CONTEXT); }
+//     if (p_next != p_completed) { p_state->p_ActiveSequence = p_next; }
+//     return p_completed;
+// }
+
 /*
-    Hw registers. The sequencer routes the trigger to the set's slot range, and converts it on every trigger.
+    Software activation. No sequencer to write: the register write is the fifo push, which
+    _ADC_ActivateMarked does from the markers left here.
 
-    Software has no sequencer to write. Its register write is the fifo push, which _ADC_ActivateMarked does,
-    driven by the markers left here. Pushing here as well would re-push a fifo in flight.
+    Markers before Active, so a completion landing between them still measures the set that is
+    converting. Publishing Active first leaves a window where the new set has no markers, and the
+    old set's capture reads as the new set's last channel.
 */
-static inline void _ADC_ActivateSequence(HAL_ADC_T * p_hal, ADC_State_T * p_state, ADC_Sequence_T * p_sequence)
-{
-    p_state->p_ActiveSequence = p_sequence;
-#if ADC_HW_SEQUENCER_ENABLE
-    assert(ADC_Mask_IsContiguous(p_sequence->CHANNELS)); /* The Hw converts a slot range. A sparse set has no Hw sequence */
-    HAL_ADC_ActivateSequence(p_hal, ADC_Sequence_Start(p_sequence), ADC_Sequence_Count(p_sequence));
-#else
-    p_state->ChannelMarkers |= p_sequence->CHANNELS;    /* Any set. The thread or the ISR walks them */
-    (void)p_hal;                                        /* The fifo push is _ADC_ActivateMarked's */
-#endif
-}
-
 /*
     Software activation. The capture held one of the set's channels, and none of them are left.
     The remainder alone is a level: it stays true until the next request re-marks, and would repeat.
@@ -184,62 +190,54 @@ static inline bool _ADC_IsSequenceComplete(const ADC_State_T * p_state, adc_mask
             ((p_state->ChannelMarkers & p_state->p_ActiveSequence->CHANNELS) == 0UL));
 }
 
-/*
-    The set is complete, and its results are in the buffer. COMPLETE consumes the set as a unit,
-    so a consumer needs no completion mask of its own.
-
-    It runs before the pending selection is applied, so a selection made within it takes effect on
-    the conversion that follows. Both must finish before the next trigger.
-
-    Hw sequenced: the transfer is done, and the sequencer repeats the set. A selection rewrites it
-                  here, where the ADC is idle.
-    Software:     the last of the set's channels was captured. The request already applied Next,
-                  so there is nothing to rewrite.
-*/
-static inline ADC_Sequence_T * _ADC_OnCompleteSequence(ADC_T * p_adc, ADC_State_T * p_state)
+static inline ADC_Sequence_T * _ADC_OnCompleteSequenceFifo(ADC_State_T * p_state)
 {
     ADC_Sequence_T * p_completed = p_state->p_ActiveSequence;
     ADC_Sequence_T * p_next = p_state->p_NextSequence;    /* Snapshot, written by other threads */
-
     if (p_completed->COMPLETE != NULL) { p_completed->COMPLETE(p_completed->P_CONTEXT); }
-    if (p_next != p_completed) { _ADC_ActivateSequence(p_adc->P_HAL_ADC, p_state, p_next); }
-
+    if (p_next != p_completed)
+    {
+        p_state->p_ActiveSequence = p_next;
+        p_state->ChannelMarkers |= p_next->CHANNELS;
+    }
     return p_completed;
 }
 
-/******************************************************************************/
-/*
-    Selection. Any thread, last request wins
-*/
-/******************************************************************************/
-/*
-    Set and send it to the Hw. On init, while the trigger source is inactive, or in a batch join,
-    where every part of the trigger has landed and its ADCs are idle.
-    Sets Next as well as Active. The completion applies Next, it must not be left unset.
-*/
-static inline void ADC_ActivateSequence(ADC_T * p_adc, uint8_t sequenceId)
+static inline void _ADC_SetSequence(ADC_State_T * p_state, ADC_Sequence_T * p_sequence)
 {
-    ADC_Sequence_T * p_sequence = ADC_SequenceOf(p_adc, sequenceId);
-
-    p_adc->P_STATE->p_NextSequence = p_sequence;
-    _ADC_ActivateSequence(p_adc->P_HAL_ADC, p_adc->P_STATE, p_sequence);
+    p_state->ChannelMarkers |= p_sequence->CHANNELS;
+    p_state->p_NextSequence = p_sequence;
+    p_state->p_ActiveSequence = p_sequence;
 }
 
+/******************************************************************************/
 /*
-    Request the sequence.
-
-    Hw sequenced: the completion activates it, before the trigger that follows. The set then converts
-                  on every trigger, until another is selected.
-    Software:     the set is marked here, and converts once per request. A request while the previous
-                  set is in flight merges into it, and that set's completion is dropped.
+    Hw Sequence
 */
-static inline void ADC_MarkSequence(ADC_T * p_adc, uint8_t sequenceId)
+/******************************************************************************/
+/*
+    Hw registers. The sequencer routes the trigger to the set's slot range, and converts it on every trigger.
+
+    Software has no sequencer to write. Its register write is the fifo push, which _ADC_ActivateMarked does,
+    driven by the markers left here. Pushing here as well would re-push a fifo in flight.
+*/
+static inline void _ADC_ActivateSequenceDma(HAL_ADC_T * p_hal, ADC_State_T * p_state, ADC_Sequence_T * p_sequence)
 {
-    p_adc->P_STATE->p_NextSequence = ADC_SequenceOf(p_adc, sequenceId);
-#if !ADC_HW_SEQUENCER_ENABLE
-    _ADC_ActivateSequence(p_adc->P_HAL_ADC, p_adc->P_STATE, p_adc->P_STATE->p_NextSequence);
-#endif
+    assert(ADC_Mask_IsContiguous(p_sequence->CHANNELS)); /* The Hw converts a slot range. A sparse set has no Hw sequence */
+    p_state->p_NextSequence = p_sequence;
+    p_state->p_ActiveSequence = p_sequence;
+    HAL_ADC_ActivateSequence(p_hal, ADC_Sequence_Start(p_sequence), ADC_Sequence_Count(p_sequence));
 }
+
+static inline ADC_Sequence_T * _ADC_OnCompleteSequenceDma(HAL_ADC_T * p_hal, ADC_State_T * p_state)
+{
+    ADC_Sequence_T * p_completed = p_state->p_ActiveSequence;
+    ADC_Sequence_T * p_next = p_state->p_NextSequence;    /* Snapshot, written by other threads */
+    if (p_completed->COMPLETE != NULL) { p_completed->COMPLETE(p_completed->P_CONTEXT); }
+    if (p_next != p_completed) { _ADC_ActivateSequenceDma(p_hal, p_state, p_next); }
+    return p_completed;
+}
+
 
 
 /******************************************************************************/
@@ -247,19 +245,17 @@ static inline void ADC_MarkSequence(ADC_T * p_adc, uint8_t sequenceId)
     Unsynchronized Activation
     start a conversion immediately cancels ongoing conversions
     single threaded or atomic flag test and set
-    ( Analog_ConversionChannel_T,  uint32_t markers) interface
+    (ConversionChannel_T,  uint32_t markers) interface
      select from mapped or parameters
 */
 /******************************************************************************/
-// static void _Analog_ADC_StartConversions(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
+// static void ADC_StartConversionsADC_T * p_adc,ConversionChannel_T * p_conversions, uint32_t markers)
 // {
-//     if (Analog_ADC_ReadIsActive(p_adc) == false) { ADC_StartFrom(p_adc, p_conversions, markers); }
-//     else { Analog_ADC_MarkAll(p_adc, markers); }
+//     if ADC_ReadIsActive(p_adc) == false) { ADC_StartFrom(p_adc, p_conversions, markers); }
+//     else {ADC_MarkAll(p_adc, markers); }
 // }
 
-// static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversion)
+// static void ADC_StartConversionADC_T * p_adc,ConversionChannel_T * p_conversion)
 // {
-//     _Analog_ADC_StartConversions(p_adc, p_conversion, (1UL << p_conversion->ID)); // mask as adc fixed
+//     ADC_StartConversions(p_adc, p_conversion, (1UL << p_conversion->ID)); // mask as adc fixed
 // }
-
-// /*

@@ -69,11 +69,31 @@
 /******************************************************************************/
 #include "_ADC.h"  /* The per ADC mechanism a part composes. ADC.h below it */
 
+/* A batch is what 1 trigger converts, so its parts are Hw sequenced. A software activated set
+   completes on its own ADC, and needs no join. ADC_Thread.h */
+#if !ADC_HW_SEQUENCER_ENABLE
+#error "ADC_Batch requires ADC_HW_SEQUENCER_ENABLE"
+#endif
+
 /******************************************************************************/
 /*
     Batch
 */
 /******************************************************************************/
+/*
+    The trigger's state. 1 batch of a trigger converts at a time, so the join and the selection
+    belong to the trigger, and the batches that alternate on it share 1 state. ADC_Batch.h
+*/
+typedef struct ADC_TriggerState
+{
+    const struct ADC_Batch * volatile p_Active; /* Converting. Written in the join, and on activation */
+    const struct ADC_Batch * volatile p_Next;   /* Selected. Any thread. Applied in the join */
+    volatile adc_mask_t CompleteMarkers;        /* Parts of p_Active. The ADCs hold their own active sequence */
+}
+ADC_TriggerState_T;
+
+#define ADC_TRIGGER_STATE_ALLOC() (&(ADC_TriggerState_T){})
+
 /* Where a part converts. The batch activates it, and nothing else reads it */
 typedef const struct ADC_BatchPart
 {
@@ -105,7 +125,11 @@ static inline adc_mask_t _ADC_Batch_PartMarkers(const ADC_Batch_T * p_batch) { r
 /******************************************************************************/
 static inline void _ADC_Batch_ActivateParts(const ADC_Batch_T * p_batch)
 {
-    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++) { ADC_ActivateSequence(p_batch->P_PARTS[iPart].P_ADC, p_batch->P_PARTS[iPart].SEQUENCE_ID); }
+    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++)
+    {
+        ADC_T * p_adc = p_batch->P_PARTS[iPart].P_ADC;
+        _ADC_ActivateSequenceDma(p_adc->P_HAL_ADC, p_adc->P_STATE, ADC_SequenceOf(p_adc, p_batch->P_PARTS[iPart].SEQUENCE_ID));
+    }
 }
 
 /* Batches on 1 trigger convert the same ADCs. The join leaves all of them idle, and the switch reprograms all of them */
@@ -230,24 +254,6 @@ static inline void ADC_Batch_OnCompleteSequence_ISR(ADC_TriggerState_T * p_trigg
     assert(p_adc->P_STATE->p_ActiveSequence != NULL);                           /* A sequence must be activated before the trigger is enabled */
     assert(p_adc->P_STATE->p_NextSequence == p_adc->P_STATE->p_ActiveSequence); /* A part's selection belongs to its trigger, and applies in the join */
 
-    _ADC_Batch_OnPartComplete(p_trigger, p_adc, _ADC_OnCompleteSequence(p_adc, p_adc->P_STATE));
+    _ADC_Batch_OnPartComplete(p_trigger, p_adc, _ADC_OnCompleteSequenceDma(p_adc->P_HAL_ADC, p_adc->P_STATE));
 }
 
-
-// static inline void _ADC_Batch_OnPartComplete(const ADC_T * p_adc, const ADC_Sequence_T * p_sequence)
-// {
-//     ADC_Batch_T * p_batch = NULL;
-//     ADC_Map_T map = p_batch->MAP;
-//     // map points to p_adc->P_CHANNEL_RESULTS
-//     ADC_Map_Decode(map, p_batch->LENGTH,  p_batch->P_BUFFER);
-//     if (Batch_IsComplete(p_batch)) { p_batch->CAPTURE(p_batch->P_CONTEXT, p_batch->P_BUFFER); }
-//     else { _ADC_Batch_ApplyNext(p_state); }
-// }
-
-// static inline void Motor_Analog_CaptureIabc(Motor_T * p_motor, const volatile adc_result_t * p_values)
-// {
-//     Motor_Analog_CaptureIa(p_motor, p_values[MOTOR_ANALOG_IA]);
-//     Motor_Analog_CaptureIb(p_motor, p_values[MOTOR_ANALOG_IB]);
-//     Motor_Analog_CaptureIc(p_motor, p_values[MOTOR_ANALOG_IC]);
-//     Motor_ProcIabc(p_motor);
-// }

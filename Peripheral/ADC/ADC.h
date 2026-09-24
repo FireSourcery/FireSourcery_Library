@@ -148,19 +148,6 @@ static inline adc_channel_t ADC_Sequence_Start(const ADC_Sequence_T * p_sequence
 static inline uint8_t ADC_Sequence_Count(const ADC_Sequence_T * p_sequence) { return p_sequence->COUNT; }
 
 
-/*
-    The trigger's state. 1 batch of a trigger converts at a time, so the join and the selection
-    belong to the trigger, and the batches that alternate on it share 1 state. ADC_Batch.h
-*/
-typedef struct ADC_TriggerState
-{
-    const struct ADC_Batch * volatile p_Active; /* Converting. Written in the join, and on activation */
-    const struct ADC_Batch * volatile p_Next;   /* Selected. Any thread. Applied in the join */
-    volatile adc_mask_t CompleteMarkers;        /* Parts of p_Active. The ADCs hold their own active sequence */
-}
-ADC_TriggerState_T;
-
-#define ADC_TRIGGER_STATE_ALLOC() (&(ADC_TriggerState_T){})
 
 /******************************************************************************/
 /*
@@ -182,13 +169,13 @@ typedef struct ADC_State
         Markers are the channels still to convert, Pending the active sequence channels still to capture.
     */
     volatile adc_mask_t ChannelMarkers;
+    // volatile adc_mask_t PendingMarkers;
     /*
         Reg/Fifo State
         maintained by software where direct channel read is not available.
         Result buffer outside of ADC_State.
         ADC state as purely setup control remains unmodified through the entire conversion process.
     */
-    // volatile adc_mask_t PendingMarkers;
     const ADC_Channel_T * ActiveChannels[ADC_FIFO_LENGTH_MAX];
     uint8_t ActiveChannelCount;
 

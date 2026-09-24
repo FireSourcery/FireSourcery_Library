@@ -28,8 +28,10 @@
     @author FireSourcery
     @brief  ISR and thread entry points.
 
-    Hw sequenced:   ADC_OnCompleteSequence_ISR, in the transfer complete ISR. 1 per ADC, per trigger.
+    Hw sequenced:   ADC_OnCompleteSequenceDma_ISR, in the transfer complete ISR. 1 per ADC, per trigger.
+                    ADC_SetSequenceDma buffers the next set, ADC_ActivateSequenceDma writes it now.
     Software:       ADC_OnComplete_ISR, in the ADC ISR. ADC_ActivateMarked, in the thread that requests.
+                    ADC_SetSequence marks the set, and it converts once per request.
 
     _ADC_[Name](p_adc, p_state, ...) is private, and takes the resolved state.
     ADC_[Name]_ISR(p_adc) is the outermost call, for the Board to place in the vector.
@@ -45,13 +47,6 @@
     Software activation
 */
 /******************************************************************************/
-static void _ADC_ActivateMarked(ADC_T * p_adc, ADC_State_T * p_state)
-{
-    _ADC_SetStateFrom(p_state, &p_adc->P_CHANNELS[0U], p_state->ChannelMarkers);
-    /* Nothing marked selects no channels, and the fifo push has no pin to write */
-    if (p_state->ActiveChannelCount > 0U) { _ADC_Activate(p_adc->P_HAL_ADC, p_state); }
-}
-
 static inline void _ADC_OnComplete(ADC_T * p_adc, ADC_State_T * p_state)
 {
 #ifndef NDEBUG
@@ -64,11 +59,12 @@ static inline void _ADC_OnComplete(ADC_T * p_adc, ADC_State_T * p_state)
     if (p_state->ActiveChannelCount > 0U)
     {
         adc_mask_t captured = _ADC_Capture(p_adc->P_HAL_ADC, p_state, p_adc->P_CHANNEL_RESULTS);
-
         p_state->ChannelMarkers &= ~captured;
 
+        p_state->ActiveChannelCount = 0U;
+
         /* The set captured its last channel. Before the continue, so a request made within it is picked up here */
-        if (_ADC_IsSequenceComplete(p_state, captured) == true) { (void)_ADC_OnCompleteSequence(p_adc, p_state); }
+        if (_ADC_IsSequenceComplete(p_state, captured) == true) { (void)_ADC_OnCompleteSequenceFifo(p_state); }
 
         /* Continue incrementing. Channels do not repeat until all marked channels have completed once */
         if (p_state->ChannelMarkers != 0UL) { _ADC_ActivateMarked(p_adc, p_state); }
@@ -100,6 +96,7 @@ static inline void ADC_PollComplete(ADC_T * p_adc)
 */
 static inline void ADC_ActivateMarked(ADC_T * p_adc)
 {
+// #if !ADC_HW_SEQUENCER_ENABLE
     /*
         While the ADC is active the remaining channels continue from the ISR.
         The ISR does not start within this block when a single thread calls it.
@@ -113,10 +110,22 @@ static inline void ADC_ActivateMarked(ADC_T * p_adc)
 #endif
 }
 
+/*
+    Request the set. Any thread, last request wins. Active and the markers follow immediately, and
+    the set converts once per request, from the next ADC_ActivateMarked or from the ISR.
+
+    A request while the previous set is in flight merges into it, and that set's completion is
+    dropped: Active names the new set, so the old one's last channel no longer closes it.
+*/
+static inline void ADC_SetSequence(ADC_T * p_adc, uint8_t sequenceId)
+{
+    _ADC_SetSequence(p_adc->P_STATE, ADC_SequenceOf(p_adc, sequenceId));
+}
+
 
 /******************************************************************************/
 /*
-    Sequence. The mechanism is in _ADC.h, shared with ADC_Batch.h
+    Hw Sequence.
 */
 /******************************************************************************/
 /*!
@@ -125,8 +134,27 @@ static inline void ADC_ActivateMarked(ADC_T * p_adc)
 
     ADC ISR priority: a consumer that joins several ADCs needs their ISRs at 1 priority, for its own bookkeeping.
 */
-static inline void ADC_OnCompleteSequence_ISR(ADC_T * p_adc)
+static inline void ADC_OnCompleteSequenceDma_ISR(ADC_T * p_adc)
 {
     assert(p_adc->P_STATE->p_ActiveSequence != NULL); /* A sequence must be activated before the trigger is enabled */
-    (void)_ADC_OnCompleteSequence(p_adc, p_adc->P_STATE);
+    (void)_ADC_OnCompleteSequenceDma(p_adc->P_HAL_ADC, p_adc->P_STATE);
+}
+
+/*
+    Immediate. On init, while the trigger source is inactive, or in a batch join, where every part
+    of the trigger has landed and its ADCs are idle. Sets Next as well as Active.
+*/
+static inline void ADC_ActivateSequenceDma(ADC_T * p_adc, uint8_t sequenceId)
+{
+    _ADC_ActivateSequenceDma(p_adc->P_HAL_ADC, p_adc->P_STATE, ADC_SequenceOf(p_adc, sequenceId));
+}
+
+/*
+    Buffered for the trigger that follows. Any thread, last request wins, 1 store.
+    The Hw keeps converting the active set until the completion applies this, where the ADC is idle.
+    Writing Active here would leave that completion with no change to see.
+*/
+static inline void ADC_SetSequenceDma(ADC_T * p_adc, uint8_t sequenceId)
+{
+    p_adc->P_STATE->p_NextSequence = ADC_SequenceOf(p_adc, sequenceId);
 }

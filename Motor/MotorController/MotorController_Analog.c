@@ -93,7 +93,8 @@ static State_T * EndCalibrateAdc(MotorController_T * p_dev)
 
 const State_T MC_STATE_LOCK_CALIBRATE_ADC =
 {
-    .ID = MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC, // valid during subsstae only
+    .ID = MC_LOCK_SUB_ID_CALIBRATE_ADC, /* scoped to LOCK's children — a lock command id is not a state id */
+    .PATH_ID = { .Depth0 = MC_STATE_ID_LOCK, .Depth1 = MC_LOCK_SUB_ID_CALIBRATE_ADC },
     .P_TOP = &MC_STATE_LOCK,
     .P_PARENT = &MC_STATE_LOCK,
     .DEPTH = 1U,

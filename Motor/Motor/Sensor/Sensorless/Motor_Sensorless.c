@@ -96,6 +96,8 @@ static State_T * Align_Next(Motor_T * p_motor)
 
 static const State_T SENSORLESS_ALIGN =
 {
+    .PATH_ID    = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP    = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH    = 1U,
@@ -153,6 +155,8 @@ static State_T * StartUp_Next(Motor_T * p_motor)
 
 static const State_T SENSORLESS_START_UP =
 {
+    .PATH_ID    = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP    = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH    = 1U,

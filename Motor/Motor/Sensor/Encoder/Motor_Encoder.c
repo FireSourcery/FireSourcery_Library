@@ -113,6 +113,7 @@ static State_T * HomingTransition(Motor_T * p_motor)
 static const State_T STATE_ENCODER_HOMING =
 {
     // .ID         = MOTOR_STATE_ID_CALIBRATION,
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_CALIBRATION }, /* sub-state id not yet allocated: reports as the root state */
     .P_TOP      = &MOTOR_STATE_CALIBRATION,
     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,
@@ -153,6 +154,8 @@ static State_T * HomingAlignTransition(Motor_T * p_motor)
 
 static const State_T STATE_ENCODER_HOMING_ALIGN =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_CALIBRATION }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_CALIBRATION,
     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,
@@ -215,6 +218,8 @@ static State_T * AlignZeroNext(Motor_T * p_motor)
 
 static const State_T ALIGN =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH      = 1U,
@@ -266,6 +271,8 @@ static State_T * ValidateAlignNext(Motor_T * p_motor)
 
 static const State_T VALIDATE_ALIGN =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH      = 1U,
@@ -316,6 +323,8 @@ static State_T * ValidateClosedLoopTransition(Motor_T * p_motor)
 
 static const State_T VALIDATE_CLOSED_LOOP =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH      = 1U,
@@ -375,6 +384,8 @@ static State_T * StartUpValidateClosedLoopTransition(Motor_T * p_motor);
 
 static const State_T START_UP =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH      = 1U,
@@ -383,6 +394,8 @@ static const State_T START_UP =
 
 static const State_T START_UP_ALIGN =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH      = 1U,
@@ -393,6 +406,8 @@ static const State_T START_UP_ALIGN =
 
 static const State_T START_UP_VALIDATE_ALIGN =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH      = 1U,
@@ -403,6 +418,8 @@ static const State_T START_UP_VALIDATE_ALIGN =
 
 static const State_T START_UP_VALIDATE_CLOSED_LOOP =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH      = 1U,

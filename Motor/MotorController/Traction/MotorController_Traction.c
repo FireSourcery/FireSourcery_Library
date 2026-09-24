@@ -273,6 +273,7 @@ static const State_T STATE_DRIVE =
 {
     .ID         = TRACTION_STATE_ID_DRIVE,
     .DEPTH      = 1U,
+    .PATH_ID      = { .Depth0 = MC_STATE_ID_MAIN }, /* sub-state id not yet allocated: reports as the root state */
     .P_TOP      = &MC_STATE_MAIN,
     .P_PARENT   = &MC_STATE_MAIN,
     .ENTRY      = (State_Action_T)Drive_Entry,
@@ -367,6 +368,7 @@ static const State_T STATE_NEUTRAL =
 {
     .ID         = TRACTION_STATE_ID_NEUTRAL,
     .DEPTH      = 1U,
+    .PATH_ID      = { .Depth0 = MC_STATE_ID_MAIN }, /* sub-state id not yet allocated: reports as the root state */
     .P_TOP      = &MC_STATE_MAIN,
     .P_PARENT   = &MC_STATE_MAIN,
     .ENTRY      = (State_Action_T)Neutral_Entry,

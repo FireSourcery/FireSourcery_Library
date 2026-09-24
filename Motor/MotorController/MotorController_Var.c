@@ -55,7 +55,7 @@ int MotorController_Var_Output_Get(MotorController_T * p_dev, MotorController_Va
         case MOT_VAR_ZERO:                      value = 0;                                                                  break;
         case MOT_VAR_MILLIS:                    value = Millis();                                                           break;
         case MOT_VAR_SYSTEM_STATE:              value = MotorController_GetStateId(p_dev->P_MC);              break;
-        case MOT_VAR_SYSTEM_SUB_STATE:          value = _MotorController_GetSubStateId(p_dev->P_MC);          break;
+        case MOT_VAR_SYSTEM_SUB_STATE:          value = MotorController_GetPathId(p_dev->P_MC);               break;
         case MOT_VAR_SYSTEM_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_dev->P_MC).Value;     break;
         // case MOT_VAR_SYSTEM_STATUS_FLAGS:       value = MotorController_GetStatusFlags(p_dev).Value;               break;
         case MOT_VAR_SYSTEM_STATUS_FLAGS: break; /* not yet implemented */

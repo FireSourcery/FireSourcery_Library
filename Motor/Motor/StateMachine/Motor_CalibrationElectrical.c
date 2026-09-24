@@ -354,6 +354,7 @@ State_T * Electrical_Next(Motor_T * p_motor)
 const State_T CALIBRATION_STATE_ELECTRICAL =
 {
     .P_PARENT = &MOTOR_STATE_CALIBRATION,
+    .PATH_ID    = { .Depth0 = MOTOR_STATE_ID_CALIBRATION }, /* sub-state id not yet allocated: reports as the root state */
     .P_TOP    = &MOTOR_STATE_CALIBRATION,
     .DEPTH    = 1U,
     .ENTRY    = (State_Action_T)Electrical_Entry,

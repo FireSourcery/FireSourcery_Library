@@ -62,18 +62,16 @@ static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active
 /* depreciate for pointer compare */
 static inline bool StateMachine_IsRootStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == StateMachine_GetRootState(p_active)->ID); }
 
-
-// static inline State_PathId_T StateMachine_GetPathId(const StateMachine_Active_T * p_active)
-// {
-//     assert(StateMachine_GetLeafState(p_active)->DEPTH < 8); /* Ensure depth fits within 4-bit fields */
-
-//     uint32_t id = 0;
-//     for (State_T * p_iterator = StateMachine_GetLeafState(p_active); p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
-//     {
-//         id |= ((uint32_t)p_iterator->ID << (p_iterator->DEPTH * 4));
-//     }
-//     return (State_PathId_T){ .BranchId = id };
-// }
+/*
+    The full path from root to leaf, as one value. Unlike [StateMachine_GetRootStateId] and
+    [StateMachine_GetLeafStateId] it is unambiguous: a leaf id is only unique among its siblings,
+    so two branches may reuse the same number.
+*/
+static inline state_t StateMachine_GetPathId(const StateMachine_Active_T * p_active)
+{
+    assert(State_IsPathIdValid(StateMachine_GetLeafState(p_active))); /* catches a state that omits PATH_ID, which would otherwise read as root id 0 */
+    return StateMachine_GetLeafState(p_active)->PATH_ID.Id;
+}
 
 /*
 

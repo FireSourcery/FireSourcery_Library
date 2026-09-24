@@ -86,6 +86,8 @@ static State_T * TorqueZero_Next(Motor_T * p_motor)
 /* alternatively substate passive */
 const State_T INTERVENTION_STATE_TORQUE_ZERO =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_INTERVENTION }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_INTERVENTION,
     .P_PARENT   = &MOTOR_STATE_INTERVENTION,
     .DEPTH      = 1U,
@@ -165,6 +167,8 @@ static const State_Input_T RAMP_SAFE_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LEN
 
 const State_T INTERVENTION_STATE_RAMP_SAFE =
 {
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_INTERVENTION }, /* sub-state id not yet allocated: reports as the root state */
+
     .P_TOP      = &MOTOR_STATE_INTERVENTION,
     .P_PARENT   = &MOTOR_STATE_INTERVENTION,
     .DEPTH      = 1U,

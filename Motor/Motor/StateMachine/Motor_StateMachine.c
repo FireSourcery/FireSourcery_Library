@@ -152,6 +152,7 @@ static const State_Input_T INIT_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] 
 const State_T MOTOR_STATE_INIT =
 {
     .ID                 = MOTOR_STATE_ID_INIT,
+    .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_INIT },
     .ENTRY              = (State_Action_T)Init_Entry,
     .LOOP               = (State_Action_T)Init_Proc,
     .NEXT               = (State_Input0_T)Init_Next,
@@ -227,6 +228,7 @@ static const State_Input_T DEACTIVATED_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_L
 const State_T MOTOR_STATE_DEACTIVATED =
 {
     .ID                 = MOTOR_STATE_ID_DEACTIVATED,
+    .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_DEACTIVATED },
     .ENTRY              = (State_Action_T)Deactivated_Entry,
     .LOOP               = (State_Action_T)Deactivated_Proc,
     .P_TRANSITION_TABLE = &DEACTIVATED_TRANSITION_TABLE[0U],
@@ -361,6 +363,7 @@ static const State_Input_T PASSIVE_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGT
 const State_T MOTOR_STATE_PASSIVE =
 {
     .ID                 = MOTOR_STATE_ID_PASSIVE,
+    .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_PASSIVE },
     .ENTRY              = (State_Action_T)Passive_Entry,
     .LOOP               = (State_Action_T)Passive_Proc,
     .P_TRANSITION_TABLE = &PASSIVE_TRANSITION_TABLE[0U],
@@ -466,6 +469,7 @@ static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 const State_T MOTOR_STATE_RUN =
 {
     .ID                 = MOTOR_STATE_ID_RUN,
+    .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_RUN },
     .P_TRANSITION_TABLE = &RUN_TRANSITION_TABLE[0U],
     .P_ACTION_TABLE     = &RUN_ACTION_TABLE[0U],
     .ENTRY              = (State_Action_T)Run_Entry,
@@ -528,6 +532,7 @@ static const State_Input_T INTERVENTION_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_
 const State_T MOTOR_STATE_INTERVENTION =
 {
     .ID                 = MOTOR_STATE_ID_INTERVENTION,
+    .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_INTERVENTION },
     .ENTRY              = (State_Action_T)Intervention_Entry,
     .LOOP               = (State_Action_T)Intervention_Proc,
     .P_TRANSITION_TABLE = &INTERVENTION_TRANSITION_TABLE[0U],
@@ -617,6 +622,7 @@ static const State_Input_T OPEN_LOOP_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LEN
 const State_T MOTOR_STATE_OPEN_LOOP =
 {
     .ID                 = MOTOR_STATE_ID_OPEN_LOOP,
+    .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP },
     .ENTRY              = (State_Action_T)OpenLoop_Entry,
     .LOOP               = (State_Action_T)OpenLoop_Proc,
     .P_TRANSITION_TABLE = &OPEN_LOOP_TRANSITION_TABLE[0U],
@@ -699,6 +705,7 @@ static const State_Input_T CALIBRATION_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_L
 const State_T MOTOR_STATE_CALIBRATION =
 {
     .ID                 = MOTOR_STATE_ID_CALIBRATION,
+    .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_CALIBRATION },
     .ENTRY              = (State_Action_T)Calibration_Entry,
     .LOOP               = (State_Action_T)Calibration_Proc,
     .P_TRANSITION_TABLE = &CALIBRATION_TRANSITION_TABLE[0U],
@@ -751,6 +758,7 @@ static const State_Input_T FAULT_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH]
 const State_T MOTOR_STATE_FAULT =
 {
     .ID                 = MOTOR_STATE_ID_FAULT,
+    .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_FAULT },
     .P_TRANSITION_TABLE = &FAULT_TRANSITION_TABLE[0U],
     .ENTRY              = (State_Action_T)Fault_Entry,
     .LOOP               = (State_Action_T)Fault_Proc,

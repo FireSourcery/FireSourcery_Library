@@ -208,6 +208,7 @@ static const State_Input_T INIT_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 const State_T MC_STATE_INIT =
 {
     .ID                 = MC_STATE_ID_INIT,
+    .PATH_ID            = { .Depth0 = MC_STATE_ID_INIT },
     .ENTRY              = (State_Action_T)Init_Entry,
     .LOOP               = (State_Action_T)Init_Proc,
     .NEXT               = (State_Input0_T)Init_Next,
@@ -296,6 +297,7 @@ static const State_Input_T STANDBY_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] 
 const State_T MC_STATE_STANDBY =
 {
     .ID                 = MC_STATE_ID_STANDBY,
+    .PATH_ID            = { .Depth0 = MC_STATE_ID_STANDBY },
     .ENTRY              = (State_Action_T)Standby_Entry,
     .LOOP               = (State_Action_T)Standby_Proc,
     .NEXT               = (State_Input0_T)Standby_Next, /* Headless-analog auto-start; NULL (no-op) for all other configs */
@@ -348,7 +350,8 @@ static const State_Input_T MAIN_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 
 const State_T MC_STATE_MAIN =
 {
-    .ID     = MC_STATE_ID_MAIN,
+    .ID      = MC_STATE_ID_MAIN,
+    .PATH_ID = { .Depth0 = MC_STATE_ID_MAIN },
     .ENTRY  = (State_Action_T)Main_Entry,
     .LOOP   = (State_Action_T)Main_Proc,
     .P_TRANSITION_TABLE = &MAIN_TRANSITION_TABLE[0U],
@@ -403,7 +406,8 @@ static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH
 
 const State_T MC_STATE_MAIN_MOTOR_CMD =
 {
-    .ID         = MC_STATE_ID_MOTOR_CMD,
+    .ID         = MC_MAIN_SUB_ID_MOTOR_CMD, /* scoped to MAIN's children, not a root id */
+    .PATH_ID    = { .Depth0 = MC_STATE_ID_MAIN, .Depth1 = MC_MAIN_SUB_ID_MOTOR_CMD },
     .P_TOP      = &MC_STATE_MAIN,
     .P_PARENT   = &MC_STATE_MAIN,
     .DEPTH      = 1U,
@@ -481,6 +485,7 @@ static const State_Input_T TUNING_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 const State_T MC_STATE_MOTOR_TUNING =
 {
     .ID         = MC_STATE_ID_MOTOR_TUNING,
+    .PATH_ID    = { .Depth0 = MC_STATE_ID_MOTOR_TUNING },
     .DEPTH      = 0U,
     .ENTRY      = (State_Action_T)MotorTuning_Entry,
     .LOOP       = (State_Action_T)MotorTuning_Proc,
@@ -607,6 +612,7 @@ static const State_Input_T LOCK_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 const State_T MC_STATE_LOCK =
 {
     .ID                 = MC_STATE_ID_LOCK,
+    .PATH_ID            = { .Depth0 = MC_STATE_ID_LOCK },
     .ENTRY              = (State_Action_T)Lock_Entry,
     .LOOP               = (State_Action_T)Lock_Proc,
     .P_TRANSITION_TABLE = &LOCK_TRANSITION_TABLE[0U],
@@ -688,6 +694,7 @@ static const State_Input_T FAULT_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 const State_T MC_STATE_FAULT =
 {
     .ID                 = MC_STATE_ID_FAULT,
+    .PATH_ID            = { .Depth0 = MC_STATE_ID_FAULT },
     .ENTRY              = (State_Action_T)Fault_Entry,
     .LOOP               = (State_Action_T)Fault_Proc,
     .P_TRANSITION_TABLE = &FAULT_TRANSITION_TABLE[0U],

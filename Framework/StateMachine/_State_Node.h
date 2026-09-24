@@ -53,6 +53,30 @@ static inline State_T * _State_GetRoot(State_T * p_start) { return (p_start->P_T
 /******************************************************************************/
 static inline bool State_IsSubState(State_T * p_state) { return (p_state->DEPTH > 0U); }
 
+/*
+    [PATH_ID] caches what (ID, DEPTH, P_PARENT) already encode, so that reporting the active path
+    is a single load rather than a walk. Verify rather than trust: a state that omits [PATH_ID]
+    reads as root id 0, which is a valid path and so cannot be detected by inspection alone.
+*/
+static inline state_t State_BuildPathId(State_T * p_state)
+{
+    state_t pathId = 0U;
+    for (State_T * p_iterator = p_state; p_iterator != NULL; p_iterator = p_iterator->P_PARENT) { pathId |= _STATE_ID(p_iterator->ID, p_iterator->DEPTH); }
+    return pathId;
+}
+
+/*
+    Exact, or - for a sub-state not yet numbered in the path scheme - its ancestors with its own
+    level left 0. The second form is how a sub-state reports as its root until an id is allocated:
+    [_STATE_ID(0, DEPTH)] is already the encoding for "no state at this level".
+*/
+static inline bool State_IsPathIdValid(State_T * p_state)
+{
+    if (p_state->DEPTH >= STATE_PATH_DEPTH_MAX) { return false; }
+    if (p_state->PATH_ID.Id == State_BuildPathId(p_state)) { return true; }
+    return (State_IsSubState(p_state) && (p_state->PATH_ID.Id == State_BuildPathId(p_state->P_PARENT)));
+}
+
 
 /******************************************************************************/
 /*

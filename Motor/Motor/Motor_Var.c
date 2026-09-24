@@ -50,7 +50,7 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
         case MOTOR_VAR_I_PHASE:                     value = Motor_GetIPhase_Fract16(p_state);               break;
         case MOTOR_VAR_V_PHASE:                     value = Motor_GetVPhase_Fract16(p_state);               break;
         case MOTOR_VAR_STATE:                       value = Motor_GetStateId(p_state);                      break;
-        case MOTOR_VAR_SUB_STATE:                   value = _Motor_GetSubStateId(p_state);                  break;
+        case MOTOR_VAR_SUB_STATE:                   value = Motor_GetPathId(p_state);                       break;
         case MOTOR_VAR_FAULT_FLAGS:                 value = Motor_GetFaultFlags(p_state).Value;             break;
         case MOTOR_VAR_HEAT:                        value = Motor_GetHeat_Adcu(p_state);                    break;
         case MOTOR_VAR_SPEED_REQ:                   value = Motor_GetSpeedSetpoint(p_state);                break;
