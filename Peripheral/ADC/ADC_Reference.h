@@ -30,7 +30,6 @@
 */
 /******************************************************************************/
 #include <stdint.h>
-#include <stdbool.h>
 
 typedef const struct ADC_Reference
 {

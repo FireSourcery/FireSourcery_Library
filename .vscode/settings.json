@@ -89,4 +89,5 @@
         "txsize",
         "ufract"
     ],
+    "cmake.sourceDirectory": "E:/Workspace/Project/Kelly_KMC/CMake",
 }

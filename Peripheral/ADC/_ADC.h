@@ -29,7 +29,7 @@
     @brief  Private. Capture and activation. Resolves Hw sequenced against software activation.
 */
 /******************************************************************************/
-#include "ADC.h"
+#include "ADC.h" /* Included from ADC.h after its typedefs. #pragma once resolves either order */
 
 /******************************************************************************/
 /*
@@ -46,7 +46,7 @@ static inline void HAL_ADC_ActivateSequence(HAL_ADC_T * p_hal, uint32_t channelS
 
 /******************************************************************************/
 /*
-    Capture. Software activation only. The Hw transfer fills the results buffer directly.
+    Fifo
 */
 /******************************************************************************/
 /*
@@ -101,11 +101,9 @@ static inline void _ADC_Activate(HAL_ADC_T * p_hal, const  ADC_State_T * p_state
     _ADC_ActivateFrom(p_hal, &p_state->ActiveChannels[0U], p_state->ActiveChannelCount);
 }
 
-
 /******************************************************************************/
 /*
-    Software activation
-    Fills the Hw fifo, or the single conversion register, from the marked channels.
+    Channel marker or Sw sequence
 */
 /******************************************************************************/
 /*
@@ -143,73 +141,6 @@ static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, ADC_Channel_T 
     return markers ^ sourceMarkers; /* return processed markers */
 }
 
-// static void ADC_StartFrom(HAL_ADC_T * p_hal, ADC_State_T * p_state, ADC_Channel_T * p_channels, uint32_t markers)
-// {
-//     _ADC_SetStateFrom(p_state, p_channels, markers);
-//     _ADC_Activate(p_hal, p_state);
-// }
-
-static void _ADC_ActivateMarked(ADC_T * p_adc, ADC_State_T * p_state)
-{
-    _ADC_SetStateFrom(p_state, &p_adc->P_CHANNELS[0U], p_state->ChannelMarkers);
-    assert(p_state->ActiveChannelCount > 0U); /* Callers gate on ChannelMarkers, so the selection is never empty */
-    _ADC_Activate(p_adc->P_HAL_ADC, p_state);
-}
-
-/******************************************************************************/
-/*
-    Sequence
-    The leaf resolves the Hw sequencer against software activation.
-*/
-/******************************************************************************/
-// static inline ADC_Sequence_T * _ADC_OnCompleteSequenceCommon(ADC_State_T * p_state)
-// {
-//     ADC_Sequence_T * p_completed = p_state->p_ActiveSequence;
-//     ADC_Sequence_T * p_next = p_state->p_NextSequence;
-//     if (p_completed->COMPLETE != NULL) { p_completed->COMPLETE(p_completed->P_CONTEXT); }
-//     if (p_next != p_completed) { p_state->p_ActiveSequence = p_next; }
-//     return p_completed;
-// }
-
-/*
-    Software activation. No sequencer to write: the register write is the fifo push, which
-    _ADC_ActivateMarked does from the markers left here.
-
-    Markers before Active, so a completion landing between them still measures the set that is
-    converting. Publishing Active first leaves a window where the new set has no markers, and the
-    old set's capture reads as the new set's last channel.
-*/
-/*
-    Software activation. The capture held one of the set's channels, and none of them are left.
-    The remainder alone is a level: it stays true until the next request re-marks, and would repeat.
-*/
-static inline bool _ADC_IsSequenceComplete(const ADC_State_T * p_state, adc_mask_t captured)
-{
-    return ((p_state->p_ActiveSequence != NULL) &&
-            ((captured & p_state->p_ActiveSequence->CHANNELS) != 0UL) &&
-            ((p_state->ChannelMarkers & p_state->p_ActiveSequence->CHANNELS) == 0UL));
-}
-
-static inline ADC_Sequence_T * _ADC_OnCompleteSequenceFifo(ADC_State_T * p_state)
-{
-    ADC_Sequence_T * p_completed = p_state->p_ActiveSequence;
-    ADC_Sequence_T * p_next = p_state->p_NextSequence;    /* Snapshot, written by other threads */
-    if (p_completed->COMPLETE != NULL) { p_completed->COMPLETE(p_completed->P_CONTEXT); }
-    if (p_next != p_completed)
-    {
-        p_state->p_ActiveSequence = p_next;
-        p_state->ChannelMarkers |= p_next->CHANNELS;
-    }
-    return p_completed;
-}
-
-static inline void _ADC_SetSequence(ADC_State_T * p_state, ADC_Sequence_T * p_sequence)
-{
-    p_state->ChannelMarkers |= p_sequence->CHANNELS;
-    p_state->p_NextSequence = p_sequence;
-    p_state->p_ActiveSequence = p_sequence;
-}
-
 /******************************************************************************/
 /*
     Hw Sequence
@@ -224,18 +155,49 @@ static inline void _ADC_SetSequence(ADC_State_T * p_state, ADC_Sequence_T * p_se
 static inline void _ADC_ActivateSequenceDma(HAL_ADC_T * p_hal, ADC_State_T * p_state, ADC_Sequence_T * p_sequence)
 {
     assert(ADC_Mask_IsContiguous(p_sequence->CHANNELS)); /* The Hw converts a slot range. A sparse set has no Hw sequence */
-    p_state->p_NextSequence = p_sequence;
+    /* Active only. Writing Next here would overwrite a selection made since it was read. The immediate entry point sets Next itself */
     p_state->p_ActiveSequence = p_sequence;
     HAL_ADC_ActivateSequence(p_hal, ADC_Sequence_Start(p_sequence), ADC_Sequence_Count(p_sequence));
+    // HAL_ADC_ActivateSequence(p_hal, p_sequence->CHANNELS);
 }
 
-static inline ADC_Sequence_T * _ADC_OnCompleteSequenceDma(HAL_ADC_T * p_hal, ADC_State_T * p_state)
+/*
+    The set completed. Runs its handler, and reports a pending selection.
+    Returns the set to switch to, or NULL where the active set repeats.
+
+    The caller names the set: it has resolved Active already, and the software path tested that
+    set's channels to get here, so the handler cannot run against a different one.
+    The caller commits Active too, so it is assigned once: the Hw path through
+    _ADC_ActivateSequenceDma, which the immediate entry point needs anyway, and the software path
+    inline, having no sequencer to write.
+*/
+static inline ADC_Sequence_T * _ADC_CompleteSequence(ADC_State_T * p_state, ADC_Sequence_T * p_completed)
 {
-    ADC_Sequence_T * p_completed = p_state->p_ActiveSequence;
-    ADC_Sequence_T * p_next = p_state->p_NextSequence;    /* Snapshot, written by other threads */
+    ADC_Sequence_T * p_next = p_state->p_NextSequence;
     if (p_completed->COMPLETE != NULL) { p_completed->COMPLETE(p_completed->P_CONTEXT); }
-    if (p_next != p_completed) { _ADC_ActivateSequenceDma(p_hal, p_state, p_next); }
-    return p_completed;
+    return (p_next != p_completed) ? p_next : NULL;    /* Read before the handler: a request made there applies itself */
+}
+
+
+
+/******************************************************************************/
+/*
+    Sw Sequence
+*/
+/******************************************************************************/
+/*
+    Software activation. No sequencer to write: the register write is the fifo push, which
+    _ADC_ActivateMarked does from the markers left here.
+
+    Markers before Active, so a completion landing between them still measures the set that is
+    converting. Publishing Active first leaves a window where the new set has no markers, and the
+    old set's capture reads as the new set's last channel.
+*/
+static inline void _ADC_SetActiveSequence(ADC_State_T * p_state, ADC_Sequence_T * p_sequence)
+{
+    p_state->ChannelMarkers |= p_sequence->CHANNELS;
+    p_state->p_NextSequence = p_sequence;
+    p_state->p_ActiveSequence = p_sequence; /* ISR might overwrite with the same value. */
 }
 
 

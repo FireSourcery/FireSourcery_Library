@@ -134,4 +134,5 @@ static inline void HAL_ADC_Init(HAL_ADC_T * p_hal)
     //   |= ADC_SC3_ADLSMP_MASK; enableLongSampleTime
 }
 
+
 #endif

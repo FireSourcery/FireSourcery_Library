@@ -251,6 +251,15 @@ static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idN
 /* Virtual Id - resolve physical sensors via calibration table */
 static inline Hall_Id_T _Hall_IdOf(const Hall_State_T * p_hall, uint8_t physicalSensors) { return p_hall->Config.SensorsTable[physicalSensors]; }
 
+/* Capture path resolve mapped Id. Stores calibrated read */
+static inline void _Hall_CaptureSensors(Hall_State_T * p_state, Hall_Sensors_T sensors)
+{
+    // p_state->SensorsPrev.Value = p_state->Sensors.Value;
+    p_state->Sensors.Value = sensors.Value;
+    p_state->IdPrev = p_state->Id;
+    p_state->Id = _Hall_IdOf(p_state, sensors.Value);
+}
+
 /*
     Physical Sensors
 */
@@ -262,15 +271,6 @@ static inline Hall_Sensors_T Hall_ReadSensors(Hall_T * p_hall)
         .B = Pin_Input_ReadPhysical(&p_hall->PIN_B),
         .C = Pin_Input_ReadPhysical(&p_hall->PIN_C),
     };
-}
-
-/* Capture path resolve mapped Id */
-static inline void _Hall_CaptureSensors(Hall_State_T * p_state, Hall_Sensors_T sensors)
-{
-    // p_state->SensorsPrev.Value = p_state->Sensors.Value;
-    p_state->Sensors.Value = sensors.Value;
-    p_state->IdPrev = p_state->Id;
-    p_state->Id = _Hall_IdOf(p_state, sensors.Value);
 }
 
 static inline void Hall_CaptureSensors_ISR(Hall_T * p_hall)

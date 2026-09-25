@@ -42,11 +42,9 @@
 typedef const struct ADC_Conversion
 {
     const volatile adc_result_t * P_RESULT;
-    // volatile adc_mask_t * P_COMPLETION;
     /* for starting. */
     ADC_T * P_ADC;
     adc_channel_t CHANNEL;
-    // adc_mask_t CHANNEL_MASK;
 }
 ADC_Conversion_T;
 
@@ -107,3 +105,21 @@ static inline void ADC_ConversionMap_Resolve(ADC_Conversion_T ** p_conv, uint8_t
 //
 // }
 // ADC_MultiReq_T;
+/*
+    Compacting decode. The channels of [mask], in channel order, packed from p_dest[0].
+    For any other order, or across ADCs, see ADC_Map.h
+*/
+// static inline void _ADC_GetResultsOf(ADC_T * p_adc, adc_mask_t mask, adc_result_t * p_dest)
+// {
+//     uint8_t index = 0U;
+//     for (adc_mask_t markers = mask; markers != 0UL; markers &= (markers - 1UL))
+//     {
+//         p_dest[index++] = p_adc->P_CHANNEL_RESULTS[__builtin_ctz(markers)];
+//     }
+// }
+
+// static inline void ADC_GetResultsOf(ADC_T * p_adc, uint8_t sequenceId, adc_result_t * p_dest)
+// {
+//     _ADC_GetResultsOf(p_adc, ADC_SequenceOf(p_adc, sequenceId)->CHANNELS, p_dest);
+// }
+

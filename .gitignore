@@ -53,8 +53,9 @@ dkms.conf
 
 **/[Exclude]/
 **/Exclude/
+**/build/**
 *.log
-#**/External/CMSIS/
+
 
 .vscode/*
 !.vscode/c_cpp_properties.json

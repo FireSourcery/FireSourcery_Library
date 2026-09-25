@@ -43,6 +43,7 @@
         Operation macros derive sizeof(*typed_ptr) at the call site — compile-time literal, zero runtime cost, identical source to the "typed handle" form without its storage overhead.
     Cited: Linux kernel DECLARE_KFIFO; Stroustrup, The C++ Programming Language 4e §25.3.4.1; Stepanov, Elements of Programming §7.
 */
+// static inline void * _RingT_Buffer_At(size_t cast, RingT_T ring, size_t index) { return ring_buffer_at(cast, ring.P_STATE->Buffer, ring.SIZE_BYTES, index); }
 
 typedef const struct RingT
 {
@@ -221,7 +222,7 @@ static inline bool RingT_PushBackArray(Ring_Type_T type, Ring_State_T * p_ring, 
 {
     if (count > RingT_GetEmptyCount(type, p_ring)) { return false; }
     _RingT_PlaceBackWrap(type, p_ring, p_array, count);
-    _RingT_AddBack(type, p_ring, count);
+    _RingT_IncBack(type, p_ring, count);
     return true;
 }
 
@@ -230,7 +231,7 @@ static inline size_t RingT_PushBackMax(Ring_Type_T type, Ring_State_T * p_ring, 
     size_t emptyCount = RingT_GetEmptyCount(type, p_ring);
     size_t pushCount = (maxCount < emptyCount) ? maxCount : emptyCount;
     _RingT_PlaceBackWrap(type, p_ring, p_array, pushCount);
-    _RingT_AddBack(type, p_ring, pushCount);
+    _RingT_IncBack(type, p_ring, pushCount);
     return pushCount;
 }
 
@@ -260,7 +261,7 @@ static inline size_t RingT_PushBackArrayOverwrite(Ring_Type_T type, Ring_State_T
 
     _RingT_RemoveFront(type, p_ring, evict);
     _RingT_PlaceBackWrap(type, p_ring, void_array_at(type.TYPE_SIZE, p_array, skip), keep);
-    _RingT_AddBack(type, p_ring, keep);
+    _RingT_IncBack(type, p_ring, keep);
     return skip + evict;
 }
 

@@ -93,6 +93,10 @@ static inline void ring_buffer_assign_at(size_t stride, void * p_buffer, size_t 
 /******************************************************************************/
 
 /* Flyweight shape descriptor. LENGTH is in TYPE_SIZE counts (NOT bytes). Always declared const. */
+/*
+    Isolating stride alone, is sufficient for transparent memcpy. But length must be included for invariant access.
+    (size_t stride, size_t span, const Ring_State_T * p_state, size_t index)
+*/
 typedef const struct Ring_Type { size_t TYPE_SIZE; size_t LENGTH; } Ring_Type_T;
 
 /* 0 is excluded: it is not a power of 2 here, and (0 - 1U) would mask to SIZE_MAX */
@@ -126,6 +130,7 @@ typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Ring_State
     uint8_t Buffer[]; /* MISRA violation. Rationale: Compile-time allocated. */
 }
 Ring_State_T;
+
 
 
 /* Round up: plain division truncates, which would short the Buffer whenever BytesSize is not a multiple of the word size */
@@ -166,15 +171,15 @@ static inline void _RingT_PlaceHead(Ring_Type_T type, Ring_State_T * p_ring, con
 static inline void _RingT_PlaceTail(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit) { pointer_assign(type.TYPE_SIZE, _RingT_Tail(type, p_ring), p_unit); }
 
 /* Index operations */
-static inline void _RingT_AddFront(Ring_Type_T type, Ring_State_T * p_ring, size_t count)       { p_ring->Head = _RingT_IndexDecOf(type, p_ring->Head, count); }
+static inline void _RingT_DecFront(Ring_Type_T type, Ring_State_T * p_ring, size_t count)       { p_ring->Head = _RingT_IndexDecOf(type, p_ring->Head, count); }
 static inline void _RingT_RemoveFront(Ring_Type_T type, Ring_State_T * p_ring, size_t count)    { p_ring->Head = _RingT_IndexIncOf(type, p_ring->Head, count); }
-static inline void _RingT_AddBack(Ring_Type_T type, Ring_State_T * p_ring, size_t count)        { p_ring->Tail = _RingT_IndexIncOf(type, p_ring->Tail, count); }
+static inline void _RingT_IncBack(Ring_Type_T type, Ring_State_T * p_ring, size_t count)        { p_ring->Tail = _RingT_IndexIncOf(type, p_ring->Tail, count); }
 static inline void _RingT_RemoveBack(Ring_Type_T type, Ring_State_T * p_ring, size_t count)     { p_ring->Tail = _RingT_IndexDecOf(type, p_ring->Tail, count); }
 
 /* FIFO operations */
-static inline void _RingT_PushBack(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)    { _RingT_PlaceTail(type, p_ring, p_unit); _RingT_AddBack(type, p_ring, 1U); }
+static inline void _RingT_PushBack(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)    { _RingT_PlaceTail(type, p_ring, p_unit); _RingT_IncBack(type, p_ring, 1U); }
 static inline void _RingT_PopFront(Ring_Type_T type, Ring_State_T * p_ring, void * p_result)        { _RingT_PeekHead(type, p_ring, p_result); _RingT_RemoveFront(type, p_ring, 1U); }
-static inline void _RingT_PushFront(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)   { _RingT_AddFront(type, p_ring, 1U); _RingT_PlaceHead(type, p_ring, p_unit); }
+static inline void _RingT_PushFront(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)   { _RingT_DecFront(type, p_ring, 1U); _RingT_PlaceHead(type, p_ring, p_unit); }
 static inline void _RingT_PopBack(Ring_Type_T type, Ring_State_T * p_ring, void * p_result)         { _RingT_RemoveBack(type, p_ring, 1U); _RingT_PeekTail(type, p_ring, p_result); }
 
 // static inline void * _RingT_PopFront(Ring_Type_T type, Ring_State_T * p_ring) { void * p_front = _RingT_Head(type, p_ring); _RingT_RemoveFront(type, p_ring, 1U); return p_front; }
@@ -187,7 +192,7 @@ static inline void _RingT_PlaceAt(Ring_Type_T type, Ring_State_T * p_ring, size_
 
 /* Alias */
 static inline void * _RingT_Front(Ring_Type_T type, const Ring_State_T * p_ring) { return _RingT_Head(type, p_ring); }
-static inline void * _RingT_Back(Ring_Type_T type, const Ring_State_T * p_ring) { return ring_at(type.TYPE_SIZE, p_ring->Buffer, type.LENGTH, _RingT_IndexDecOf(type, p_ring->Tail, 1U)); }
+static inline void * _RingT_Back(Ring_Type_T type, const Ring_State_T * p_ring) { return ring_at(type.TYPE_SIZE, p_ring->Buffer, type.LENGTH, p_ring->Tail - 1U); }
 
 /* Value access */
 static inline int _RingT_GetValueAt(Ring_Type_T type, const Ring_State_T * p_ring, size_t index)        { return pointer_value_as(type.TYPE_SIZE, _RingT_At(type, p_ring, index)); }
