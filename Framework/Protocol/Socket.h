@@ -139,15 +139,23 @@ typedef const struct Socket
     const volatile uint32_t * P_TIMER;
 
     /* Selectable bindings. Arrays of pointers - neither need be contiguous. */
-    const Xcvr_T * const * P_XCVR_TABLE;
+    Xcvr_T * const * P_XCVR_TABLE;
     uint8_t XCVR_COUNT;
-    const Packet_Codec_T * const * P_FORMAT_TABLE;
+    Packet_Codec_T * const * P_FORMAT_TABLE;
     uint8_t FORMAT_COUNT;
 
     const Socket_Config_T * P_NVM_CONFIG;   /* Initial config. The clock is P_TIMER, above. */
 }
 Socket_T;
 
+// static inline Xcvr_T * _Socket_Xcvr(Socket_T * p_socket)
+// {
+// #ifdef SOCKET_XCVR_FIXED
+//     return (Xcvr_T *)p_socket;
+// #else
+//     return p_socket->P_SOCKET_STATE->p_Xcvr;
+// #endif
+// }
 
 /******************************************************************************/
 /*!

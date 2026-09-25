@@ -63,7 +63,7 @@ static inline NvMemory_Status_T ParseCmdErrorWrite(const void * p_hal)
     return status;
 }
 
-static const NvMemory_OpControl_T EEPROM_OP_WRITE =
+static NvMemory_OpControl_T EEPROM_OP_WRITE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdWrite,
     .FINALIZE_CMD        = NULL,

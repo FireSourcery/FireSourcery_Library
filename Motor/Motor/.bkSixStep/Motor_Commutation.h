@@ -31,18 +31,13 @@
 /******************************************************************************/
 #include "Motor.h"
 
-#if     defined(MOTOR_SIX_STEP_ENABLE)
-#elif   defined(MOTOR_SIX_STEP_DISABLE)
-#else
+#if     !defined(MOTOR_SIX_STEP_ENABLE) && !defined(MOTOR_SIX_STEP_DISABLE)
 #define MOTOR_SIX_STEP_DISABLE
 #endif
 
-#if     defined(MOTOR_FOC_ENABLE)
-#elif   defined(MOTOR_FOC_DISABLE)
-#else
+#if     !defined(MOTOR_FOC_ENABLE) && !defined(MOTOR_FOC_DISABLE)
 #define MOTOR_FOC_ENABLE
 #endif
-
 
 #include "Motor_FOC.h"
 #if defined(MOTOR_SIX_STEP_ENABLE)
@@ -83,7 +78,7 @@
 // }
 
 // // c23
-// // #define Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) ((typeof(focFunction) *)(_Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction)))
+// // #define Motor_CommutationModeFn(p_motor, fn ((typeof(focFunction) *)(_Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction)))
 
 // #define Motor_CommutationModeFn(p_motor, focSet, sixStepSet)
 //     _Generic((focSet),

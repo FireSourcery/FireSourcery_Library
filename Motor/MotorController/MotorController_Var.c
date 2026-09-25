@@ -316,7 +316,7 @@ static MotVarId_Status_T _HandleVMonitor_Set(MotorController_T * p_dev, MotVarId
         case MOT_VAR_TYPE_VBUS_OUT:                         return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_VBUS_CONFIG:
             VBus_DisableMonitor(p_dev->P_VBUS); /* ensure monitor is disabled while changing config to prevent bad states */
-            VBus_ConfigId_Set(&p_dev->P_VBUS->Config, varId.Base, value); break; /* VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V resets limits */
+            VBus_ConfigId_Set(&p_dev->P_VBUS->Config, varId.Base, value); /* VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V resets limits */
             VBus_EnableMonitor(p_dev->P_VBUS);
             break;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:            RangeMonitor_ConfigId_Set(VBus_Monitor(p_dev->P_VBUS), varId.Base, value); break;

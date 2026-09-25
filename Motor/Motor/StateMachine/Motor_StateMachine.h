@@ -29,7 +29,8 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "../Motor_Commutation.h"
+// #include "../Motor_Commutation.h"
+#include "../Motor_FOC.h"
 #include "../Motor.h"
 
 #include "Framework/StateMachine/StateMachine.h"
@@ -182,7 +183,7 @@ static inline bool Motor_IsFault(Motor_T * p_motor) { return Motor_IsState(p_mot
 
 /*
     let app layer handle permission. motor layer handles its own struct mapping.
-    motor layer saftey concerns electrical chacteristics. application layer handles memory access.
+    motor layer safety concerns electrical characteristics. application layer handles memory access.
     motor layer handles unique domain concerns.
 */
 static inline bool Motor_IsConfig(Motor_T * p_motor)

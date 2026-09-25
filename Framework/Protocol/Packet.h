@@ -105,7 +105,6 @@ Packet_Context_T;
 #define PACKET_CONTEXT_ALLOC(BufferLength)                                      \
     (&(union { Packet_Context_T Context; uint8_t Bytes[sizeof(Packet_Meta_T) + (BufferLength)]; }){0}.Context)
 
-
 /*!
     Frame/header variants
     Frame Encoding/Decoding
@@ -131,6 +130,10 @@ typedef const struct Packet_FrameFormat
 }
 Packet_FrameFormat_T;
 
+static inline void * Packet_HeaderOf(Packet_Context_T * p_context) { return (void *)p_context->Packet; }
+static inline void * Packet_PayloadOf(Packet_Context_T * p_context, Packet_FrameFormat_T * p_frameFormat) { return (void *)(p_context->Packet + p_frameFormat->HEADER_LENGTH); }
+
+
 /*
     Packet content type, for handling at the protocol layer
     Protocol_Sync decoupled from [Packet_Codec_T]
@@ -148,14 +151,14 @@ typedef enum Packet_ClassId
 }
 Packet_ClassId_T;
 
-/* callback maped to id entry */
+/* callback mapped to id entry */
 /*
     embed in Protocol_Req_T or couple with forward declaration
 */
 typedef const struct
 {
     packet_id_t ID;
-    Packet_FrameFormat_T * FRAME_FORMAT;    /* effectivelt payload type and offset */
+    Packet_FrameFormat_T * FRAME_FORMAT;    /* effectively payload type and offset */
     // Packet_ClassId_T CLASS_ID;              /* no comparision on class id look up this way */
 }
 Packet_Id_T;
@@ -204,6 +207,9 @@ typedef bool          (*Packet_ValidateRx_T)   (const void * p_buffer, packet_si
     the codec does not see the request table, which is what keeps one codec usable by more than one.
 */
 typedef void (*Packet_ParseRxFrame_T)(Packet_Meta_T * p_meta, const void * p_frame);
+/*
+    Parsed Id determines. Frame Offset.
+*/
 typedef void (*Packet_BuildTxFrame_T)(const Packet_Meta_T * p_meta, void * p_frame);
 
 

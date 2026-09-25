@@ -106,7 +106,7 @@ static Flash_Status_T ParseCmdErrorReadOnce(void * p_hal)
     Set Op - Common Blocking Non Blocking
 */
 /******************************************************************************/
-static const NvMemory_OpControl_T FLASH_OP_WRITE =
+static NvMemory_OpControl_T FLASH_OP_WRITE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdWritePage,
     .FINALIZE_CMD        = NULL,
@@ -123,7 +123,7 @@ static Flash_Status_T SetWrite(Flash_T * p_flash, uintptr_t flashAddress, const 
 /******************************************************************************/
 /*! */
 /******************************************************************************/
-static const NvMemory_OpControl_T FLASH_OP_ERASE =
+static NvMemory_OpControl_T FLASH_OP_ERASE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdEraseSector,
     .FINALIZE_CMD        = NULL,
@@ -140,7 +140,7 @@ static Flash_Status_T SetErase(Flash_T * p_flash, uintptr_t flashAddress, size_t
 /******************************************************************************/
 /*! */
 /******************************************************************************/
-static const NvMemory_OpControl_T FLASH_OP_VERIFY_WRITE =
+static NvMemory_OpControl_T FLASH_OP_VERIFY_WRITE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdVerifyWriteUnit,
     .FINALIZE_CMD        = NULL,
@@ -158,7 +158,7 @@ static Flash_Status_T SetVerifyWrite(Flash_T * p_flash, uintptr_t flashAddress, 
 /******************************************************************************/
 /*! */
 /******************************************************************************/
-static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
+static NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdVerifyEraseUnits,
     .FINALIZE_CMD        = NULL,
@@ -199,7 +199,7 @@ static Flash_Status_T SetVerifyErase(Flash_T * p_flash, uintptr_t flashAddress, 
 /*! */
 /* Aligned source only */
 /******************************************************************************/
-static const NvMemory_OpControl_T FLASH_OP_WRITE_ONCE =
+static NvMemory_OpControl_T FLASH_OP_WRITE_ONCE =
 {
     .START_CMD          = (HAL_NvMemory_StartCmd_T)StartCmdWriteOnce,
     .FINALIZE_CMD       = NULL,
@@ -217,7 +217,7 @@ static Flash_Status_T SetWriteOnce(Flash_T * p_flash, uintptr_t flashAddress, co
 /*! */
 /* Aligned source only */
 /******************************************************************************/
-static const NvMemory_OpControl_T FLASH_OP_READ_ONCE =
+static NvMemory_OpControl_T FLASH_OP_READ_ONCE =
 {
     .START_CMD          = (HAL_NvMemory_StartCmd_T)StartCmdReadOnce,
     .FINALIZE_CMD       = (HAL_NvMemory_FinalizeCmd_T)FinalizeCmdReadOnce,
@@ -240,7 +240,7 @@ static Flash_Status_T SetReadOnce(Flash_T * p_flash, uintptr_t flashAddress, siz
 /******************************************************************************/
 /*! */
 /******************************************************************************/
-static const NvMemory_OpControl_T FLASH_OP_ERASE_ALL =
+static NvMemory_OpControl_T FLASH_OP_ERASE_ALL =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdEraseAll,
     .FINALIZE_CMD        = NULL,

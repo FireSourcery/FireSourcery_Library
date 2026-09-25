@@ -38,23 +38,14 @@
 #ifndef THREAD_H
 #define THREAD_H
 
-#include "Config.h"
-
 #include "Framework/Timer/Timer.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct
+typedef const struct
 {
     Timer_T Timer;
-
-    volatile bool IsEnabled;        // Enable or disable
-
-    bool IsOneShot;
-    uint32_t OneShotProcs;
-    volatile uint32_t OneShotProcsRemaining;
-
     void (*Function)(void * p_context);
     void (*OnComplete)(void * p_context);
     void * p_Context;

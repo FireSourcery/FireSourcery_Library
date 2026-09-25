@@ -26,7 +26,7 @@
 /*!
     @file   Xcvr.h
     @author FireSourcery
-    @brief
+    @brief  Message transport interface.
 */
 /******************************************************************************/
 #include <stdint.h>
@@ -34,33 +34,40 @@
 #include <stddef.h>
 
 /*
-    Serial Interface
+    A whole message moves in one call, so the interface carries no byte level surface.
+    Of (target, direction, buffer, length, flags), only buffer and length are arguments:
+    direction is which function is called, and target and flags are set beforehand
+    because only some transports have them.
 */
-typedef bool    (*Xcvr_TxByte_T)    (void * p_xcvr, uint8_t txChar);
-typedef bool    (*Xcvr_RxByte_T)    (void * p_xcvr, uint8_t * p_rxChar);
-typedef bool    (*Xcvr_TxN_T)       (void * p_xcvr, const uint8_t * p_src, size_t length);
-typedef bool    (*Xcvr_RxN_T)       (void * p_xcvr, uint8_t * p_dest, size_t length);
-typedef size_t  (*Xcvr_TxMax_T)     (void * p_xcvr, const uint8_t * p_srcBuffer, size_t bufferSize);
-typedef size_t  (*Xcvr_RxMax_T)     (void * p_xcvr, uint8_t * p_destBuffer, size_t bufferSize);
-typedef size_t  (*Xcvr_GetCount_T)  (void * p_xcvr);
-typedef bool    (*Xcvr_SetConfig_T) (void * p_xcvr, uint32_t value);
+/*
+    This message is part of a larger transaction: hold the bus open at its end.
+    I2C suppresses STOP so a repeated START can follow, SPI keeps CS asserted.
+*/
+typedef enum Xcvr_Flags
+{
+    XCVR_FLAG_NONE          = 0U,
+    XCVR_FLAG_XFER_PENDING  = 1U << 0U,
+}
+Xcvr_Flags_T;
+
+/*
+    Move one message. false when the message did not complete.
+*/
+typedef bool (*Xcvr_TxN_T)(void * p_xcvr, const uint8_t * p_src, size_t length);
+typedef bool (*Xcvr_RxN_T)(void * p_xcvr, uint8_t * p_dest, size_t length);
+
+/*
+    Set one property of the next message. Absent on transports without it.
+*/
+typedef bool (*Xcvr_SetValue_T)(void * p_xcvr, uint32_t value);
 
 typedef const struct Xcvr_VTable
 {
-    Xcvr_TxByte_T       TX_BYTE;
-    Xcvr_RxByte_T       RX_BYTE;
-    Xcvr_TxMax_T        TX_MAX; /* TxBytes */
-    Xcvr_RxMax_T        RX_MAX; /* RxBytes */
-    Xcvr_TxN_T          TX_N; /* TxFrame */
-    Xcvr_RxN_T          RX_N; /* RxFrame */
-    Xcvr_GetCount_T     GET_TX_EMPTY_COUNT;
-    Xcvr_GetCount_T     GET_RX_FULL_COUNT;
-    Xcvr_SetConfig_T    INIT_BAUD_RATE;
-    // Xcvr_SetConfig_T    COMPARE_BAUD_RATE;
-
-    /* alternatively merge with serial */
-    // RingT_T RX_RING;
-    // RingT_T TX_RING;
+    Xcvr_TxN_T      TX_N;
+    Xcvr_RxN_T      RX_N;
+    Xcvr_SetValue_T SET_TARGET;         /* Optional. I2C slave address, SPI chip select id */
+    Xcvr_SetValue_T SET_FLAGS;          /* Optional. [Xcvr_Flags_T] */
+    Xcvr_SetValue_T CONFIG_BAUD_RATE;   /* Optional. */
 }
 Xcvr_VTable_T;
 
@@ -69,8 +76,8 @@ Xcvr_VTable_T;
 */
 typedef const struct Xcvr
 {
-    void * P_BASE; /* Xcvr data struct */
-    const Xcvr_VTable_T * P_VTABLE;
+    void * P_BASE;
+    Xcvr_VTable_T * P_VTABLE;
 }
 Xcvr_T;
 
@@ -79,43 +86,12 @@ Xcvr_T;
 /*
     Inline wrap
 */
-static inline bool Xcvr_TxByte(const Xcvr_T * p_xcvr, uint8_t txChar) { return p_xcvr->P_VTABLE->TX_BYTE(p_xcvr->P_BASE, txChar); }
-static inline bool Xcvr_RxByte(const Xcvr_T * p_xcvr, uint8_t * p_rxChar) { return p_xcvr->P_VTABLE->RX_BYTE(p_xcvr->P_BASE, p_rxChar); }
-static inline bool Xcvr_TxN(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length) { return p_xcvr->P_VTABLE->TX_N(p_xcvr->P_BASE, p_src, length); }
-static inline bool Xcvr_RxN(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length) { return p_xcvr->P_VTABLE->RX_N(p_xcvr->P_BASE, p_dest, length); }
-static inline size_t Xcvr_TxMax(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize) { return p_xcvr->P_VTABLE->TX_MAX(p_xcvr->P_BASE, p_srcBuffer, srcSize); }
-static inline size_t Xcvr_RxMax(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize) { return p_xcvr->P_VTABLE->RX_MAX(p_xcvr->P_BASE, p_destBuffer, destSize); }
-static inline size_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr) { return p_xcvr->P_VTABLE->GET_RX_FULL_COUNT(p_xcvr->P_BASE); }
-static inline size_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr) { return p_xcvr->P_VTABLE->GET_TX_EMPTY_COUNT(p_xcvr->P_BASE); }
-static inline bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)         { return Xcvr_TxN(p_xcvr, p_src, length); }
-static inline size_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)    { return Xcvr_RxMax(p_xcvr, p_destBuffer, destSize); }
+static inline bool Xcvr_TxN(Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length) { return p_xcvr->P_VTABLE->TX_N(p_xcvr->P_BASE, p_src, length); }
+static inline bool Xcvr_RxN(Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length) { return p_xcvr->P_VTABLE->RX_N(p_xcvr->P_BASE, p_dest, length); }
 
-static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
-{
-    bool isSuccess = true;
-    if (p_xcvr->P_VTABLE->INIT_BAUD_RATE != NULL) { isSuccess = p_xcvr->P_VTABLE->INIT_BAUD_RATE(p_xcvr->P_BASE, baudRate); }
-    return isSuccess;
-}
+/* An absent property is nothing to set, not a failure */
+static inline bool _Xcvr_SetValue(Xcvr_T * p_xcvr, Xcvr_SetValue_T set, uint32_t value) { return (set != NULL) ? set(p_xcvr->P_BASE, value) : true; }
 
-// void Xcvr_InitFrom(const Xcvr_T ** pp_xcvr, Xcvr_Table_T * p_table, uint8_t xcvrIndex);
-// bool Xcvr_AssignFrom(const Xcvr_T ** pp_xcvr, Xcvr_Table_T * p_table, uint8_t xcvrIndex);
-// bool Xcvr_IsSet(const Xcvr_T * p_xcvr, Xcvr_Table_T * p_table, uint8_t xcvrIndex);
-// bool Xcvr_IsValid(const Xcvr_Table_T * p_table, void * p_target);
-
-// typedef const struct Xcvr_Table
-// {
-//     const Xcvr_T * const P_XCVRS;
-//     const uint8_t LENGTH;
-// }
-// Xcvr_Table_T;
-
-// #define XCVR_TABLE_INIT(p_XcvrTable, Count) { .P_XCVRS = p_XcvrTable, .LENGTH = Count, }
-// #define XCVR_INIT_FIXED(p_XcvrTable) { .P_XCVRS = p_XcvrTable, .LENGTH = 1U, }
-
-//static inline void Xcvr_EnableTx(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_DisableTx(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_EnableRxIsr(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_DisableRxIsr(const Xcvr_T * p_xcvr){}
-// size_t Xcvr_FlushRxBuffer(const Xcvr_T * p_xcvr)
-
-
+static inline bool Xcvr_SetTarget(Xcvr_T * p_xcvr, uint32_t target)           { return _Xcvr_SetValue(p_xcvr, p_xcvr->P_VTABLE->SET_TARGET, target); }
+static inline bool Xcvr_SetFlags(Xcvr_T * p_xcvr, Xcvr_Flags_T flags)         { return _Xcvr_SetValue(p_xcvr, p_xcvr->P_VTABLE->SET_FLAGS, (uint32_t)flags); }
+static inline bool Xcvr_ConfigBaudRate(Xcvr_T * p_xcvr, uint32_t baudRate)    { return _Xcvr_SetValue(p_xcvr, p_xcvr->P_VTABLE->CONFIG_BAUD_RATE, baudRate); }

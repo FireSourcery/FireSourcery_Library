@@ -150,6 +150,3 @@ extern void Serial_FlushBuffers(Serial_T * p_serial);
 // extern char Serial_GetChar(Serial_T * p_serial);
 // extern bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 
-// extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
-// extern size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
-

@@ -1,0 +1,7 @@
+```mermaid
+graph LR
+    E["NvMemory engine<br/>owns ALL state<br/>(OpAddress, OpSize, buffer)"]
+    V["vtable seam<br/>OpControl_T / HalBase_T"]
+    H["HAL_Flash_*<br/>register pokes only"]
+    E --> V --> H
+```

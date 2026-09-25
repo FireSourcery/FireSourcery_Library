@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2025 FireSourcery
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,22 +22,26 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Serial_Xcvr.c
+    @file
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief
+
 */
 /******************************************************************************/
-/******************************************************************************/
-#include "Serial_Xcvr.h"
+#ifndef MOTOR_CONTROLLER_SHELL_H
+#define MOTOR_CONTROLLER_SHELL_H
 
-/* No target, no transaction to hold open: SET_TARGET and SET_FLAGS stay absent */
-const Xcvr_VTable_T SERIAL_XCVR_VTABLE =
-{
-    .TX_N               = (Xcvr_TxN_T)Serial_SendN,
-    .RX_N               = (Xcvr_RxN_T)Serial_RecvN,
-    .CONFIG_BAUD_RATE   = (Xcvr_SetValue_T)Serial_ConfigBaudRate,
-};
+#ifdef MOTOR_CONTROLLER_SHELL_ENABLE
 
+#include "Framework/Shell/Shell.h"
 
+#define MC_SHELL_CMD_COUNT 30U
 
+extern const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT];
 
+#define MOTOR_CONTROLLER_SHELL_INIT(p_MotorController, p_Timer, TimerFreq, p_Config, p_XcvrTable, TableLength)  \
+    SHELL_INIT(MC_CMD_TABLE, MC_SHELL_CMD_COUNT, p_MotorController, p_Timer, TimerFreq, p_Config, p_XcvrTable, TableLength)
+
+#endif
+
+#endif /* MOTOR_SHELL_H */

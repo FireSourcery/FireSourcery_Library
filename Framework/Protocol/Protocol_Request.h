@@ -68,12 +68,12 @@ typedef enum Protocol_ReqCode
 }
 Protocol_ReqCode_T;
 
-/*  Optionally
+/*
+    Optionally
     Step is the handler's resume point - a program counter it advances itself. That makes a
     multi-step handler a coroutine in the Protothreads sense (Dunkels): one function, switch
     on Step, return between yields, sub-state carried in P_SUB_STATE rather than the C stack.
     The engine does not interpret Step; only the handler assigns meaning to it.
-
 */
 /* sub type inherit. */
 typedef struct Protocol_Substate
@@ -94,6 +94,7 @@ Protocol_Substate_T;
 */
 typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Packet_Xfer
 {
+//     union { const Packet_Meta_T * const p_RxMeta; const Packet_Context_T * const p_RxContext; };
     const Packet_Meta_T * const p_RxMeta;     /* Header of the frame that caused this call - may be a control frame */
     Packet_Meta_T * const p_TxMeta;           /* Handler sets Id and Length; the format builds the header */
     void * const p_Substate;                  /* Handler's own storage, sized by the child protocol */

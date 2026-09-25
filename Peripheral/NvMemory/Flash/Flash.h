@@ -68,6 +68,13 @@ typedef NvMemory_Status_T Flash_Status_T;
 typedef NvMemory_Partition_T Flash_Partition_T;
 typedef NvMemory_T Flash_T; /* Flash struct must reside in RAM NV_MEMORY_ATTRIBUTE_RAM_SECTION */
 
+// static NvMemory_HalBase_T FLASH_HAL_BASE =
+// {
+//     .READ_COMPLETE_FLAG    = HAL_Flash_ReadCompleteFlag,
+//     .READ_ERROR_FLAGS      = HAL_Flash_ReadErrorFlags,
+//     .CLEAR_ERROR_FLAGS     = HAL_Flash_ClearErrorFlags,
+// };
+
 #define FLASH_INIT(p_Hal, p_State, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
     NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_State, p_Partitions, PartitionCount, p_Buffer, BufferSize)
 

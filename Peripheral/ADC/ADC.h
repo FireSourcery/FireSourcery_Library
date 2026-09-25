@@ -89,8 +89,7 @@ static inline uint8_t ADC_ChannelCountOf(adc_mask_t sequence) { return (uint8_t)
 
 typedef void (*ADC_Callback_T)(void * p_context);
 typedef void (*ADC_Capture_T)(void * p_context, adc_result_t value);
-// typedef void (*ADC_CaptureSeq_T)(void * p_context, const volatile adc_result_t * p_values); /* The sequence's values, in channel order */
-// typedef const volatile adc_result_t * ADC_DemuxEntry_T;
+
 
 /******************************************************************************/
 /*`
@@ -107,7 +106,6 @@ typedef const struct ADC_Channel
     adc_pin_t PIN;              /* Physical Id of the Pin */
     ADC_Capture_T CAPTURE;      /* Optional. Software activation only, per conversion. The result is stored either way */
     void * P_CONTEXT;
-    // ADC_DemuxEntry_T DEMUX;
     // uint32_t RESULT_SCALING;    /* Consumer concern, known at the Board layer */
 }
 ADC_Channel_T;
@@ -137,7 +135,6 @@ typedef const struct ADC_Sequence
     // adc_channel_t COUNT;
     ADC_Callback_T COMPLETE;   /* Runs in the completion ISR of its ADC. NULL for scan only */
     void * P_CONTEXT;           /* Opaque. A batch join record, or any handler the Board registers */
-    // ADC_DemuxEntry_T * DEMUX_MAP; /* [Source] -> [Destination] */
 }
 ADC_Sequence_T;
 
@@ -194,6 +191,8 @@ typedef struct ADC_State
 ADC_State_T;
 
 #define ADC_STATE_ALLOC() (&(ADC_State_T){})
+
+// typedef void (*ADC_BoardCallback_T)(const volatile adc_result_t * p_values, adc_mask_t completed);
 
 /******************************************************************************/
 /*

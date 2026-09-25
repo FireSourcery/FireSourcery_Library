@@ -66,7 +66,7 @@
 #if defined(MOTOR_CONTROLLER_SHELL_ENABLE)
 #include "Framework/Shell/Shell.h"
 #endif
-#include "Framework/BootRef/BootRef.h"
+#include "System/BootRef/BootRef.h"
 #include "Type/Word/Version.h"
 
 #include "Math/Linear/Linear.h"

@@ -83,7 +83,7 @@ static inline int pointer_value_as(size_t type, const void * p_unit)
     }
 }
 
-/* value version signiture clamp with type */
+/* value version signature clamp with type */
 /* preserves endianess */
 static inline void pointer_assign_value_as(size_t type, void * p_unit, int value)
 {
@@ -106,9 +106,8 @@ static inline void pointer_assign_value_as(size_t type, void * p_unit, int value
 
 */
 /******************************************************************************/
-typedef  union
+typedef union
 {
-    // uint8_t * asU8;
     uint8_t * u8;
     uint16_t * u16;
     uint32_t * u32;
@@ -116,7 +115,7 @@ typedef  union
 }
 pointer_cast_t;
 
-static inline pointer_cast_t pointer_cast(const void * p_unit) { return (pointer_cast_t) { .u8 = (uint8_t *)p_unit }; }
+static inline pointer_cast_t pointer_cast(void * p_unit) { return (pointer_cast_t) { .u8 = (uint8_t *)p_unit }; }
 
 #define pointer_value(T, p_unit) _Generic(((T)0), \
     uint8_t: *pointer_cast(p_unit).u8, \

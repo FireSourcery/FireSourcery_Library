@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,12 +22,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Xcvr.c
+    @file   HAL_SPI.h
     @author FireSourcery
-
-    @brief
+    @brief  Dependency inversion. Selects the platform HAL_SPI.
 */
 /******************************************************************************/
-#include "Xcvr.h"
+#ifndef HAL_SPI_H
+#define HAL_SPI_H
 
+#include <stddef.h>
 
+#include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_SPI.h)
+
+#endif

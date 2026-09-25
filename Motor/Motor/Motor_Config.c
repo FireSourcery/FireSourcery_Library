@@ -172,8 +172,8 @@ void Motor_Config_SetIcZero_Adcu(Motor_Config_T * p_config, uint16_t adcu) { p_c
 */
 /******************************************************************************/
 /* inline set */
-static inline Motor_CommutationMode_T Motor_Config_GetCommutationMode(const Motor_Config_T * p_config) { return p_config->CommutationMode; }
-static inline void Motor_Config_SetCommutationMode(Motor_Config_T * p_config, Motor_CommutationMode_T mode) { p_config->CommutationMode = mode; }
+// static inline Motor_CommutationMode_T Motor_Config_GetCommutationMode(const Motor_Config_T * p_config) { return p_config->CommutationMode; }
+// static inline void Motor_Config_SetCommutationMode(Motor_Config_T * p_config, Motor_CommutationMode_T mode) { p_config->CommutationMode = mode; }
 
 /* The user direction that is the positive direction */
 static inline Motor_Direction_T Motor_Config_GetDirectionCalibration(const Motor_Config_T * p_config) { return p_config->DirectionForward; }
@@ -329,7 +329,7 @@ int _Motor_Var_ConfigCalibration_Get(const Motor_Config_T * p_motor, Motor_Var_C
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_COMMUTATION_MODE:        value = Motor_Config_GetCommutationMode(p_motor);           break;
+        case MOTOR_VAR_COMMUTATION_MODE:            break;
         case MOTOR_VAR_SENSOR_MODE:             value = Motor_Config_GetSensorMode(p_motor);                break;
         case MOTOR_VAR_DIRECTION_CALIBRATION:   value = Motor_Config_GetDirectionCalibration(p_motor);      break;
         case MOTOR_VAR_POLE_PAIRS:              value = Motor_Config_GetPolePairs(p_motor);                 break;
@@ -348,7 +348,7 @@ void _Motor_Var_ConfigCalibration_Set(Motor_Config_T * p_motor, Motor_Var_Config
 {
     switch (varId)
     {
-        case MOTOR_VAR_COMMUTATION_MODE:              Motor_Config_SetCommutationMode(p_motor, varValue);           break;
+        case MOTOR_VAR_COMMUTATION_MODE:                break;
         case MOTOR_VAR_SENSOR_MODE:                   Motor_Config_SetSensorMode(p_motor, varValue);                break;
         case MOTOR_VAR_DIRECTION_CALIBRATION:         Motor_Config_SetDirectionCalibration(p_motor, varValue);      break;
         case MOTOR_VAR_POLE_PAIRS:                    Motor_Config_SetPolePairs(p_motor, varValue);                 break;

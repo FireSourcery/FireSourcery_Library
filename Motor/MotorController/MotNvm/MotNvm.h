@@ -33,7 +33,7 @@
 #include "Motor/Motor/Phase_Input/Phase_Calibration.h"
 #include "Motor/Motor/Motor_Electrical.h"
 
-#include "Framework/BootRef/BootRef.h"
+#include "System/BootRef/BootRef.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 
@@ -45,23 +45,16 @@
 /******************************************************************************/
 
 // #if     defined(MOT_NVM_USER_EEPROM)
-#if     defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
-#elif   defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
-#else
+#if !defined(MOTOR_CONTROLLER_USER_NVM_EEPROM) && !defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
 #define MOTOR_CONTROLLER_USER_NVM_FLASH
 #endif
 
-#if     defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
-#elif   defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
-#else
+#if !defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)&& !defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
 #define MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE
 #endif
 
-
 /* For Protocol Flash Only */
-#if     defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-#elif   defined(MOTOR_CONTROLLER_FLASH_LOADER_DISABLE)
-#else
+#if !defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE) && !defined(MOTOR_CONTROLLER_FLASH_LOADER_DISABLE)
 #define MOTOR_CONTROLLER_FLASH_LOADER_DISABLE
 #endif
 

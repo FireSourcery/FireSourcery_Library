@@ -217,14 +217,30 @@ static_assert(offsetof(Protocol_ReqContext_T, Xfer.p_Substate) == offsetof(Proto
     //         void * p_SUB_STATE;   /* Handler sub-state. Sized for the largest handler */
     //     };
     //     Packet_Xfer_T PACKET_XFER;
-    // P_TIMER
 
-    // P_PACKET_LENGTH
+    // P_TIMER
+    // PACKET_LENGTH
     // Packet_Codec_T *  P_PACKET_;
     // const Protocol_Req_T * P_REQ_TABLE;
     // uint8_t REQ_TABLE_LENGTH;
 // }
 // Protocol_Binding_T;
+
+/* The request service. Id -> handler, plus the storage handlers run against. */
+/* Narrow to extern length at define site */
+// typedef const struct { Protocol_Req_T * P_REQS; uint8_t LENGTH; } Protocol_ReqTable_T;
+
+
+// typedef const struct
+// {
+    // Packet_Codec_T * P_PACKET_INTERFACE;
+    // Protocol_ReqTable_T REQ_TABLE;
+    // void * P_APP_CONTEXT;                      /* Passed to every handler */
+    // Packet_ReqIdResolver_T REQ_ID_RESOLVER; /* Function to resolve request IDs */
+    // P_TIMER
+    // const uint32_t REQ_TIMEOUT;              /* Exchange deadline. The frame deadline is the codec's RX_TIMEOUT. */
+// }
+// Protocol_Service_T;
 
 /*
     REQ_CONTEXT.p_RxBuffer and .p_TxBuffer must be distinct - the handler's two payload

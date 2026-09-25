@@ -30,24 +30,13 @@
 /******************************************************************************/
 #include "Serial.h"
 
-
-#ifndef SERIAL_ENTER_CRITICAL
-#define SERIAL_ENTER_CRITICAL(p_serial) _Critical_DisableIrq()
+#if !defined(SERIAL_ENTER_CRITICAL) && !defined(SERIAL_EXIT_CRITICAL)
+#define _ENTER_CRITICAL(local,...) local
+#define _EXIT_CRITICAL(local,...) local
+#else
+    #define _ENTER_CRITICAL(local,...)   __VA_ARGS__
+    #define _EXIT_CRITICAL(local,...)    __VA_ARGS__
 #endif
-#ifndef SERIAL_EXIT_CRITICAL
-#define SERIAL_EXIT_CRITICAL(p_serial) _Critical_EnableIrq()
-#endif
-
-// #if     defined(SERIAL_SINGLE_THREADED)
-//     #define _ENTER_CRITICAL(local,...)   local
-//     #define _EXIT_CRITICAL(local,...)    local
-// #elif  defined(SERIAL_MULTITHREADED_USE_CRITICAL)
-//     #define _ENTER_CRITICAL(local,...)   __VA_ARGS__
-//     #define _EXIT_CRITICAL(local,...)    __VA_ARGS__
-// #else
-    #define _ENTER_CRITICAL(local,...) local
-    #define _EXIT_CRITICAL(local,...) local
-// #endif
 
 /*
     Single threaded buffer read/write only need disable channel ISR
@@ -221,16 +210,6 @@ bool Serial_RecvN(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
 
     return status;
 }
-
-// bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
-// {
-//     return Serial_SendN(p_serial, p_srcBuffer, length);
-// }
-
-// size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
-// {
-//     return Serial_RecvMax(p_serial, p_destBuffer, length);
-// }
 
 void Serial_FlushBuffers(Serial_T * p_serial)
 {

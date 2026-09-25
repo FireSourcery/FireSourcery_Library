@@ -251,7 +251,7 @@ NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_dev, const void * p_data, si
 }
 
 
-NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size)
+NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_dev, NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size)
 {
     assert(p_opControl != NULL); // p_opControl must not be NULL
 
@@ -264,7 +264,7 @@ NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_dev, const NvMemory_OpCon
 }
 
 /* With Data Out */
-NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, void * p_data)
+NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_dev, NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, void * p_data)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpControl(p_dev, p_opControl, address, size); }
@@ -273,7 +273,7 @@ NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_dev, const NvMemory_
 }
 
 /* With Data In */
-NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const void * p_data, size_t size)
+NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_dev, NvMemory_OpControl_T * p_opControl, uintptr_t address, const void * p_data, size_t size)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpControl(p_dev, p_opControl, address, size); }

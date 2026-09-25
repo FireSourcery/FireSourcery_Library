@@ -121,13 +121,13 @@ typedef const struct NvMemory_OpControl
 NvMemory_OpControl_T;
 
 // BaseVTable
-// typedef const struct NvMemory_OpBase
-// {
-//     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
-//     const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case */
-//     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
-// }
-// NvMemory_OpBase_T;
+typedef const struct NvMemory_HalBase
+{
+    HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
+    HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case */
+    HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
+}
+NvMemory_HalBase_T;
 
 /******************************************************************************/
 /*
@@ -163,7 +163,7 @@ typedef struct NvMemory_State
 {
     /* User Input Per Operation. Persist through HAL Cmds */
     /* Direct */
-    const NvMemory_OpControl_T * p_OpControl;
+    NvMemory_OpControl_T * p_OpControl;
     uintptr_t OpAddress;        /* The NV Memory address. The destination address in most cases */
     size_t OpSize;              /* Outer loop size. Retain for ContinueWrite. Total bytes at start, aligned */
     const void * p_OpData;      /* Op data source or read buffer. internal buffer, caller provided address, written only in read case */
@@ -194,6 +194,7 @@ typedef const struct NvMemory
 {
     /* Per sub-type VTable, abstract functions provided by concrete child class */
     void * P_HAL;
+    // NvMemory_HalBase_T HAL_BASE; /* Simplifies init macro */
     HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM for Flash case */
     HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM for Flash case */
     HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
@@ -295,9 +296,9 @@ extern NvMemory_Status_T NvMemory_MemCompare(const void * p_dest, const void * p
 extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_dev, uintptr_t address, size_t size);
 extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_dev, size_t size);
 extern NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_dev, const void * p_data, size_t size);
-extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size);
-extern NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, void * p_data);
-extern NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const void * p_data, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_dev, NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_dev, NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, void * p_data);
+extern NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_dev, NvMemory_OpControl_T * p_opControl, uintptr_t address, const void * p_data, size_t size);
 
 /*
     Non Blocking

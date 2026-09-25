@@ -181,24 +181,3 @@ void Socket_ConfigId_Set(Socket_T * p_socket, Socket_ConfigId_T id, int value)
     if (p_socket != NULL) { _Socket_ConfigId_Set(p_socket->P_SOCKET_STATE, id, value); }
 }
 
-
-//todo
-//static void ProcDatagram(Socket_T * p_socket)
-//{
-//    //* save room for 1 req packet
-//    if (Port_GetTxEmpty() > Datagram_GetPacketSize(&p_state->Datagram) +  p_socket->PACKET_BUFFER_LENGTH)
-//    {
-//        if (Datagram_Server_Proc(&p_state->Datagram))
-//        {
-//            PortTxString(p_state, p_state->Datagram.P_TX_BUFFER, p_state->Datagram.TxDataSizeActive + p_state->Datagram.HeaderSize);
-//        }
-//    }
-//        //    if (Port_GetTxEmpty() > Datagram_GetPacketSize(&p_state->Datagram) +  p_socket->PACKET_BUFFER_LENGTH)
-//        //    {
-//                if (Datagram_Server_Proc(&p_state->Datagram))
-//                {
-//                    PortTxString(p_state, p_state->Datagram.P_TX_BUFFER, p_state->Datagram.TxDataSizeActive + p_state->Datagram.HeaderSize);
-//                }
-//        //    }
-//}
-
