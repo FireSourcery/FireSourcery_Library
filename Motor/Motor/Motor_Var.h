@@ -39,7 +39,7 @@
 /******************************************************************************/
 /*
     [Var_UserOut] Motor_User.h Implementation
-    RealTime Read-Only
+    Polling Read-Only
     Speed/IPhase/VPhase/Power -> UFract16, may over saturate
 */
 typedef enum Motor_Var_UserOut
@@ -63,16 +63,10 @@ typedef enum Motor_Var_UserOut
 }
 Motor_Var_UserOut_T;
 
-// typedef enum Motor_Var_SubstateId
-// {
-// MOTOR_VAR_OPEN_LOOP_SUBSTATE,
-// MOTOR_VAR_CALIBRATION_SUBSTATE,
-// }
-// Motor_Var_SubstateId_T;
 
 /*
     [Var_UserControl] Motor_User.h Implementation
-    RealTime IO Access
+    Polling IO Access
     in/out may differ
     May be paired getter/setter or a single variable
     Read effective value, write interface value
@@ -95,7 +89,7 @@ Motor_Var_UserControl_T;
 
 /*
     [UserSetpoint]
-    polling, write only
+    Polling, write only
     Value [-32768:32767]
     with User Direction
 */
@@ -109,9 +103,6 @@ typedef enum Motor_Var_UserSetpoint
     MOTOR_VAR_USER_SETPOINT_ANGLE,
 }
 Motor_Var_UserSetpoint_T;
-
-
-
 
 /*!
     [Var_StateCmd]
@@ -130,7 +121,6 @@ typedef enum Motor_Var_StateCmd
     // MOTOR_VAR_CMD_ENTER_OPEN_LOOP,
 }
 Motor_Var_StateCmd_T;
-
 
 /*
     possibly merge with per module StateId
@@ -164,7 +154,6 @@ typedef enum Motor_Var_CalibrationCmd
 Motor_Var_CalibrationCmd_T;
 
 
-
 /******************************************************************************/
 /*
     Read-Only Ref
@@ -192,7 +181,9 @@ Motor_Var_Board_T;
 
 
 /******************************************************************************/
-/* Debug */
+/*
+    Debug/Diagnostic
+*/
 /******************************************************************************/
 typedef enum Motor_Var_ConfigDebug
 {
@@ -235,74 +226,6 @@ void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, in
 extern int Motor_Var_Board_Get(Motor_Var_Board_T varId);
 
 
-/******************************************************************************/
-/*
-    [Motor_VarType]
-    Identifies the struct, object, or interface segment.
-    VarType directly corresponds to base enum type literal
-    partition by Prefix. Each sub-enum indexes within its Prefix group.
-*/
-/******************************************************************************/
-typedef enum Motor_VarType_Base
-{
-    MOTOR_VAR_TYPE_USER_OUT,
-    MOTOR_VAR_TYPE_USER_CONTROL, /* Polling IO. Setpoint/StateMachine. */
-    MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
-    MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
-    MOTOR_VAR_TYPE_OPEN_LOOP_CMD,
-    MOTOR_VAR_TYPE_CALIBRATION_CMD,
-    MOTOR_VAR_TYPE_CMD_RESV,
-    MOTOR_VAR_TYPE_CONFIG_CALIBRATION,
-    MOTOR_VAR_TYPE_CONFIG_ACTUATION,
-    MOTOR_VAR_TYPE_CONFIG_PID,
-    MOTOR_VAR_TYPE_CONFIG_DEBUG,
-    MOTOR_VAR_TYPE_CONFIG_RESV,
-}
-Motor_VarType_Base_T;
-
-extern int Motor_VarType_Base_Get(Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId);
-extern void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId, int varValue);
-extern bool Motor_VarType_Base_CheckSet(Motor_T * p_motor, Motor_VarType_Base_T typeId);
-
-typedef enum Motor_VarType_SubModule
-{
-    MOTOR_VAR_TYPE_BOARD_CONST,    /* Not instanced */
-    MOTOR_VAR_TYPE_ROTOR_OUT, /* Common generic interface */
-    MOTOR_VAR_TYPE_PHASE,
-    MOTOR_VAR_TYPE_PHASE_INPUT,
-    MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
-    MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */
-    MOTOR_VAR_TYPE_THERMISTOR_CONFIG,
-    MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
-    MOTOR_VAR_TYPE_FOC_OUT,
-    MOTOR_VAR_TYPE_FOC_CONFIG,
-    // opt move to sensor module
-    MOTOR_VAR_TYPE_FOC_SENSORLESS,
-    MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG,
-}
-Motor_VarType_SubModule_T;
-
-extern int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId);
-extern void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId, int varValue);
-extern bool Motor_VarType_SubModule_CheckSet(Motor_T * p_motor, Motor_VarType_SubModule_T typeId);
-
-/******************************************************************************/
-/*
-    Instead of using SensorTable Ids, This way it takes only one field to associate properties.
-*/
-/******************************************************************************/
-typedef enum Motor_VarType_Sensor
-{
-    MOTOR_VAR_TYPE_HALL_STATE,
-    MOTOR_VAR_TYPE_HALL_CONFIG,
-    MOTOR_VAR_TYPE_HALL_CMD,
-    MOTOR_VAR_TYPE_ENCODER_STATE,
-    MOTOR_VAR_TYPE_ENCODER_CONFIG,
-    MOTOR_VAR_TYPE_ENCODER_CMD,
-}
-Motor_VarType_Sensor_T;
-
-extern int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId);
-extern void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue);
-extern bool Motor_VarType_Sensor_CheckSet(Motor_T * p_motor, Motor_VarType_Sensor_T typeId);
-
+// extern Nested Modules
+// Hall_Config_T *  Motor_HallConfig(Motor_T * p_motor);
+// FOC_Config_T *   Motor_FocConfig(Motor_T * p_motor);

@@ -27,11 +27,6 @@
     @file   UART.h
     @author FireSourcery
     @brief  Buffered byte stream over a UART.
-
-    The peer sends whenever it likes, so bytes arrive unbidden and the ring absorbs
-    the rate mismatch between the wire and the polling thread. Both ISRs move
-    min(available, space) bytes: each count only grows from the other side, so one
-    snapshot bounds the whole loop and the body needs no per byte check.
 */
 /******************************************************************************/
 #include "HAL_UART.h"
@@ -42,7 +37,10 @@
 
 /******************************************************************************/
 /*!
-
+    The peer sends whenever it likes, so bytes arrive unbidden and the ring absorbs
+    the rate mismatch between the wire and the polling thread. Both ISRs move
+    min(available, space) bytes: each count only grows from the other side, so one
+    snapshot bounds the whole loop and the body needs no per byte check.
 */
 /******************************************************************************/
 typedef const struct UART

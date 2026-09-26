@@ -26,66 +26,49 @@
 /*!
     @file   ADC_Batch.h
     @author FireSourcery
-    @brief  The channel sets converted as a unit, and their completion. Board layer.
+    @brief  Sets over 1..N ADCs, converted by 1 trigger and joined. Board layer.
 */
 /******************************************************************************/
-#include "ADC_Thread.h"  /* The per ADC protocol a part composes. ADC.h, _ADC.h below it */
-
+#include "ADC_Sequence.h"  /* A part is a sequence. It already names its own ADC */
 
 /******************************************************************************/
 /*
-    A batch is what 1 trigger converts: 1..N parts, a part being 1 sequence on 1 ADC. The single ADC
-    case is a batch of 1 part, so nothing above distinguishes 1 channel, 1 ADC, or several ADCs.
+    A batch is what 1 trigger converts: 1..N parts, a part being 1 sequence on 1 ADC. The single
+    ADC case is a batch of 1 part, so nothing above distinguishes 1 ADC from several.
 
-    [ADC_BatchPart_T] is an activation record, and the only link between a batch and an ADC.
-        Activation - the batch sends each part's set to its ADC, and arms that part's channels.
-        Completion - the Board's ISR calls ADC_Trigger_OnComplete_ISR with the ADC that completed
-                     and the trigger it converts on. That ADC clears its own set from its markers,
-                     and the last part to land finds none marked and joins.
-    Nothing below holds a batch pointer, and no sequence handler is spent on the join.
+    The join reads [CompleteFlags], the same word a lone sequence reads:
+        - each part's transfer ISR flags that part's channels
+        - the last to land finds every part flagged, takes them all, and runs ON_COMPLETE
+    Taking is what makes the join an edge, so the trigger holds no completion count and no ADC
+    writes another's state.
 
-    [ADC_TriggerState_T] belongs to the trigger, not to the batch. The batches that alternate on 1
+    [ADC_BatchTrigger_T] belongs to the trigger, not to a batch. The batches that alternate on 1
     trigger share 1 state, so only 1 of them is ever in flight, and:
         - a selection is 1 write. Batches cannot end up split across a trigger
-        - the join applies it, where every part of the trigger has landed and its ADCs are idle
-        - a part of a batch that is no longer active is ignored, so no join state survives a switch
-    Batches sharing a state must span the same ADCs, in the same order. The switch reprograms them all.
+        - the join applies it, where every part has landed and its ADCs are idle
+    Batches sharing a state must span the same ADCs. The switch reprograms them all.
 
-    Part ISRs must share a priority, the marker update is a read modify write.
+    A part whose completion is dropped leaves the others flagged, and the join runs one trigger
+    late. The results buffer is written in place, so what it reads then is the newest of each.
 
-        static ADC_TriggerState_T MOTOR0_TRIGGER;   // 1 per trigger. MOTOR0_I_BATCH and MOTOR0_V_BATCH alternate on it
+        static ADC_BatchTrigger_T MOTOR0_TRIGGER;   // MOTOR0_I_BATCH and MOTOR0_V_BATCH alternate on it
 
-        // A part carries its own set. The ADCs' sequence tables are not involved
-        static ADC_BatchPart_T MOTOR0_I_PARTS[] =
+        static const ADC_Sequence_T MOTOR0_I_PARTS[] =
         {
-            [0U] = ADC_BATCH_PART(&ADCS[0U], ADC_MASK_RANGE(ADC0_IA, 2U)),
-            [1U] = ADC_BATCH_PART(&ADCS[1U], ADC_MASK(ADC1_IC)),
+            [0U] = ADC_SEQUENCE_FIELDS(&ADCS[0U], ADC_MASK_RANGE(ADC0_IA, 2U), NULL, NULL),
+            [1U] = ADC_SEQUENCE_FIELDS(&ADCS[1U], ADC_MASK(ADC1_IC), NULL, NULL),
         };
 
-        static const ADC_Batch_T MOTOR0_I_BATCH = ADC_BATCH_INIT(MOTOR0_I_PARTS, Motor_OnBatchComplete, &Motors[0U]);
+        static ADC_Batch_T MOTOR0_I_BATCH = ADC_BATCH_INIT(MOTOR0_I_PARTS, Motor_OnBatchComplete, &Motors[0U]);
 
-        // The Board's ISRs. 1 per ADC of the trigger
-        void BOARD_ADC0_DMA_ISR(void) { Board_ADC0_ClearComplete(); ADC_Trigger_OnComplete_ISR(&MOTOR0_TRIGGER, &ADCS[0U]); }
-        void BOARD_ADC1_DMA_ISR(void) { Board_ADC1_ClearComplete(); ADC_Trigger_OnComplete_ISR(&MOTOR0_TRIGGER, &ADCS[1U]); }
+        // The Board's ISRs. 1 per ADC of the trigger, at 1 priority
+        void BOARD_ADC0_DMA_ISR(void) { Board_ADC0_ClearComplete(); ADC_BatchTrigger_OnComplete_ISR(&MOTOR0_TRIGGER, &ADCS[0U]); }
+        void BOARD_ADC1_DMA_ISR(void) { Board_ADC1_ClearComplete(); ADC_BatchTrigger_OnComplete_ISR(&MOTOR0_TRIGGER, &ADCS[1U]); }
 */
 /******************************************************************************/
-/*
-    A part is a set bound to an ADC. It holds the set itself, so the join reads it without the ADC's
-    sequence table, and a batch is declared in 1 place. An id would be a reference the Board has to
-    keep in step with a table the part cannot see.
-*/
-typedef const struct ADC_BatchPart
-{
-    ADC_T * P_ADC;
-    ADC_Sequence_T SEQUENCE;
-}
-ADC_BatchPart_T;
-
-#define ADC_BATCH_PART(p_Adc, Channels) { .P_ADC = (p_Adc), .SEQUENCE = ADC_SEQUENCE_FIELDS(Channels, NULL, NULL) }
-
 typedef const struct ADC_Batch
 {
-    ADC_BatchPart_T * P_PARTS;
+    ADC_Sequence_T * P_PARTS;     /* [Part]. Each names its own ADC */
     uint8_t PART_COUNT;
     ADC_Callback_T ON_COMPLETE;
     void * P_CONTEXT;
@@ -94,102 +77,90 @@ ADC_Batch_T;
 
 /* Derives the part count from the array, and casts the handler to its registration type */
 #define ADC_BATCH_INIT(Parts, OnComplete, p_Context) (ADC_Batch_T) \
-    { .P_PARTS = (Parts), .PART_COUNT = (sizeof(Parts) / sizeof(ADC_BatchPart_T)), .ON_COMPLETE = (ADC_Callback_T)(OnComplete), .P_CONTEXT = (void *)(p_Context), }
+    { .P_PARTS = (Parts), .PART_COUNT = (sizeof(Parts) / sizeof(ADC_Sequence_T)), .ON_COMPLETE = (ADC_Callback_T)(OnComplete), .P_CONTEXT = (void *)(p_Context), }
 
-typedef struct ADC_TriggerState
+typedef struct ADC_BatchTrigger
 {
     ADC_Batch_T * volatile p_Active;
     ADC_Batch_T * volatile p_Next;
-    //  volatile adc_mask_t Pending; simplified on complete check
 }
-ADC_TriggerState_T;
+ADC_BatchTrigger_T;
+
+#define ADC_BATCH_TRIGGER_ALLOC() (&(ADC_BatchTrigger_T){})
 
 /******************************************************************************/
 /*
     Parts
-    A part reports through its own ADC's markers. The join arms every part, each ADC clears its own
-    in its own ISR, and the set is complete when none is still marked. The trigger holds no
-    completion state, and no ADC writes another's. Sequences on 1 ADC must not overlap.
 */
 /******************************************************************************/
-static inline adc_mask_t _ADC_Batch_PartChannels(ADC_BatchPart_T * p_part) { return p_part->SEQUENCE.CHANNELS; }
+/* The part this ADC converts in [p_batch]. NULL where the ADC is not one of its parts */
+static inline const ADC_Sequence_T * _ADC_Batch_PartOf(ADC_Batch_T * p_batch, ADC_T * p_adc)
+{
+    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++) { if (p_batch->P_PARTS[iPart].P_ADC == p_adc) { return &p_batch->P_PARTS[iPart]; } }
+    return NULL;
+}
 
-static inline bool _ADC_Batch_IsPartComplete(ADC_BatchPart_T * p_part) { return ((p_part->P_ADC->P_STATE->ChannelMarkers & _ADC_Batch_PartChannels(p_part)) == 0UL); }
-
-/* Repeats over every part on every part completion. Part count is small, and there is no shared count to maintain */
+/* Peek every part before taking any, so a partial set keeps its flags */
 static inline bool _ADC_Batch_IsEachComplete(ADC_Batch_T * p_batch)
 {
-    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++) { if (_ADC_Batch_IsPartComplete(&p_batch->P_PARTS[iPart]) == false) { return false; } }
+    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++) { if (ADC_Sequence_IsComplete(&p_batch->P_PARTS[iPart]) == false) { return false; } }
     return true;
 }
 
-/* Arms the phase. A part that missed its trigger is re-armed here, so a dropped completion costs 1 cycle and not the phase */
-static inline void _ADC_Batch_MarkEach(ADC_Batch_T * p_batch)
+static inline void _ADC_Batch_TakeEach(ADC_Batch_T * p_batch)
 {
-    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++) { ADC_MarkAll(p_batch->P_PARTS[iPart].P_ADC, _ADC_Batch_PartChannels(&p_batch->P_PARTS[iPart])); }
-}
-
-/*
-    The batch is the selector, so it sets Next as well as Active: nothing is left pending, and the
-    ADC's own completion has no change to see.
-*/
-static inline void _ADC_Batch_ActivatePart(ADC_BatchPart_T * p_part)
-{
-    p_part->P_ADC->P_STATE->p_NextSequence = &p_part->SEQUENCE;
-    _ADC_ActivateSequenceDma(p_part->P_ADC->P_HAL_ADC, p_part->P_ADC->P_STATE, &p_part->SEQUENCE);
+    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++) { (void)ADC_TakeFlags(p_batch->P_PARTS[iPart].P_ADC, p_batch->P_PARTS[iPart].CHANNELS); }
 }
 
 /* Sends every part to its Hw. Only where every ADC of the trigger is idle: on init, or in the join */
-static inline void _ADC_Batch_ActivateEach(ADC_Batch_T * p_batch)
+static inline void _ADC_Batch_ActivateEachDma(ADC_Batch_T * p_batch)
 {
-    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++) { _ADC_Batch_ActivatePart(&p_batch->P_PARTS[iPart]); }
+    for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++) { ADC_Sequence_ActivateDma(&p_batch->P_PARTS[iPart]); }
 }
-
-// static inline ADC_Sequence_T * _ADC_OnCompletePart(HAL_ADC_T * p_hal, ADC_State_T * p_state)
-// {
-//     ADC_Sequence_T * p_completed = p_state->p_ActiveSequence;
-//     ADC_Sequence_T * p_next = p_state->p_NextSequence;
-//     if (p_next != p_completed) { _ADC_ActivateSequenceDma(p_hal, p_state, p_next); }
-//     return p_completed;
-// }
 
 /******************************************************************************/
 /*
     Join
 */
 /******************************************************************************/
-/* Joins where every part of the trigger has landed, and its ADCs are idle */
-static inline void _ADC_Trigger_OnComplete(ADC_TriggerState_T * p_trigger, ADC_Batch_T * p_active)
+/* Joins where every part has landed. Takes the whole set, so the handler runs once */
+static inline bool ADC_Batch_TakeComplete(ADC_Batch_T * p_batch)
 {
-    assert(p_active != NULL);   /* A batch must be activated before the trigger is enabled */
+    bool isComplete = _ADC_Batch_IsEachComplete(p_batch);
+    if (isComplete == true) { _ADC_Batch_TakeEach(p_batch); }
+    return isComplete;
+}
 
-    if (_ADC_Batch_IsEachComplete(p_active) == true)
-    {
-        if (p_active->ON_COMPLETE != NULL) { p_active->ON_COMPLETE(p_active->P_CONTEXT); }
-
-        /*
-            The selection applies here, 1 place reprogramming every part, so they cannot end up split
-            across a trigger. Read after the handler, so a set selected from there applies now, and read
-            once, so the set sent to the Hw is the set recorded and the set armed.
-        */
-        ADC_Batch_T * p_next = p_trigger->p_Next;
-        if (p_next != p_active) { _ADC_Batch_ActivateEach(p_next); p_trigger->p_Active = p_next; }
-
-        _ADC_Batch_MarkEach(p_next);    /* The set now converting: the selection, or the active set where it repeats */
-    }
+static inline bool ADC_Batch_Poll(ADC_Batch_T * p_batch)
+{
+    bool isComplete = ADC_Batch_TakeComplete(p_batch);
+    if ((isComplete == true) && (p_batch->ON_COMPLETE != NULL)) { p_batch->ON_COMPLETE(p_batch->P_CONTEXT); }
+    return isComplete;
 }
 
 /*!
     @brief  1 per ADC of the trigger, in its transfer complete ISR. The caller clears the Hw flag.
-            The last part to land runs the join. A part's own sequence handler is not used.
+            The last part to land runs the join. A part's own COMPLETE is not used.
 
-    Part ISRs must share a priority: the join arms every part, and each part clears its own.
+    Part ISRs must share a priority: the join peeks every part, then takes them all.
 */
-static inline void ADC_Trigger_OnComplete_ISR(ADC_TriggerState_T * p_trigger, ADC_T * p_adc)
+static inline void ADC_BatchTrigger_OnComplete_ISR(ADC_BatchTrigger_T * p_trigger, ADC_T * p_adc)
 {
-    p_adc->P_STATE->ChannelMarkers &= ~p_adc->P_STATE->p_ActiveSequence->CHANNELS;  /* This part landed */
-    // _ADC_OnCompletePart
-    _ADC_Trigger_OnComplete(p_trigger, p_trigger->p_Active);   /* 1 read of Active, held across the join */
+    ADC_Batch_T * p_active = p_trigger->p_Active;
+    assert(p_active != NULL);   /* A batch must be activated before the trigger is enabled */
+
+    const ADC_Sequence_T * p_part = _ADC_Batch_PartOf(p_active, p_adc);
+    if (p_part != NULL) { ADC_OnCompleteTransfer_ISR(p_adc, p_part->CHANNELS); }    /* This part landed. A part of a batch no longer active is ignored */
+
+    if (ADC_Batch_Poll(p_active) == true)
+    {
+        /*
+            The selection applies here, 1 place reprogramming every part, so they cannot end up
+            split across a trigger. Read after the handler, so a set selected from there applies now.
+        */
+        ADC_Batch_T * p_next = p_trigger->p_Next;
+        if (p_next != p_active) { _ADC_Batch_ActivateEachDma(p_next); p_trigger->p_Active = p_next; }
+    }
 }
 
 /******************************************************************************/
@@ -201,10 +172,9 @@ static inline void ADC_Trigger_OnComplete_ISR(ADC_TriggerState_T * p_trigger, AD
     Immediate. On init, or while the trigger source is inactive.
     Sets Next as well as Active, the join applies Next and it must not be left unset.
 */
-static inline void ADC_Batch_Activate(ADC_TriggerState_T * p_trigger, ADC_Batch_T * p_batch)
+static inline void ADC_BatchTrigger_ActivateDma(ADC_BatchTrigger_T * p_trigger, ADC_Batch_T * p_batch)
 {
-    _ADC_Batch_ActivateEach(p_batch);
-    _ADC_Batch_MarkEach(p_batch);
+    _ADC_Batch_ActivateEachDma(p_batch);
     p_trigger->p_Active = p_batch;
     p_trigger->p_Next = p_batch;
 }
@@ -213,49 +183,10 @@ static inline void ADC_Batch_Activate(ADC_TriggerState_T * p_trigger, ADC_Batch_
     Deferred, 1 store. Any thread, last request wins.
     Applied in the join, before the trigger that follows it.
 */
-static inline void ADC_Batch_Select(ADC_TriggerState_T * p_trigger, ADC_Batch_T * p_batch) { p_trigger->p_Next = p_batch; }
+static inline void ADC_BatchTrigger_Select(ADC_BatchTrigger_T * p_trigger, ADC_Batch_T * p_batch) { p_trigger->p_Next = p_batch; }
 
 /* Converting. A deferred selection is not applied until the active batch joins */
-static inline bool ADC_Batch_IsActive(const ADC_TriggerState_T * p_trigger, const ADC_Batch_T * p_batch) { return (p_trigger->p_Active == p_batch); }
+static inline bool ADC_BatchTrigger_IsActive(const ADC_BatchTrigger_T * p_trigger, ADC_Batch_T * p_batch) { return (p_trigger->p_Active == p_batch); }
 
 /* Selected. Active already, or applied at the next join */
-static inline bool ADC_Batch_IsSelected(const ADC_TriggerState_T * p_trigger, const ADC_Batch_T * p_batch) { return (p_trigger->p_Next == p_batch); }
-
-// ADC_TriggerState_T MultiAdcState;
-// void BOARD_ADC0_ISR(void) { ADC_Batch_OnComplete_ISR(&MultiAdcState, &ANALOG_ADCS[0U]); }
-// void BOARD_ADC1_ISR(void) { ADC_Batch_OnComplete_ISR(&MultiAdcState, &ANALOG_ADCS[1U]); }
-
-
-
-
-
-// /* 1. The arm follows the ADC, not the batch. A part may switch on its own, so the arm must name
-//       what that ADC will convert next, not what the batch says it converts */
-// static inline adc_mask_t _ADC_Batch_PartChannels(ADC_BatchPart_T * p_part) { return p_part->P_ADC->P_STATE->p_ActiveSequence->CHANNELS; }
-
-// static inline void ADC_Trigger_OnCompletePart_ISR(ADC_TriggerState_T * p_trigger, ADC_T * p_adc)
-// {
-//     assert(p_trigger->p_Active != NULL);
-
-//     p_adc->P_STATE->ChannelMarkers &= ~p_adc->P_STATE->p_ActiveSequence->CHANNELS;  /* this part landed */
-
-//     /* 2. It starts its own next set here, before the arm. The other parts switched at their own
-//           completions earlier in this trigger, so by the arm every part is on its next set */
-//     _ADC_OnCompleteSequenceDma(p_adc->P_HAL_ADC, p_adc->P_STATE);
-
-//     if (_ADC_Batch_IsEachComplete(p_trigger->p_Active) == true)
-//     {
-//         if (p_trigger->p_Active->ON_COMPLETE != NULL) { p_trigger->p_Active->ON_COMPLETE(p_trigger->p_Active->P_CONTEXT); }
-
-//         p_trigger->p_Active = p_trigger->p_Next;    /* the join no longer reprograms anything */
-//         _ADC_Batch_MarkEach(p_trigger->p_Active);   /* 3. the arm is still only at the join: it is the phase boundary */
-//     }
-// }
-
-// /* N stores, 1 per part. Each ADC applies its own at its own completion */
-// static inline void ADC_Batch_SelectParts(ADC_TriggerState_T * p_trigger, ADC_Batch_T * p_batch)
-// {
-//     for (uint8_t iPart = 0U; iPart < p_batch->PART_COUNT; iPart++)
-//     { ADC_SetNextSequenceDma(p_batch->P_PARTS[iPart].P_ADC, p_batch->P_PARTS[iPart].SEQUENCE_ID); }
-//     p_trigger->p_Next = p_batch;
-// }
+static inline bool ADC_BatchTrigger_IsSelected(const ADC_BatchTrigger_T * p_trigger, ADC_Batch_T * p_batch) { return (p_trigger->p_Next == p_batch); }

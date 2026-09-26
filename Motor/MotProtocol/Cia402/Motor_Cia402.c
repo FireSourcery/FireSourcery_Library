@@ -39,14 +39,10 @@
 */
 #define MOTOR_CIA402_SUPPORTED_DRIVE_MODES  (CIA402_SUPPORTED_PV | CIA402_SUPPORTED_TQ)
 
-static_assert(sizeof(Cia402_Adapter_T) <= MOTOR_ADAPTER_BUFFER_SIZE, "MOTOR_ADAPTER_BUFFER_SIZE must be large enough to hold the largest adapter struct");
-
-static inline Cia402_Adapter_T * Motor_Cia402_Adapter(Motor_T * p_motor) { return (Cia402_Adapter_T *)(p_motor->P_MOTOR->AdapterBuffer); }
-
 /*
-    keep (Motor_T * p_motor, Cia402_Adapter_T * p_adapter, ...) signatures in case Adapter is move to outer context.
+    The adapter is owned by the outer context and passed in: (Motor_T * p_motor, Cia402_Adapter_T * p_adapter, ...).
+    [MotorController_T] holds the per-axis array; there is no route from a bare [Motor_T].
 */
-// static inline Cia402_Adapter_T * Motor_Cia402_Adapter(Motor_Entity_T * p_motor) { return (Cia402_Adapter_T *)(p_motor->P_MOTOR->AdapterBuffer); }
 
 /******************************************************************************/
 /*

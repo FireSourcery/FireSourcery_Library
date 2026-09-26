@@ -53,21 +53,21 @@ Xcvr_Flags_T;
 /*
     Move one message. false when the message did not complete.
 */
-typedef bool (*Xcvr_TxN_T)(void * p_xcvr, const uint8_t * p_src, size_t length);
-typedef bool (*Xcvr_RxN_T)(void * p_xcvr, uint8_t * p_dest, size_t length);
+typedef bool (*Xcvr_Tx_T)(void * p_xcvr, const uint8_t * p_src, size_t length);
+typedef bool (*Xcvr_Rx_T)(void * p_xcvr, uint8_t * p_dest, size_t length);
 
 /*
     Set one property of the next message. Absent on transports without it.
 */
-typedef bool (*Xcvr_SetValue_T)(void * p_xcvr, uint32_t value);
+typedef bool (*Xcvr_SetProperty_T)(void * p_xcvr, uint32_t value);
 
 typedef const struct Xcvr_VTable
 {
-    Xcvr_TxN_T      TX_N;
-    Xcvr_RxN_T      RX_N;
-    Xcvr_SetValue_T SET_TARGET;         /* Optional. I2C slave address, SPI chip select id */
-    Xcvr_SetValue_T SET_FLAGS;          /* Optional. [Xcvr_Flags_T] */
-    Xcvr_SetValue_T CONFIG_BAUD_RATE;   /* Optional. */
+    Xcvr_Tx_T       TX;
+    Xcvr_Rx_T       RX;
+    Xcvr_SetProperty_T SET_TARGET;         /* Optional. I2C slave address, SPI chip select id */
+    Xcvr_SetProperty_T SET_FLAGS;          /* Optional. [Xcvr_Flags_T] */
+    Xcvr_SetProperty_T CONFIG_BAUD_RATE;   /* Optional. */
 }
 Xcvr_VTable_T;
 
@@ -86,11 +86,11 @@ Xcvr_T;
 /*
     Inline wrap
 */
-static inline bool Xcvr_TxN(Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length) { return p_xcvr->P_VTABLE->TX_N(p_xcvr->P_BASE, p_src, length); }
-static inline bool Xcvr_RxN(Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length) { return p_xcvr->P_VTABLE->RX_N(p_xcvr->P_BASE, p_dest, length); }
+static inline bool Xcvr_TxN(Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length) { return p_xcvr->P_VTABLE->TX(p_xcvr->P_BASE, p_src, length); }
+static inline bool Xcvr_RxN(Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length) { return p_xcvr->P_VTABLE->RX(p_xcvr->P_BASE, p_dest, length); }
 
 /* An absent property is nothing to set, not a failure */
-static inline bool _Xcvr_SetValue(Xcvr_T * p_xcvr, Xcvr_SetValue_T set, uint32_t value) { return (set != NULL) ? set(p_xcvr->P_BASE, value) : true; }
+static inline bool _Xcvr_SetValue(Xcvr_T * p_xcvr, Xcvr_SetProperty_T set, uint32_t value) { return (set != NULL) ? set(p_xcvr->P_BASE, value) : true; }
 
 static inline bool Xcvr_SetTarget(Xcvr_T * p_xcvr, uint32_t target)           { return _Xcvr_SetValue(p_xcvr, p_xcvr->P_VTABLE->SET_TARGET, target); }
 static inline bool Xcvr_SetFlags(Xcvr_T * p_xcvr, Xcvr_Flags_T flags)         { return _Xcvr_SetValue(p_xcvr, p_xcvr->P_VTABLE->SET_FLAGS, (uint32_t)flags); }

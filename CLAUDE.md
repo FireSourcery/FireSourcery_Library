@@ -76,7 +76,7 @@
 - **UPPER_SNAKE_CASE** for macros, enum values, and constants: `MOTOR_STATE_RUN`, `HAL_ADC_CHANNEL_COUNT`
 - **camelCase** for local variables and struct fields
 - **snake_case** for pure functions on primitives
-- Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `Serial_`, etc.
+- Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `UART_`, etc.
 - Files prefixed with `_` (e.g., `_Motor_Config.h`) are internal/private headers not intended for external inclusion
 - Public API headers match the module directory name: `Motor.h`, `StateMachine.h`, `Protocol.h`
 
@@ -178,7 +178,7 @@ FireSourcery_Library/
 │   │   └── NvMemory/            #     Unified NvMemory abstraction
 │   ├── Pin/                     #   GPIO pin abstraction
 │   ├── PWM/                     #   PWM output driver (center-aligned for motor)
-│   ├── Serial/                  #   UART serial driver (interrupt/DMA)
+│   ├── UART/                  #   UART serial driver (interrupt/DMA)
 │   └── Xcvr/                    #   Transceiver abstraction (RX/TX buffer management)
 │
 ├── System/                      # System-level services

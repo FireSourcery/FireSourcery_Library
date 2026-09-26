@@ -402,6 +402,12 @@ typedef struct Cia402_Adapter
 }
 Cia402_Adapter_T;
 
+/* Load the stored option codes. All-zero is the conservative encoding, so an unwritten config is valid. */
+static inline void Cia402_Adapter_InitFrom(Cia402_Adapter_T * p_adapter, const Cia402_Config_T * p_config)
+{
+    if (p_config != NULL) { p_adapter->Config = *p_config; }
+}
+
 
 /******************************************************************************/
 /*

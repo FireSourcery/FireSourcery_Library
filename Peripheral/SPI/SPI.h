@@ -64,21 +64,6 @@ SPI_Status_T;
 
 /******************************************************************************/
 /*!
-    Target - the device behind one chip select.
-    Applied to the bus only when the active target changes.
-*/
-/******************************************************************************/
-typedef const struct SPI_Target
-{
-    Pin_T CS_PIN;           /* IS_INVERT selects active low */
-    uint32_t CLOCK_FREQ;
-    uint8_t CLOCK_MODE;     /* 0..3 -> {CPOL, CPHA} */
-    bool IS_LSB_FIRST;
-}
-SPI_Target_T;
-
-/******************************************************************************/
-/*!
     Transfer - the unit of work. Caller owns the buffers until completion.
 
     p_TxData == NULL    clock out SPI_FILL_CHAR, capture the echo     (read)
@@ -90,7 +75,6 @@ typedef void (*SPI_Callback_T)(void * p_context);
 
 typedef struct SPI_Transfer
 {
-    const SPI_Target_T * p_Target;
     const uint8_t * p_TxData;
     uint8_t * p_RxData;
     size_t Size;
@@ -101,16 +85,22 @@ SPI_Transfer_T;
 
 /******************************************************************************/
 /*!
-    Instance
+    Instance - one bus, one device.
+
+    SPI selects its peer with a wire, not an address, so a bus driving a single
+    device has nothing to select and the pin and clock settle at init. A second
+    device on the same [HAL_SPI_T] is not a second [SPI_T]: two instances would
+    each hold their own state with nothing arbitrating between them. That case
+    wants the device moved back into [SPI_Transfer_T], reapplied per transfer.
 */
 /******************************************************************************/
 typedef struct SPI_State
 {
     SPI_Transfer_T Active;
-    size_t TxIndex;                         /* Handed to the shifter */
-    size_t RxIndex;                         /* Echoes captured. Trails TxIndex */
-    const SPI_Target_T * p_ActiveTarget;    /* Bus configuration currently applied */
+    size_t TxIndex;         /* Handed to the shifter */
+    size_t RxIndex;         /* Echoes captured. Trails TxIndex */
     SPI_Status_T Status;
+    bool IsCsHold;          /* Leave CS asserted past the end of this transfer */
 }
 SPI_State_T;
 
@@ -120,25 +110,29 @@ typedef const struct SPI
 {
     HAL_SPI_T * P_HAL;
     SPI_State_T * P_STATE;
+    Pin_T CS_PIN;           /* IS_INVERT selects active low */
+    uint32_t CLOCK_FREQ;
+    uint8_t CLOCK_MODE;     /* 0..3 -> {CPOL, CPHA} */
+    bool IS_LSB_FIRST;
 }
 SPI_T;
 
-#define SPI_INIT(p_Hal) { .P_HAL = (p_Hal), .P_STATE = SPI_STATE_ALLOC(), }
+/* Remaining fields by designated initializer. Only the state needs allocating */
 
 /******************************************************************************/
 /*!
     Transfer step
 */
 /******************************************************************************/
-extern void _SPI_EndTransfer(const SPI_T * p_spi, SPI_Status_T status);
+extern void _SPI_EndTransfer(SPI_T * p_spi, SPI_Status_T status);
 
-static inline uint8_t _SPI_TxCharAt(const SPI_Transfer_T * p_transfer, size_t index)
+static inline uint8_t _SPI_TxCharAt(SPI_Transfer_T * p_transfer, size_t index)
 {
     return (p_transfer->p_TxData != NULL) ? p_transfer->p_TxData[index] : SPI_FILL_CHAR;
 }
 
 /* The D read is what clears SPRF, so it happens whether or not the echo is kept */
-static inline void _SPI_CaptureRx(const SPI_T * p_spi)
+static inline void _SPI_CaptureRx(SPI_T * p_spi)
 {
     SPI_State_T * p_state = p_spi->P_STATE;
     uint8_t rxChar = HAL_SPI_ReadRxChar(p_spi->P_HAL);
@@ -147,7 +141,7 @@ static inline void _SPI_CaptureRx(const SPI_T * p_spi)
     p_state->RxIndex++;
 }
 
-static inline void _SPI_FeedTx(const SPI_T * p_spi)
+static inline void _SPI_FeedTx(SPI_T * p_spi)
 {
     SPI_State_T * p_state = p_spi->P_STATE;
 
@@ -155,13 +149,14 @@ static inline void _SPI_FeedTx(const SPI_T * p_spi)
     p_state->TxIndex++;
 }
 
+
 /*
     Tx drives the clock, Rx is its echo. Feeding stops at Size; the transfer ends one
     exchange later, when the last echo lands.
 
     Interrupt entry point. The blocking path polls the same step with interrupts unarmed.
 */
-static inline void SPI_ProcTransfer(const SPI_T * p_spi)
+static inline void SPI_ProcTransfer(SPI_T * p_spi)
 {
     SPI_State_T * p_state = p_spi->P_STATE;
 
@@ -184,26 +179,39 @@ static inline void SPI_ProcTransfer(const SPI_T * p_spi)
     }
 }
 
+
 /******************************************************************************/
 /*!
     Query
 */
 /******************************************************************************/
-static inline SPI_Status_T SPI_GetStatus(const SPI_T * p_spi)   { return p_spi->P_STATE->Status; }
-static inline bool SPI_IsBusy(const SPI_T * p_spi)              { return (p_spi->P_STATE->Status == SPI_STATUS_BUSY); }
-// static inline size_t SPI_GetQueuedCount(const SPI_T * p_spi)    { return RingT_GetFullCount(RING_T_ARGS(p_spi->PENDING)); }
+static inline SPI_Status_T SPI_GetStatus(SPI_T * p_spi)   { return p_spi->P_STATE->Status; }
+static inline bool SPI_IsBusy(SPI_T * p_spi)              { return (p_spi->P_STATE->Status == SPI_STATUS_BUSY); }
+
+/*
+    Hold CS past the end of the next transfer, so a write then read reaches the device
+    as one framed transaction. Sticky until cleared.
+*/
+static inline void SPI_SetCsHold(SPI_T * p_spi, bool isHold) { p_spi->P_STATE->IsCsHold = isHold; }
 
 /******************************************************************************/
 /*!
     Extern
 */
 /******************************************************************************/
-extern void SPI_Init(const SPI_T * p_spi);
-extern void SPI_Deinit(const SPI_T * p_spi);
+extern void SPI_Init(SPI_T * p_spi);
+extern void SPI_Deinit(SPI_T * p_spi);
 
 /* Interrupt driven. Completion reported by OnComplete, which may submit the next transfer */
-extern SPI_Status_T SPI_Submit(const SPI_T * p_spi, const SPI_Transfer_T * p_transfer);
+extern SPI_Status_T SPI_Submit(SPI_T * p_spi, SPI_Transfer_T * p_transfer);
 
 /* Polled. Rejects while the interrupt driven path holds the bus */
-extern SPI_Status_T SPI_Transfer_Blocking(const SPI_T * p_spi, const SPI_Transfer_T * p_transfer);
-extern SPI_Status_T SPI_Exchange_Blocking(const SPI_T * p_spi, const SPI_Target_T * p_target, const void * p_txData, void * p_rxData, size_t size);
+extern SPI_Status_T SPI_Transfer_Blocking(SPI_T * p_spi, SPI_Transfer_T * p_transfer);
+extern SPI_Status_T SPI_Exchange_Blocking(SPI_T * p_spi, const void * p_txData, void * p_rxData, size_t size);
+
+/*
+    [Xcvr] shaped. Half duplex views of one exchange: the unused direction is
+    filled with SPI_FILL_CHAR or discarded.
+*/
+extern bool SPI_Tx(SPI_T * p_spi, const uint8_t * p_src, size_t length);
+extern bool SPI_Rx(SPI_T * p_spi, uint8_t * p_dest, size_t length);

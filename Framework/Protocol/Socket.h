@@ -39,23 +39,22 @@
     Protocol.h is the engine: given a link, a service and a state, run one pass. It has no
     opinion about where those came from.
 
-    This file is what a socket instance is - one Xcvr and one format, chosen from tables,
-    with the buffers and the NVM configuration that belong to this port and not to the
+    This file is what a socket instance is - one Xcvr, one [Protocol_T] and one
+    [Protocol_Binding_T], with the NVM configuration that belongs to this port and not to the
     protocol. Nothing here parses, dispatches or acknowledges.
 
-    The split matters because selection is runtime and the engine's inputs are const. The
-    link is assembled per pass from the current selection, which costs a handful of stores
-    and keeps Protocol.h free of any notion that a format can change. The request table and
-    its context need no such view - they are const fields of Socket_T already, so they pass
-    straight through.
+        Socket_T        const, per instance   PROTOCOL, BINDING, xcvr table, NVM config
+        Socket_State_T  mutable               xcvr selection, config
 
-        Socket_T        const, per instance   buffers, tables, timer
-        Socket_State_T  mutable               selection, config, engine state
-        Protocol_Base_T view, per pass        the transport binding in effect
+    The codec, the request table and the app context are one selectable unit - a row's
+    ID.FRAME_FORMAT names a shape the codec owns, so they cannot come apart. BINDING is a const
+    field for now; making it selectable means a P_BINDING_TABLE here and a p_Binding in
+    Socket_State_T, which is where Config.FormatId would then point.
 
-    Selection is admitted only while the socket is idle. Swapping a format mid-exchange
-    would leave a staged response built to one header shape and acked against another, so
-    that is lifecycle reasoning and it belongs here rather than in the engine.
+    The Xcvr stays the one independently selected axis: the port is orthogonal to the protocol
+    spoken on it. Selection is admitted only while the socket is idle - bytes already in the
+    frame buffer do not belong to the new port - and that is lifecycle reasoning, so it lives
+    here rather than in the engine.
 */
 /******************************************************************************/
 
@@ -97,17 +96,16 @@ Socket_Config_T;
 /******************************************************************************/
 typedef struct Socket_State
 {
-    /* Selection. Pointers into the instance's const tables. */
+    /* Selection. Pointer into the instance's const table. */
     const Xcvr_T * p_Xcvr;
-    const Packet_Codec_T * p_Format;
 
-    Socket_Config_T Config;     /* Working copy, loaded from NVM at init */
-    Protocol_State_T Protocol;  /* Parser + sync + request + counters */
+    Socket_Config_T Config;     /* Working copy, loaded from NVM at init. NVM layout - do not reorder. */
 
     bool IsEnabled;
     bool IsRxWatchdogEnable;    /* Link-liveness watchdog, armed at runtime */
 }
 Socket_State_T;
+
 
 
 /******************************************************************************/
@@ -119,43 +117,30 @@ typedef const struct Socket
 {
     Socket_State_T * P_SOCKET_STATE;
 
-    // Protocol_Base_T PROTOCOL;
-    Protocol_ReqContext_T REQ_CONTEXT;     /* same shape as Packet_Xfer_T, pass compile time defined */
-    Protocol_ReqTable_T REQ_TABLE;
+    Protocol_T PROTOCOL;            /* This port's buffers, engine state and clock */
+    Protocol_Binding_T BINDING;     /* Codec + request table + app context, as one unit */
 
-    // union
-    // {
-    //     struct
-    //     {
-    //         Packet_Context_T * P_RX_BUFFER;
-    //         Packet_Context_T * P_TX_BUFFER;
-    //         void * const p_SUB_STATE;
-    //     };
-    //     Packet_Xfer_T PACKET_XFER;
-    // };
+    uint8_t PACKET_BUFFER_LENGTH;   /* What P_RX_BUFFER and P_TX_BUFFER were allocated with */
 
-    uint8_t PACKET_BUFFER_LENGTH;
-
-    const volatile uint32_t * P_TIMER;
-
-    /* Selectable bindings. Arrays of pointers - neither need be contiguous. */
+#ifdef SOCKET_XCVR_FIXED
+    // Xcvr_T * const * P_XCVR; /* const binding */
+#endif
+    /* Selectable transports. Array of pointers - need not be contiguous. */
     Xcvr_T * const * P_XCVR_TABLE;
     uint8_t XCVR_COUNT;
-    Packet_Codec_T * const * P_FORMAT_TABLE;
-    uint8_t FORMAT_COUNT;
 
-    const Socket_Config_T * P_NVM_CONFIG;   /* Initial config. The clock is P_TIMER, above. */
+    const Socket_Config_T * P_NVM_CONFIG;   /* Initial config. The clock is PROTOCOL.P_TIMER. */
 }
 Socket_T;
 
-// static inline Xcvr_T * _Socket_Xcvr(Socket_T * p_socket)
-// {
-// #ifdef SOCKET_XCVR_FIXED
-//     return (Xcvr_T *)p_socket;
-// #else
-//     return p_socket->P_SOCKET_STATE->p_Xcvr;
-// #endif
-// }
+static inline Xcvr_T * _Socket_Xcvr(Socket_T * p_socket)
+{
+#ifdef SOCKET_XCVR_FIXED
+    return (Xcvr_T *)p_socket->P_XCVR;
+#else
+    return p_socket->P_SOCKET_STATE->p_Xcvr;
+#endif
+}
 
 /******************************************************************************/
 /*!
@@ -166,19 +151,14 @@ Socket_T;
     @brief  One non-blocking pass. Single threaded.
             Cadence is the caller's: the engine reads the clock but never waits on it.
 
-    The link is written out here, at the only place that needs it. Each field comes from its
-    own source - selection from state, buffers from the instance, the deadline from config -
-    so a builder would only hide where they came from. The request table, its context and its
-    deadline pass individually; they are already fields of Socket_T and repackaging them
-    would be the same data in a second shape.
+    Everything the engine needs is already assembled in flash. Only the Xcvr is selected at
+    runtime, so only the Xcvr is passed.
 */
 static inline void Socket_Proc(Socket_T * p_socket)
 {
-    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
+    if (p_socket->P_SOCKET_STATE->IsEnabled == false) { return; }
 
-    if (p_state->IsEnabled == false) { return; }
-
-    Protocol_Proc(&p_state->Protocol, p_state->p_Xcvr, p_state->p_Format, &p_socket->REQ_TABLE, &p_socket->REQ_CONTEXT, *p_socket->P_TIMER);
+    Protocol_Proc(&p_socket->PROTOCOL, &p_socket->BINDING, _Socket_Xcvr(p_socket));
 }
 
 
@@ -190,15 +170,15 @@ static inline void Socket_Proc(Socket_T * p_socket)
 static inline bool Socket_IsEnabled(Socket_T * p_socket) { return p_socket->P_SOCKET_STATE->IsEnabled; }
 
 /*! true while an exchange occupies the socket. Selection is refused in this condition. */
-static inline bool Socket_IsBusy(Socket_T * p_socket) { return Protocol_IsReqSyncActive(&p_socket->P_SOCKET_STATE->Protocol); }
+static inline bool Socket_IsBusy(Socket_T * p_socket) { return Protocol_IsReqSyncActive(p_socket->PROTOCOL.P_STATE); }
 
 static inline Socket_Status_T Socket_StatusOf(Socket_T * p_socket)
 {
-    const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
+    const Protocol_State_T * p_protocolState = p_socket->PROTOCOL.P_STATE;
 
-    if (p_state->IsEnabled == false) { return SOCKET_STATUS_DISABLED; }
-    if (Protocol_IsReqSyncActive(&p_state->Protocol) == true) { return SOCKET_STATUS_BUSY; }
-    if (Packet_IsRxActive(&p_state->Protocol.RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
+    if (p_socket->P_SOCKET_STATE->IsEnabled == false) { return SOCKET_STATUS_DISABLED; }
+    if (Protocol_IsReqSyncActive(p_protocolState) == true) { return SOCKET_STATUS_BUSY; }
+    if (Packet_IsRxActive(&p_protocolState->RxParser) == true) { return SOCKET_STATUS_RX_FRAME; }
     return SOCKET_STATUS_IDLE;
 }
 
@@ -208,7 +188,7 @@ static inline Socket_Status_T Socket_StatusOf(Socket_T * p_socket)
     RX_TIMEOUT bounds a frame and REQ_TIMEOUT bounds an exchange; both are transport
     concerns and both live in the engine. This one asks whether the host is still there at
     all, which only the application can act on - MotorController raises FaultFlags.RxLost
-    from it. Hence config here rather than in Protocol_Base_T.
+    from it. Hence config here rather than in [Protocol_Binding_T].
 */
 /*!
     @return true if WatchdogTimeout reached, a successful Req has not occurred
@@ -216,7 +196,8 @@ static inline Socket_Status_T Socket_StatusOf(Socket_T * p_socket)
 static inline bool Socket_IsRxLost(Socket_T * p_socket)
 {
     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-    return ((p_state->IsRxWatchdogEnable == true) && (Protocol_RxLostTime(&p_state->Protocol, *p_socket->P_TIMER) > p_state->Config.WatchdogTimeout));
+    return ((p_state->IsRxWatchdogEnable == true) &&
+            (Protocol_RxLostTime(p_socket->PROTOCOL.P_STATE, Protocol_TimerNow(&p_socket->PROTOCOL)) > p_state->Config.WatchdogTimeout));
 }
 
 /*! Arming a disabled socket would fault immediately, since nothing can feed the base. */
@@ -238,13 +219,14 @@ static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->
     Selection is admitted only while the socket is idle; both setters refuse while busy.
     Socket_Init selects before enabling, so an out of range stored id leaves the socket down
     rather than bound to nothing.
+
+    Config.FormatId is retained in NVM but selects nothing while BINDING is const.
 */
 /******************************************************************************/
 extern void Socket_Init(Socket_T * p_socket);
 extern bool Socket_Enable(Socket_T * p_socket);
 extern void Socket_Disable(Socket_T * p_socket);
 extern bool Socket_SetXcvr(Socket_T * p_socket, uint8_t xcvrId);
-extern bool Socket_SetFormat(Socket_T * p_socket, uint8_t formatId);
 extern bool Socket_SetBaudRate(Socket_T * p_socket, uint32_t baudRate);
 
 

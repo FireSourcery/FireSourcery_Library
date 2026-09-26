@@ -41,7 +41,7 @@
 */
 /******************************************************************************/
 #include "Motor/MotProtocol/MotPacket.h"
-#include "Motor/MotProtocol/MotVarId.h"
+#include "Motor/MotProtocol/MotVarId/MotVarId.h"
 #include "Motor/MotProtocol/CANopen/CANopen.h"
 #include "Motor/MotProtocol/CANopen/OD.h"
 #include "Motor/MotProtocol/CANopen/SDO.h"

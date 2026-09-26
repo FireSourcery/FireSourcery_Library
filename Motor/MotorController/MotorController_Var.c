@@ -190,40 +190,8 @@ int MotorController_InstancesRef_Get(MotorController_T * p_dev, MotorController_
     @brief Motor Prefix Handlers
 */
 /******************************************************************************/
+/* [Motor_MotVar] routes the Prefix block; this layer only resolves the instance. */
 static inline Motor_T * MotorAt(MotorController_T * p_dev, uint8_t motor) { return (motor < p_dev->MOTORS.LENGTH) ? &p_dev->MOTORS.P_DEVS[motor] : NULL; }
-
-static int _HandleMotor_Get(MotorController_T * p_dev, MotVarId_T varId) { return Motor_VarType_Base_Get(MotorAt(p_dev, varId.Instance), (Motor_VarType_Base_T)varId.Type, varId.Base); }
-
-static MotVarId_Status_T _HandleMotor_Set(MotorController_T * p_dev, MotVarId_T varId, int value)
-{
-    Motor_T * p_motor = MotorAt(p_dev, varId.Instance);
-    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    // if (!Motor_VarType_Base_CheckSet(p_motor, (Motor_VarType_Base_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
-    Motor_VarType_Base_Set(p_motor, (Motor_VarType_Base_T)varId.Type, varId.Base, value);
-    return MOT_VAR_STATUS_OK;
-}
-
-static int _HandleMotorSubModule_Get(MotorController_T * p_dev, MotVarId_T varId) { return Motor_VarType_SubModule_Get(MotorAt(p_dev, varId.Instance), (Motor_VarType_SubModule_T)varId.Type, varId.Base); }
-
-static MotVarId_Status_T _HandleMotorSubModule_Set(MotorController_T * p_dev, MotVarId_T varId, int value)
-{
-    Motor_T * p_motor = MotorAt(p_dev, varId.Instance);
-    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    // if (!Motor_VarType_SubModule_CheckSet(p_motor, (Motor_VarType_SubModule_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
-    Motor_VarType_SubModule_Set(p_motor, (Motor_VarType_SubModule_T)varId.Type, varId.Base, value);
-    return MOT_VAR_STATUS_OK;
-}
-
-static int _HandleMotorSensor_Get(MotorController_T * p_dev, MotVarId_T varId) { return Motor_VarType_Sensor_Get(MotorAt(p_dev, varId.Instance), (Motor_VarType_Sensor_T)varId.Type, varId.Base); }
-
-static MotVarId_Status_T _HandleMotorSensor_Set(MotorController_T * p_dev, MotVarId_T varId, int value)
-{
-    Motor_T * p_motor = MotorAt(p_dev, varId.Instance);
-    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    // if (!Motor_VarType_Sensor_CheckSet(p_motor, (Motor_VarType_Sensor_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
-    Motor_VarType_Sensor_Set(p_motor, (Motor_VarType_Sensor_T)varId.Type, varId.Base, value);
-    return MOT_VAR_STATUS_OK;
-}
 
 /******************************************************************************/
 /*!
@@ -553,9 +521,10 @@ int MotorController_Var_Get(MotorController_T * p_dev, MotVarId_T varId)
 {
     switch ((MotVarId_Prefix_T)varId.Prefix)
     {
-        case MOT_VAR_ID_PREFIX_MOTOR:             return _HandleMotor_Get(p_dev, varId);
-        case MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE:  return _HandleMotorSubModule_Get(p_dev, varId);
-        case MOT_VAR_ID_PREFIX_MOTOR_SENSOR:      return _HandleMotorSensor_Get(p_dev, varId);
+        case MOT_VAR_ID_PREFIX_MOTOR:
+        case MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE:
+        case MOT_VAR_ID_PREFIX_MOTOR_SENSOR:      return Motor_MotVar_Get(MotorAt(p_dev, varId.Instance), varId);
+        case MOT_VAR_ID_PREFIX_MOTOR_RESV:        return 0;
         case MOT_VAR_ID_PREFIX_GENERAL:           return _HandleGeneral_Get(p_dev, varId);
         case MOT_VAR_ID_PREFIX_V_MONITOR:         return _HandleVMonitor_Get(p_dev, varId);
         case MOT_VAR_ID_PREFIX_HEAT_MONITOR:      return _HandleHeatMonitor_Get(p_dev, varId);
@@ -577,9 +546,10 @@ MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_dev, MotVarId_T 
 
     switch ((MotVarId_Prefix_T)varId.Prefix)
     {
-        case MOT_VAR_ID_PREFIX_MOTOR:             return _HandleMotor_Set(p_dev, varId, value);
-        case MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE:  return _HandleMotorSubModule_Set(p_dev, varId, value);
-        case MOT_VAR_ID_PREFIX_MOTOR_SENSOR:      return _HandleMotorSensor_Set(p_dev, varId, value);
+        case MOT_VAR_ID_PREFIX_MOTOR:
+        case MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE:
+        case MOT_VAR_ID_PREFIX_MOTOR_SENSOR:      return Motor_MotVar_Set(MotorAt(p_dev, varId.Instance), varId, value);
+        case MOT_VAR_ID_PREFIX_MOTOR_RESV:        return MOT_VAR_STATUS_ERROR_INVALID_ID;
         case MOT_VAR_ID_PREFIX_GENERAL:           return _HandleGeneral_Set(p_dev, varId, value);
         case MOT_VAR_ID_PREFIX_V_MONITOR:         return _HandleVMonitor_Set(p_dev, varId, value);
         case MOT_VAR_ID_PREFIX_HEAT_MONITOR:      return _HandleHeatMonitor_Set(p_dev, varId, value);

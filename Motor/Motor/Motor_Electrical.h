@@ -60,7 +60,7 @@ typedef struct
     uint8_t  PolePairs;
     uint16_t Kv;
     uint16_t VSpeedAdjustment; /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
-    /* alternatively store speedRated_Rpm, with option to resolve with VBus. */
+    /* alternatively store speedRated_Rpm, with option to resolve with VBus during init. */
 }
 Motor_ElectricalSpeedRating_T;
 // Motor_Kv_T;
@@ -91,7 +91,7 @@ static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_
     vbus max with margin
     sets the fw speed limit
     ~20000 rpm base for pi feedback, shared common max
-    altneratively pid use seperate base 2x vnominal ~10000, ui use angle for invaraint ui
+    alteratively pid use separate base 2x vnominal ~10000, ui use angle for invariant ui
 */
 static inline uint16_t _Motor_GetSpeedTypeMax_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return Phase_Calibration_GetVMaxVolts() * p_config->Kv; }
 static inline uint16_t _Motor_GetSpeedTypeMax_Rads(const Motor_ElectricalSpeedRating_T * p_config) { return el_rads_of_mech_rpm(p_config->PolePairs, _Motor_GetSpeedTypeMax_Rpm(p_config)); }
@@ -108,46 +108,14 @@ static inline accum32_t _Motor_GetKe_Fract16(const Motor_ElectricalSpeedRating_T
 static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { return psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 // static inline accum32_t Motor_GetPsi_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return psi_pu_angle_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 
-
-
-/*
-    optionally unify integrator and setpoint
-    selection used by for bemf and optionally setpoint ramp/pid
-*/
-// #if !defined(MOTOR_PU_BASIS_RPM) && !defined(MOTOR_PU_BASIS_ANGLE16)
-// #define MOTOR_PU_BASIS_RPM
-// #endif
-
 /*
     Alternative Storage
+    alternatively store as control domain units angldt
 */
-// typedef struct
-// {
-//     uint8_t  PolePairs;
-//     uint16_t Psi_Wb;
-// }
-// Motor_ElectricalSpeedRatingPsi_T;
-// typedef struct
-// {
-//     uint8_t  PolePairs;
-//     uint16_t RadsPerV;
-// }
-// Motor_ElectricalSpeedRatingRads_T;
 
-/*
-    Derived Parameters during initialization or from Host
-    alternatively store as control domain units
-*/
-// typedef struct
-// {
-//     uint16_t SpeedRated;
-//     uint16_t SpeedVMatch; uint16_t VSpeedAdjustment;
-// }
-// Motor_ElectricalSpeedRating_T;
-
-/* seperate data obbject for ui */
+/* separate data object for ui */
 /* si units for per motor base */
-/* optionally handle on remote side */
+/* optionally resolve reference on device side*/
 // struct Motor_ElectricalBase
 // {
 //     int32_t V ;

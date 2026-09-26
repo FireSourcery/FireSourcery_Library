@@ -211,7 +211,7 @@ static inline void * void_array_min(size_t type, const void * p_buffer, size_t l
     for (size_t index = 1U; index < length; index++)
     {
         p_unit = void_array_at(type, p_buffer, index);
-        if (memcmp(p_unit, p_min, type) < 0) { p_min = p_unit; }
+        if (pointer_value_as(type, p_unit) < pointer_value_as(type, p_min)) { p_min = p_unit; }
     }
     return (void *)p_min;
 }
@@ -223,7 +223,7 @@ static inline void * void_array_max(size_t type, const void * p_buffer, size_t l
     for (size_t index = 1U; index < length; index++)
     {
         p_unit = void_array_at(type, p_buffer, index);
-        if (memcmp(p_unit, p_max, type) > 0) { p_max = p_unit; }
+        if (pointer_value_as(type, p_unit) > pointer_value_as(type, p_max)) { p_max = p_unit; }
     }
     return (void *)p_max;
 }

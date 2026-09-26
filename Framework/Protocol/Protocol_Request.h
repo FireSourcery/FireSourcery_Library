@@ -68,6 +68,7 @@ typedef enum Protocol_ReqCode
 }
 Protocol_ReqCode_T;
 
+
 /*
     Optionally
     Step is the handler's resume point - a program counter it advances itself. That makes a
@@ -91,15 +92,17 @@ Protocol_Substate_T;
 /*!
     p_RxMeta describes the frame that caused THIS invocation, which is not always a data frame.
     However Protocol_ProcReqResp_T is only called when p_RxMeta is filled with a data frame.
+    a union def here: union { const Packet_Meta_T * const p_RxMeta; const Packet_Context_T * const p_RxContext; };
+    cannot be reused for socket initializers since the pointers use different const.
 */
 typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Packet_Xfer
 {
-//     union { const Packet_Meta_T * const p_RxMeta; const Packet_Context_T * const p_RxContext; };
     const Packet_Meta_T * const p_RxMeta;     /* Header of the frame that caused this call - may be a control frame */
     Packet_Meta_T * const p_TxMeta;           /* Handler sets Id and Length; the format builds the header */
     void * const p_Substate;                  /* Handler's own storage, sized by the child protocol */
 }
 Packet_Xfer_T;
+
 
 /*
     This function signature exposes the void * payloads so they can be cast through the function pointer for ergonomics.
@@ -222,6 +225,11 @@ static inline bool Protocol_CaptureReqOfTable(Protocol_ReqState_T * p_state, Pro
     return (p_state->p_ReqActive != NULL);
 }
 
+static inline bool Protocol_IsReqActive(const Protocol_ReqState_T * p_state)
+{
+    return (p_state->p_ReqActive != NULL); /* && (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE)   */
+}
+
 /*!
     The bound row's id, carrying the frame shape for both directions.
 
@@ -251,14 +259,6 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
     p_state->p_ReqActive = NULL;
 }
 
-static inline bool Protocol_BindReq(Protocol_ReqState_T * p_state, Protocol_Req_T * p_req)
-{
-    if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; }
-    p_state->p_ReqActive = p_req;
-    if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
-    return (p_state->p_ReqActive != NULL);
-}
-
 /*!
     @brief  Invoke the bound handler.
 
@@ -266,7 +266,7 @@ static inline bool Protocol_BindReq(Protocol_ReqState_T * p_state, Protocol_Req_
             the handler distinguishes them by Step, which the engine only clears at Select.
             Returns to IDLE on DONE and ABORT.
 
-    @param  p_xfer  handler context. p_Step must point at this state's Step.
+    @param  p_xfer  handler context. Payloads arrive already offset by the caller.
 
     Handler contract
     p_rxPayload / p_txPayload arrive already offset past the header - a handler never
@@ -281,6 +281,8 @@ static inline bool Protocol_BindReq(Protocol_ReqState_T * p_state, Protocol_Req_
 static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state, void * p_app, const Packet_Xfer_T * p_xfer, const void * p_rxPayload, void * p_txPayload)
 {
     Protocol_ReqCode_T reqCode;
+
+    assert(Protocol_IsReqActive(p_state));
 
     switch (p_state->StateId)
     {
@@ -299,40 +301,11 @@ static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state
     return reqCode;
 }
 
-
-/*!
-    Offset both payloads past their headers and invoke the handler.
-
-    One offset serves both: the bound row's shape describes the request and the answer alike,
-    and it cannot change under an active handler because CaptureReq does not re-look-up while
-    ACTIVE. A control frame arriving mid-exchange never reaches here at all.
-*/
-static inline Protocol_ReqCode_T Protocol_ProcReqState(Protocol_ReqState_T * p_state, void * p_app, const Packet_Xfer_T * p_xfer, uint8_t * p_rxFrame, uint8_t * p_txFrame)
-{
-    if (p_state->p_ReqActive == NULL) { return PROTOCOL_REQ_ABORT; }
-
-    assert(Protocol_ReqId(p_state)->FRAME_FORMAT != NULL);
-    assert(Protocol_ReqRespId(p_state)->FRAME_FORMAT != NULL);
-
-    packet_size_t rxOffset = Protocol_ReqId(p_state)->FRAME_FORMAT->HEADER_LENGTH; /* the opening data frame */
-    packet_size_t txOffset = Protocol_ReqRespId(p_state)->FRAME_FORMAT->HEADER_LENGTH;   /* the shape the row answers with */
-
-    /*
-        same as p_xfer->p_Meta + HEADER_LENGTH + sizeof(Packet_Meta_T)
-    */
-    return _Protocol_ProcReq(p_state, p_app, p_xfer, &p_rxFrame[rxOffset], &p_txFrame[txOffset]);
-}
-
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
-static inline bool Protocol_IsReqActive(const Protocol_ReqState_T * p_state)
-{
-    return (p_state->p_ReqActive != NULL); /* && (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE)   */
-}
-
 /*! Zeroed when nothing is bound, so an unbound socket acks nothing. */
 static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState_T * p_state)
 {

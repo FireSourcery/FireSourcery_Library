@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,34 +24,33 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Cmd.c
+    @file   SPI_Xcvr.h
     @author FireSourcery
-    @brief
-
- */
+    @brief  [SPI_T] as an [Xcvr_T].
+*/
 /******************************************************************************/
-#include "Cmd.h"
+#include "SPI.h"
+#include "../Xcvr/Xcvr.h"
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
+// extern const Xcvr_VTable_T SPI_XCVR_VTABLE;
 
-Cmd_T * Cmd_Search(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p_cmdName)
+#define SPI_XCVR_INIT(p_Spi) XCVR_INIT((p_Spi), &SPI_XCVR_VTABLE)
+
+/* Translates the generic flag word into the one thing SPI does with it */
+static bool SetFlags(SPI_T * p_spi, uint32_t flags)
 {
-    Cmd_T * p_cmd = 0U;
-
-    if ((p_cmdName != 0U) && (p_cmdName[0U] != '\0'))
-    {
-        for (uint8_t idx = 0U; idx < tableLength; idx++)
-        {
-            if (strcmp(p_cmdName, p_cmdTable[idx].P_NAME) == 0)
-            {
-                p_cmd = &p_cmdTable[idx];
-                break;
-            }
-        }
-    }
-
-    return p_cmd;
+    SPI_SetCsHold(p_spi, ((flags & XCVR_FLAG_XFER_PENDING) != 0U));
+    return true;
 }
 
+/*
+    SET_TARGET is absent because SPI selects its peer with a wire, and one [SPI_T] is
+    one device. CONFIG_BAUD_RATE is absent because the clock is const config, fixed by
+    the device rather than negotiated at runtime.
+*/
+static const Xcvr_VTable_T SPI_XCVR_VTABLE =
+{
+    .TX       = (Xcvr_Tx_T)SPI_Tx,
+    .RX       = (Xcvr_Rx_T)SPI_Rx,
+    .SET_FLAGS  = (Xcvr_SetProperty_T)SetFlags,
+};

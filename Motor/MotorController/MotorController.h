@@ -40,9 +40,9 @@
 #include "Motor/Motor/Motor_Config.h"
 #include "Motor/Motor/Motor_User.h"
 #include "Motor/Motor/StateMachine/Motor_StateMachine.h"
-// #include "Motor/Motor/Motor_Include.h"
 #include "Motor/Motor/VBus/VBus.h"
 #include "Motor/Motor/VBus/VBus_Monitor.h"
+// #include "Motor/Motor/Motor_Include.h"
 
 #include "Transducer/Blinky/Blinky.h"
 #include "Transducer/Monitor/Voltage/VMonitor.h"
@@ -54,10 +54,11 @@
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/UART/UART.h"
-#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+
+// #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
 #include "Peripheral/CAN/CAN.h"
 #include "Peripheral/CAN/CAN_Service.h"
-#endif
+// #endif
 
 #include "Framework/Timer/Timer.h"
 #include "Framework/StateMachine/StateMachine.h"
@@ -212,6 +213,11 @@ typedef struct MotorController_Context
 MotorController_Context_T;
 
 /*
+    CiA 402 per-axis adapter state. Pointer only - the protocol layer owns the type.
+*/
+typedef struct Cia402_Adapter Cia402_Adapter_T;
+
+/*
     Allocated memory context
 */
 typedef const struct MotorController
@@ -226,14 +232,17 @@ typedef const struct MotorController
 
     UART_T * P_UARTS;
     uint8_t UART_COUNT;
-#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+// #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
     CAN_T * P_CAN_SOCKETS;
     uint8_t CAN_SOCKET_COUNT;
-#endif
+// #endif
 
     /* Motor Services Context */
     Motor_Table_T MOTORS; /* Motor Array Context */
-    // uint8_t * P_MOTOR_ADAPTER_BUFFER; /* parallel for now */
+// #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
+    /* Per-axis CiA 402 state, [MOTORS.LENGTH] entries. Indexed by axis, never reached from Motor_T. */
+    Cia402_Adapter_T * P_CIA402_ADAPTERS;
+// #endif
 
     /*
         Peripheral Services Context

@@ -26,27 +26,30 @@
 /*!
     @file   ADC.h
     @author FireSourcery
-    @brief  ADC module. Core types, per ADC accessors.
+    @brief  ADC base. 1 converter, addressed by channel mask.
 
-    ADC.h, _ADC.h, ADC_Thread.h handle everything around 1 ADC, and know nothing above it:
-        ADC_Channel_T   - 1 Hw input. The single channel unit. [ID] == [Hw slot] == [P_CHANNELS index] == [Results index]
-        ADC_Sequence_T  - a channel set on 1 ADC, converted as a unit. Its results land in the buffer by [ID]
-        ADC_T           - 1 converter. Owns the channel table, the results buffer, and the sequence table
+    The base holds no handler and no set. It converts what is marked, reports what landed, and
+    names nothing above itself. [adc_channel_t] is its only address: [ID] == [Hw slot] ==
+    [P_CHANNELS index] == [P_CHANNEL_RESULTS index].
 
-    Above, and depending only downward:
-        ADC_Batch_T      - sequences over 1..N ADCs, converted by 1 trigger and joined. ADC_Batch.h
-        ADC_Conversion_T - the application handle, a single channel or a batch alike. ADC_Conversion.h
+    The collaborators are optional, one per activation style, each depending only downward:
+        ADC_Channel_T  - [channel] -> a push handler. ADC_Channel.h
+        ADC_Sequence_T - a channel set on 1 ADC, selected against a trigger. ADC_Sequence.h
+        ADC_Batch_T    - sets over 1..N ADCs, joined by 1 trigger. ADC_Batch.h
 
-    There is no upward link. The ADC calls nothing above it, and holds no pointer to anything above it.
-    A set's consumer belongs to its batch, and the Board's ISR is the only place that names both
-    an ADC and the trigger it converts on. ADC_TriggerState_T below is state the ADC never reads.
+    Completion is 2 mask words, maintained the same way by both activation styles:
+        [ChannelMarkers] - to convert. The software walker's work queue, cleared as each lands.
+        [CompleteFlags]  - landed, not yet consumed. Set by the ISR, cleared by whoever takes it.
 
-    ADC_Channel_T.CAPTURE stays the user handler for a single channel, software activation.
+    They are separate words because the clear authority differs. Sharing one would have the
+    walker's clear erase a consumer's notification, and a consumer's clear requeue conversions.
+    [CompleteFlags] is the only state both activation styles maintain, so it is what lets the
+    Board read completion the same way whichever style an ADC runs.
 
     Activation is either:
-        Hw sequenced    - ADC_HW_SEQUENCER_ENABLE. A trigger converts the sequence, a transfer fills the results.
-                          A selected sequence repeats on every trigger until another is selected.
-        Software        - Channels are marked, the ISR walks them. A selected sequence converts once per request.
+        Hw sequenced    - ADC_HW_SEQUENCER_ENABLE. A trigger converts the slot range, a transfer
+                          fills the results, and the Board's ISR flags the set it armed.
+        Software        - Channels are marked, the ISR walks them, fifo depth at a time.
 */
 /******************************************************************************/
 #include "HAL_ADC.h"    /* HAL contract. HAL_ADC_T, adc_result_t, adc_pin_t */
@@ -79,77 +82,22 @@ typedef uint32_t adc_mask_t;
 /* Constant expressions, for config time masks */
 #define ADC_MASK(Channel)                       ((adc_mask_t)(1UL << (Channel)))
 #define ADC_MASK_RANGE(ChannelStart, Count)     ((adc_mask_t)(((1UL << (Count)) - 1UL) << (ChannelStart)))
+#define ADC_MASK_ALL                            ((adc_mask_t)(~0UL))
 
 static inline adc_mask_t ADC_MaskOf(adc_channel_t channel) { return ADC_MASK(channel); }
 static inline adc_mask_t ADC_MaskRange(adc_channel_t channelStart, uint8_t count) { return ADC_MASK_RANGE(channelStart, count); }
 static inline bool ADC_Mask_IsContiguous(adc_mask_t mask) { return (((mask + (mask & (0UL - mask))) & mask) == 0UL); }
 
-static inline adc_channel_t ADC_ChannelStartOf(adc_mask_t sequence) { return (adc_channel_t)__builtin_ctz(sequence); }
-static inline uint8_t ADC_ChannelCountOf(adc_mask_t sequence) { return (uint8_t)__builtin_popcount(sequence); }
-
-typedef void (*ADC_Callback_T)(void * p_context);
-typedef void (*ADC_Capture_T)(void * p_context, adc_result_t value);
-
-
-/******************************************************************************/
-/*`
-    Channel
-    The single channel unit. A sequence of 1, addressed as [ADC, Channel]
-*/
-/******************************************************************************/
-struct ADC_Module;
-typedef const struct ADC_Module ADC_T;
-
-typedef const struct ADC_Channel
-{
-    adc_channel_t ID;           /* Index into ADC.P_CHANNELS */
-    adc_pin_t PIN;              /* Physical Id of the Pin */
-    ADC_Capture_T CAPTURE;      /* Optional. Software activation only, per conversion. The result is stored either way */
-    void * P_CONTEXT;
-    // uint32_t RESULT_SCALING;    /* Consumer concern, known at the Board layer */
-}
-ADC_Channel_T;
-
-/* Casts the handler to its registration type. CAPTURE and P_CONTEXT are optional */
-#define ADC_CHANNEL_INIT(ChannelId, PinId, p_Context, CaptureFn) (ADC_Channel_T) \
-    { .ID = (ChannelId), .PIN = (PinId), .CAPTURE = (ADC_Capture_T)(CaptureFn), .P_CONTEXT = (p_Context), }
+static inline adc_channel_t ADC_ChannelStartOf(adc_mask_t mask) { return (adc_channel_t)__builtin_ctz(mask); }
+static inline uint8_t ADC_ChannelCountOf(adc_mask_t mask) { return (uint8_t)__builtin_popcount(mask); }
 
 /******************************************************************************/
 /*
-    Sequence
-    The channel set 1 ADC converts per request. A channel mask, so it serves both activations:
-
-        Hw sequenced - the mask must be contiguous. It maps onto the Hw slot range and 1 transfer.
-        Software     - any mask. The ISR walks it, fifo depth at a time, in channel order.
-
-    On completion the sequence pushes its values to CAPTURE, in channel order. The consumer is opaque:
-    a batch part, or any handler the Board registers.
+    Handler types. Vocabulary shared by the collaborators, which the base never calls.
 */
 /******************************************************************************/
-typedef const struct ADC_Sequence
-{
-    adc_mask_t CHANNELS;
-    // adc_mask_t ACTIVATION;
-    // adc_mask_t COMPLETION; /* ACTIVATION optionally includes channels not checked for completion. */
-    // adc_channel_t START;
-    // adc_channel_t COUNT;
-    ADC_Callback_T COMPLETE;   /* Runs in the completion ISR of its ADC. NULL for scan only */
-    void * P_CONTEXT;           /* Opaque. A batch join record, or any handler the Board registers */
-}
-ADC_Sequence_T;
-
-/* Casts the handler to its registration type. Braces only, so a sequence can nest in a holder's initializer */
-#define ADC_SEQUENCE_FIELDS(Channels, CompleteFn, p_Context) \
-    { .CHANNELS = (Channels), .COMPLETE = (ADC_Callback_T)(CompleteFn), .P_CONTEXT = (void *)(p_Context), }
-
-#define ADC_SEQUENCE(Channels, CompleteFn, p_Context) (ADC_Sequence_T)ADC_SEQUENCE_FIELDS(Channels, CompleteFn, p_Context)
-
-
-static inline adc_channel_t ADC_Sequence_Start(const ADC_Sequence_T * p_sequence) { return ADC_ChannelStartOf(p_sequence->CHANNELS); }
-static inline adc_channel_t ADC_Sequence_Count(const ADC_Sequence_T * p_sequence) { return ADC_ChannelCountOf(p_sequence->CHANNELS); }
-static inline adc_mask_t ADC_Sequence_Mask(const ADC_Sequence_T * p_sequence) { return p_sequence->CHANNELS; }
-
-
+typedef void (*ADC_Callback_T)(void * p_context);
+typedef void (*ADC_Capture_T)(void * p_context, adc_result_t value);
 
 /******************************************************************************/
 /*
@@ -159,27 +107,14 @@ static inline adc_mask_t ADC_Sequence_Mask(const ADC_Sequence_T * p_sequence) { 
 /******************************************************************************/
 typedef struct ADC_State
 {
-    /*
-        Selected sequence. Active is written in the completion ISR window only, Next by any thread.
-        Last request wins, and applies before the next trigger.
+    volatile adc_mask_t ChannelMarkers;     /* To convert. Software activation only, the walker clears as each lands */
+    volatile adc_mask_t CompleteFlags;      /* Landed, not yet consumed. The consumer clears what it takes */
 
-        ActiveSequence means two different things: the Hw-owned set in DMA mode,
-        and the software set in flight in marked mode — whose channels must be walked, not skipped.
-    */
-    ADC_Sequence_T * volatile p_ActiveSequence;
-    ADC_Sequence_T * volatile p_NextSequence; /* Synchronous activation */
     /*
-        Software activation. Not used when the sequencer is Hw.
-        Markers are the channels still to convert, Pending the active sequence channels still to capture.
+        Mirrors the fifo registers, where a direct channel read is unavailable.
+        Setup control is unmodified through the conversion, so the results buffer is outside this.
     */
-    volatile adc_mask_t ChannelMarkers;
-    /*
-        Reg/Fifo State
-        maintained by software where direct channel read is not available.
-        Result buffer outside of ADC_State.
-        ADC state as purely setup control remains unmodified through the entire conversion process.
-    */
-    const ADC_Channel_T * ActiveChannels[ADC_FIFO_LENGTH_MAX];
+    adc_channel_t ActiveChannels[ADC_FIFO_LENGTH_MAX];
     uint8_t ActiveChannelCount;
 
 #ifndef NDEBUG
@@ -192,14 +127,10 @@ ADC_State_T;
 
 #define ADC_STATE_ALLOC() (&(ADC_State_T){})
 
-// typedef void (*ADC_BoardCallback_T)(const volatile adc_result_t * p_values, adc_mask_t completed);
-
 /******************************************************************************/
 /*
     ADC Peripheral Control
-    Wraps HAL_ADC with the channel table, the results buffer, and the sequence table.
-        - Context Per Thread
-        - Wraps HAL_ADC with State, callback context
+    Wraps HAL_ADC with the pin table, the results buffer, and the completion state.
 */
 /******************************************************************************/
 /* Tag is ADC_Module, not ADC. Vendor headers define ADC as a peripheral base, e.g. MKE06Z4 */
@@ -208,15 +139,11 @@ typedef const struct ADC_Module
     HAL_ADC_T * P_HAL_ADC;
     ADC_State_T * P_STATE;
 
-    const ADC_Channel_T * P_CHANNELS;           /* [Channel] */
+    const adc_pin_t * P_CHANNEL_PINS;               /* [Channel] -> Hw pin. The base's whole notion of a channel */
     uint8_t CHANNEL_COUNT;                      /* Pins may repeat, for a channel per consumer */
 
     /* Parallel to P_CHANNELS, for the Hw transfer */
     volatile adc_result_t * P_CHANNEL_RESULTS;  /* [Channel] -> result. Hw transfer destination */
-
-    /* Sequence share completion markers [ChannelMarkers] so long as its single consumer, i.e sequences are non-overlapping. */
-    const ADC_Sequence_T * P_SEQUENCES;         /* [SequenceId] */
-    uint8_t SEQUENCE_COUNT;
 }
 ADC_T;
 
@@ -238,12 +165,12 @@ static inline void ADC_Deactivate(ADC_T * p_adc) { HAL_ADC_Deactivate(p_adc->P_H
     Channel access
 */
 /******************************************************************************/
-static inline const ADC_Channel_T * ADC_ChannelOf(ADC_T * p_adc, adc_channel_t channel) { return &p_adc->P_CHANNELS[channel]; }
+static inline adc_pin_t ADC_PinOf(ADC_T * p_adc, adc_channel_t channel) { return p_adc->P_CHANNEL_PINS[channel]; }
 static inline adc_result_t ADC_ResultOf(ADC_T * p_adc, adc_channel_t channel) { return p_adc->P_CHANNEL_RESULTS[channel]; }
 
 /******************************************************************************/
 /*
-    Channel markers.
+    Channel markers. The software walker's work queue
 */
 /******************************************************************************/
 static inline void ADC_MarkChannel(ADC_T * p_adc, adc_channel_t channel) { p_adc->P_STATE->ChannelMarkers |= ADC_MaskOf(channel); }
@@ -252,25 +179,38 @@ static inline bool ADC_IsMarked(ADC_T * p_adc, adc_channel_t channel) { return (
 static inline void ADC_MarkAll(ADC_T * p_adc, adc_mask_t mask) { p_adc->P_STATE->ChannelMarkers |= mask; }
 static inline bool ADC_IsMarkedAll(ADC_T * p_adc, adc_mask_t mask) { return ((p_adc->P_STATE->ChannelMarkers & mask) == mask); }
 
-
 /******************************************************************************/
 /*
-    Sequence selection
-    Activation is in _ADC.h, it resolves the Hw
+    Completion flags.
+    The Board's view, identical whichever activation style the ADC runs.
+
+    Peek is a level, and stays true until taken. Take is the edge: it consumes, so a handler
+    driven by it runs once per set, and a set the caller did not name is left for its own consumer.
 */
 /******************************************************************************/
-/* The id is the Board's entry. Everything inside holds the set itself, so the check costs nothing on the data path */
-static inline const ADC_Sequence_T * ADC_SequenceOf(ADC_T * p_adc, uint8_t sequenceId)
-{
-    assert(sequenceId < p_adc->SEQUENCE_COUNT);
-    return &p_adc->P_SEQUENCES[sequenceId];
-}
-static inline const ADC_Sequence_T * ADC_GetActiveSequence(ADC_T * p_adc) { return p_adc->P_STATE->p_ActiveSequence; }
-/* Converting. A deferred selection is not applied until the completion */
-static inline bool ADC_IsSequenceActive(ADC_T * p_adc, uint8_t sequenceId) { return (p_adc->P_STATE->p_ActiveSequence == ADC_SequenceOf(p_adc, sequenceId)); }
+static inline adc_mask_t ADC_CompleteFlags(ADC_T * p_adc) { return p_adc->P_STATE->CompleteFlags; }
+static inline bool ADC_IsComplete(ADC_T * p_adc, adc_mask_t mask) { return ((p_adc->P_STATE->CompleteFlags & mask) == mask); }
 
-/* Selected. Active already, or applied at the next completion */
-static inline bool ADC_IsSequenceSelected(ADC_T * p_adc, uint8_t sequenceId) { return (p_adc->P_STATE->p_NextSequence == ADC_SequenceOf(p_adc, sequenceId)); }
+/*
+    The clear is a read modify write against the ISR's OR, and Cortex-M0+ has no LDREX.
+    Take from 1 context per ADC: its completion ISR, or the thread that polls it. Taking from a
+    thread while an ISR flags the same ADC loses bits, and needs a Critical section around both.
+*/
+/* All or nothing. A partial set keeps its flags, so it can still complete */
+static inline bool ADC_TakeComplete(ADC_T * p_adc, adc_mask_t mask)
+{
+    bool isComplete = ((p_adc->P_STATE->CompleteFlags & mask) == mask);
+    if (isComplete == true) { p_adc->P_STATE->CompleteFlags &= ~mask; }
+    return isComplete;
+}
+
+/* Greedy. Takes whatever of [mask] has landed */
+static inline adc_mask_t ADC_TakeFlags(ADC_T * p_adc, adc_mask_t mask)
+{
+    adc_mask_t taken = p_adc->P_STATE->CompleteFlags & mask;
+    p_adc->P_STATE->CompleteFlags &= ~taken;
+    return taken;
+}
 
 /******************************************************************************/
 /*

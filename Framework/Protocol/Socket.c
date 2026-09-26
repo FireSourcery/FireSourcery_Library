@@ -29,6 +29,7 @@
 /******************************************************************************/
 #include "Protocol.h"
 #include "Socket.h"
+#include <assert.h>
 #include <string.h>
 
 
@@ -39,26 +40,24 @@
 /******************************************************************************/
 void Socket_Disable(Socket_T * p_socket)
 {
-    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-
-    Protocol_Reset(&p_state->Protocol);
-    p_state->IsEnabled = false;
+    Protocol_Reset(p_socket->PROTOCOL.P_STATE);
+    p_socket->P_SOCKET_STATE->IsEnabled = false;
 }
 
 /*!
-    @return false when no binding is selected. An enabled socket always has both.
+    @return false when no Xcvr is selected. BINDING is const, so it is always present.
 */
 bool Socket_Enable(Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
-    if ((p_state->p_Xcvr == NULL) || (p_state->p_Format == NULL)) { return false; }
+    if (p_state->p_Xcvr == NULL) { return false; }
 
     Xcvr_ConfigBaudRate(p_state->p_Xcvr, p_state->Config.BaudRate);
-    Protocol_Reset(&p_state->Protocol);
+    Protocol_Reset(p_socket->PROTOCOL.P_STATE);
     /* The link starts measuring from now - otherwise the watchdog carries the age of the
        socket's last enable, and arming it on a long-idle socket faults immediately. */
-    Protocol_Init(&p_state->Protocol, *p_socket->P_TIMER);
+    Protocol_Init(p_socket->PROTOCOL.P_STATE, Protocol_TimerNow(&p_socket->PROTOCOL));
     p_state->IsEnabled = true;
     return true;
 }
@@ -67,8 +66,8 @@ bool Socket_Enable(Socket_T * p_socket)
 /*!
     Selection
 
-    Both refuse while busy: a format swap mid-exchange orphans the staged response, and an
-    Xcvr swap orphans the bytes already in the frame buffer. Disable first to force it.
+    Refuses while busy: an Xcvr swap orphans the bytes already in the frame buffer. Disable
+    first to force it.
 */
 /******************************************************************************/
 bool Socket_SetXcvr(Socket_T * p_socket, uint8_t xcvrId)
@@ -80,28 +79,9 @@ bool Socket_SetXcvr(Socket_T * p_socket, uint8_t xcvrId)
 
     p_state->Config.XcvrId = xcvrId;
     p_state->p_Xcvr = p_socket->P_XCVR_TABLE[xcvrId];
-    Packet_ResetRx(&p_state->Protocol.RxParser);      /* bytes from the old port are not this frame */
+    Packet_ResetRx(&p_socket->PROTOCOL.P_STATE->RxParser);   /* bytes from the old port are not this frame */
 
     if (p_state->IsEnabled == true) { Xcvr_ConfigBaudRate(p_state->p_Xcvr, p_state->Config.BaudRate); }
-    return true;
-}
-
-bool Socket_SetFormat(Socket_T * p_socket, uint8_t formatId)
-{
-    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-
-    if (formatId >= p_socket->FORMAT_COUNT) { return false; }
-    if (Socket_IsBusy(p_socket) == true) { return false; }
-
-    /*
-        formatId is the only runtime input here - it arrives from NVM or over the wire. The
-        format's own fields are compile-time constants of a const table, so their bounds are
-        the format author's to assert at the definition, not this function's to re-check on
-        every selection. See the contract on Packet_Format_T.
-    */
-    p_state->Config.FormatId = formatId;
-    p_state->p_Format = p_socket->P_FORMAT_TABLE[formatId];
-    Packet_ResetRx(&p_state->Protocol.RxParser);      /* a partial frame has no meaning in the new shape */
     return true;
 }
 
@@ -124,16 +104,16 @@ void Socket_Init(Socket_T * p_socket)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
 
+    assert(p_socket->PROTOCOL.P_RX_BUFFER != p_socket->PROTOCOL.P_TX_BUFFER); /* the handler's payloads are restrict */
+
     if (p_socket->P_NVM_CONFIG != NULL) { p_state->Config = *p_socket->P_NVM_CONFIG; }
 
     p_state->IsEnabled = false;
     p_state->p_Xcvr = NULL;
-    p_state->p_Format = NULL;
-    Protocol_Init(&p_state->Protocol, *p_socket->P_TIMER);
+    Protocol_Init(p_socket->PROTOCOL.P_STATE, Protocol_TimerNow(&p_socket->PROTOCOL));
 
     /* Select before enabling, so an out of range stored id leaves the socket down rather than bound to nothing. */
     (void)Socket_SetXcvr(p_socket, p_state->Config.XcvrId);
-    (void)Socket_SetFormat(p_socket, p_state->Config.FormatId);
 
     if (p_state->Config.IsEnableOnInit == true) { (void)Socket_Enable(p_socket); }
 }

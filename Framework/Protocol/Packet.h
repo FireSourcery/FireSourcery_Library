@@ -31,6 +31,7 @@
 /******************************************************************************/
 #include <stdint.h>
 #include <stddef.h>
+#include <stddef.h>
 
 
 #ifndef PACKET_ID_TYPE
@@ -105,6 +106,13 @@ Packet_Context_T;
 #define PACKET_CONTEXT_ALLOC(BufferLength)                                      \
     (&(union { Packet_Context_T Context; uint8_t Bytes[sizeof(Packet_Meta_T) + (BufferLength)]; }){0}.Context)
 
+// typedef union
+// {
+//     Packet_Context_T * p_Context;
+//     Packet_Meta_T * p_Meta;
+// }
+// Packet_Xfer_T;
+
 /*!
     Frame/header variants
     Frame Encoding/Decoding
@@ -129,9 +137,6 @@ typedef const struct Packet_FrameFormat
     // uint8_t MAX_LENGTH;
 }
 Packet_FrameFormat_T;
-
-static inline void * Packet_HeaderOf(Packet_Context_T * p_context) { return (void *)p_context->Packet; }
-static inline void * Packet_PayloadOf(Packet_Context_T * p_context, Packet_FrameFormat_T * p_frameFormat) { return (void *)(p_context->Packet + p_frameFormat->HEADER_LENGTH); }
 
 
 /*
@@ -292,6 +297,10 @@ static inline packet_size_t _Packet_OverheadOf(Packet_FrameFormat_T * p_format)
 {
     return p_format->HEADER_LENGTH + p_format->TRAILER_LENGTH;
 }
+
+static inline void * Packet_HeaderOf(Packet_Context_T * p_context) { return (void *)p_context->Packet; }
+static inline void * Packet_PayloadOf(Packet_Context_T * p_context, Packet_FrameFormat_T * p_frameFormat) { return (void *)(p_context->Packet + p_frameFormat->HEADER_LENGTH); }
+
 
 /*!
     PRECONDITION: the body length is already known to fit - the frame was either sized by the

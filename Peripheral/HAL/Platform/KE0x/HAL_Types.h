@@ -38,6 +38,7 @@
 
 */
 
+typedef UART_Type HAL_UART_T;
 typedef FTM_Type HAL_ClockTimer_T;
 typedef ADC_Type HAL_ADC_T;
 typedef MSCAN_Type HAL_CAN_T;

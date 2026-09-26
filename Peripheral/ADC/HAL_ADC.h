@@ -60,9 +60,9 @@ static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal);
 static inline void HAL_ADC_Init(HAL_ADC_T * p_hal);
 
 #ifdef HAL_ADC_DMA_ENABLE
-static inline void HAL_ADC_ActivateDmaSequence(HAL_ADC_T * p_hal, uint32_t mask);
+static inline void HAL_ADC_SelectDmaSequence(HAL_ADC_T * p_hal, uint32_t channelStart, uint8_t count);
 #else
-static inline void HAL_ADC_ActivateDmaSequence(HAL_ADC_T * p_hal, uint32_t mask) { (void)p_hal; (void)mask; }
+static inline void HAL_ADC_SelectDmaSequence(HAL_ADC_T * p_hal, uint32_t channelStart, uint8_t count) { (void)p_hal; (void)channelStart; (void)count; }
 #endif
 
 

@@ -26,45 +26,31 @@
 /*!
     @file   _ADC.h
     @author FireSourcery
-    @brief  Private. Capture and activation. Resolves Hw sequenced against software activation.
+    @brief  Private. Fifo capture and activation.
+
+    The channel list is ids. [P_CHANNELS] resolves the pin, and the id is the results index,
+    so the Hw facing blocks take the pin table and the base never sees a handler.
 */
 /******************************************************************************/
 #include "ADC.h" /* Included from ADC.h after its typedefs. #pragma once resolves either order */
 
-/******************************************************************************/
-/*
-    Hw sequencer import.
-    Route the trigger to [channelStart, channelStart + count). The Hw converts and transfers on each trigger.
-    Board or platform provided, when ADC_HW_SEQUENCER_ENABLE is true.
-*/
-/******************************************************************************/
-#if ADC_HW_SEQUENCER_ENABLE
-static inline void HAL_ADC_ActivateSequence(HAL_ADC_T * p_hal, uint32_t channelStart, uint32_t count);
-#else
-static inline void HAL_ADC_ActivateSequence(HAL_ADC_T * p_hal, uint32_t channelStart, uint32_t count) { (void)p_hal; (void)channelStart; (void)count; }
-#endif
 
 /******************************************************************************/
 /*
-    Fifo
+    Capture. Software activation only. The Hw transfer fills the results buffer directly.
 */
 /******************************************************************************/
-/*
-    The results buffer is the canonical store, so the channel's CAPTURE is in addition, not instead.
-    A pull read then sees the same value the push delivered.
-*/
-static inline void _ADC_CaptureChannel(const HAL_ADC_T * p_hal, const ADC_Channel_T * p_channel, volatile adc_result_t * p_dest)
+/* 1 channel. The pin reads the Hw, the id addresses the buffer */
+static inline void _ADC_CaptureChannel(const HAL_ADC_T * p_hal, adc_pin_t pin, volatile adc_result_t * p_dest)
 {
-    adc_result_t result = HAL_ADC_ReadResult(p_hal, p_channel->PIN);
-
-    *p_dest = result;
-    if (p_channel->CAPTURE != NULL) { p_channel->CAPTURE(p_channel->P_CONTEXT, result); }
+    *p_dest = HAL_ADC_ReadResult(p_hal, pin);
 }
 
 /*
     Read in the same way it was pushed, store by [ID]. Returns the captured channels.
+    A fifo mismatch captures nothing, and those channels convert again.
 */
-static inline adc_mask_t _ADC_CaptureTo(const HAL_ADC_T * p_hal, const ADC_Channel_T * const * p_channels, uint8_t count, volatile adc_result_t * p_results)
+static inline adc_mask_t _ADC_CaptureTo(const HAL_ADC_T * p_hal, const adc_pin_t * p_pins, const adc_channel_t * p_channels, uint8_t count, volatile adc_result_t * p_results)
 {
     adc_mask_t captured = 0UL;
 #if (ADC_FIFO_LENGTH_MAX > 1U)
@@ -73,65 +59,54 @@ static inline adc_mask_t _ADC_CaptureTo(const HAL_ADC_T * p_hal, const ADC_Chann
     {
         for (uint8_t index = 0U; index < count; index++)
         {
-            _ADC_CaptureChannel(p_hal, p_channels[index], &p_results[p_channels[index]->ID]);
-            captured |= ADC_MaskOf(p_channels[index]->ID);
+            _ADC_CaptureChannel(p_hal, p_pins[p_channels[index]], &p_results[p_channels[index]]);
+            captured |= ADC_MaskOf(p_channels[index]);
         }
     }
     return captured;
 }
 
-static inline void _ADC_ActivateFrom(HAL_ADC_T * p_hal, ADC_Channel_T * const * p_channels, uint8_t count)
+static inline void _ADC_ActivateFrom(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, const adc_channel_t * p_channels, uint8_t count)
 {
     adc_pin_t pins[ADC_FIFO_LENGTH_MAX]; /* This should optimize away. */
-    for (uint8_t index = 0U; index < count; index++) { pins[index] = p_channels[index]->PIN; }
-    HAL_ADC_ActivateEach(p_hal, pins, count);
+    for (uint8_t index = 0U; index < count; index++) { pins[index] = p_pins[p_channels[index]]; }
+    /* Nothing active is not a push. The callers gate on the markers, so this only holds under NDEBUG, where their assert is gone */
+    if (count > 0U) { HAL_ADC_ActivateEach(p_hal, pins, count); }
 }
 
 /*
-    The captured channels clear their markers, so [ChannelMarkers] alone tracks what is left to convert.
-    A fifo mismatch captures nothing, and those channels convert again.
+    The captured channels clear their markers and set their flags, so the 2 words hold the whole
+    conversion state: what is left to convert, and what has landed unconsumed.
 */
-static inline adc_mask_t _ADC_Capture(const HAL_ADC_T * p_hal, const ADC_State_T * p_state, volatile adc_result_t * p_results)
+static inline adc_mask_t _ADC_Capture(ADC_T * p_adc)
 {
-    return _ADC_CaptureTo(p_hal, &p_state->ActiveChannels[0U], p_state->ActiveChannelCount, p_results);
+    return _ADC_CaptureTo(p_adc->P_HAL_ADC, p_adc->P_CHANNEL_PINS, &p_adc->P_STATE->ActiveChannels[0U], p_adc->P_STATE->ActiveChannelCount, p_adc->P_CHANNEL_RESULTS);
 }
 
-static inline void _ADC_Activate(HAL_ADC_T * p_hal, const  ADC_State_T * p_state)
+static inline void _ADC_Activate(ADC_T * p_adc)
 {
-    _ADC_ActivateFrom(p_hal, &p_state->ActiveChannels[0U], p_state->ActiveChannelCount);
+    _ADC_ActivateFrom(p_adc->P_HAL_ADC, p_adc->P_CHANNEL_PINS, &p_adc->P_STATE->ActiveChannels[0U], p_adc->P_STATE->ActiveChannelCount);
 }
 
 /******************************************************************************/
 /*
-    Channel marker or Sw sequence
+    Channel markers
 */
 /******************************************************************************/
 /*
-    Set [ActiveConversions] to reflect fifo registers state
-    Markers corresponding to this particular list of channels.
-    if p_source = p_adc->P_CONVERSION_CHANNELS => p_source[index].ID = index
-*/
-/*
-    Sets State for OnComplete
-    Write Critical Section Buffer.
-    single threaded access or lock
-    In a single thread while ADC is inactive
-    In the ADC ISR
+    Set [ActiveChannels] to reflect the fifo registers, fifo depth at a time, in channel order.
 
-    p_state->ChannelMarkers writes in an ISR preempting this function are lost
-*/
-/*
     Write critical section buffer. In the ISR, or in a single thread while the ADC is inactive.
     Marker writes from an ISR preempting this function are lost.
 */
-static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, ADC_Channel_T * p_channels, adc_mask_t sourceMarkers)
+static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, adc_mask_t sourceMarkers)
 {
     adc_mask_t markers = sourceMarkers;
     uint8_t count = 0U;
 
     while ((markers != 0UL) && (count < ADC_FIFO_LENGTH_MAX))
     {
-        p_state->ActiveChannels[count] = &p_channels[__builtin_ctz(markers)];
+        p_state->ActiveChannels[count] = (adc_channel_t)__builtin_ctz(markers);
         markers &= (markers - 1);
         count++;
     }
@@ -140,84 +115,3 @@ static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, ADC_Channel_T 
 
     return markers ^ sourceMarkers; /* return processed markers */
 }
-
-/******************************************************************************/
-/*
-    Hw Sequence
-*/
-/******************************************************************************/
-/*
-    Hw registers. The sequencer routes the trigger to the set's slot range, and converts it on every trigger.
-
-    Software has no sequencer to write. Its register write is the fifo push, which _ADC_ActivateMarked does,
-    driven by the markers left here. Pushing here as well would re-push a fifo in flight.
-*/
-static inline void _ADC_ActivateSequenceDma(HAL_ADC_T * p_hal, ADC_State_T * p_state, ADC_Sequence_T * p_sequence)
-{
-    assert(ADC_Mask_IsContiguous(p_sequence->CHANNELS)); /* The Hw converts a slot range. A sparse set has no Hw sequence */
-    /* Active only. Writing Next here would overwrite a selection made since it was read. The immediate entry point sets Next itself */
-    p_state->p_ActiveSequence = p_sequence;
-    HAL_ADC_ActivateSequence(p_hal, ADC_Sequence_Start(p_sequence), ADC_Sequence_Count(p_sequence));
-    // HAL_ADC_ActivateSequence(p_hal, p_sequence->CHANNELS);
-}
-
-/*
-    The set completed. Runs its handler, and reports a pending selection.
-    Returns the set to switch to, or NULL where the active set repeats.
-
-    The caller names the set: it has resolved Active already, and the software path tested that
-    set's channels to get here, so the handler cannot run against a different one.
-    The caller commits Active too, so it is assigned once: the Hw path through
-    _ADC_ActivateSequenceDma, which the immediate entry point needs anyway, and the software path
-    inline, having no sequencer to write.
-*/
-static inline ADC_Sequence_T * _ADC_CompleteSequence(ADC_State_T * p_state, ADC_Sequence_T * p_completed)
-{
-    ADC_Sequence_T * p_next = p_state->p_NextSequence;
-    if (p_completed->COMPLETE != NULL) { p_completed->COMPLETE(p_completed->P_CONTEXT); }
-    return (p_next != p_completed) ? p_next : NULL;    /* Read before the handler: a request made there applies itself */
-}
-
-
-
-/******************************************************************************/
-/*
-    Sw Sequence
-*/
-/******************************************************************************/
-/*
-    Software activation. No sequencer to write: the register write is the fifo push, which
-    _ADC_ActivateMarked does from the markers left here.
-
-    Markers before Active, so a completion landing between them still measures the set that is
-    converting. Publishing Active first leaves a window where the new set has no markers, and the
-    old set's capture reads as the new set's last channel.
-*/
-static inline void _ADC_SetActiveSequence(ADC_State_T * p_state, ADC_Sequence_T * p_sequence)
-{
-    p_state->ChannelMarkers |= p_sequence->CHANNELS;
-    p_state->p_NextSequence = p_sequence;
-    p_state->p_ActiveSequence = p_sequence; /* ISR might overwrite with the same value. */
-}
-
-
-
-/******************************************************************************/
-/*!
-    Unsynchronized Activation
-    start a conversion immediately cancels ongoing conversions
-    single threaded or atomic flag test and set
-    (ConversionChannel_T,  uint32_t markers) interface
-     select from mapped or parameters
-*/
-/******************************************************************************/
-// static void ADC_StartConversionsADC_T * p_adc,ConversionChannel_T * p_conversions, uint32_t markers)
-// {
-//     if ADC_ReadIsActive(p_adc) == false) { ADC_StartFrom(p_adc, p_conversions, markers); }
-//     else {ADC_MarkAll(p_adc, markers); }
-// }
-
-// static void ADC_StartConversionADC_T * p_adc,ConversionChannel_T * p_conversion)
-// {
-//     ADC_StartConversions(p_adc, p_conversion, (1UL << p_conversion->ID)); // mask as adc fixed
-// }

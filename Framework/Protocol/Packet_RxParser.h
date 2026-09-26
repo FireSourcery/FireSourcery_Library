@@ -218,7 +218,12 @@ static inline Packet_RxCode_T Packet_ProcRxParser(Packet_RxParser_T * p_parser, 
             else
             {
                 p_parser->Remaining = nextIndex - p_parser->Index;
-                p_parser->StateId = PACKET_RX_STATE_END;
+                /*
+                    A length the format cannot yet name leaves the machine in LENGTH, per the state
+                    table above - one more byte, then ask again. Advancing to END on an unresolved
+                    length would validate a frame at whatever offset the +1 landed on.
+                */
+                p_parser->StateId = (frameLength > 0U) ? PACKET_RX_STATE_END : PACKET_RX_STATE_LENGTH;
             }
 
             p_parser->ResolvedLength = frameLength; /* storage for consistency check only */

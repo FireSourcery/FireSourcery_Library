@@ -30,10 +30,13 @@ static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal) { (voi
 
 static inline void HAL_ADC_Init(HAL_ADC_T * p_hal) { (void)p_hal; }
 
-/* The Board's hook. On S32K1 this is HAL_PDB_ConfigChannel(PDB, channel, start, count) */
+/* The Board's hook. On S32K1 this is HAL_PDB_ConfigChannel(PDB, channel, start, count).
+   Only where the sequencer is enabled: _ADC.h supplies the stub otherwise */
+#if ADC_HW_SEQUENCER_ENABLE
 static inline void HAL_ADC_ActivateSequence(HAL_ADC_T * p_hal, uint32_t channelStart, uint32_t count)
 {
     p_hal->RangeStart = (uint8_t)channelStart;
     p_hal->RangeCount = (uint8_t)count;
     p_hal->RangeWrites++;
 }
+#endif

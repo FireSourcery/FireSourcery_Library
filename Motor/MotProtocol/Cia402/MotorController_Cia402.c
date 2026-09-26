@@ -58,11 +58,18 @@
     (CAN_RouteHandler_T shape: p_dev is the MotorController context).
     The route table fans out by COB-ID class; the bus filter admits only this node.
 */
+#if defined(MOTOR_CONTROLLER_CAN_ENABLE)
 static Cia402_Adapter_T * Cia402_Adapter(MotorController_T * p_mc, uint8_t axis)
 {
-    if (axis >= p_mc->MOTORS.LENGTH) { return NULL; }
-    return (Cia402_Adapter_T *)(p_mc->MOTORS.P_DEVS[axis].P_MOTOR->AdapterBuffer);
+    assert(axis >= p_mc->MOTORS.LENGTH);
+    return &p_mc->P_CIA402_ADAPTERS[axis];
 }
+#else
+static Cia402_Adapter_T * Cia402_Adapter(MotorController_T * p_mc, uint8_t axis)
+{
+    (void)p_mc;    (void)axis;    return NULL;
+}
+#endif
 
 
 /******************************************************************************/
@@ -76,22 +83,22 @@ static Cia402_Adapter_T * Cia402_Adapter(MotorController_T * p_mc, uint8_t axis)
 /******************************************************************************/
 static OD_Info_T _AppOd_GetInfo(MotorController_T * p_mc, uint16_t index, uint8_t subindex)
 {
-    return (Cia402_OdIndex_IsProfile(index) && (Cia402_Adapter(p_mc, Cia402_OdIndex_DecodeAxis(index)) != NULL)) ?
+    return (Cia402_OdIndex_IsProfile(index) && (Cia402_OdIndex_DecodeAxis(index) < p_mc->MOTORS.LENGTH)) ?
         Cia402_Od_GetInfo(Cia402_OdDeviceIndex(index), subindex) : (OD_Info_T) { .Type = OD_TYPE_NONE };
 }
 
 static OD_Status_T _AppOd_Get(MotorController_T * p_mc, uint16_t index, uint8_t subindex, int32_t * p_value)
 {
     uint8_t axis = Cia402_OdIndex_DecodeAxis(index);
-    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, axis);
-    return (p_adapter != NULL) ? Motor_Cia402_Od_Get(&p_mc->MOTORS.P_DEVS[axis], p_adapter, Cia402_OdDeviceIndex(index), subindex, p_value) : OD_ERR_NO_OBJECT;
+    if (axis >= p_mc->MOTORS.LENGTH) { return OD_ERR_NO_OBJECT; }
+    return Motor_Cia402_Od_Get(&p_mc->MOTORS.P_DEVS[axis], Cia402_Adapter(p_mc, axis), Cia402_OdDeviceIndex(index), subindex, p_value);
 }
 
 static OD_Status_T _AppOd_Set(MotorController_T * p_mc, uint16_t index, uint8_t subindex, int32_t value)
 {
     uint8_t axis = Cia402_OdIndex_DecodeAxis(index);
-    Cia402_Adapter_T * p_adapter = Cia402_Adapter(p_mc, axis);
-    return (p_adapter != NULL) ? Motor_Cia402_Od_Set(&p_mc->MOTORS.P_DEVS[axis], p_adapter, Cia402_OdDeviceIndex(index), subindex, value) : OD_ERR_NO_OBJECT;
+    if (axis >= p_mc->MOTORS.LENGTH) { return OD_ERR_NO_OBJECT; }
+    return Motor_Cia402_Od_Set(&p_mc->MOTORS.P_DEVS[axis], Cia402_Adapter(p_mc, axis), Cia402_OdDeviceIndex(index), subindex, value);
 }
 
 static const OD_Interface_T APP_OD =
@@ -126,7 +133,7 @@ void MotorController_Cia402_HandleRxPdo(MotorController_T * p_mc, const CAN_Fram
     PDO_HandleRx(&APP_OD, (void *)p_mc, &CIA402_PDO_TABLES.RX, (uint16_t)p_rx->CanId.Id, (const PDO_T *)p_rx->Data, p_rx->DataLength);
 }
 
-static uint32_t TX_PDO_TIMESTAMPS[CIA402_PDO_COUNT]; /* last transmission, ms */
+static uint32_t TxPdoTimestamps[CIA402_PDO_COUNT]; /* last transmission, ms */
 
 /*
     Every TPDO broadcast entry. The entry's seeded ID names the channel — TxPDO1..4's predefined base,
@@ -140,11 +147,11 @@ void MotorController_Cia402_BuildTxPdo(MotorController_T * p_mc, CAN_Frame_T * p
     uint32_t now = TimerT_Ticks(&p_mc->MILLIS_TIMER);
 
     if (n >= CIA402_PDO_TABLES.TX.COUNT) { return; }
-    if (PDO_Channel_IsTxDue(&Cia402_PdoConfig.Tx[n], TX_PDO_TIMESTAMPS[n], now) == true)
+    if (PDO_Channel_IsTxDue(&Cia402_PdoConfig.Tx[n], TxPdoTimestamps[n], now) == true)
     {
         p_tx->CanId.Id32 = Cia402_PdoConfig.Tx[n].CobId.CanId;
         p_tx->DataLength = PDO_BuildTx(&APP_OD, (void *)p_mc, &Cia402_PdoConfig.Tx[n], (PDO_T *)p_tx->Data);
-        TX_PDO_TIMESTAMPS[n] = now;
+        TxPdoTimestamps[n] = now;
     }
 }
 

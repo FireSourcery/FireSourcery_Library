@@ -47,6 +47,7 @@ void MotorController_Init(MotorController_T * p_dev)
 
 #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
     for (uint8_t iCan = 0U; iCan < p_dev->CAN_SOCKET_COUNT; iCan++) { CAN_Init(&p_dev->P_CAN_SOCKETS[iCan]); }
+    // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Cia402_Adapter_Init(&p_dev->P_CIA402_ADAPTERS[iMotor]); }
 #endif
 
     for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_dev->P_PROTOCOLS[iProtocol]); }
