@@ -245,9 +245,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
         {
-        #ifdef MOTOR_CONTROLLER_SHELL_ENABLE
-            Shell_Proc(&p_mc->Shell);
-        #endif
             Blinky_Proc(&p_dev->BUZZER);
             Blinky_Proc(&p_dev->METER);
         }
@@ -274,8 +271,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, &MOTOR_STATE_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
             if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
 
-            /* In case of Serial Rx Overflow Timeout */
-            for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_dev->P_SERIALS[iSerial]); }
+            /* In case of UART Rx Overflow Timeout */
+            for (uint8_t iUart = 0U; iUart < p_dev->UART_COUNT; iUart++) { UART_PollRestartRxIsr(&p_dev->P_UARTS[iUart]); }
         }
     }
 }

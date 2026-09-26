@@ -43,7 +43,7 @@ void MotorController_Init(MotorController_T * p_dev)
     if (p_dev->MOT_NVM.P_BOOT_REF != NULL) { p_mc->BootRef.Word = p_dev->MOT_NVM.P_BOOT_REF->Word; }
 
     for (uint8_t iAnalog = 0U; iAnalog < p_dev->ADC_COUNT; iAnalog++) { ADC_Init(&p_dev->P_ADCS[iAnalog]); }
-    for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_Init(&p_dev->P_SERIALS[iSerial]); }
+    for (uint8_t iUart = 0U; iUart < p_dev->UART_COUNT; iUart++) { UART_Init(&p_dev->P_UARTS[iUart]); }
 
 #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
     for (uint8_t iCan = 0U; iCan < p_dev->CAN_SOCKET_COUNT; iCan++) { CAN_Init(&p_dev->P_CAN_SOCKETS[iCan]); }
@@ -79,10 +79,6 @@ void MotorController_Init(MotorController_T * p_dev)
     // UserDIn_Init(&p_dev->OPT_DIN); /* 5-10ms by default */
 
     TimerT_Periodic_Init(&p_dev->MILLIS_TIMER, 1U);
-
-#ifdef MOTOR_CONTROLLER_SHELL_ENABLE
-    Shell_Init(&p_mc->Shell);
-#endif
 
     MotorController_App_Init(p_dev);
 

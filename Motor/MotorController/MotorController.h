@@ -53,7 +53,7 @@
 #include "Peripheral/ADC/ADC.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
-#include "Peripheral/Serial/Serial.h"
+#include "Peripheral/UART/UART.h"
 #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
 #include "Peripheral/CAN/CAN.h"
 #include "Peripheral/CAN/CAN_Service.h"
@@ -63,9 +63,6 @@
 #include "Framework/StateMachine/StateMachine.h"
 #include "Framework/Protocol/Protocol.h"
 #include "Framework/Protocol/Socket.h"
-#if defined(MOTOR_CONTROLLER_SHELL_ENABLE)
-#include "Framework/Shell/Shell.h"
-#endif
 #include "System/BootRef/BootRef.h"
 #include "Type/Word/Version.h"
 
@@ -211,12 +208,6 @@ typedef struct MotorController_Context
 
     uint32_t MicrosRef;
     uint32_t ControlLoopProfile;
-
-#if defined(MOTOR_CONTROLLER_SHELL_ENABLE)
-    Shell_T Shell;
-    uint16_t ShellSubState;
-#endif
-
 }
 MotorController_Context_T;
 
@@ -233,8 +224,8 @@ typedef const struct MotorController
     ADC_T * P_ADCS;
     uint8_t ADC_COUNT; /* Analog ADCs */
 
-    Serial_T * P_SERIALS;
-    uint8_t SERIAL_COUNT;
+    UART_T * P_UARTS;
+    uint8_t UART_COUNT;
 #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
     CAN_T * P_CAN_SOCKETS;
     uint8_t CAN_SOCKET_COUNT;
@@ -242,7 +233,7 @@ typedef const struct MotorController
 
     /* Motor Services Context */
     Motor_Table_T MOTORS; /* Motor Array Context */
-    uint8_t * P_MOTOR_ADAPTER_BUFFER; /* parallel for now */
+    // uint8_t * P_MOTOR_ADAPTER_BUFFER; /* parallel for now */
 
     /*
         Peripheral Services Context

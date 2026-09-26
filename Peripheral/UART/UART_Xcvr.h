@@ -1,3 +1,5 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -22,22 +24,22 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Serial_Xcvr.c
+    @file   UART_Xcvr.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  [UART_T] as an [Xcvr_T].
 */
 /******************************************************************************/
-/******************************************************************************/
-#include "Serial_Xcvr.h"
+#include "UART.h"
+#include "../Xcvr/Xcvr.h"
 
-/* No target, no transaction to hold open: SET_TARGET and SET_FLAGS stay absent */
-const Xcvr_VTable_T SERIAL_XCVR_VTABLE =
+/*
+    No target, and no transaction to hold open, so SET_TARGET and SET_FLAGS stay absent.
+*/
+static const Xcvr_VTable_T UART_XCVR_VTABLE =
 {
-    .TX_N               = (Xcvr_TxN_T)Serial_SendN,
-    .RX_N               = (Xcvr_RxN_T)Serial_RecvN,
-    .CONFIG_BAUD_RATE   = (Xcvr_SetValue_T)Serial_ConfigBaudRate,
+    .TX                 = (Xcvr_Tx_T)UART_SendN,
+    .RX                 = (Xcvr_Rx_T)UART_RecvN,
+    .CONFIG_BAUD_RATE   = (Xcvr_SetProperty_T)UART_ConfigBaudRate,
 };
 
-
-
-
+#define UART_XCVR_INIT(p_Uart) XCVR_INIT((p_Uart), &UART_XCVR_VTABLE)

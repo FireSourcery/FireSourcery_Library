@@ -34,7 +34,7 @@
 #include "MotorController_User.h"
 // #include "MotorController_Analog.h"
 #if defined(MOTOR_CONTROLLER_SHELL_ENABLE)
-#include "MotorController_Shell.h"
+#include "Shell/MotorController_Shell.h"
 #endif
 #include "Motor/Motor/Motor_Include.h"
 #include "../MotProtocol/MotProtocol.h"

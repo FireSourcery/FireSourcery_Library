@@ -31,6 +31,7 @@
 #include "MotorController_User.h"
 #include "MotorController_StateMachine.h"
 #include "../Motor/Motor_Var.h"
+#include "Motor/MotProtocol/MotVarId/Motor_MotVar.h"
 #include "../Motor/VBus/VBus.h"
 #include "../Motor/Sensor/Motor_Sensor.h"
 
