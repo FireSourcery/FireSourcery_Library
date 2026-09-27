@@ -55,6 +55,7 @@ int Traction_ConfigId_Get(const Traction_Config_T * p_config, Traction_ConfigId_
         case TRACTION_CONFIG_THROTTLE_MODE:    value = p_config->ThrottleMode;                 break;
         case TRACTION_CONFIG_BRAKE_MODE:       value = p_config->BrakeMode;                    break;
         case TRACTION_CONFIG_ZERO_MODE:        value = p_config->ZeroMode;                     break;
+        case TRACTION_CONFIG_LEVER_MODE:       value = p_config->LeverMode;                    break;
     }
     return value;
 }
@@ -66,6 +67,7 @@ void Traction_ConfigId_Set(Traction_Config_T * p_config, Traction_ConfigId_T id,
         case TRACTION_CONFIG_THROTTLE_MODE:    p_config->ThrottleMode = (Traction_ThrottleMode_T)value;     break;
         case TRACTION_CONFIG_BRAKE_MODE:       p_config->BrakeMode = (Traction_BrakeMode_T)value;           break;
         case TRACTION_CONFIG_ZERO_MODE:        p_config->ZeroMode = (Traction_ZeroMode_T)value;             break;
+        case TRACTION_CONFIG_LEVER_MODE:       p_config->LeverMode = (Traction_LeverMode_T)value;           break;
         default: break;
     }
 }

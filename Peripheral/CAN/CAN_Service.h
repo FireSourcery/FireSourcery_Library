@@ -51,7 +51,6 @@ typedef const struct
     uint32_t ID; /*   */
     CAN_BuildBroadcast_T BUILD;  /* Frame-based broadcast — caller fills a full CAN_Frame_T (ID, DLC, data). */
     uint32_t INTERVAL;
-    CAN_BroadcastState_T * P_STATE;  /* allocate per entry, alternatively collective handle */
     // CAN_ServiceInit_T INIT;
 }
 CAN_BroadcastEntry_T;
@@ -60,8 +59,6 @@ CAN_BroadcastEntry_T;
 // {
 //     CAN_BroadcastEntry_T * P_BROADCASTS;
 //     uint8_t BROADCAST_COUNT;
-//     const volatile uint32_t * P_TIMER;
-//     CAN_BroadcastState_T * P_STATES; /* Parallel array of broadcast states */
 // }
 // CAN_BroadcastService_T;
 
@@ -83,14 +80,14 @@ static inline void CAN_ProcBroadcast(CAN_T * p_can, CAN_BroadcastEntry_T * p_bro
 
 static inline void _CAN_ProcBroadcastService(CAN_T * p_can, CAN_BroadcastEntry_T * p_table, uint8_t count, uint32_t timer)
 {
-    for (uint8_t i = 0U; i < count; i++)
-    {
-        if ((timer - p_table[i].P_STATE->Timestamp) >= p_table[i].INTERVAL)
-        {
-            CAN_ProcBroadcast(p_can, &p_table[i]);
-            p_table[i].P_STATE->Timestamp = timer;
-        }
-    }
+    // for (uint8_t i = 0U; i < count; i++)
+    // {
+    //     if ((timer - p_table[i].P_STATE->Timestamp) >= p_table[i].INTERVAL)
+    //     {
+    //         CAN_ProcBroadcast(p_can, &p_table[i]);
+    //         p_table[i].P_STATE->Timestamp = timer;
+    //     }
+    // }
 }
 
 
@@ -146,17 +143,24 @@ static inline void _CAN_ProcRequestService(CAN_T * p_can, CAN_ReqRoute_T * p_tab
 }
 
 
-/*
- */
+/* A protocol's frames, both directions. Defined by its module; stateless. */
+typedef const struct CAN_ServiceTables
+{
+    CAN_ReqRoute_T * P_ROUTES;              uint8_t ROUTE_COUNT;
+    CAN_BroadcastEntry_T * P_BROADCASTS;    uint8_t BROADCAST_COUNT;
+}
+CAN_ServiceTables_T;
 
 
-/* unit of selection, alternatively CAN holds separate tables */
+/* One protocol bound to one bus. Assembled by the board. */
 typedef const struct CAN_Service
 {
     CAN_BroadcastEntry_T * P_BROADCASTS;  uint8_t BROADCAST_COUNT;
     CAN_ReqRoute_T * P_ROUTES; uint8_t ROUTE_COUNT;
-    // const volatile uint32_t * P_TIMER;
-    // CAN_BroadcastState_T * P_STATES; /* Parallel array of broadcast states */
+    // const CAN_ServiceTables_T * P_TABLES;
+    // void * P_CONTEXT;
+    const volatile uint32_t * P_TIMER;
+    CAN_BroadcastState_T * P_STATES; /* Parallel array of broadcast states */
 }
 CAN_Service_T;
 

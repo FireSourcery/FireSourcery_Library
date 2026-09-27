@@ -105,8 +105,8 @@ static inline void BuildTelemetry2(MotorController_T * p_mc, CAN_Frame_T * p_tx)
 
 static const CAN_BroadcastEntry_T MOT_CAN_BROADCAST_TABLE[] =
 {
-    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U,     .BUILD = (CAN_BuildBroadcast_T)BuildTelemetry1, .P_STATE = &(CAN_BroadcastState_T) { 0 } },
-    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U,   .BUILD = (CAN_BuildBroadcast_T)BuildTelemetry2, .P_STATE = &(CAN_BroadcastState_T) { 0 } },
+    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U,     .BUILD = (CAN_BuildBroadcast_T)BuildTelemetry1, },
+    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U,   .BUILD = (CAN_BuildBroadcast_T)BuildTelemetry2, },
 };
 
 

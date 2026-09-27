@@ -139,12 +139,12 @@ static inline bool VarAccess_TrySet(VarAccess_T * p_varAccess, void * p_context,
     compatibility with sub modules using switch()
     includes/circumvents handling function pointers with different signatures
 */
-// typedef const struct Accessor
-// {
-//     get_field_t GET_FIELD;
-//     set_field_t SET_FIELD;
-// }
-// Accessor_T;
+typedef const struct Accessor
+{
+    get_field_t GET_FIELD;
+    set_field_t SET_FIELD;
+}
+Accessor_T;
 
 
 // static inline int Accessor_Get(Accessor_T * p_this, void * p_context, int id) { return p_this->GET_FIELD(p_context, id); }

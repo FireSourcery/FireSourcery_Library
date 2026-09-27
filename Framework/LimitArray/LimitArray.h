@@ -251,9 +251,17 @@ static bool LimitArray_TestSetEntry(LimitArray_T * p_limit, limit_id_t id, limit
 static bool LimitArray_TestSetUpper(LimitArray_T * p_limit, limit_id_t id, limit_t value) { return _LimitArray_TestSetUpper(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), id, value); }
 
 
-static void LimitArray_ProcCompare(LimitArray_T * p_limit) { _LimitArray_ProcCompare(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH); }
+// static void LimitArray_ProcCompare(LimitArray_T * p_limit) { _LimitArray_ProcCompare(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH); }
 
 static bool LimitArray_TestClearEntry(LimitArray_T * p_limit, limit_id_t id) { return _LimitArray_TestClearEntry(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH, id); }
+
+
+
+
+
+
+
+
 
 // diagnostic
 // static inline limit_t LimitArray_ProcCompareUpper(LimitArray_T * p_limit) { _LimitArray_State(p_limit)->Min = _LimitArray_ProcCompareUpper(p_limit); }

@@ -337,3 +337,62 @@ static inline void Motor_FocConfig_SetSi(Motor_T * p_motor, FOC_ConfigId_T var, 
 }
 
 
+
+
+// typedef struct VarGroup
+// {
+//     uint16_t Index;
+//     int32_t (*Get)(const void *, int id);
+//     void (*Set)(const void *, int id, int32_t);
+// }
+// VarGroup_T;
+
+// #if   defined(MOTOR_VAR_META_CHECK)   /* CI only - typos become errors */
+// #define MOTOR_VAR_META(type, instances, accessGroup, units, description)  , sizeof(type), units, accessGroup
+// #elif defined(PARSER_SIDE)            /* exporter */
+// #define MOTOR_VAR_META(type, instances, accessGroup, units, description)  , #type, #instances, #accessGroup, #units, description
+// #else                                 /* firmware - vanishes */
+// #define MOTOR_VAR_META(type, instances, accessGroup, units, description)
+// #endif
+
+
+// #define MOTOR_VAR_FIELD_META(...)
+// typedef const struct VField
+// {
+//     get_t GET;
+//     set_t SET;
+// }
+// VField_T;
+
+// /* This list each entry describes one variable */
+// static const VField_T  MOTOR_USER_OUT_VARS[] =
+// {
+//     [MOTOR_VAR_SPEED]       = { Motor_User_GetSpeed_Fract16, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t, ) },
+//     [MOTOR_VAR_I_PHASE]     = { Motor_GetIPhase_Fract16, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t) },
+//     [MOTOR_VAR_V_PHASE]     = { Motor_GetVPhase_Fract16, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t) },
+//     [MOTOR_VAR_STATE]       = { Motor_GetStateId, NULL, MOTOR_VAR_FIELD_META(Rpm, Motor_StateId_T) },
+//     [MOTOR_VAR_SUB_STATE]   = { Motor_GetPathId, NULL, MOTOR_VAR_FIELD_META(Rpm, Motor_StateId_T) }
+// };
+
+
+
+// #define MOTOR_VAR_OBJ_META(...)
+// /* This list each entry describes the Object Groups or struct,  */
+// static const VarGroup_T MOTOR_VAR_GROUPS[] =
+// {
+//     //Motor_VarType_Base_T
+//     [MOTOR_VAR_TYPE_USER_OUT]       = { _Motor_Var_UserOut_Get,     NULL, &MOTOR_USER_OUT_VARS[0], MOTOR_VAR_OBJ_META(Motor_Var_UserOut_T, Motor_T    ) },
+//     [MOTOR_VAR_TYPE_USER_CONTROL]   = { _Motor_Var_UserControl_Get, NULL, &MOTOR_USER_CONTROL_VARS[0], MOTOR_VAR_OBJ_META(Motor_Var_UserControl_T, Motor_T) },
+//     // MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
+//     // MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
+//     // MOTOR_VAR_TYPE_OPEN_LOOP_CMD,
+//     // MOTOR_VAR_TYPE_CALIBRATION_CMD,
+//     // MOTOR_VAR_TYPE_CMD_RESV,
+//     // MOTOR_VAR_TYPE_CONFIG_CALIBRATION,
+//     // MOTOR_VAR_TYPE_CONFIG_ACTUATION,
+//     // MOTOR_VAR_TYPE_CONFIG_PID,
+//     // MOTOR_VAR_TYPE_CONFIG_DEBUG,
+//     // MOTOR_VAR_TYPE_CONFIG_RESV,
+// };
+
+

@@ -54,6 +54,7 @@ typedef struct Traction_Input
     sign_t Direction;
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
+    int16_t LeverValue;     /* Single axis [-32768:32767], positive as user Forward */
     Traction_Cmd_T DriveCmd;
 }
 Traction_Input_T;
@@ -103,6 +104,22 @@ static inline bool Traction_Input_PollDirectionEdge(Traction_Input_T * p_input, 
 
 static inline sign_t Traction_Input_GetDirectionCmd(const Traction_Input_T * p_input) { return p_input->Direction; }
 
+/*
+    Lever
+    Magnitude along a reference direction, in [ThrottleValue]/[BrakeValue] scale [0:65535]
+*/
+static inline uint16_t Traction_LeverAlong(sign_t reference, int16_t lever) { return math_clamp((int32_t)reference * lever * 2, 0, UINT16_MAX); }
+
+/* Along the reference as Throttle, against as Brake */
+static inline void Traction_Input_ResolveLever(Traction_Input_T * p_input, sign_t reference)
+{
+    p_input->ThrottleValue = Traction_LeverAlong(reference, p_input->LeverValue);
+    p_input->BrakeValue = Traction_LeverAlong(0 - reference, p_input->LeverValue);
+}
+
+/* Prior to PollCmd */
+static inline bool Traction_Input_IsLeverEngage(const Traction_Input_T * p_input) { return (p_input->DriveCmd == TRACTION_CMD_RELEASE) && (p_input->LeverValue != 0); }
+
 
 /*
     Config
@@ -133,11 +150,31 @@ typedef enum Traction_ZeroMode
 }
 Traction_ZeroMode_T;
 
+/* Lever Input */
+typedef enum Traction_LeverMode
+{
+    TRACTION_LEVER_MODE_BRAKE_TO_STOP,  /* Against the drive direction brakes. Reverse on engage from release at standstill */
+    TRACTION_LEVER_MODE_THROUGH_ZERO,   /* Signed cmd continuous through zero speed. Motor bounds plugging */
+}
+Traction_LeverMode_T;
+
+/* Direction the lever is read against. [driveDirection] NULL when unresolved */
+static inline sign_t Traction_LeverReference(Traction_LeverMode_T mode, sign_t driveDirection, int16_t lever)
+{
+    switch (mode)
+    {
+        case TRACTION_LEVER_MODE_BRAKE_TO_STOP: return (driveDirection != 0) ? driveDirection : math_sign(lever);
+        case TRACTION_LEVER_MODE_THROUGH_ZERO:  return math_sign(lever);
+        default:                                return 0;
+    }
+}
+
 typedef struct Traction_Config
 {
     Traction_ThrottleMode_T ThrottleMode;
     Traction_BrakeMode_T BrakeMode;
     Traction_ZeroMode_T ZeroMode;
+    Traction_LeverMode_T LeverMode;
     // uint8_t RequireZeroOnEntry;
     // uint16_t SwitchBrakeFloor_Percent16;
 }
@@ -172,6 +209,7 @@ typedef enum Traction_VarId
     TRACTION_VAR_BRAKE,              // [0:65535]
     TRACTION_VAR_COMMAND,           // Traction_Cmd_T
     TRACTION_VAR_STATE_ID,          // Traction_StateId_T
+    TRACTION_VAR_LEVER,             // [-32768:32767]
 }
 Traction_VarId_T;
 
@@ -180,6 +218,7 @@ typedef enum Traction_ConfigId
     TRACTION_CONFIG_THROTTLE_MODE,     /* Traction_ThrottleMode_T */
     TRACTION_CONFIG_BRAKE_MODE,        /* Traction_BrakeMode_T */
     TRACTION_CONFIG_ZERO_MODE,         /* Traction_ZeroMode_T */
+    TRACTION_CONFIG_LEVER_MODE,        /* Traction_LeverMode_T */
 }
 Traction_ConfigId_T;
 

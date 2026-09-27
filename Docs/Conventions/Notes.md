@@ -18,13 +18,23 @@ flowchart LR
 ```
 ```mermaid
 flowchart LR
-    L["HALL_CONFIG_LIST(X)<br/>one list per leaf enum"] --> E["Hall_ConfigId_T<br/>(firmware enum)"]
-    L --> N["BASE_NAMES[]<br/>(export build only)"]
-    E --> T["MotVar_Group_T table<br/>CONTEXT / GET / SET / COUNT"]
-    N --> T
-    T --> FW["firmware.elf<br/>no strings"]
-    T --> D["motvar_dump<br/>host binary"]
-    D --> J["id_space.json"]
-    J --> G["gen_dart.py"]
-    G --> DA["mot_var_id.dart<br/>enums only"]
-```
+    subgraph C["C group table row"]
+      D["array designator<br/>MOTOR_VAR_TYPE_USER_OUT"]
+      T["META type<br/>Motor_Var_UserOut_T"]
+    end
+    subgraph E["base enum, ordered"]
+      M["[0] MOTOR_VAR_SPEED<br/>[1] MOTOR_VAR_I_PHASE<br/>[2] MOTOR_VAR_V_PHASE"]
+    end
+    subgraph V["MotVarId"]
+      W["Type = 0<br/>Base = n"]
+    end
+    subgraph S["CSV row"]
+      O["id_object"]
+      B["id_base"]
+    end
+    D --> O
+    D --> W
+    T --> M
+    M -- "member[Base]" --> B
+    M -- "index" --> W
+````

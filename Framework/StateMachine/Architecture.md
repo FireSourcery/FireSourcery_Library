@@ -89,9 +89,9 @@ classDiagram
         P_TRANSITION_TABLE
         TRANSITION_MAPPER
         P_ACTION_TABLE
-        P_CMD_TABLE
-        P_ACCESSOR_TABLE
-        P_DATA_VECTOR
+  <!--       P_CMD_TABLE -->
+  <!--       P_ACCESSOR_TABLE -->
+<!--         P_DATA_VECTOR -->
         P_PARENT
         P_TOP
         DEPTH

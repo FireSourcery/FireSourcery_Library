@@ -68,6 +68,8 @@ typedef enum Traction_StateInput
     TRACTION_STATE_INPUT_DRIVE_CMD,      /* On Edge, Drive Cmd -Throttle/Brake/Release */
     TRACTION_STATE_INPUT_THROTTLE_VALUE,
     TRACTION_STATE_INPUT_BRAKE_VALUE,
+    TRACTION_STATE_INPUT_LEVER_DIRECTION,   /* On engage from release */
+    TRACTION_STATE_INPUT_LEVER_VALUE,       /* Signed, user Forward frame */
 }
 Traction_StateInput_T;
 
@@ -102,6 +104,7 @@ extern void MotorController_Traction_SetThrottle(MotorController_T * p_mc, uint1
 extern void MotorController_Traction_SetBrake(MotorController_T * p_mc, uint16_t userCmd);
 extern void MotorController_Traction_SetRelease(MotorController_T * p_mc);
 extern void MotorController_Traction_SetThrottleBrake(MotorController_T * p_mc, uint16_t throttle, uint16_t brake);
+extern void MotorController_Traction_SetLever(MotorController_T * p_mc, int16_t lever);
 
 extern void MotorController_Traction_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction);
 extern void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, sign_t direction);

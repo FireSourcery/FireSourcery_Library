@@ -56,13 +56,15 @@ typedef struct { void * P_BUFFER; size_t LENGTH; } ArraySpan_T;
 #define ARRAY_SPAN_ALLOC(TypeSize, Length) ARRAY_SPAN(_BUFFER_ALLOC((TypeSize) * (Length)), Length)
 #define ARRAY_SPAN_ALLOC_AS(T, Length) ARRAY_SPAN(_ARRAY_ALLOC(T, Length), Length)
 
+#define ARRAY_HEADED_ALLOC(AUG, UnitSize, Length) \
+    (&(struct { AUG Header; uintptr_t Words[((UnitSize) * (Length) + sizeof(uintptr_t) - 1U) / sizeof(uintptr_t)]; }){ }.Header)
 
 
 /*
     A contiguous run of LENGTH units of TYPE_SIZE at P_BUFFER. A view, not a descriptor:
     it is returned by value, so it is NOT const-qualified (a qualifier on a by-value return is ignored, and warns under -Wextra).
 */
-// typedef struct typed_span { size_t type; void * p_buffer; size_t length; } const array_span_t; // returnable record
+
 typedef struct ArraySpanT { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; } ArraySpanT_T;
 
 static inline size_t ArraySpan_Size(ArraySpanT_T span) { return span.LENGTH * span.TYPE_SIZE; }
@@ -85,6 +87,12 @@ static inline void ArraySpan_CopyFrom(ArraySpanT_T span, const void * p_src) { m
 
 // static inline void ArrayT_CopyTo(size_t type, ArraySpan_T arrayBuffer, void * p_value) { ArraySpan_CopyTo(ArraySpanT_Cast(type, arrayBuffer), p_value); }
 // static inline void ArrayT_CopyFrom(size_t type, ArraySpan_T arrayBuffer, const void * p_value) { ArraySpan_CopyFrom(ArraySpanT_Cast(type, arrayBuffer), p_value); }
+
+
+// typedef struct { size_t type; void * p_buffer; size_t length; } const typed_span_t; // returnable record
+// typedef struct { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; } ArrayDescriptor_T; // Descriptor
+// typedef struct { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; void * P_AUGMENTS; } ArrayHeaded_T; // with State pointer
+
 
 
 /*

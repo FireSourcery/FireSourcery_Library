@@ -111,6 +111,21 @@ void Traction_ApplyThrottleValue(const Traction_T * p_vehicle, Motor_Table_T * p
     }
 }
 
+/*!
+    User Forward frame, independent of the drive direction.
+    Transition through zero speed is resolved by the Motor.
+    @param[in] lever [-32768:32767]
+*/
+void Traction_ApplyLeverValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors, int16_t lever)
+{
+    switch (p_vehicle->Config.ThrottleMode)
+    {
+        case TRACTION_THROTTLE_MODE_SPEED:  Motor_Table_SetCmdWith(p_motors, Motor_SetSpeedCmd_Norm, lever);     break;
+        case TRACTION_THROTTLE_MODE_TORQUE: Motor_Table_SetCmdWith(p_motors, Motor_SetTorqueCmd_Norm, lever);    break;
+        default: break;
+    }
+}
+
 void Traction_StartBrakeMode(const Traction_T * p_vehicle, Motor_Table_T * p_motors)
 {
     switch (p_vehicle->Config.BrakeMode)
@@ -245,6 +260,19 @@ static State_T * Drive_InputBrakeValue(MotorController_T * p_mc, state_value_t v
     return NULL;
 }
 
+/* Reverse at standstill only. While rolling, the lever is read against the motion */
+static State_T * Drive_InputLeverDirection(MotorController_T * p_mc, state_value_t direction)
+{
+    if (Motor_Table_IsEverySpeedZero(&p_mc->MOTORS) == true) { Motor_Table_ApplyUserDirection(&p_mc->MOTORS, (Motor_Direction_T)direction); }
+    return NULL;
+}
+
+static State_T * Drive_InputLeverValue(MotorController_T * p_mc, state_value_t value)
+{
+    Traction_ApplyLeverValue(TractionAdapter(p_mc), &p_mc->MOTORS, value);
+    return NULL;
+}
+
 // State_Input_T Drive_TransitionMapper(state_input_t inputId)
 // {
 //     State_Input_T inputHandler = NULL;
@@ -267,6 +295,8 @@ static State_T * Drive_InputAppUser(MotorController_T * p_mc, state_value_t appC
         case TRACTION_STATE_INPUT_DRIVE_CMD:        return Drive_InputCmdStart(p_mc, p_input->DriveCmd);
         case TRACTION_STATE_INPUT_THROTTLE_VALUE:   return Drive_InputThrottleValue(p_mc, p_input->ThrottleValue);
         case TRACTION_STATE_INPUT_BRAKE_VALUE:      return Drive_InputBrakeValue(p_mc, p_input->BrakeValue);
+        case TRACTION_STATE_INPUT_LEVER_DIRECTION:  return Drive_InputLeverDirection(p_mc, math_sign(p_input->LeverValue));
+        case TRACTION_STATE_INPUT_LEVER_VALUE:      return Drive_InputLeverValue(p_mc, p_input->LeverValue);
         default: return NULL;
     }
 
@@ -367,6 +397,8 @@ static State_T * Neutral_InputAppUser(MotorController_T * p_mc, state_value_t ap
         case TRACTION_STATE_INPUT_DRIVE_CMD:        return Neutral_InputCmdStart(p_mc, p_input->DriveCmd);
         case TRACTION_STATE_INPUT_BRAKE_VALUE:      return Neutral_InputBrakeValue(p_mc, p_input->BrakeValue);
         case TRACTION_STATE_INPUT_THROTTLE_VALUE:   return NULL; /* Throttle has no effect in Neutral */
+        case TRACTION_STATE_INPUT_LEVER_DIRECTION:  return NULL; /* Neutral exit by direction select only */
+        case TRACTION_STATE_INPUT_LEVER_VALUE:      return NULL;
         default: return NULL;
     }
 }
@@ -478,19 +510,40 @@ void MotorController_Traction_SetRelease(MotorController_T * p_mc)
     MotorController_Traction_PollStartCmd(p_mc);
 }
 
+/* Start edge, then the value of the active cmd */
+static void ApplyDriveCmd(MotorController_T * p_mc, Traction_StateInput_T throttleValueInput)
+{
+    MotorController_Traction_PollStartCmd(p_mc);
+    switch (TractionAdapter(p_mc)->Input.DriveCmd)
+    {
+        case TRACTION_CMD_BRAKE:     _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_BRAKE_VALUE);   break;
+        case TRACTION_CMD_THROTTLE:  _MotorController_Traction_ApplyCmd(p_mc, throttleValueInput);                break;
+        case TRACTION_CMD_RELEASE:   break;
+        default: break;
+    }
+}
+
 void MotorController_Traction_SetThrottleBrake(MotorController_T * p_mc, uint16_t throttle, uint16_t brake)
 {
     TractionAdapter(p_mc)->Input.ThrottleValue = throttle;
     TractionAdapter(p_mc)->Input.BrakeValue = brake;
-    MotorController_Traction_PollStartCmd(p_mc);
-    // if (Traction_Input_PollCmdEdge(&TractionAdapter(p_mc)->Input)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
-    switch (TractionAdapter(p_mc)->Input.DriveCmd)
-    {
-        case TRACTION_CMD_BRAKE:     _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_BRAKE_VALUE);         break;
-        case TRACTION_CMD_THROTTLE:  _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_THROTTLE_VALUE);      break;
-        case TRACTION_CMD_RELEASE:   break;
-        default: break;
-    }
+    ApplyDriveCmd(p_mc, TRACTION_STATE_INPUT_THROTTLE_VALUE);
+}
+
+/*
+    Single axis lever, positive as user Forward. Resolves to [Traction_Cmd_T] by [Traction_LeverMode_T]:
+        BRAKE_TO_STOP - Throttle/Brake along the drive direction, motoring frame
+        THROUGH_ZERO  - Throttle along the lever, value applied signed
+    Engage from release requests the lever direction.
+*/
+void MotorController_Traction_SetLever(MotorController_T * p_mc, int16_t lever)
+{
+    Traction_T * p_traction = TractionAdapter(p_mc);
+
+    p_traction->Input.LeverValue = lever;
+    if (Traction_Input_IsLeverEngage(&p_traction->Input) == true) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_LEVER_DIRECTION); }
+    Traction_Input_ResolveLever(&p_traction->Input, Traction_LeverReference(p_traction->Config.LeverMode, (sign_t)MotorController_GetDirection(p_mc), lever));
+    ApplyDriveCmd(p_mc, (p_traction->Config.LeverMode == TRACTION_LEVER_MODE_THROUGH_ZERO) ? TRACTION_STATE_INPUT_LEVER_VALUE : TRACTION_STATE_INPUT_THROTTLE_VALUE);
 }
 
 
@@ -551,6 +604,7 @@ void MotorController_Traction_VarId_Set(MotorController_T * p_mc, Traction_VarId
         case TRACTION_VAR_BRAKE:       MotorController_Traction_SetBrake(p_mc, (uint16_t)value);         break;
         case TRACTION_VAR_STATE_ID:    break; /* read only */
         case TRACTION_VAR_COMMAND:     break; /* read only, derived from throttle/brake */
+        case TRACTION_VAR_LEVER:       MotorController_Traction_SetLever(p_mc, (int16_t)value);          break;
     }
 }
 
@@ -563,6 +617,7 @@ int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction_VarId_
         case TRACTION_VAR_THROTTLE:    value = TractionAdapter(p_mc)->Input.ThrottleValue;  break;
         case TRACTION_VAR_BRAKE:       value = TractionAdapter(p_mc)->Input.BrakeValue;     break;
         case TRACTION_VAR_STATE_ID:    value = MotorController_Traction_GetStateId(p_mc); break;
+        case TRACTION_VAR_LEVER:       value = TractionAdapter(p_mc)->Input.LeverValue;     break;
         default: break;
     }
     return value;
