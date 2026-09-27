@@ -7,7 +7,7 @@
 typedef enum Motor_Var_UserOut { MOTOR_USER_OUT_IDS(_ID) _MOTOR_VAR_USER_OUT_END } Motor_Var_UserOut_T;
 
 
-Your tagging idea produced something better than either table design — the exporter is the preprocessor.
+the exporter is the preprocessor.
 
 $ arm-none-eabi-gcc -E -DEXPORT enum.h | grep @@
 "MOTOR_VAR_SPEED" , "Rpm" , "fract16_t" ,
