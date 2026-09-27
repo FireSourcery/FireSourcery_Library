@@ -364,8 +364,10 @@ const State_T MC_STATE_MAIN =
 
     Motor State: PASSIVE / RUN / OPEN_LOOP
     Motors passthrough coordinated default
-    marker for accepting [Motor_VarId] interface inputs
     as top state until id scheme is determined.
+
+    Guard applied on SetVar for now.
+    marker for accepting [Motor_VarId] interface inputs
 */
 /******************************************************************************/
 static void MotorCmd_Entry(MotorController_T * p_dev)

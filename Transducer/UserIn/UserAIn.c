@@ -37,7 +37,7 @@
     Public Functions
 */
 /******************************************************************************/
-void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
+void UserAIn_InitFrom(UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
 {
     if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
     if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Init(p_dev->P_EDGE_PIN); }
@@ -51,15 +51,15 @@ void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config
     p_dev->P_STATE->ValuePrev = p_dev->P_STATE->Value;
 }
 
-void UserAIn_Init(const UserAIn_T * p_dev) { UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }
+void UserAIn_Init(UserAIn_T * p_dev) { UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }
 
-void UserAIn_ReinitScale(const UserAIn_T * p_dev) { Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax); }
+void UserAIn_ReinitScale(UserAIn_T * p_dev) { Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax); }
 
 /*
     Resolve Config onto runtime state.
     UseEdgePin is the AIn's enable for its gate pin — the gate pin carries no config of its own.
 */
-void UserAIn_ApplyConfig(const UserAIn_T * p_dev)
+void UserAIn_ApplyConfig(UserAIn_T * p_dev)
 {
     UserAIn_ReinitScale(p_dev);
     if (p_dev->P_EDGE_PIN != NULL)
@@ -86,9 +86,9 @@ static inline void CaptureValue(UserAIn_State_T * p_state, uint16_t filter, uint
     p_state->Value = FilterValue(filter, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
 }
 
-// static inline void _UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu) { CaptureValue(p_dev->P_STATE, p_dev->FILTER_SHIFT, value_adcu); }
+// static inline void _UserAIn_CaptureValue(UserAIn_T * p_dev, uint16_t value_adcu) { CaptureValue(p_dev->P_STATE, p_dev->FILTER_SHIFT, value_adcu); }
 
-void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
+void UserAIn_CaptureValue(UserAIn_T * p_dev, uint16_t value_adcu)
 {
     if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Modal_PollEdgeValue(p_dev->P_EDGE_PIN); }
 
@@ -104,20 +104,20 @@ void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
 
 */
 /******************************************************************************/
-bool UserAIn_PollEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
+bool UserAIn_PollEdge(UserAIn_T * p_dev, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_dev, value_adcu);
     return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_PollEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE);
 }
 
-bool UserAIn_PollRisingEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
+bool UserAIn_PollRisingEdge(UserAIn_T * p_dev, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_dev, value_adcu);
     return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_PollRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE);
 }
 
 /* get value needs to check pin on getter */
-bool UserAIn_PollFallingEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
+bool UserAIn_PollFallingEdge(UserAIn_T * p_dev, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_dev, value_adcu);
     return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_PollFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE);

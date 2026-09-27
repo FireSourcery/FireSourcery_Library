@@ -32,6 +32,8 @@
 #include "Transducer/UserIn/UserDIn_Cmd.h"
 
 
+//todo refactor.
+
 typedef enum MotorController_OptDinMode
 {
     MOTOR_CONTROLLER_OPT_DIN_DISABLE,

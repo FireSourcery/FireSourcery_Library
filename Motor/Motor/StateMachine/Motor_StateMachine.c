@@ -382,6 +382,8 @@ static void Run_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
 
+    Motor_ResolveFeedbackLimits(p_motor); /* Intervention holds I limits regardless of FeedbackMode */
+
     if (Phase_ReadVOut(&p_motor->PHASE) == PHASE_VOUT_Z) /* prev state is freewheel */
     {
         /* Vabc maybe 0 on entry, if capture vbemf did not complete */
@@ -429,7 +431,7 @@ static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 */
 static State_T * Run_InputRelease(Motor_T * p_motor)
 {
-    return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
+    return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_DOWN;
 }
 
 /* App layer handle conditional release for now. substate for passive torque 0. change input from user cmd */
@@ -482,7 +484,8 @@ const State_T MOTOR_STATE_RUN =
     @brief State Intervention - Motor-level safety supervisor
     Active control with an alternative control variable path.
       TORQUE_ZERO (ZTC) - Coast with zero torque, user may resume
-      RAMP_SAFE   (SS1) - Active deceleration to zero, no resume
+      RAMP_DOWN         - Active deceleration to zero, user may resume
+      SAFE_STOP   (SS1) - RAMP_DOWN, resume rejected
 
     FeedbackMode flags ignored, userCmd augmented.
 */
@@ -490,8 +493,9 @@ const State_T MOTOR_STATE_RUN =
 static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    // if (p_context->FeedbackMode.Current == 0U)
-    Ramp_SetLimits(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context)); // ensure switch to i limits or use vramp for voltage
+    interval_t iLimits = Motor_GetILimits(p_context); /* Current control regardless of FeedbackMode. SpeedPid output is I. */
+    Ramp_SetLimits(&p_context->TorqueRamp, iLimits.low, iLimits.high);
+    PID_SetOutputLimits(&p_context->PidSpeed, iLimits.low, iLimits.high);
     Motor_FOC_MatchTorqueIState(p_context);
     Motor_FOC_MatchVOutput(p_context);
 }
@@ -501,24 +505,24 @@ static void Intervention_Entry(Motor_T * p_motor)
 static void Intervention_Proc(Motor_T * p_motor) { (void)p_motor; }
 
 /*
-    Resume to Run only from TorqueZero substate.
-    RampSafe substate override to reject resume — committed to safe stop.
+    Inherited by TorqueZero and RampDown.
+    SafeStop overrides to reject resume.
 */
 static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
+        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_DOWN;
         case PHASE_VOUT_PWM:    return RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL;
         default: return NULL;
     }
 }
 
-/* Store only */
+/* Store only - resolving would replace the I limits. Run_Entry resolves and matches on resume. */
 static State_T * Intervention_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode); /* transition from speed to i mode does not need match */
+    p_motor->P_MOTOR->FeedbackMode = Motor_FeedbackMode_Cast(feedbackMode);
     return NULL;
 }
 

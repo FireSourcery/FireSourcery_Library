@@ -222,10 +222,15 @@ void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
 /******************************************************************************/
 void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
 {
+    p_dev->P_MOTOR->FeedbackMode.Value = mode.Value;
+    Motor_ResolveFeedbackLimits(p_dev);
+}
+
+/* TorqueRamp and SpeedPid output units follow FeedbackMode.Current */
+void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
+{
     Motor_Context_T * p_motor = p_dev->P_MOTOR;
     interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
-
-    p_dev->P_MOTOR->FeedbackMode.Value = mode.Value;
 
     /* Current mode: resolve from inputs, TorqueRamp may hold V limits from voltage mode. */
     if (p_motor->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor); }
@@ -251,83 +256,6 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 }
 
 
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-void Motor_ResetSpeedPid(Motor_Context_T * p_motor)
-{
-    PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
-}
-
-void Motor_ResetIPid(Motor_Context_T * p_motor)
-{
-    PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
-    PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
-}
-
-void _Motor_ResetTuning(Motor_T * p_motor)
-{
-    /* load from nvm to maintain consistency for save */
-    p_motor->P_MOTOR->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
-    p_motor->P_MOTOR->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
-    Motor_ResetSpeedPid(p_motor->P_MOTOR);
-    Motor_ResetIPid(p_motor->P_MOTOR);
-}
-
-/* Maintain consistency between runtime and Nvm */
-void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
-{
-    p_state->Config.PidSpeed.Kp_Fixed32 = value;
-    PID_SetKp_Fixed32(&p_state->PidSpeed, value);
-}
-
-void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
-{
-    p_state->Config.PidSpeed.Ki_Fixed32 = value;
-    PID_SetKi_Fixed32(&p_state->PidSpeed, value);
-}
-
-void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
-{
-    p_state->Config.PidI.Kp_Fixed32 = value;
-    PID_SetKp_Fixed32(&p_state->Foc.PidIq, value);
-    PID_SetKp_Fixed32(&p_state->Foc.PidId, value);
-}
-
-void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
-{
-    p_state->Config.PidI.Ki_Fixed32 = value;
-    PID_SetKi_Fixed32(&p_state->Foc.PidIq, value);
-    PID_SetKi_Fixed32(&p_state->Foc.PidId, value);
-}
-
-/*  */
-void _Motor_Tuning_SetSpeedKp_Fixed16(Motor_Context_T * p_state, uint32_t value)
-{
-    _PID_SetKp_Fixed16(&p_state->Config.PidSpeed, value);
-    PID_SetKp_Fixed16(&p_state->PidSpeed, value);
-}
-
-void _Motor_Tuning_SetSpeedKi_Fixed16(Motor_Context_T * p_state, uint32_t value)
-{
-    _PID_SetKi_Fixed16(&p_state->Config.PidSpeed, value);
-    PID_SetKi_Fixed16(&p_state->PidSpeed, value);
-}
-
-void _Motor_Tuning_SetIKp_Fixed16(Motor_Context_T * p_state, uint32_t value)
-{
-    _PID_SetKp_Fixed16(&p_state->Config.PidI, value);
-    PID_SetKp_Fixed16(&p_state->Foc.PidIq, value);
-    PID_SetKp_Fixed16(&p_state->Foc.PidId, value);
-}
-
-void _Motor_Tuning_SetIKi_Fixed16(Motor_Context_T * p_state, uint32_t value)
-{
-    _PID_SetKi_Fixed16(&p_state->Config.PidI, value);
-    PID_SetKi_Fixed16(&p_state->Foc.PidIq, value);
-    PID_SetKi_Fixed16(&p_state->Foc.PidId, value);
-}
 
 /******************************************************************************/
 /*!
@@ -392,3 +320,83 @@ void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, uint16_t scalar_ufract
 }
 
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+void Motor_ResetSpeedPid(Motor_Context_T * p_motor)
+{
+    PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
+}
+
+void Motor_ResetIPid(Motor_Context_T * p_motor)
+{
+    PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
+    PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
+}
+
+void _Motor_ResetTuning(Motor_T * p_motor)
+{
+    /* load from nvm to maintain consistency for save */
+    p_motor->P_MOTOR->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
+    p_motor->P_MOTOR->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
+    Motor_ResetSpeedPid(p_motor->P_MOTOR);
+    Motor_ResetIPid(p_motor->P_MOTOR);
+}
+
+/* Maintain consistency between runtime and Nvm */
+void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
+{
+    p_state->Config.PidSpeed.Kp_Fixed32 = value;
+    PID_SetKp_Fixed32(&p_state->PidSpeed, value);
+}
+
+void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
+{
+    p_state->Config.PidSpeed.Ki_Fixed32 = value;
+    PID_SetKi_Fixed32(&p_state->PidSpeed, value);
+}
+
+void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
+{
+    p_state->Config.PidI.Kp_Fixed32 = value;
+    PID_SetKp_Fixed32(&p_state->Foc.PidIq, value);
+    PID_SetKp_Fixed32(&p_state->Foc.PidId, value);
+}
+
+void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
+{
+    p_state->Config.PidI.Ki_Fixed32 = value;
+    PID_SetKi_Fixed32(&p_state->Foc.PidIq, value);
+    PID_SetKi_Fixed32(&p_state->Foc.PidId, value);
+}
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+void _Motor_Tuning_SetSpeedKp_Fixed16(Motor_Context_T * p_state, uint32_t value)
+{
+    _PID_SetKp_Fixed16(&p_state->Config.PidSpeed, value);
+    PID_SetKp_Fixed16(&p_state->PidSpeed, value);
+}
+
+void _Motor_Tuning_SetSpeedKi_Fixed16(Motor_Context_T * p_state, uint32_t value)
+{
+    _PID_SetKi_Fixed16(&p_state->Config.PidSpeed, value);
+    PID_SetKi_Fixed16(&p_state->PidSpeed, value);
+}
+
+void _Motor_Tuning_SetIKp_Fixed16(Motor_Context_T * p_state, uint32_t value)
+{
+    _PID_SetKp_Fixed16(&p_state->Config.PidI, value);
+    PID_SetKp_Fixed16(&p_state->Foc.PidIq, value);
+    PID_SetKp_Fixed16(&p_state->Foc.PidId, value);
+}
+
+void _Motor_Tuning_SetIKi_Fixed16(Motor_Context_T * p_state, uint32_t value)
+{
+    _PID_SetKi_Fixed16(&p_state->Config.PidI, value);
+    PID_SetKi_Fixed16(&p_state->Foc.PidIq, value);
+    PID_SetKi_Fixed16(&p_state->Foc.PidId, value);
+}

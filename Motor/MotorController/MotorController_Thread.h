@@ -235,7 +235,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
             /* AnalogUser is drive functions only */
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:                _MotorController_ProcAnalogUser(p_dev);                 break;
                 /* Only active when Serial is selected as drive input */
-            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: // if (MotorController_PollRxLost(p_dev) == true)     MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_RX_LOST);
+            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+                if (MotorController_PollRxLost(p_dev) == true) { Motor_Table_ForEach(&p_dev->MOTORS, Motor_ApplySafeStop); } /* RxLost latched, escalates to Fault once stopped */
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_CAN:  break;
         }
@@ -269,7 +270,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 
             /* Can use low priority check, as motor is already in fault state. */
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, &MOTOR_STATE_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
-            if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
+            /* Fault_Entry force disables - defer while any motor is in controlled stop */
+            if ((p_mc->FaultFlags.Value != 0U) && (Motor_Table_IsAnyState(&p_dev->MOTORS, &MOTOR_STATE_INTERVENTION) == false)) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
 
             /* In case of UART Rx Overflow Timeout */
             for (uint8_t iUart = 0U; iUart < p_dev->UART_COUNT; iUart++) { UART_PollRestartRxIsr(&p_dev->P_UARTS[iUart]); }

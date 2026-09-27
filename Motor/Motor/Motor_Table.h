@@ -174,3 +174,34 @@ static inline void Motor_Table_ResetSpeedLimit(Motor_Table_T * p_table) { for (u
 static inline void Motor_Table_ResetILimit(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ResetILimit(p_table->P_DEVS[iMotor].P_MOTOR); } }
 
 // static inline void Motor_Table_InputStateMachine(Motor_Table_T * p_table, Motor_State_Input_T input, state_value_t value)  { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_table->P_MONITORS[iMotor], input, value); } }
+
+
+// #define ARRAY_FOREACH_CALL(p_buffer, length, function, ...) \
+//     _Generic((function), \
+//         proc_t:   void_array_foreach,        \
+//         set_t:    void_array_foreach_set,    \
+//         default:  void_array_foreach         \
+//     )(sizeof(*(p_buffer)), p_buffer, length, function __VA_OPT__(,) __VA_ARGS__)
+
+
+// #define Motor_CastFn( fn)\
+//     _Generic((fn), \
+//         Motor_ArraySet_T:            (set_t)(fn),\
+//         Motor_ArrayProc_T:    (proc_t)(fn ),\
+//         default:            (fn )\
+//     )
+
+
+
+// static  void Motor_SetSpeedLimitTest(Motor_T * p_motor, int speed_ufract16) { Motor_SetSpeedLimits(p_motor, speed_ufract16, speed_ufract16); }
+
+// static Motor_Table_T testTable;
+
+// #define MOTOR_FOREACH(MotorTable, function, ...) ARRAY_FOREACH_CALL(MotorTable.P_DEVS, MotorTable.LENGTH, Motor_CastFn(function), __VA_ARGS__)
+
+// static void testfn(void)
+// {
+//     // ARRAY_FOR(Motor_Context_T, MotorSpan, Motor_ResetILimit);
+
+//     MOTOR_FOREACH(testTable, Motor_SetSpeedLimitTest, 100);
+// }

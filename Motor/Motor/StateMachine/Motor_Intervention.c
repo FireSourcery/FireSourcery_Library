@@ -39,9 +39,9 @@
 #define MOTOR_INTERVENTION_COAST_TIMEOUT (60000U) /* 3 seconds at 20kHz */
 #endif
 
-/* Ramp-down watchdog - if speed not decreasing after this many ticks, escalate to fault */
-#ifndef MOTOR_INTERVENTION_RAMP_WATCHDOG
-#define MOTOR_INTERVENTION_RAMP_WATCHDOG (200000U) /* 10 seconds at 20kHz */
+/* Safe stop watchdog - escalate to fault if not stopped within this many ticks */
+#ifndef MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG
+#define MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG (200000U) /* 10 seconds at 20kHz */
 #endif
 
 /******************************************************************************/
@@ -79,7 +79,7 @@ static void TorqueZero_Proc(Motor_T * p_motor)
 static State_T * TorqueZero_Next(Motor_T * p_motor)
 {
     // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
-    // if (p_motor->P_MOTOR->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_RAMP_SAFE; }
+    // if (p_motor->P_MOTOR->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_RAMP_DOWN; }
     return NULL;
 }
 
@@ -99,14 +99,13 @@ const State_T INTERVENTION_STATE_TORQUE_ZERO =
 
 /******************************************************************************/
 /*!
-    @brief SubState: Ramp to Safe Speed (SS1)
+    @brief SubState: Ramp Down
 
     Active deceleration using speed PID targeting zero speed.
-    User resume is rejected — committed to safe stop.
-    Monitors deceleration progress; escalates to Fault on watchdog timeout.
+    Inherits Intervention_InputControl - user may resume to Run.
 */
 /******************************************************************************/
-static void RampSafe_Entry(Motor_T * p_motor)
+static void RampDown_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     /* Intervention_Entry calls MatchIVState */
@@ -115,91 +114,97 @@ static void RampSafe_Entry(Motor_T * p_motor)
     p_context->ControlTimerBase = 0U;
 }
 
-static void RampSafe_Proc(Motor_T * p_motor)
+static void RampDown_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_ProcTorqueReq(p_motor, PID_GetOutput(&p_context->PidSpeed));
 }
 
-static State_T * RampSafe_Next(Motor_T * p_motor)
+static State_T * RampDown_Next(Motor_T * p_motor)
 {
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
-
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { return &MOTOR_STATE_PASSIVE; }
-    /* Watchdog: if speed not decreasing after timeout, escalate to fault */
-    if (p_context->ControlTimerBase > MOTOR_INTERVENTION_RAMP_WATCHDOG) { return &MOTOR_STATE_FAULT; }
-
+    (void)p_motor;
+    // if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { return &MOTOR_STATE_PASSIVE; }
     return NULL;
 }
 
-/*
-
-*/
-static void RampSafe_CaptureSpeed(Motor_T * p_motor)
+static void RampDown_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
     Motor_ProcSpeedControlOf(p_context, 0); /* drive to zero speed */
 }
 
-static const State_Action_T RAMP_SAFE_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
+/* Shared with SafeStop - action dispatch is leaf-only */
+static const State_Action_T RAMP_DOWN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
-    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)RampSafe_CaptureSpeed,
+    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)RampDown_CaptureSpeed,
     [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
 };
 
-static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
+static const State_Input_T RAMP_DOWN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
+{
+};
+
+const State_T INTERVENTION_STATE_RAMP_DOWN =
+{
+    .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_INTERVENTION }, /* sub-state id not yet allocated: reports as the root state */
+    .P_TOP      = &MOTOR_STATE_INTERVENTION,
+    .P_PARENT   = &MOTOR_STATE_INTERVENTION,
+    .DEPTH      = 1U,
+    .ENTRY      = (State_Action_T)RampDown_Entry,
+    .LOOP       = (State_Action_T)RampDown_Proc,
+    .NEXT       = (State_Input0_T)RampDown_Next,
+    .P_TRANSITION_TABLE = &RAMP_DOWN_TRANSITION_TABLE[0U],
+    .P_ACTION_TABLE = &RAMP_DOWN_ACTION_TABLE[0U],
+};
+
+
+/******************************************************************************/
+/*!
+    @brief SubState: Safe Stop (SS1)
+
+    RampDown with user resume rejected - committed to stop.
+    Inherits RampDown LOOP. Escalates to Fault on watchdog timeout.
+*/
+/******************************************************************************/
+/* Entry from Run traverses RampDown_Entry. Entry from RampDown continues the ramp in progress. */
+static void SafeStop_Entry(Motor_T * p_motor)
+{
+    p_motor->P_MOTOR->ControlTimerBase = 0U;
+}
+
+static State_T * SafeStop_Next(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    if (Motor_IsSpeedZero(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
+    if (p_context->ControlTimerBase > MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG) { return &MOTOR_STATE_FAULT; }
+    return NULL;
+}
+
+static State_T * SafeStop_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-        case PHASE_VOUT_0: return (Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : NULL);
-        case PHASE_VOUT_PWM: return (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL);
-        default: return NULL;
+        case PHASE_VOUT_0:      return Motor_IsSpeedZero(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : NULL;
+        case PHASE_VOUT_PWM:    return NULL; /* Reject resume, including brake */
+        default:                return NULL;
     }
-    return NULL;
 }
 
-static const State_Input_T RAMP_SAFE_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T SAFE_STOP_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
-    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Intervention_InputControl, /* override */
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)SafeStop_InputControl, /* override */
 };
 
-const State_T INTERVENTION_STATE_RAMP_SAFE =
+const State_T INTERVENTION_STATE_SAFE_STOP =
 {
     .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_INTERVENTION }, /* sub-state id not yet allocated: reports as the root state */
-
     .P_TOP      = &MOTOR_STATE_INTERVENTION,
-    .P_PARENT   = &MOTOR_STATE_INTERVENTION,
-    .DEPTH      = 1U,
-    .ENTRY      = (State_Action_T)RampSafe_Entry,
-    .LOOP       = (State_Action_T)RampSafe_Proc,
-    .NEXT       = (State_Input0_T)RampSafe_Next,
-    .P_TRANSITION_TABLE = &RAMP_SAFE_TRANSITION_TABLE[0U],
-    .P_ACTION_TABLE = &RAMP_SAFE_ACTION_TABLE[0U],
+    .P_PARENT   = &INTERVENTION_STATE_RAMP_DOWN,
+    .DEPTH      = 2U,
+    .ENTRY      = (State_Action_T)SafeStop_Entry,
+    .NEXT       = (State_Input0_T)SafeStop_Next,
+    .P_TRANSITION_TABLE = &SAFE_STOP_TRANSITION_TABLE[0U],
+    .P_ACTION_TABLE = &RAMP_DOWN_ACTION_TABLE[0U],
 };
-
-
-
-// static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
-// {
-//     switch ((Phase_VOutMode_T)phaseOutput)
-//     {
-//         case PHASE_VOUT_Z:
-//         case PHASE_VOUT_0: return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : NULL;
-//         case PHASE_VOUT_PWM: return NULL; /* Reject */ /* brake call after release */
-//         default: return NULL;
-//     }
-//     return NULL;
-// }
-
-// const State_T INTERVENTION_STATE_RAMP_SAFE_COMMIT =
-// {
-//     .P_TOP      = &MOTOR_STATE_INTERVENTION,
-//     .P_PARENT   = &INTERVENTION_STATE_RAMP_SAFE,
-//     .DEPTH      = 1U,
-//     .ENTRY      = (State_Action_T)RampSafe_Entry,
-//     .LOOP       = (State_Action_T)RampSafe_Proc,
-//     .NEXT       = (State_Input0_T)RampSafe_Next,
-//     .P_TRANSITION_TABLE = &RAMP_SAFE_TRANSITION_TABLE[0U],
-// };

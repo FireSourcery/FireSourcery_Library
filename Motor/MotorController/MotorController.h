@@ -48,6 +48,8 @@
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
 #include "Transducer/UserIn/UserDIn_Cmd.h"
+#include "Transducer/UserIn/UserAIn.h"
+#include "Transducer/UserIn/UserDIn.h"
 
 #include "Peripheral/ADC/ADC_Conversion.h"
 #include "Peripheral/ADC/ADC.h"

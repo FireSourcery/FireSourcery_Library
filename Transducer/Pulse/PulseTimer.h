@@ -272,8 +272,6 @@ static inline void PulseTimer_SetInitial(PulseTimer_T * p_timer)
 // }
 
 
-
-
 // static inline uint32_t _PulseTimer_ExtendCapture(PulseTimer_T * p_timer, uint16_t captured, uint16_t now)
 // {
 //     uint32_t high = p_timer->P_STATE->TimerHigh;

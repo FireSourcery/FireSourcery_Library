@@ -79,7 +79,7 @@ static inline void ADC_Channel_Activate(ADC_Channel_T * p_channel)
 static inline adc_result_t ADC_Channel_Result(ADC_Channel_T * p_channel) { return ADC_ResultOf(p_channel->P_ADC, p_channel->ID); }
 
 /* Landed. Consumes, so it is an edge */
-static inline bool ADC_Channel_TakeComplete(ADC_Channel_T * p_channel) { return ADC_TakeComplete(p_channel->P_ADC, ADC_Channel_Mask(p_channel)); }
+static inline bool ADC_Channel_TakeComplete(ADC_Channel_T * p_channel) { return ADC_PollComplete(p_channel->P_ADC, ADC_Channel_Mask(p_channel)); }
 
 /******************************************************************************/
 /*
@@ -104,7 +104,7 @@ static inline void ADC_Channel_CaptureEach(ADC_Channel_T * p_channels, adc_mask_
             Run in the ADC ISR, in place of ADC_OnComplete_ISR.
 
     Takes every flag, so 1 dispatcher owns the ADC. A Board that also reads flags of its own
-    names its set with ADC_TakeComplete first, or calls ADC_Channel_CaptureEach itself.
+    names its set with ADC_PollComplete first, or calls ADC_Channel_CaptureEach itself.
 */
 static inline void ADC_Channel_OnComplete_ISR(ADC_T * p_adc, ADC_Channel_T * p_channels)
 {

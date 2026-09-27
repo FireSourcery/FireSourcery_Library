@@ -178,7 +178,7 @@ FireSourcery_Library/
 │   │   └── NvMemory/            #     Unified NvMemory abstraction
 │   ├── Pin/                     #   GPIO pin abstraction
 │   ├── PWM/                     #   PWM output driver (center-aligned for motor)
-│   ├── UART/                  #   UART serial driver (interrupt/DMA)
+│   ├── UART/                    #   UART serial driver (interrupt/DMA)
 │   └── Xcvr/                    #   Transceiver abstraction (RX/TX buffer management)
 │
 ├── System/                      # System-level services

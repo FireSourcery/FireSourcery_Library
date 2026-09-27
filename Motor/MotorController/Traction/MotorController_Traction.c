@@ -111,7 +111,6 @@ void Traction_ApplyThrottleValue(const Traction_T * p_vehicle, Motor_Table_T * p
     }
 }
 
-// apply hold on low speed
 void Traction_StartBrakeMode(const Traction_T * p_vehicle, Motor_Table_T * p_motors)
 {
     switch (p_vehicle->Config.BrakeMode)
@@ -121,6 +120,16 @@ void Traction_StartBrakeMode(const Traction_T * p_vehicle, Motor_Table_T * p_mot
         default: break;
     }
     Motor_Table_ApplyControl(p_motors, PHASE_VOUT_PWM);     /* alternatively from Release only */
+}
+
+/*
+    Opposing torque cannot hold standstill - anti-plugging clamps it to short-circuit braking once speed crosses zero.
+    Hold zero speed once no motor advances. Repeat calls while holding are no-op.
+    Exits: Throttle resumes Run. Release by ZeroMode.
+*/
+static void Traction_ProcBrakeHold(Motor_Table_T * p_motors)
+{
+    if (Motor_Table_IsAny(p_motors, Motor_IsSpeedAligned) == false) { Motor_Table_ForEach(p_motors, Motor_ApplyRampDown); }
 }
 
 /*!
@@ -139,7 +148,10 @@ void Traction_ApplyBrakeValue(const Traction_T * p_vehicle, Motor_Table_T * p_mo
 
     switch (p_vehicle->Config.BrakeMode)
     {
-        case TRACTION_BRAKE_MODE_TORQUE: Motor_Table_SetCmdWith(p_motors, Motor_SetICmd_Norm, cmdValue); break; /* note: torqueRamp also written in voltage mode */
+        case TRACTION_BRAKE_MODE_TORQUE:
+            Motor_Table_SetCmdWith(p_motors, Motor_SetICmd_Norm, cmdValue); /* note: torqueRamp also written in voltage mode */
+            Traction_ProcBrakeHold(p_motors);
+            break;
             // case TRACTION_BRAKE_MODE_VOLTAGE: Motor_Table_SetCmdWith(p_motors, Motor_SetRegenCmd, 0); break;
         default: break;
     }

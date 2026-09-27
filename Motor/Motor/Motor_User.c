@@ -130,18 +130,50 @@ void Motor_ApplyUserDirection(Motor_T * p_motor, Motor_Direction_T direction) { 
 
 /******************************************************************************/
 /*
-   User Request Torque 0,
-   User Rquest Ramp down
+   User Request Torque 0, Ramp Down - user may resume
+   System Request Safe Stop - committed
 */
 /******************************************************************************/
-/* todo add user init ramp down */
 #include "StateMachine/Motor_Intervention.h"
-static State_T * _Motor_ApplyTorque0(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &INTERVENTION_STATE_TORQUE_ZERO; }
+/* SafeStop is committed */
+static State_T * _Motor_ApplyTorque0(Motor_T * p_motor, state_value_t value)
+{
+    (void)value; return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_SAFE_STOP) ? NULL : &INTERVENTION_STATE_TORQUE_ZERO;
+}
 
+/* From Run, or release RampDown */
 void Motor_ApplyTorque0(Motor_T * p_motor)
 {
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyTorque0 };
+    static StateMachine_TransitionCmd_T FROM_RUN = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyTorque0 };
+    static StateMachine_TransitionCmd_T FROM_RAMP_DOWN = { .P_START = &INTERVENTION_STATE_RAMP_DOWN, .NEXT = (State_Input_T)_Motor_ApplyTorque0 };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_RUN, 0U);
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_RAMP_DOWN, 0U);
+}
+
+static State_T * _Motor_ApplyRampDown(Motor_T * p_motor, state_value_t value)
+{
+    (void)p_motor; (void)value; return &INTERVENTION_STATE_RAMP_DOWN;
+}
+
+void Motor_ApplyRampDown(Motor_T * p_motor)
+{
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyRampDown };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+}
+
+/* Self-transition would restart the watchdog */
+static State_T * _Motor_ApplySafeStop(Motor_T * p_motor, state_value_t value)
+{
+    (void)value; return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_SAFE_STOP) ? NULL : &INTERVENTION_STATE_SAFE_STOP;
+}
+
+/* From Run, or escalate from TorqueZero/RampDown */
+void Motor_ApplySafeStop(Motor_T * p_motor)
+{
+    static StateMachine_TransitionCmd_T FROM_RUN = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplySafeStop };
+    static StateMachine_TransitionCmd_T FROM_INTERVENTION = { .P_START = &MOTOR_STATE_INTERVENTION, .NEXT = (State_Input_T)_Motor_ApplySafeStop };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_RUN, 0U);
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_INTERVENTION, 0U);
 }
 
 /******************************************************************************/

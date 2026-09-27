@@ -33,9 +33,10 @@
     Hypervisor-layer safe stop functions at the Motor level.
     Motor States are divided by control logic, this can be implemented here.
 
-    Two substates provide ZTC/SS1 semantics:
+    SubStates:
       TORQUE_ZERO  (ZTC) - coast/Regen, user may resume.
-      RAMP_SAFE    (SS1) - Active deceleration to zero speed, no user resume.
+      RAMP_DOWN          - Active deceleration to zero speed, user may resume.
+      SAFE_STOP    (SS1) - RAMP_DOWN child. User resume rejected, watchdog to Fault.
 */
 /******************************************************************************/
 #include "Motor_StateMachine.h"
@@ -43,9 +44,10 @@
 
 /******************************************************************************/
 /*
-    SubState externs - for direct entry from Run_InputRelease
+    SubState externs - for direct entry from Run and Motor_User
 */
 /******************************************************************************/
 extern const State_T INTERVENTION_STATE_TORQUE_ZERO;
-extern const State_T INTERVENTION_STATE_RAMP_SAFE;
+extern const State_T INTERVENTION_STATE_RAMP_DOWN;
+extern const State_T INTERVENTION_STATE_SAFE_STOP;
 

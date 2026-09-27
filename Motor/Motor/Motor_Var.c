@@ -135,6 +135,8 @@ void _Motor_Var_StateCmd_Call(Motor_T * p_motor, Motor_Var_StateCmd_T varId, int
         case MOTOR_VAR_FORCE_DISABLE_CONTROL:   Motor_ForceDisableControl(p_motor);                                                  break;
         case MOTOR_VAR_USER_ENABLE:             Motor_Enable(p_motor);                                                                 break;
         case MOTOR_VAR_USER_DISABLE:            Motor_Disable(p_motor);                                                                break;
+        case MOTOR_VAR_USER_ZERO_TORQUE:        Motor_ApplyTorque0(p_motor);                                break;
+        case MOTOR_VAR_USER_RAMP_DOWN:          Motor_ApplyRampDown(p_motor);                                    break;
         default: break;
     }
 }

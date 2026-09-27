@@ -111,11 +111,11 @@ static inline bool _UserAIn_IsOn(const UserAIn_State_T * p_state) { return (p_st
 static inline uint16_t _UserAIn_GetValue(const UserAIn_State_T * p_state) { return p_state->Value; }
 
 /* Edge as threshold */
-static inline bool UserAIn_IsOn(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) ? _UserAIn_IsOn(p_dev->P_STATE) : false; }
+static inline bool UserAIn_IsOn(UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) ? _UserAIn_IsOn(p_dev->P_STATE) : false; }
 
 /*! @return Percent16 by default */
 /* Check IsOn on get, rather than overwrite 0 when off, Value remains prev captured value */
-static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) ? _UserAIn_GetValue(p_dev->P_STATE) : 0; }
+static inline uint16_t UserAIn_GetValue(UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) ? _UserAIn_GetValue(p_dev->P_STATE) : 0; }
 
 /*
     Analog value only substate without EdgePin
@@ -130,9 +130,9 @@ static inline bool _UserAIn_IsEdge(const UserAIn_State_T * p_state) { return (_U
     @brief Check for edge without polling (query current state only)
     @note Uses digital pin edge if present, otherwise analog threshold edge
 */
-static inline bool UserAIn_IsRisingEdge(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE); }
-static inline bool UserAIn_IsFallingEdge(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE); }
-static inline bool UserAIn_IsEdge(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE); }
+static inline bool UserAIn_IsRisingEdge(UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE); }
+static inline bool UserAIn_IsFallingEdge(UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE); }
+static inline bool UserAIn_IsEdge(UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE); }
 
 
 /******************************************************************************/
@@ -140,21 +140,21 @@ static inline bool UserAIn_IsEdge(const UserAIn_T * p_dev) { return _UserAIn_IsE
     Public Functions
 */
 /******************************************************************************/
-extern void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config);
-extern void UserAIn_Init(const UserAIn_T * p_dev);
+extern void UserAIn_InitFrom(UserAIn_T * p_dev, const UserAIn_Config_T * p_config);
+extern void UserAIn_Init(UserAIn_T * p_dev);
 
-extern void UserAIn_ReinitScale(const UserAIn_T * p_dev);
-extern void UserAIn_ApplyConfig(const UserAIn_T * p_dev);
+extern void UserAIn_ReinitScale(UserAIn_T * p_dev);
+extern void UserAIn_ApplyConfig(UserAIn_T * p_dev);
 
 /* Polling functions */
-extern void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu);
-extern bool UserAIn_PollEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
-extern bool UserAIn_PollRisingEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
-extern bool UserAIn_PollFallingEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
+extern void UserAIn_CaptureValue(UserAIn_T * p_dev, uint16_t value_adcu);
+extern bool UserAIn_PollEdge(UserAIn_T * p_dev, uint16_t value_adcu);
+extern bool UserAIn_PollRisingEdge(UserAIn_T * p_dev, uint16_t value_adcu);
+extern bool UserAIn_PollFallingEdge(UserAIn_T * p_dev, uint16_t value_adcu);
 
 
 
-// static inline int _UserAIn_Var_Get(const UserAIn_T * p_dev, int id)
+// static inline int _UserAIn_Var_Get(UserAIn_T * p_dev, int id)
 // {
 //     int32_t value = 0;
 //     switch (id)
@@ -202,21 +202,21 @@ static inline void _UserAIn_Config_Set(UserAIn_Config_T * p_config, UserAIn_Conf
     Config is owned by the device, loaded from P_NVM_CONFIG on init.
     Set propagates: ADC bounds rescale the linear units, UseEdgePin re-gates the edge pin.
 */
-static inline int UserAIn_Config_Get(const UserAIn_T * p_dev, UserAIn_ConfigId_T configId) { return _UserAIn_Config_Get(&p_dev->P_STATE->Config, configId); }
+static inline int UserAIn_Config_Get(UserAIn_T * p_dev, UserAIn_ConfigId_T configId) { return _UserAIn_Config_Get(&p_dev->P_STATE->Config, configId); }
 
-static inline void UserAIn_Config_Set(const UserAIn_T * p_dev, UserAIn_ConfigId_T configId, int value)
+static inline void UserAIn_Config_Set(UserAIn_T * p_dev, UserAIn_ConfigId_T configId, int value)
 {
     _UserAIn_Config_Set(&p_dev->P_STATE->Config, configId, value);
     UserAIn_ApplyConfig(p_dev);
 }
 
-static inline int UserAIn_Config_GetInstance(const UserAIn_T * p_array, uint8_t length, uint8_t instance, UserAIn_ConfigId_T configId)
+static inline int UserAIn_Config_GetInstance(UserAIn_T * p_array, uint8_t length, uint8_t instance, UserAIn_ConfigId_T configId)
 {
     if (instance >= length) { return 0; }
     return UserAIn_Config_Get(&p_array[instance], configId);
 }
 
-static inline void UserAIn_Config_SetInstance(const UserAIn_T * p_array, uint8_t length, uint8_t instance, UserAIn_ConfigId_T configId, int value)
+static inline void UserAIn_Config_SetInstance(UserAIn_T * p_array, uint8_t length, uint8_t instance, UserAIn_ConfigId_T configId, int value)
 {
     if (instance >= length) { return; }
     UserAIn_Config_Set(&p_array[instance], configId, value);

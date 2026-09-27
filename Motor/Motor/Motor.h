@@ -548,6 +548,9 @@ static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract1
 static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(Motor_T * p_motor) { return Motor_SpeedRated_Fract16(p_motor); }
 static inline bool Motor_IsSpeedFreewheelLimitRange(Motor_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor->P_MOTOR)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
 
+/* Rotating along the applied Direction. False at standstill or counter-rotation */
+static inline bool Motor_IsSpeedAligned(Motor_T * p_motor) { return ((Motor_GetSpeedFeedback(p_motor->P_MOTOR) * p_motor->P_MOTOR->Direction) > 0); }
+
 /*
     bus ratio IS the no-FW speed ceiling, VBus_GetSpeedDerate
 */
@@ -662,6 +665,7 @@ extern bool Motor_IsConfigValid(Motor_T * p_motor);
 extern void Motor_ValidateConfig(Motor_T * p_motor);
 
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void Motor_ResolveFeedbackLimits(Motor_T * p_motor);
 extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 
 extern void Motor_ResetSpeedPid(Motor_Context_T * p_motor);

@@ -60,7 +60,7 @@ typedef union Shifter_Pins
 Shifter_Pins_T;
 
 /*
-    Set convienience
+    Set convenience
     Wiring variants. (Neutral<<2 | Forward<<1 | Reverse<<0) — assignable directly to Config.PinMode.Value.
         FNR — three pins, one per gear, mutually exclusive
         FR  — two pins (forward + reverse). Neutral = neither pressed
@@ -68,9 +68,8 @@ Shifter_Pins_T;
 */
 typedef enum Shifter_PinMode
 {
-    SHIFTER_PIN_MODE_FNR = 0b111,
-    SHIFTER_PIN_MODE_FR = 0b011,
-    SHIFTER_PIN_MODE_R = 0b001,
+    SHIFTER_PIN_MODE_FR = 0,
+    SHIFTER_PIN_MODE_R = 1, /* R-only wiring variant */
 }
 Shifter_PinMode_T;
 

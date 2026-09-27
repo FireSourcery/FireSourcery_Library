@@ -27,7 +27,17 @@
     @file   ADC.h
     @author FireSourcery
     @brief  ADC base. 1 converter, addressed by channel mask.
+*/
+/******************************************************************************/
+#include "HAL_ADC.h"    /* HAL contract. HAL_ADC_T, adc_result_t, adc_pin_t */
 
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <assert.h>
+
+/******************************************************************************/
+/*
     The base holds no handler and no set. It converts what is marked, reports what landed, and
     names nothing above itself. [adc_channel_t] is its only address: [ID] == [Hw slot] ==
     [P_CHANNELS index] == [P_CHANNEL_RESULTS index].
@@ -52,13 +62,6 @@
         Software        - Channels are marked, the ISR walks them, fifo depth at a time.
 */
 /******************************************************************************/
-#include "HAL_ADC.h"    /* HAL contract. HAL_ADC_T, adc_result_t, adc_pin_t */
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <assert.h>
-
 #ifndef ADC_HW_SEQUENCER_ENABLE
 #define ADC_HW_SEQUENCER_ENABLE false
 #endif
@@ -71,11 +74,7 @@
 #define ADC_FIFO_LENGTH_MAX 1U
 #endif
 
-/******************************************************************************/
-/*
-    Channel mask
-*/
-/******************************************************************************/
+
 typedef uint8_t adc_channel_t;
 typedef uint32_t adc_mask_t;
 
@@ -139,7 +138,7 @@ typedef const struct ADC_Module
     HAL_ADC_T * P_HAL_ADC;
     ADC_State_T * P_STATE;
 
-    const adc_pin_t * P_CHANNEL_PINS;               /* [Channel] -> Hw pin. The base's whole notion of a channel */
+    const adc_pin_t * P_CHANNEL_PINS;           /* [Channel] -> Hw pin. The base's whole notion of a channel */
     uint8_t CHANNEL_COUNT;                      /* Pins may repeat, for a channel per consumer */
 
     /* Parallel to P_CHANNELS, for the Hw transfer */
@@ -197,7 +196,7 @@ static inline bool ADC_IsComplete(ADC_T * p_adc, adc_mask_t mask) { return ((p_a
     thread while an ISR flags the same ADC loses bits, and needs a Critical section around both.
 */
 /* All or nothing. A partial set keeps its flags, so it can still complete */
-static inline bool ADC_TakeComplete(ADC_T * p_adc, adc_mask_t mask)
+static inline bool ADC_PollComplete(ADC_T * p_adc, adc_mask_t mask)
 {
     bool isComplete = ((p_adc->P_STATE->CompleteFlags & mask) == mask);
     if (isComplete == true) { p_adc->P_STATE->CompleteFlags &= ~mask; }

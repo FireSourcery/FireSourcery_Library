@@ -98,7 +98,7 @@ static inline void void_array_foreach(size_t type, void * p_buffer, size_t lengt
     for (size_t index = 0U; index < length; index++) { unit_op(void_array_at(type, p_buffer, index)); }
 }
 
-#define ARRAY_FOREACH(p_buffer, length, op) void_array_foreach(sizeof(*(p_buffer)), (void *)p_buffer, length, (proc_t)op)
+// #define ARRAY_FOREACH(p_buffer, length, op) void_array_foreach(sizeof(*(p_buffer)), (void *)p_buffer, length, (proc_t)op)
 
 /*!
     applies to every element

@@ -89,7 +89,7 @@ static inline void ADC_Sequence_ActivateDma(ADC_Sequence_T * p_sequence)
 static inline bool ADC_Sequence_IsComplete(ADC_Sequence_T * p_sequence) { return ADC_IsComplete(p_sequence->P_ADC, p_sequence->CHANNELS); }
 
 /* All or nothing. A partial set keeps its flags, so a set that straddles 2 ISRs still closes */
-static inline bool ADC_Sequence_TakeComplete(ADC_Sequence_T * p_sequence) { return ADC_TakeComplete(p_sequence->P_ADC, p_sequence->CHANNELS); }
+static inline bool ADC_Sequence_TakeComplete(ADC_Sequence_T * p_sequence) { return ADC_PollComplete(p_sequence->P_ADC, p_sequence->CHANNELS); }
 
 /*!
     @brief  Close the set where it has landed. Runs COMPLETE once, from the ISR or from a thread.

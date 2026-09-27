@@ -56,6 +56,32 @@ static inline void ExitCriticalRx(UART_T * p_uart) { _EXIT_CRITICAL(HAL_UART_Ena
     Public
 */
 /******************************************************************************/
+bool UART_SendN(UART_T * p_uart, const uint8_t * p_srcBuffer, size_t length)
+{
+    bool status;
+
+    EnterCriticalTx(p_uart);
+    status = RingT_PushBackArray(RING_T_ARGS(p_uart->TX_RING), p_srcBuffer, length);
+    if (status == true) { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
+    ExitCriticalTx(p_uart);
+
+    return status;
+}
+
+/*
+    Rx only if length had been reached
+*/
+bool UART_RecvN(UART_T * p_uart, uint8_t * p_destBuffer, size_t length)
+{
+    bool status;
+
+    EnterCriticalRx(p_uart);
+    status = RingT_PopFrontArray(RING_T_ARGS(p_uart->RX_RING), p_destBuffer, length);
+    ExitCriticalRx(p_uart);
+
+    return status;
+}
+
 void UART_Init(UART_T * p_uart)
 {
     HAL_UART_Init(p_uart->P_HAL_UART);
@@ -86,6 +112,13 @@ bool UART_ConfigBaudRate(UART_T * p_uart, uint32_t baudRate)
 
     return isSuccess;
 }
+
+void UART_FlushBuffers(UART_T * p_uart)
+{
+    RingT_Clear(RING_T_ARGS(p_uart->TX_RING));
+    RingT_Clear(RING_T_ARGS(p_uart->RX_RING));
+}
+
 
 bool UART_SendByte(UART_T * p_uart, uint8_t txChar)
 {
@@ -136,34 +169,4 @@ size_t UART_RecvMax(UART_T * p_uart, uint8_t * p_destBuffer, size_t destSize)
     return charCount;
 }
 
-bool UART_SendN(UART_T * p_uart, const uint8_t * p_srcBuffer, size_t length)
-{
-    bool status;
 
-    EnterCriticalTx(p_uart);
-    status = RingT_PushBackArray(RING_T_ARGS(p_uart->TX_RING), p_srcBuffer, length);
-    if (status == true) { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
-    ExitCriticalTx(p_uart);
-
-    return status;
-}
-
-/*
-    Rx only if length had been reached
-*/
-bool UART_RecvN(UART_T * p_uart, uint8_t * p_destBuffer, size_t length)
-{
-    bool status;
-
-    EnterCriticalRx(p_uart);
-    status = RingT_PopFrontArray(RING_T_ARGS(p_uart->RX_RING), p_destBuffer, length);
-    ExitCriticalRx(p_uart);
-
-    return status;
-}
-
-void UART_FlushBuffers(UART_T * p_uart)
-{
-    RingT_Clear(RING_T_ARGS(p_uart->TX_RING));
-    RingT_Clear(RING_T_ARGS(p_uart->RX_RING));
-}

@@ -92,7 +92,7 @@ static inline void ADC_OnComplete_ISR(ADC_T * p_adc)
 /*!
     @brief Capture by polling the status register, where the ISR is unavailable
 */
-static inline void ADC_PollComplete(ADC_T * p_adc)
+static inline void ADC_PollCompleteFifo(ADC_T * p_adc)
 {
     if (HAL_ADC_ReadConversionCompleteFlag(p_adc->P_HAL_ADC) == true) { ADC_OnComplete_ISR(p_adc); }
 }
