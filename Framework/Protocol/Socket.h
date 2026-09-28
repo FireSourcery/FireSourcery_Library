@@ -121,7 +121,7 @@ typedef const struct Socket
     uint8_t PACKET_BUFFER_LENGTH;   /* What P_RX_BUFFER and P_TX_BUFFER were allocated with */
 
 #ifdef SOCKET_XCVR_FIXED
-    // Xcvr_T * const * P_XCVR; /* const binding */
+    Xcvr_T * P_XCVR; /* const binding */
 #endif
     /* Selectable transports. Array of pointers - need not be contiguous. */
     Xcvr_T * const * P_XCVR_TABLE;
@@ -134,7 +134,7 @@ Socket_T;
 static inline Xcvr_T * _Socket_Xcvr(Socket_T * p_socket)
 {
 #ifdef SOCKET_XCVR_FIXED
-    return (Xcvr_T *)p_socket->P_XCVR;
+    return p_socket->P_XCVR;
 #else
     return p_socket->P_SOCKET_STATE->p_Xcvr;
 #endif

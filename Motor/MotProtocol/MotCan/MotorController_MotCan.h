@@ -42,6 +42,94 @@
 
 #include <stdint.h>
 
+
+
+/******************************************************************************/
+/*
+    MotVar SDO server — manufacturer object range (0x2000..0x2FFF)
+
+    Every var is a 32-bit RW object. Read-only and state-refusals are reported
+    by MotorController_Var_Set's status, which MotCan_Od_StatusOf turns into the
+    same abort code a per-id access table would have produced.
+*/
+/******************************************************************************/
+/*
+    OD_Interface_T callbacks — the context-bound shape of the pure
+    MotCan_Od_* mapping in MotCan.h. Named apart so the wire-format layer and
+    the bound callbacks do not collide on GetInfo.
+*/
+static inline OD_Info_T _MotCan_OdGetInfo(MotorController_T * p_mc, uint16_t index, uint8_t subindex)
+{
+    (void)p_mc; /* object metadata is static — no device state consulted */
+    return MotCan_Od_GetInfo(index, subindex);
+}
+
+/* Var_Get has no status channel — an unmapped id reads 0. GetInfo already rejected out-of-range. */
+static inline OD_Status_T _MotCan_OdGet(MotorController_T * p_mc, uint16_t index, uint8_t subindex, int32_t * p_value)
+{
+    *p_value = MotorController_Var_Get(p_mc, MotCan_Od_VarIdOf(index, subindex));
+    return OD_OK;
+}
+
+static inline OD_Status_T _MotCan_OdSet(MotorController_T * p_mc, uint16_t index, uint8_t subindex, int32_t value)
+{
+    return MotCan_Od_StatusOf(MotorController_Var_Set(p_mc, MotCan_Od_VarIdOf(index, subindex), value));
+}
+
+static inline void _MotCan_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+{
+    static const OD_Interface_T OD =
+    {
+        .GetInfo   = (OD_GetInfoFn_T)_MotCan_OdGetInfo,
+        .Get       = (OD_GetFn_T)_MotCan_OdGet,
+        .Set       = (OD_SetFn_T)_MotCan_OdSet,
+    };
+
+    /* p_adapter is unused by the engine for OD-interface-backed servers */
+    p_tx->DataLength = SDO_HandleRequest(&OD, (void *)p_mc, (const SDO_T *)p_rx->Data, (SDO_T *)p_tx->Data);
+    if (p_tx->DataLength > 0U) { p_tx->CanId.Id32 = (COB_SDO_RSP_BASE | COB_NODE(p_rx->CanId.Id)); }
+}
+
+/*
+    0x600 + node — one SDO server address, two object ranges.
+        0x2000..0x2FFF  manufacturer : MotVar accessors
+        otherwise       profile      : CiA 402 standard objects
+*/
+static inline void MotCan_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+{
+    if (MotCan_Od_IsVarIndex(((const SDO_T *)p_rx->Data)->Index)) { _MotCan_HandleSdo(p_mc, p_rx, p_tx); }
+    else { MotorController_Cia402_HandleSdo(p_mc, p_rx, p_tx); }
+}
+
+/******************************************************************************/
+/*! RX dispatch — register as CAN_T REQ_CALLBACK */
+/******************************************************************************/
+/*!
+    @brief  Dispatch received CAN frame to the appropriate handler.
+            Signature matches CAN_RxRequest_T.
+            p_context must be MotorController_T *.
+*/
+/*
+    handlers run as interrupt priority of Rx
+*/
+static inline void Req_Traction(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+{
+    (void)p_tx;
+    const MotCan_TractionCmd_T * p_ctrl = (const MotCan_TractionCmd_T *)p_rx->Data;
+    MotorController_Traction_SetThrottleBrake(p_mc, p_ctrl->Throttle, p_ctrl->Brake);
+}
+
+
+static const CAN_Request_T MOT_CAN_ROUTES[] =
+{
+    { COB_RXPDO1_BASE,  COB_FUNCTION_MASK, (CAN_RequestHandler_T)MotorController_Cia402_HandleRxPdo }, /* RxPDO3 stays free for MOT_CAN_RX_CONTROL_ID */
+    { COB_RXPDO2_BASE,  COB_FUNCTION_MASK, (CAN_RequestHandler_T)MotorController_Cia402_HandleRxPdo },
+    { COB_SDO_REQ_BASE, COB_FUNCTION_MASK, (CAN_RequestHandler_T)MotCan_HandleSdo },
+    // { MOT_CAN_RX_CONTROL_ID,   0x7FFU, (CAN_RequestHandler_T)Req_Traction }, /* 0x001 throttle/brake — no reply */
+};
+
+
+
 /*!
     @brief  Broadcast primary motion telemetry.
             Speed, phase current & voltage, bus voltage — all as fract16.
@@ -105,103 +193,14 @@ static inline void BuildTelemetry2(MotorController_T * p_mc, CAN_Frame_T * p_tx)
 
 static const CAN_BroadcastEntry_T MOT_CAN_BROADCAST_TABLE[] =
 {
-    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U,     .BUILD = (CAN_BuildBroadcast_T)BuildTelemetry1, },
-    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U,   .BUILD = (CAN_BuildBroadcast_T)BuildTelemetry2, },
+    [0] = {.ID = MOT_CAN_TX_TELEMETRY1_ID, .INTERVAL = 20U,     .BUILD = (CAN_BroadcastHandler_T)BuildTelemetry1, },
+    [1] = {.ID = MOT_CAN_TX_TELEMETRY2_ID, .INTERVAL = 1000U,   .BUILD = (CAN_BroadcastHandler_T)BuildTelemetry2, },
 };
 
 
-/******************************************************************************/
-/*! RX dispatch — register as CAN_T REQ_CALLBACK */
-/******************************************************************************/
-/*!
-    @brief  Dispatch received CAN frame to the appropriate handler.
-            Signature matches CAN_RxRequest_T.
-            p_context must be MotorController_T *.
-*/
-/*
-    handlers run as interrupt priority of Rx
-*/
-static inline void Req_Traction(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
-{
-    (void)p_tx;
-    const MotCan_TractionControl_T * p_ctrl = (const MotCan_TractionControl_T *)p_rx->Data;
-    MotorController_Traction_SetThrottleBrake(p_mc, p_ctrl->Throttle, p_ctrl->Brake);
-}
-
-/******************************************************************************/
-/*
-    MotVar SDO server — manufacturer object range (0x2000..0x2FFF)
-
-    Every var is a 32-bit RW object. Read-only and state-refusals are reported
-    by MotorController_Var_Set's status, which MotCan_Od_StatusOf turns into the
-    same abort code a per-id access table would have produced.
-*/
-/******************************************************************************/
-/*
-    OD_Interface_T callbacks — the context-bound shape of the pure
-    MotCan_Od_* mapping in MotCan.h. Named apart so the wire-format layer and
-    the bound callbacks do not collide on GetInfo.
-*/
-static inline OD_Info_T _MotCan_OdGetInfo(MotorController_T * p_mc, uint16_t index, uint8_t subindex)
-{
-    (void)p_mc; /* object metadata is static — no device state consulted */
-    return MotCan_Od_GetInfo(index, subindex);
-}
-
-/* Var_Get has no status channel — an unmapped id reads 0. GetInfo already rejected out-of-range. */
-static inline OD_Status_T _MotCan_OdGet(MotorController_T * p_mc, uint16_t index, uint8_t subindex, int32_t * p_value)
-{
-    *p_value = MotorController_Var_Get(p_mc, MotCan_Od_VarIdOf(index, subindex));
-    return OD_OK;
-}
-
-static inline OD_Status_T _MotCan_OdSet(MotorController_T * p_mc, uint16_t index, uint8_t subindex, int32_t value)
-{
-    return MotCan_Od_StatusOf(MotorController_Var_Set(p_mc, MotCan_Od_VarIdOf(index, subindex), value));
-}
-
-static inline void MotCan_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
-{
-    // OD_Interface_T od =
-    // {
-    //     .p_Context = (void *)p_mc, /* MotorController_T is a const typedef; the callbacks cast it back */
-    //     .GetInfo   = (OD_GetInfoFn_T)_MotCan_OdGetInfo,
-    //     .Get       = (OD_GetFn_T)_MotCan_OdGet,
-    //     .Set       = (OD_SetFn_T)_MotCan_OdSet,
-    // };
-
-    static const OD_Interface_T od =
-    {
-        .GetInfo   = (OD_GetInfoFn_T)_MotCan_OdGetInfo,
-        .Get       = (OD_GetFn_T)_MotCan_OdGet,
-        .Set       = (OD_SetFn_T)_MotCan_OdSet,
-    };
-
-    /* p_adapter is unused by the engine for OD-interface-backed servers */
-    p_tx->DataLength = SDO_HandleRequest(&od, (void *)p_mc, (const SDO_T *)p_rx->Data, (SDO_T *)p_tx->Data);
-    if (p_tx->DataLength > 0U) { p_tx->CanId.Id32 = (COB_SDO_RSP_BASE | COB_NODE(p_rx->CanId.Id)); }
-}
-
-/*
-    0x600 + node — one SDO server address, two object ranges.
-        0x2000..0x2FFF  manufacturer : MotVar accessors
-        otherwise       profile      : CiA 402 standard objects
-*/
-static inline void Req_HandleSdo(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
-{
-    if (MotCan_Od_IsVarIndex(((const SDO_T *)p_rx->Data)->Index)) { MotCan_HandleSdo(p_mc, p_rx, p_tx); }
-    else { MotorController_Cia402_HandleSdo(p_mc, p_rx, p_tx); }
-}
 
 
-static const CAN_ReqRoute_T MOT_CAN_ROUTES[] =
-{
-    { COB_RXPDO1_BASE,  COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo }, /* RxPDO3 stays free for MOT_CAN_RX_CONTROL_ID */
-    { COB_RXPDO2_BASE,  COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo },
-    { COB_SDO_REQ_BASE, COB_FUNCTION_MASK, (CAN_RouteHandler_T)Req_HandleSdo },
-    // { MOT_CAN_RX_CONTROL_ID,   0x7FFU, (CAN_RouteHandler_T)Req_Traction }, /* 0x001 throttle/brake — no reply */
-};
-
+static_assert(sizeof(MOT_CAN_BROADCAST_TABLE) / sizeof(MOT_CAN_BROADCAST_TABLE[0]) <= CAN_BROADCAST_COUNT_MAX);
 
 static const CAN_Service_T MOTOR_CONTROLLER_MOT_CAN_SERVICE =
 {
@@ -210,22 +209,6 @@ static const CAN_Service_T MOTOR_CONTROLLER_MOT_CAN_SERVICE =
     .P_BROADCASTS = MOT_CAN_BROADCAST_TABLE,
     .BROADCAST_COUNT = sizeof(MOT_CAN_BROADCAST_TABLE) / sizeof(MOT_CAN_BROADCAST_TABLE[0]),
 };
-
-/*
-    Hardware acceptance filter for this service — node bits only.
-    Accepts every function code addressed to the node and rejects every other node in hardware;
-    MOT_CAN_ROUTES then fans out by function code (ID_MASK COB_FUNCTION_MASK).
-
-    Node 0 matches the bare COB bases this service currently answers and broadcasts on.
-    Moving to a CANopen node 1..127 also requires OR-ing the node into the Tx ids.
-*/
-#ifndef MOT_CAN_NODE_ID
-#define MOT_CAN_NODE_ID (0U)
-#endif
-
-#define MOT_CAN_RX_FILTER_INIT(nodeId) { .Id = { .Id = (nodeId) }, .Mask = COB_NODE_MASK }
-
-#define MOT_CAN_CONFIG_INIT(nodeId) { .IsEnabled = true, .RxFilterCount = 1U, .RxFilters = { MOT_CAN_RX_FILTER_INIT(nodeId) } }
 
 /* #define MOT_CAN_RX_VAR_ID        (0x680U) */
 // static inline void Req_VarRead(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)

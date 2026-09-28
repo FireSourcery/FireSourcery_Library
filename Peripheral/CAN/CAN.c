@@ -1,4 +1,5 @@
 #include "CAN.h"
+#include "CAN_Service.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -34,8 +35,7 @@ void CAN_Init(CAN_T * p_can)
     ApplyRxFilters(p_can);
     HAL_CAN_EnableRxFullInterrupt(p_can->P_HAL); /* after every init-mode window — MSCAN holds CANRIER in reset there */
 
-    // p_can->P_STATE->ServiceHandler = CAN_ProcServiceDisabled;
-    p_can->P_STATE->p_Service = (p_can->P_STATE->Config.IsEnabled) ? p_can->P_SERVICE : NULL; /* runtime-swappable via CAN_Enable/CAN_SetService */
+    if (p_can->P_STATE->Config.IsEnabled) { CAN_EnableService(p_can, p_can->P_SERVICE); } else { CAN_DisableService(p_can); }
 }
 
 /* Runtime reconfiguration. Aborts any pending Tx on platforms that need init mode to rewrite filters. */

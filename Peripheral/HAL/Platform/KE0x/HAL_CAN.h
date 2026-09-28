@@ -32,6 +32,7 @@
 */
 /******************************************************************************/
 #include "KE0x.h"
+#include "Math/math_general.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -222,7 +223,10 @@ static inline uint32_t HAL_CAN_ReadRxExtendedId(const HAL_CAN_T * p_hal)
     return _HAL_CAN_ReadRxExtendedId(p_hal);
 }
 
-static inline uint8_t HAL_CAN_ReadRxLength(const HAL_CAN_T * p_hal) { return p_hal->RDLR & 0x0FU; }
+#define HAL_CAN_PAYLOAD_SIZE (8U)
+
+/* Classic CAN: DLC 9-15 still carries 8 bytes */
+static inline uint8_t HAL_CAN_ReadRxLength(const HAL_CAN_T * p_hal) { return (uint8_t)math_min(p_hal->RDLR & MSCAN_RDLR_RDLC_MASK, HAL_CAN_PAYLOAD_SIZE); }
 
 static inline bool HAL_CAN_ReadRxRemoteFlag(const HAL_CAN_T * p_hal)
 {
@@ -237,7 +241,7 @@ static inline uint32_t HAL_CAN_ReadRxTimeStamp(const HAL_CAN_T * p_hal)
 
 static inline uint8_t HAL_CAN_ReadRxData(HAL_CAN_T * p_hal, uint8_t * p_data)
 {
-    uint8_t length = p_hal->RDLR & 0x0FU;
+    uint8_t length = HAL_CAN_ReadRxLength(p_hal);
     for (uint8_t i = 0U; i < length; i++) { p_data[i] = p_hal->REDSR[i]; }
     // p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK;
     return length;
@@ -264,77 +268,6 @@ static inline bool HAL_CAN_ReadRxFullFlag(const HAL_CAN_T * p_hal) { return (p_h
 static inline void HAL_CAN_ClearRxFullFlag(HAL_CAN_T * p_hal) { p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK; }
 static inline void HAL_CAN_EnableRxFullInterrupt(HAL_CAN_T * p_hal) { p_hal->CANRIER |= MSCAN_CANRIER_RXFIE_MASK; }
 static inline void HAL_CAN_DisableRxFullInterrupt(HAL_CAN_T * p_hal) { p_hal->CANRIER &= ~MSCAN_CANRIER_RXFIE_MASK; }
-
-/******************************************************************************/
-/*!
-    Buffer index mapping
-    Rx always uses the single foreground buffer (no multiplexing)
-    Rx is always index 0 (single foreground buffer).
-    Tx has 3 buffers (0-2), each with its own interrupt enable bit
-*/
-/******************************************************************************/
-// static inline uint8_t HAL_CAN_MapMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId) { p_hal->CANTBSEL = MSCAN_CANTBSEL_TX(userId); return p_hal->CANTBSEL; }
-static inline uint8_t HAL_CAN_MapMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId) { (void)p_hal; return userId; }
-
-/* MSCAN has only one Rx foreground buffer */
-static inline uint8_t HAL_CAN_MapTxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId) { (void)p_hal; return userId; }
-static inline uint8_t HAL_CAN_MapRxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId) { (void)p_hal; (void)userId; return 0U; }
-
-/******************************************************************************/
-/*!
-    Rx buffer lock/unlock
-    MSCAN Rx foreground registers are implicitly locked once read.
-    Clearing RXF releases the buffer and loads the next queued frame (if any).
-*/
-/******************************************************************************/
-/* Foreground buffer auto-locks on first register read */
-static inline bool HAL_CAN_LockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)p_hal; (void)hwIndex; return true; }
-static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; }
-
-
-/******************************************************************************/
-/*!
-    Completion / ready flags
-    Tx complete: CANTFLG.TXE bit set for the buffer (empty = done transmitting).
-    Rx complete: CANRFLG.RXF set (full = frame available).
-*/
-/******************************************************************************/
-// static inline bool HAL_CAN_ReadTxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex) { return (p_hal->CANTFLG & (1U << hwIndex)) != 0U; }
-// /* Tx buffer empty = ready */
-// static inline bool HAL_CAN_ReadTxRemoteRxEmpty(HAL_CAN_T * p_hal, uint8_t hwIndex) { return (p_hal->CANTFLG & (1U << hwIndex)) != 0U; }
-// /* Rx buffer full = has data */
-// static inline bool HAL_CAN_ReadTxRemoteRxFull(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; return (p_hal->CANRFLG & MSCAN_CANRFLG_RXF_MASK) != 0U; }
-
-// static inline bool HAL_CAN_ReadRxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; return (p_hal->CANRFLG & MSCAN_CANRFLG_RXF_MASK) != 0U; }
-// static inline bool _HAL_CAN_ReadRxInterruptEnable(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; return ((p_hal->CANRIER & MSCAN_CANRIER_RXFIE_MASK) != 0U); }
-// // static inline bool HAL_CAN_ReadRxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex) { return _HAL_CAN_ReadRxComplete(p_hal, hwIndex) && _HAL_CAN_ReadRxInterruptEnable(p_hal, hwIndex); }
-
-// static inline void HAL_CAN_ClearTxRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) {}
-// static inline void HAL_CAN_EnableTxRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) {}
-// static inline void HAL_CAN_DisableTxRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) {}
-
-// static inline void HAL_CAN_ClearTxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) { p_hal->CANTFLG = (1U << hwIndex); }
-// static inline void HAL_CAN_EnableTxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) { p_hal->CANTIER |= (1U << hwIndex); }
-// static inline void HAL_CAN_DisableTxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) { p_hal->CANTIER &= ~(1U << hwIndex); }
-
-// static inline void HAL_CAN_ClearRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK; }
-// static inline void HAL_CAN_EnableRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; p_hal->CANRIER |= MSCAN_CANRIER_RXFIE_MASK; }
-// static inline void HAL_CAN_DisableRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; p_hal->CANRIER &= ~MSCAN_CANRIER_RXFIE_MASK; }
-
-
-
-/******************************************************************************/
-/*!
-    Status
-    MSCAN Tx status: CANTFLG bits [2:0] — set when buffer is empty (transmission complete).
-    MSCAN Rx status: CANRFLG.RXF — set when foreground buffer holds a valid frame.
-*/
-/******************************************************************************/
-// static inline uint32_t HAL_CAN_ReadTxStatus(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; return p_hal->CANTFLG & MSCAN_CANTFLG_TXE_MASK; }
-// static inline uint32_t HAL_CAN_ReadRxStatus(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; return p_hal->CANRFLG & MSCAN_CANRFLG_RXF_MASK; }
-// static inline HAL_CAN_DriverStatus_T HAL_CAN_MapTxStatus(HAL_CAN_T * p_hal, uint32_t status) {
-// static inline HAL_CAN_DriverStatus_T HAL_CAN_MapRxStatus(HAL_CAN_T * p_hal, uint32_t status) {
-
 
 /******************************************************************************/
 /*!
@@ -366,7 +299,7 @@ static inline void _HAL_CAN_Enable(HAL_CAN_T * p_hal, bool enable)
 
     MSCAN compares the received IDR0..IDR3 bytes against IDAR0..3 under IDMR0..3.
     MSCAN mask polarity is 1 = don't care; this HAL takes the opposite, upper-layer
-    convention — 1 = bit must match, the same sense as CAN_ReqRoute_T.ID_MASK — and
+    convention — 1 = bit must match, the same sense as CAN_Request_T.ID_MASK — and
     inverts internally, so a route's (ID_MATCH, ID_MASK) pair can be handed straight
     to a filter.
 

@@ -27,17 +27,6 @@
     @file   MotCan.h
     @author FireSourcery
     @brief  CAN service layer for motor controller.
-            RX: control commands (throttle, brake).
-            TX: periodic telemetry broadcasts.
-
-    Frame values use the library's internal fract16 representation.
-    Scaling to engineering units (RPM, Amps, Volts) is done on the host
-    using the rated values readable via the serial protocol.
-
-    IDs follow CANopen Tx/Rx PDO conventions (standard 11-bit):
-        0x001         Control   RX  (throttle, brake)
-        0x181 = 0x180 + node    Telemetry1 TX  (speed, current, voltage, vbus)
-        0x182 = 0x180 + node    Telemetry2 TX  (heat, faults, state)
 */
 /******************************************************************************/
 #include "Motor/MotProtocol/MotPacket.h"
@@ -50,12 +39,43 @@
 #include <stdbool.h>
 
 /******************************************************************************/
+/*
+    RX: control commands (throttle, brake).
+    TX: periodic telemetry broadcasts.
+
+    Frame values use the library's internal fract16 representation.
+    Scaling to engineering units (RPM, Amps, Volts) is done on the host
+    using the rated values readable via the serial protocol.
+
+    IDs follow CANopen Tx/Rx PDO conventions (standard 11-bit):
+        0x001         Control   RX  (throttle, brake)
+        0x181 = 0x180 + node    Telemetry1 TX  (speed, current, voltage, vbus)
+        0x182 = 0x180 + node    Telemetry2 TX  (heat, faults, state)
+*/
+/******************************************************************************/
+/******************************************************************************/
 /*! CAN IDs */
 /******************************************************************************/
+#define MOT_CAN_VAR_SDO_ID           (COB_SDO_REQ_BASE)
 #define MOT_CAN_TX_TELEMETRY1_ID     (COB_TXPDO3_BASE)   /* speed, IPhase, VPhase, VBus */
 #define MOT_CAN_TX_TELEMETRY2_ID     (COB_TXPDO3_BASE)   /* heat, fault flags, state */
 #define MOT_CAN_RX_CONTROL_ID        (COB_RXPDO3_BASE)
-#define MOT_CAN_VAR_SDO_ID           (COB_SDO_REQ_BASE)
+
+/*
+    Hardware acceptance filter for this service — node bits only.
+    Accepts every function code addressed to the node and rejects every other node in hardware;
+    MOT_CAN_ROUTES then fans out by function code (ID_MASK COB_FUNCTION_MASK).
+
+    Node 0 matches the bare COB bases this service currently answers and broadcasts on.
+    Moving to a CANopen node 1..127 also requires OR-ing the node into the Tx ids.
+*/
+#ifndef MOT_CAN_NODE_ID
+#define MOT_CAN_NODE_ID (0U)
+#endif
+
+#define MOT_CAN_RX_FILTER_INIT(nodeId) { .Id = { .Id = (nodeId) }, .Mask = COB_NODE_MASK }
+
+#define MOT_CAN_CONFIG_INIT(nodeId) { .IsEnabled = true, .RxFilterCount = 1U, .RxFilters = { MOT_CAN_RX_FILTER_INIT(nodeId) } }
 
 /******************************************************************************/
 /*!
@@ -173,7 +193,7 @@ typedef struct __attribute__((packed))
     uint16_t Brake;
     uint8_t Resv[4];
 }
-MotCan_TractionControl_T;
+MotCan_TractionCmd_T;
 
 typedef struct __attribute__((packed))
 {
@@ -181,7 +201,7 @@ typedef struct __attribute__((packed))
     uint8_t FeedbackMode;
     uint8_t Resv[5];
 }
-MotCan_MotorControl_T;
+MotCan_MotorCmd_T;
 
 typedef struct __attribute__((packed))
 {
@@ -189,7 +209,7 @@ typedef struct __attribute__((packed))
     uint8_t StopAll;
     uint8_t Resv[5];
 }
-MotCan_StateControl_T;
+MotCan_StateCmd_T;
 
 /******************************************************************************/
 /*! TX broadcasts — call periodically (e.g. every 20 ms) */

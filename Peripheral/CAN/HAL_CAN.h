@@ -66,35 +66,12 @@ static inline void HAL_CAN_EnableRxFullInterrupt(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_DisableRxFullInterrupt(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_ClearRxFullFlag(HAL_CAN_T * p_hal);
 
-/*
-
-*/
-static inline uint8_t HAL_CAN_MapMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId);
-// static inline uint8_t HAL_CAN_MapTxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId);
-// static inline uint8_t HAL_CAN_MapRxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId);
-
-// static inline bool HAL_CAN_ReadTxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex);
-// static inline bool HAL_CAN_ReadTxRemoteRxEmpty(HAL_CAN_T * p_hal, uint8_t hwIndex);
-// static inline bool HAL_CAN_ReadTxRemoteRxFull(HAL_CAN_T * p_hal, uint8_t hwIndex);
-// static inline bool HAL_CAN_ReadRxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex);
-
-// static inline void HAL_CAN_ClearTxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex);
-// static inline void HAL_CAN_EnableTxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex);
-// static inline void HAL_CAN_DisableTxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex);
-// static inline void HAL_CAN_ClearRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex);
-// static inline void HAL_CAN_EnableRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex);
-// static inline void HAL_CAN_DisableRxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex);
-
-static inline bool HAL_CAN_LockRx(HAL_CAN_T * p_hal, uint8_t hwIndex);
-static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex);
-
-
 static inline void HAL_CAN_InitBaudRate(HAL_CAN_T * p_hal, uint32_t baudRate);
 static inline void HAL_CAN_Init(HAL_CAN_T * p_hal);
 
 /*
     Rx acceptance filters — platform defines HAL_CAN_RX_FILTER_COUNT banks.
-    mask: 1 = bit must match, the same sense as CAN_ReqRoute_T.ID_MASK.
+    mask: 1 = bit must match, the same sense as CAN_Request_T.ID_MASK.
     Safe at runtime: the platform handles any mode transition and preserves Rx interrupt enables.
 */
 static inline void HAL_CAN_SetRxFilterStandard(HAL_CAN_T * p_hal, uint8_t bank, uint32_t id, uint32_t mask);

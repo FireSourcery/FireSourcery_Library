@@ -35,7 +35,7 @@
 /******************************************************************************/
 /*! Service callbacks */
 /******************************************************************************/
-typedef void (*CAN_BuildBroadcast_T)(void * p_context, CAN_Frame_T * p_frame);
+typedef void (*CAN_BroadcastHandler_T)(void * p_context, CAN_Frame_T * p_frame);
 
 // keep for interface
 typedef struct
@@ -49,7 +49,7 @@ CAN_BroadcastState_T;
 typedef const struct
 {
     uint32_t ID; /*   */
-    CAN_BuildBroadcast_T BUILD;  /* Frame-based broadcast — caller fills a full CAN_Frame_T (ID, DLC, data). */
+    CAN_BroadcastHandler_T BUILD;  /* Frame-based broadcast — caller fills a full CAN_Frame_T (ID, DLC, data). */
     uint32_t INTERVAL;
     // CAN_ServiceInit_T INIT;
 }
@@ -78,17 +78,6 @@ static inline void CAN_ProcBroadcast(CAN_T * p_can, CAN_BroadcastEntry_T * p_bro
     if (frame.DataLength > 0U) { HAL_CAN_WriteTxMessage(p_can->P_HAL, &frame); } /* empty = nothing due, as the request path */
 }
 
-static inline void _CAN_ProcBroadcastService(CAN_T * p_can, CAN_BroadcastEntry_T * p_table, uint8_t count, uint32_t timer)
-{
-    // for (uint8_t i = 0U; i < count; i++)
-    // {
-    //     if ((timer - p_table[i].P_STATE->Timestamp) >= p_table[i].INTERVAL)
-    //     {
-    //         CAN_ProcBroadcast(p_can, &p_table[i]);
-    //         p_table[i].P_STATE->Timestamp = timer;
-    //     }
-    // }
-}
 
 
 /******************************************************************************/
@@ -101,84 +90,79 @@ static inline void _CAN_ProcBroadcastService(CAN_T * p_can, CAN_BroadcastEntry_T
     this layer handles request routing
 */
 // typedef void (*CAN_ReqHandler_T)(void * p_dev, void * adapter, const void * p_rx, void * p_tx);
-typedef void (*CAN_RouteHandler_T)(void * p_dev, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
+typedef void (*CAN_RequestHandler_T)(void * p_dev, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
 
 typedef const struct
 {
     uint32_t ID_MATCH;     /* expected (id & ID_MASK) */
     uint32_t ID_MASK;
-    CAN_RouteHandler_T HANDLER;
+    CAN_RequestHandler_T HANDLER;
 }
-CAN_ReqRoute_T;
+CAN_Request_T;
 
-// typedef const struct CAN_ReqService
-// {
-//     CAN_ReqRoute_T * P_ROUTES;
-//     uint8_t ROUTE_COUNT;
-//     // void * P_CONTEXT;
-// }
-// CAN_ReqService_T;
+
 
 // alternative to table search
-// typedef CAN_ReqRoute_T * (*CAN_RxRequestMapper_T)(void * p_dev, uint32_t id);
-static inline CAN_ReqRoute_T * CAN_SearchRxTable(CAN_ReqRoute_T * p_routes, uint8_t count, uint32_t id)
+// typedef CAN_Request_T * (*CAN_RxRequestMapper_T)(void * p_dev, uint32_t id);
+static inline CAN_Request_T * CAN_SearchRxTable(CAN_Request_T * p_routes, uint8_t count, uint32_t id)
 {
     for (uint8_t i = 0U; i < count; i++) { if ((id & p_routes[i].ID_MASK) == p_routes[i].ID_MATCH) { return &p_routes[i]; } }
     return NULL;
 }
 
-// static inline void _CAN_ProcRequestService(CAN_T * p_can, CAN_ReqRoute_T * p_route, void * p_context)
+// static inline void _CAN_ProcRequestService(CAN_T * p_can, CAN_Request_T * p_route, void * p_context)
 // {
 //     CAN_Frame_T txFrame = { 0U };
 //     if (p_found != NULL) { p_found->HANDLER(p_context, p_rxFrame, &txFrame); }
 //     if (txFrame.DataLength > 0U) { HAL_CAN_WriteTxMessage(p_can->P_HAL, &txFrame); }
 // }
 
-static inline void _CAN_ProcRequestService(CAN_T * p_can, CAN_ReqRoute_T * p_table, uint8_t count, const CAN_Frame_T * p_rxFrame)
+static inline void _CAN_ProcRequestService(CAN_T * p_can, CAN_Request_T * p_table, uint8_t count, const CAN_Frame_T * p_rxFrame)
 {
     CAN_Frame_T txFrame = { 0U };
-    CAN_ReqRoute_T * p_route = CAN_SearchRxTable(p_table, count, p_rxFrame->CanId.Id);
+    CAN_Request_T * p_route = CAN_SearchRxTable(p_table, count, p_rxFrame->CanId.Id);
     if (p_route != NULL) { p_route->HANDLER(p_can->P_CONTEXT, p_rxFrame, &txFrame); }
     if (txFrame.DataLength > 0U) { HAL_CAN_WriteTxMessage(p_can->P_HAL, &txFrame); }
 }
 
 
-/* A protocol's frames, both directions. Defined by its module; stateless. */
-typedef const struct CAN_ServiceTables
-{
-    CAN_ReqRoute_T * P_ROUTES;              uint8_t ROUTE_COUNT;
-    CAN_BroadcastEntry_T * P_BROADCASTS;    uint8_t BROADCAST_COUNT;
-}
-CAN_ServiceTables_T;
+/******************************************************************************/
+/*!
+    Service — a protocol's frames, both directions. Defined by its module, stateless,
+    selected whole. Timing state is per bus, sized to the largest service.
+*/
+/******************************************************************************/
+#ifndef CAN_BROADCAST_COUNT_MAX
+#define CAN_BROADCAST_COUNT_MAX (4U)
+#endif
 
-
-/* One protocol bound to one bus. Assembled by the board. */
 typedef const struct CAN_Service
 {
-    CAN_BroadcastEntry_T * P_BROADCASTS;  uint8_t BROADCAST_COUNT;
-    CAN_ReqRoute_T * P_ROUTES; uint8_t ROUTE_COUNT;
-    // const CAN_ServiceTables_T * P_TABLES;
-    // void * P_CONTEXT;
-    const volatile uint32_t * P_TIMER;
-    CAN_BroadcastState_T * P_STATES; /* Parallel array of broadcast states */
+    CAN_Request_T * P_ROUTES;               uint8_t ROUTE_COUNT;
+    CAN_BroadcastEntry_T * P_BROADCASTS;    uint8_t BROADCAST_COUNT;    /* <= CAN_BROADCAST_COUNT_MAX, asserted at the define site */
 }
 CAN_Service_T;
 
-// CAN_Service_T CAN_SERVICE_EMPTY = { .P_BROADCASTS = NULL, .BROADCAST_COUNT = 0U, .P_ROUTES = NULL, .ROUTE_COUNT = 0U };
+/* Per bus. Owned by the service layer; CAN_T holds only the pointer. */
+typedef struct CAN_ServiceState
+{
+    CAN_Service_T * p_Service;                          /* NULL = disabled */
+    uint32_t BroadcastTimes[CAN_BROADCAST_COUNT_MAX];   /* last transmission, parallel to p_Service->P_BROADCASTS */
+}
+CAN_ServiceState_T;
+
+#define CAN_SERVICE_STATE_ALLOC() (&(CAN_ServiceState_T){ 0 })
 
 /*
     proc buffered frame, without isr priority
     poll rx buffer, or call form isr
-    Dispatch one inbound frame: route-table match first, else the service-wide REQ_HANDLER.
     Handler fills txFrame (ID/DLC/data); a non-zero DataLength is transmitted as the reply.
 */
 static inline void CAN_ProcRequestService(CAN_T * p_can)
 {
-    CAN_Frame_T * p_rxFrame = &p_can->P_STATE->Channel[0U].Frame;
-    CAN_Service_T * p_service = p_can->P_STATE->p_Service;
-    if (p_service == NULL) { return; } /* disabled — no active protocol */
-
-    _CAN_ProcRequestService(p_can, p_service->P_ROUTES, p_service->ROUTE_COUNT, p_rxFrame);
+    CAN_Service_T * p_service = p_can->P_SERVICE_STATE->p_Service; /* one read — a concurrent swap is seen whole */
+    if (p_service == NULL) { return; }
+    _CAN_ProcRequestService(p_can, p_service->P_ROUTES, p_service->ROUTE_COUNT, &p_can->P_STATE->Channel[0U].Frame);
 }
 
 /*
@@ -195,30 +179,42 @@ static inline void CAN_RxService_ISR(CAN_T * p_can)
 //     if (p_rxFrame->DataLength > 0U) { CAN_ProcRequestService(p_can); }
 // }
 
-static inline void CAN_ProcBroadcastService(CAN_T * p_can, uint32_t timer)
+/* Cadence is the caller's */
+static inline void CAN_ProcBroadcastService(CAN_T * p_can)
 {
-    CAN_Service_T * p_service = p_can->P_STATE->p_Service;
-    if (p_service == NULL) { return; } /* disabled — no active protocol */
-    _CAN_ProcBroadcastService(p_can, p_service->P_BROADCASTS, p_service->BROADCAST_COUNT, timer);
-}
+    CAN_ServiceState_T * p_state = p_can->P_SERVICE_STATE;
+    CAN_Service_T * p_service = p_state->p_Service;
+    uint32_t timer = *p_can->P_TIMER;
 
+    if (p_service == NULL) { return; }
 
-
-static inline void CAN_Enable(CAN_T * p_can, CAN_Service_T * p_service) { p_can->P_STATE->p_Service = p_service; }
-// todo def empty to eliminate nullcheck
-static inline void CAN_Disable(CAN_T * p_can) { p_can->P_STATE->p_Service = NULL; }
-static inline void CAN_DisableService(CAN_T * p_can)
-{
-    // p_can->P_STATE->ServiceHandler = CAN_ProcServiceDisabled;
+    for (uint8_t i = 0U; i < p_service->BROADCAST_COUNT; i++)
+    {
+        if ((timer - p_state->BroadcastTimes[i]) >= p_service->P_BROADCASTS[i].INTERVAL)
+        {
+            CAN_ProcBroadcast(p_can, &p_service->P_BROADCASTS[i]);
+            p_state->BroadcastTimes[i] = timer;
+        }
+    }
 }
 
 /*
-    TODO: on swap also reprogram HW acceptance filters from the new route table and rephase
-        broadcast timestamps to avoid a startup burst on the newly selected service.
+    Rephase before publishing — the incoming service's first broadcasts fall one INTERVAL out, not all at once.
+    Selection runs on the broadcast thread; the Rx ISR sees only the single pointer store.
+    TODO: reprogram HW acceptance filters if the new route table needs other than the node filter.
 */
+static inline void CAN_EnableService(CAN_T * p_can, CAN_Service_T * p_service)
+{
+    CAN_ServiceState_T * p_state = p_can->P_SERVICE_STATE;
+    for (uint8_t i = 0U; i < CAN_BROADCAST_COUNT_MAX; i++) { p_state->BroadcastTimes[i] = *p_can->P_TIMER; }
+    p_state->p_Service = p_service;
+}
+
+static inline void CAN_DisableService(CAN_T * p_can) { p_can->P_SERVICE_STATE->p_Service = NULL; }
+
 static inline void CAN_SetService(CAN_T * p_can, uint8_t index)
 {
-    if (index < p_can->SERVICE_COUNT) { CAN_Enable(p_can, &p_can->P_SERVICE_TABLE[index]); }
+    if (index < p_can->SERVICE_COUNT) { CAN_EnableService(p_can, p_can->P_SERVICE_TABLE[index]); }
 }
 
 

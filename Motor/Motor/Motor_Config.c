@@ -223,10 +223,10 @@ void Motor_Config_SetILimitGenerating_Fract16(Motor_Config_T * p_config, uint16_
 /* Ramp Slope */
 /******************************************************************************/
 /*
-    Ramp Slope accors variations
+    Ramp Slope access variations
     Interface in time to saturation
 */
-// time to configured limit, both directions use forawrd as limit, optionally add opposite ramp coeffcient later.
+// time to configured limit, both directions use forward as limit, optionally add opposite ramp coefficient later.
 static inline uint32_t Motor_Config_GetSpeedRampTime_Ticks(const Motor_Config_T * p_config) { return (p_config->SpeedRampSlope_Accum32 != 0U) ? RAMP_TICKS_OF_COEF(p_config->SpeedLimitForward_Fract16, p_config->SpeedRampSlope_Accum32) : 0U; }
 static inline uint32_t Motor_Config_GetTorqueRampTime_Ticks(const Motor_Config_T * p_config) { return (p_config->TorqueRampSlope_Accum32 != 0U) ? RAMP_TICKS_OF_COEF(p_config->ILimitMotoring_Fract16, p_config->TorqueRampSlope_Accum32) : 0U; }
 
@@ -454,7 +454,7 @@ void _Motor_Var_ConfigPid_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T va
 /*
     Coefficients in 9.7
 */
-int _Motor_Var16_ConfigPid_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId)
+int _Motor_Var_ConfigPid16_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId)
 {
     int value = 0;
     switch (varId)
@@ -470,7 +470,7 @@ int _Motor_Var16_ConfigPid_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigP
     return value;
 }
 
-void _Motor_Var16_ConfigPid_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
+void _Motor_Var_ConfigPid16_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
 {
     switch (varId)
     {

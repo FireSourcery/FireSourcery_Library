@@ -36,7 +36,7 @@
 #include "Motor/Motor/Phase_Input/Phase_Calibration.h"
 
 
-
+/* move with phaseboard */
 typedef const struct Motor_ElectricalCalib
 {
     volatile uint16_t SPEED_MAX_RADS; /* Optional Global Ref */
@@ -75,22 +75,19 @@ static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_
 */
 /******************************************************************************/
 /*
+    Set ψ_pu = v_pu/speed_pu = ~ .5, where V_Max is inverter max with margin
     when SpeedBase = Kv * V_Max
     SpeedRated_pu = VNominal_pu, SpeedRated_Rpm = Kv * VNominal
     Speed_pu = V_pu = V_phase_pu * 2
     ke_pu = 1.0
     ψ_pu = .5
 
-    alternatively:
+    alternatively materialize the base speed and store as an additional parameter
     when SpeedBase = SpeedRated * 2 = Kv * V_Nominal * 2
     Ke = VNominal * 2
     ψ_pu = V_Nominal / V_Max = V_Nominal_pu
 */
 /*
-    inverter max
-    vbus max with margin
-    sets the fw speed limit
-    ~20000 rpm base for pi feedback, shared common max
     alteratively pid use separate base 2x vnominal ~10000, ui use angle for invariant ui
 */
 static inline uint16_t _Motor_GetSpeedTypeMax_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return Phase_Calibration_GetVMaxVolts() * p_config->Kv; }

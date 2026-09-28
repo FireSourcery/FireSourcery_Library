@@ -39,7 +39,7 @@
 /*
     Rx route handlers — one per consumed COB-ID class, mapped directly into CIA402_ROUTES.
 
-    Each has the CAN_RouteHandler_T shape (p_dev is the MotorController context), resolves
+    Each has the CAN_RequestHandler_T shape (p_dev is the MotorController context), resolves
     its adapter, and validates the node id. Only the SDO handler fills p_tx (a non-zero
     DataLength signals a reply); the RxPDO handlers never respond.
 

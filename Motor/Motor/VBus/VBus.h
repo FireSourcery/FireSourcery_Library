@@ -27,15 +27,6 @@
     @file   VBus.h
     @author FireSourcery
     @brief  DC bus voltage module.
-
-            Owns:
-              - Live filtered ratio (VBus_Fract16, 1/VBus) for FOC Vout normalization.
-              - Battery / pack profile and derating thresholds.
-              - I-limit and speed-limit derating curves.
-
-            Does NOT own:
-              - ADC channel binding / ADCU<->Volts unit conversion — held by
-                the layer that binds the physical channel (MotorController).
 */
 /******************************************************************************/
 #include "VBus_Config.h"
@@ -53,7 +44,16 @@
     Unified VBus concept for cohesion across MotorController and Motor layers.
     This keeps all bus voltage concepts together in one place, instead of scattering them across multiple layers.
     - Motor's FOC/SVPWM code reads VBus_Fract16 and PerV_Accum32 for voltage normalization and derating calculations.
-    - Controller layer calls VBus_Capture / VBus_PollMonitor:
+    - Controller layer calls VBus_Capture / VBus_PollMonitor
+
+    Owns:
+        - Live filtered ratio (VBus_Fract16, 1/VBus) for FOC Vout normalization.
+        - Battery / pack profile and derating thresholds.
+        - I-limit and speed-limit derating curves.
+
+    Does NOT own:
+        - ADC channel binding / ADCU<->Volts unit conversion — held by
+        the layer that binds the physical channel (MotorController).
 */
 /*
     PHASE_CALIBRATION.V_MAX -> ADC Saturation
@@ -110,7 +110,7 @@ static inline void VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 */
 #include "../Phase_Input/Phase_Analog.h" /* for Phase_Analog_VFract16Of() */
 static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBus_Capture(p_vbus, Phase_Analog_VFract16Of(adcu)); }
-/* optionally seperate filter for monitor vs vout scaling  */
+/* optionally separate filter for monitor vs vout scaling  */
 
 /******************************************************************************/
 /*!

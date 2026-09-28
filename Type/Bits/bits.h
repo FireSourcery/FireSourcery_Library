@@ -37,15 +37,15 @@
 
 typedef uint32_t bits_t;
 
-static inline bool bit_at(uint32_t bits, uint8_t index) { return (bits & (1U << index)); }
-static inline void fill_bit(uint32_t * p_bits, uint8_t index) { *p_bits |= (1U << index); }
-static inline void clear_bit(uint32_t * p_bits, uint8_t index) { *p_bits &= ~(1U << index); }
-static inline void set_bit(uint32_t * p_bits, uint8_t index, bool value) { (value) ? fill_bit(p_bits, index) : clear_bit(p_bits, index); }
+// static inline bool bit_at(uint32_t bits, uint8_t index) { return (bits & (1U << index)); }
+// static inline void fill_bit(uint32_t * p_bits, uint8_t index) { *p_bits |= (1U << index); }
+// static inline void clear_bit(uint32_t * p_bits, uint8_t index) { *p_bits &= ~(1U << index); }
+// static inline void set_bit(uint32_t * p_bits, uint8_t index, bool value) { (value) ? fill_bit(p_bits, index) : clear_bit(p_bits, index); }
 
-static inline void set_bits(uint32_t * p_bits, uint8_t index, uint32_t value) { *p_bits = (*p_bits & ~(1UL << index)) | (value << index); }
+// static inline void set_bits(uint32_t * p_bits, uint8_t index, uint32_t value) { *p_bits = (*p_bits & ~(1UL << index)) | (value << index); }
 
-static inline uint32_t bitmask_of(uint8_t width, uint8_t index) { return ((1UL << width) - 1UL) << index; }
-static inline uint32_t bits_of(uint32_t bits, uint8_t index, uint8_t width) { return (bits & bitmask_of(width, index)) >> index; }
+// static inline uint32_t bitmask_of(uint8_t width, uint8_t index) { return ((1UL << width) - 1UL) << index; }
+// static inline uint32_t bits_of(uint32_t bits, uint8_t index, uint8_t width) { return (bits & bitmask_of(width, index)) >> index; }
 
 
 // #if defined(__GNUC__)

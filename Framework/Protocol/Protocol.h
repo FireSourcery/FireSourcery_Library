@@ -217,9 +217,6 @@ Protocol_State_T;
 */
 /*!
     One per socket. Buffers, state, clock.
-
-    P_RX_BUFFER and P_TX_BUFFER must be distinct - the handler's two payload pointers are
-    declared restrict, so one buffer serving both makes every handler call undefined.
 */
 typedef const struct
 {
@@ -227,8 +224,8 @@ typedef const struct
     {
         struct
         {
-            Packet_Context_T * restrict P_RX_BUFFER;
-            Packet_Context_T * restrict P_TX_BUFFER;
+            Packet_Context_T * P_RX_BUFFER;
+            Packet_Context_T * P_TX_BUFFER;
             void * P_SUB_STATE;
         };
         Packet_Xfer_T PACKET_XFER;

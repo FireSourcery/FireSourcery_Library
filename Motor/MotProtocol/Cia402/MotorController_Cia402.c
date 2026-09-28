@@ -55,7 +55,7 @@
 /******************************************************************************/
 /*
     Per-COB-ID Rx route handlers — mapped directly into CIA402_ROUTES
-    (CAN_RouteHandler_T shape: p_dev is the MotorController context).
+    (CAN_RequestHandler_T shape: p_dev is the MotorController context).
     The route table fans out by COB-ID class; the bus filter admits only this node.
 */
 #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
@@ -167,25 +167,27 @@ void MotorController_Cia402_BuildTxPdo(MotorController_T * p_mc, CAN_Frame_T * p
     Frames not addressed to this node, or in unconsumed COB-ID classes
     (NMT, SYNC, EMCY, our own TxPDOs, SDO response), are ignored.
 */
-const CAN_ReqRoute_T CIA402_ROUTES[] =
+const CAN_Request_T CIA402_ROUTES[] =
 {
-    { COB_RXPDO1_BASE,  COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo },
-    { COB_RXPDO2_BASE,  COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo },
-    { COB_RXPDO3_BASE,  COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo },
-    { COB_RXPDO4_BASE,  COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleRxPdo },
-    { COB_SDO_REQ_BASE, COB_FUNCTION_MASK, (CAN_RouteHandler_T)MotorController_Cia402_HandleSdo },
+    { COB_RXPDO1_BASE,  COB_FUNCTION_MASK, (CAN_RequestHandler_T)MotorController_Cia402_HandleRxPdo },
+    { COB_RXPDO2_BASE,  COB_FUNCTION_MASK, (CAN_RequestHandler_T)MotorController_Cia402_HandleRxPdo },
+    { COB_RXPDO3_BASE,  COB_FUNCTION_MASK, (CAN_RequestHandler_T)MotorController_Cia402_HandleRxPdo },
+    { COB_RXPDO4_BASE,  COB_FUNCTION_MASK, (CAN_RequestHandler_T)MotorController_Cia402_HandleRxPdo },
+    { COB_SDO_REQ_BASE, COB_FUNCTION_MASK, (CAN_RequestHandler_T)MotorController_Cia402_HandleSdo },
 };
 
 const CAN_BroadcastEntry_T CIA402_BROADCASTS[] =
 {
     /* One entry per TPDO channel, checked each millisecond; the channel's event timer sets the period. */
-    { .ID = COB_TXPDO1_BASE, .BUILD = (CAN_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo, .INTERVAL = 1U,  },
-    { .ID = COB_TXPDO2_BASE, .BUILD = (CAN_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo, .INTERVAL = 1U,  },
-    { .ID = COB_TXPDO3_BASE, .BUILD = (CAN_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo, .INTERVAL = 1U,  },
-    { .ID = COB_TXPDO4_BASE, .BUILD = (CAN_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo, .INTERVAL = 1U,  },
-    /* Fixed alternative: { .ID = COB_TXPDO1_BASE, .BUILD = (CAN_BuildBroadcast_T)MotorController_Cia402_BuildTxPdo1, .INTERVAL = 10U, ... } */
+    { .ID = COB_TXPDO1_BASE, .BUILD = (CAN_BroadcastHandler_T)MotorController_Cia402_BuildTxPdo, .INTERVAL = 1U,  },
+    { .ID = COB_TXPDO2_BASE, .BUILD = (CAN_BroadcastHandler_T)MotorController_Cia402_BuildTxPdo, .INTERVAL = 1U,  },
+    { .ID = COB_TXPDO3_BASE, .BUILD = (CAN_BroadcastHandler_T)MotorController_Cia402_BuildTxPdo, .INTERVAL = 1U,  },
+    { .ID = COB_TXPDO4_BASE, .BUILD = (CAN_BroadcastHandler_T)MotorController_Cia402_BuildTxPdo, .INTERVAL = 1U,  },
+    /* Fixed alternative: { .ID = COB_TXPDO1_BASE, .BUILD = (CAN_BroadcastHandler_T)MotorController_Cia402_BuildTxPdo1, .INTERVAL = 10U, ... } */
     /* Heartbeat, etc. */
 };
+
+static_assert(sizeof(CIA402_BROADCASTS) / sizeof(CIA402_BROADCASTS[0]) <= CAN_BROADCAST_COUNT_MAX);
 
 CAN_Service_T MOTOR_CONTROLLER_CIA402_SERVICE =
 {
