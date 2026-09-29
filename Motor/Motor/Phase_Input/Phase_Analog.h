@@ -153,26 +153,26 @@ static inline void Phase_Analog_CaptureVb(volatile Phase_Input_T * p_phase, adc_
 static inline void Phase_Analog_CaptureVc(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_Analog_CaptureV(p_phase, PHASE_INDEX_C, adcu); }
 
 
-static inline void Phase_Analog_CaptureI(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, Phase_Index_T channel, adc_result_t adcu)
+static inline void Phase_Analog_CaptureI(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, Phase_Index_T channel, adc_result_t adcu)
 {
     // assert(adcu <= PHASE_ANALOG_I_MAX_ADCU);
-    Phase_Capture(&p_phase->I, channel, Phase_Analog_IFract16Of(p_zeroRefs->Values[channel], adcu));
+    Phase_Capture(&p_phase->I, channel, Phase_Analog_IFract16Of(p_zeros->Values[channel], adcu));
 }
 
-static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeroRefs, PHASE_INDEX_A, adcu); }
-static inline void Phase_Analog_CaptureIb(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeroRefs, PHASE_INDEX_B, adcu); }
-static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeroRefs, PHASE_INDEX_C, adcu); }
+static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeros, PHASE_INDEX_A, adcu); }
+static inline void Phase_Analog_CaptureIb(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeros, PHASE_INDEX_B, adcu); }
+static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeros, PHASE_INDEX_C, adcu); }
 
 
-static inline Phase_Data_T Phase_Iabc_PuOfAdcu(const Phase_Triplet_T * p_zeroRefs, adc_result_t a, adc_result_t b, adc_result_t c)
+static inline Phase_Data_T Phase_Iabc_PuOfAdcu(const Phase_Triplet_T * p_zeros, adc_result_t a, adc_result_t b, adc_result_t c)
 {
     return (Phase_Data_T)
     {
         .Values =
         {
-            .A = Phase_Analog_IFract16Of(p_zeroRefs->Values[PHASE_INDEX_A], a),
-            .B = Phase_Analog_IFract16Of(p_zeroRefs->Values[PHASE_INDEX_B], b),
-            .C = Phase_Analog_IFract16Of(p_zeroRefs->Values[PHASE_INDEX_C], c),
+            .A = Phase_Analog_IFract16Of(p_zeros->Values[PHASE_INDEX_A], a),
+            .B = Phase_Analog_IFract16Of(p_zeros->Values[PHASE_INDEX_B], b),
+            .C = Phase_Analog_IFract16Of(p_zeros->Values[PHASE_INDEX_C], c),
         },
         .Flags.Bits = PHASE_ID_ABC,
     };

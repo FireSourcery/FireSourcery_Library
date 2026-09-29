@@ -269,3 +269,5 @@ static bool Motor_MotVar_CheckSet(Motor_T * p_motor, MotVarId_T varId)
         default: return false;
     }
 }
+
+

@@ -4,6 +4,12 @@
 #include <string.h>
 #include <assert.h>
 
+
+/*
+    test for compile time resolution of virtual function interfaces
+    not a test for VarAccess
+*/
+
 /*
     UserT implements VarAccess
         VarAccess is an interface and Mixin

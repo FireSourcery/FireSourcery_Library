@@ -51,7 +51,7 @@ typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
 
 typedef int32_t accum32_t;      /*!< Q17.15 [-65536.0, 65535.0] extended integer bits. */
-                                /*!< Q2.30 [-1, 1) scaled fract16_t fast saturated add */
+                                /*!< Q2.30 [-2, 2) scaled fract16_t, [-1, 1) for fast saturated add. */
 
 typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) extended fraction bits. */
 typedef uint16_t uq16_t;        /*!< Q0.16 [0, 1) */ // percent16
@@ -188,6 +188,8 @@ static inline fract16e_t fract16e(accum32_t value)
 }
 
 static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b) { return ((int32_t)a.factor * b >> a.shift); }
+
+// static inline int fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a.shift; }
 
 
 /******************************************************************************/

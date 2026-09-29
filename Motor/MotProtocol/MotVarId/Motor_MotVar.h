@@ -50,3 +50,6 @@ extern void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T t
 */
 extern int               Motor_MotVar_Get(Motor_T * p_motor, MotVarId_T varId);
 extern MotVarId_Status_T Motor_MotVar_Set(Motor_T * p_motor, MotVarId_T varId, int varValue);
+
+
+

@@ -337,3 +337,31 @@ static inline void Motor_FocConfig_SetSi(Motor_T * p_motor, FOC_ConfigId_T var, 
 
 
 
+
+// typedef enum { SIG_I8, SIG_U8, SIG_I16, SIG_U16, SIG_I32, SIG_U32, _SIG_END } MotVar_Sig_T;
+
+// typedef const struct VField
+// {
+//     void (*GET)(void);
+//     void (*SET)(void);
+//     MotVar_Sig_T SIG;
+// }
+// VField_T;
+
+
+// #define SIG_(ctype) \
+//     _Generic((ctype)0, \
+//              int8_t:  SIG_I8,  uint8_t:  SIG_U8, \
+//              int16_t: SIG_I16, uint16_t: SIG_U16, \
+//              int32_t: SIG_I32, uint32_t: SIG_U32)
+
+// #define ARGS ((const Motor_Context_T *)0)
+// #define VAR_FIELD(get, set, units) { .GET = (void (*)(void))get, .SET = (void (*)(void))set, .SIG = SIG_(typeof(get ARGS)) }
+
+// static const VField_T VARS_POSITIONAL[] =
+// {
+//     VAR_FIELD(Motor_User_GetSpeed_Fract16, NULL, Rpm ),
+//     VAR_FIELD(Motor_GetIPhase_Fract16,     NULL, Amps ),
+//     VAR_FIELD(Motor_GetStateId,            NULL, None ),
+//     VAR_FIELD(Motor_GetPathId,             NULL, None ),
+// };
