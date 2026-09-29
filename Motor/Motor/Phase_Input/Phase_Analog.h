@@ -29,7 +29,8 @@
     @brief  Analog component for every Phase_Input module
 */
 /******************************************************************************/
-#include "Phase_Calibration.h"
+// #include "Phase_Calibration.h"
+#include "Math/Fixed/fract16.h"
 #include "Phase_Input.h"
 #include "../Phase/Phase_Types.h"
 #include "Peripheral/ADC/ADC_Conversion.h"

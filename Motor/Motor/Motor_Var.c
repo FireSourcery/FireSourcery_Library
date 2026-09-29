@@ -64,6 +64,39 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
     return value;
 }
 
+
+// #define VAR_META_EXPORT(...)
+
+// typedef const struct VField
+// {
+//     int (*GET)(void * P_context);
+//     void (*SET)(void * P_context, int value);
+// }
+// VField_T;
+
+// // static fract16_t MotorSpeed_Fract16(const Motor_Context_T * p_state) { return Motor_User_GetSpeed_Fract16(p_state); }
+// static int MotorSpeed(const Motor_Context_T * p_state) { return Motor_User_GetSpeed_Fract16(p_state); }
+
+// static const VField_T  MOTOR_USER_OUT_VARS[] =
+// {
+//     { Motor_User_GetSpeed_Fract16, NULL, VAR_META_EXPORT(Rpm) }, /* VAR_META_EXPORT  MotVar_Sig_T from _Generic(typeof()) */
+//     { Motor_GetIPhase_Fract16, NULL, VAR_META_EXPORT(Rpm, fract16_t, float) },
+//     { Motor_GetVPhase_Fract16, NULL, VAR_META_EXPORT(Rpm, fract16_t) },
+//     { Motor_GetStateId, NULL, VAR_META_EXPORT(Rpm, Motor_StateId_T) },
+//     { Motor_GetPathId, NULL, VAR_META_EXPORT(Rpm, Motor_StateId_T) },
+//     // { MotorSpeed, NULL,             VAR_META_EXPORT(Rpm, fract16_t, float) }, /* hand written format annotation */
+// //     { MotorIPhase_Fract16, NULL, VAR_META_EXPORT(Rpm, fract16_t, float) },
+// //     { MotorVPhase_Fract16, NULL, VAR_META_EXPORT(Rpm, fract16_t) },
+// //     { MotorStateId, NULL, VAR_META_EXPORT(Rpm, Motor_StateId_T) },
+// //     { MotorPathId, NULL, VAR_META_EXPORT(Rpm, Motor_StateId_T) }
+// };
+
+// int _Motor_Var_UserOut_Get(Motor_Context_T * p_state, Motor_Var_UserOut_T varId)
+// {
+//     return MOTOR_USER_OUT_VARS[varId].GET(p_state);
+// }
+
+
 /******************************************************************************/
 /*
     Input/Cmds
@@ -336,32 +369,3 @@ static inline void Motor_FocConfig_SetSi(Motor_T * p_motor, FOC_ConfigId_T var, 
 }
 
 
-
-
-// typedef enum { SIG_I8, SIG_U8, SIG_I16, SIG_U16, SIG_I32, SIG_U32, _SIG_END } MotVar_Sig_T;
-
-// typedef const struct VField
-// {
-//     void (*GET)(void);
-//     void (*SET)(void);
-//     MotVar_Sig_T SIG;
-// }
-// VField_T;
-
-
-// #define SIG_(ctype) \
-//     _Generic((ctype)0, \
-//              int8_t:  SIG_I8,  uint8_t:  SIG_U8, \
-//              int16_t: SIG_I16, uint16_t: SIG_U16, \
-//              int32_t: SIG_I32, uint32_t: SIG_U32)
-
-// #define ARGS ((const Motor_Context_T *)0)
-// #define VAR_FIELD(get, set, units) { .GET = (void (*)(void))get, .SET = (void (*)(void))set, .SIG = SIG_(typeof(get ARGS)) }
-
-// static const VField_T VARS_POSITIONAL[] =
-// {
-//     VAR_FIELD(Motor_User_GetSpeed_Fract16, NULL, Rpm ),
-//     VAR_FIELD(Motor_GetIPhase_Fract16,     NULL, Amps ),
-//     VAR_FIELD(Motor_GetStateId,            NULL, None ),
-//     VAR_FIELD(Motor_GetPathId,             NULL, None ),
-// };

@@ -142,20 +142,20 @@ static inline ufract16_t Motor_User_SpeedLimitReverse(const Motor_Context_T * p_
 /******************************************************************************/
 /* Move to SyncControl extension */
 /* Buffered Sync Input for statemachine */
-typedef struct Motor_InputData
-{
-    uint8_t MotorId;
-    int16_t CmdValue;   /* [-32768:32767] */
-    Motor_Direction_T Direction;
-    Motor_FeedbackMode_T FeedbackMode;
-    Phase_VOutMode_T PhaseOutput;
-    /* optionally */
-    uint16_t SpeedLimit;
-    uint16_t ILimit;
-    // uint16_t RampOnOff;
-    // stateCmd for on edge
-}
-Motor_Input_T;
+// typedef struct Motor_InputData
+// {
+//     uint8_t MotorId;
+//     int16_t CmdValue;   /* [-32768:32767] */
+//     Motor_Direction_T Direction;
+//     Motor_FeedbackMode_T FeedbackMode;
+//     Phase_VOutMode_T PhaseOutput;
+//     /* optionally */
+//     uint16_t SpeedLimit;
+//     uint16_t ILimit;
+//     // uint16_t RampOnOff;
+//     // stateCmd for on edge
+// }
+// Motor_Input_T;
 
 
 /******************************************************************************/
@@ -212,4 +212,4 @@ extern void Motor_SetPositionCmd(Motor_Context_T * p_motor, uint16_t angle);
 
 extern void Motor_SetActiveCmd_Norm(Motor_T * p_motor, int16_t userCmd);
 
-extern void Motor_ProcSyncInput(Motor_T * p_motor, Motor_Input_T * p_input);
+// extern void Motor_ProcSyncInput(Motor_T * p_motor, Motor_Input_T * p_input);

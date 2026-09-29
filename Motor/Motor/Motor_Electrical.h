@@ -36,7 +36,7 @@
 #include "Motor/Motor/Phase_Input/Phase_Calibration.h"
 
 
-/* move with phaseboard */
+/* move with phase board */
 typedef const struct Motor_ElectricalCalib
 {
     volatile uint16_t SPEED_MAX_RADS; /* Optional Global Ref */

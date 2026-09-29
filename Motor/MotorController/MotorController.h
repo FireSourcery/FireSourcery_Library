@@ -192,7 +192,7 @@ typedef struct MotorController_Context
 
     MotLimits_T Limits;     /* Q15 unitless derate ratios — contiguous augments + values for I and Speed system arbitration. */
 
-    Motor_Input_T CmdInput; /* Buffered Input for StateMachine. Unused for now */
+    // Motor_Input_T CmdInput; /* Buffered Input for StateMachine. Unused for now */
     // MotorController_InputMode_T ActiveInput;
 
     OptDin_State_T OptDinState;

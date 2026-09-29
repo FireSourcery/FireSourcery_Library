@@ -23,13 +23,7 @@ typedef const struct VarGroup
 }
 VarGroup_T;
 
-// unlike the static polymorphism case, runtime mapped indexs need type to materialize through an enum selection.
-// in the static polymorphism case, compiler optimization may strip away the widened wrapper. materializing select through an enum type id is not necessary.
-// here widening to a unifrom function signature int32_t get(void*) means deriving return type through manual assignment.
-//
-// into a call site (name it, typeof works, hand assign switch indexing)
-// into data (a tag — indirect step)
-// out of existence (normalize every signature, hand assign type)
+
 
 /*
     A signature is (width, signedness)
@@ -82,6 +76,30 @@ static const VarGroup_T MOTOR_VAR_GROUPS[] =
 
 /*  Config_T can use field offset. */
 
+
+// like the static polymorphism pattern, a wider wrapper can unify handling without materializing an enum type id,
+// compiler optimization may strip away the widened wrapper.
+// however the trade off here is losing compiler generated meta data.
+// here widening to a unifrom function signature int32_t get(void*) means deriving return type through manual assignment.
+// runtime mapped indexs, can auto produce both piece, enforce type annotations and materialize type through an enum id,
+// but costs a run time switch,
+//      adapter be does not optimize away
+//      VarTableFn_T fn = VARS[varId].GET_VOID;
+//      return VARS[varId].GET_ADAPTER(fn, p_state);
+//
+// into a call site (name it, typeof works, hand assign switch indexing)
+// into data (a tag — indirect step)
+// out of existence (normalize every signature, hand assign type)
+
+/*
+    compiler outputs the function name with its index
+    $ arm-none-eabi-gcc -E -DEXPORT enum.h | grep @@
+
+    [0] "Motor_User_GetSpeed_Fract16" , "Rpm" , "accum32_t"  dwarf file for
+    [1] "Motor_GetIPhase_Fract16" , "Amps" , "fract16_t" ,
+    [2] "Motor_GetStateId", "None" , "Motor_StateId_T" ,
+*/
+
 /******************************************************************************/
 /*
     Per variable tags
@@ -95,7 +113,6 @@ static const VarGroup_T MOTOR_VAR_GROUPS[] =
         original format -> annotation export by dwarf file. materialize enum to encode calling convention, auto through _Generic
             pays through switch on sig enum
 */
-
 static fract16_t Motor_User_GetSpeed(const Motor_Context_T * p_state) { return p_state->SensorState.Speed_Fract16; }
 // static fract16_t MotorSpeed_Fract16(const Motor_Context_T * p_state) { return Motor_User_GetSpeed(p_state); }
 static int MotorSpeed(const Motor_Context_T * p_state) { return Motor_User_GetSpeed(p_state); }
@@ -119,7 +136,7 @@ int _Motor_Var_UserOut_Get(Motor_Context_T * p_state, Motor_Var_UserOut_T varId)
 
 /*
     switch
-    absorbs the calling convention
+    enum index absorbs the calling convention
 
     requires explicitly defined enum index
     tag on enum, when there is no table.
@@ -156,7 +173,61 @@ typedef enum Motor_Var_UserOut
 Motor_Var_UserOut_T;
 
 
+typedef int (*VarGetAdapter_T)(void (*generic)(void), void * p_context);
+typedef void (*VarTableFn_T)(void);
 
+static inline int32_t Adapter_I8(VarTableFn_T fn, void * p_context) { return (int32_t)((int8_t(*)(void *))fn)(p_context); }
+static inline int32_t Adapter_U8(VarTableFn_T fn, void * p_context) { return (int32_t)((uint8_t(*)(void *))fn)(p_context); }
+static inline int32_t Adapter_I16(VarTableFn_T fn, void * p_context) { return (int32_t)((int16_t(*)(void *))fn)(p_context); }
+static inline int32_t Adapter_U16(VarTableFn_T fn, void * p_context) { return (int32_t)((uint16_t(*)(void *))fn)(p_context); }
+static inline int32_t Adapter_I32(VarTableFn_T fn, void * p_context) { return (int32_t)((int32_t(*)(void *))fn)(p_context); }
+static inline int32_t Adapter_U32(VarTableFn_T fn, void * p_context) { return (int32_t)((uint32_t(*)(void *))fn)(p_context); }
+
+#define _ADAPTER(ctype) \
+_Generic((ctype)0, \
+    int8_t:  Adapter_I8,  uint8_t:  Adapter_U8, \
+    int16_t: Adapter_I16, uint16_t: Adapter_U16, \
+    int32_t: Adapter_I32, uint32_t: Adapter_U32, \
+    intptr_t: Adapter_I32, uintptr_t: Adapter_U32 \
+)
+
+// #define _ADAPTER(ctype) _Generic((ctype)0, \
+//     signed char: Adapter_I8, unsigned char:  Adapter_U8, \
+//     short:       Adapter_I16, unsigned short: Adapter_U16, \
+//     int:         Adapter_I32,   unsigned int:   Adapter_U32, \
+//     long:        Adapter_I32,  unsigned long:  Adapter_U32)
+
+typedef const struct VFieldA
+{
+    VarTableFn_T GET_VOID;
+    VarTableFn_T SET;
+    VarGetAdapter_T GET_ADAPTER;
+}
+VFieldA_T;
+
+#define VAR_FIELD(get, set,  ...) { .GET_VOID = (void (*)(void))get, .SET = (void (*)(void))set, .GET_ADAPTER = _ADAPTER(typeof(get(NULL))) }
+
+static const VFieldA_T VARS[] =
+{
+    VAR_FIELD(Motor_User_GetSpeed_Fract16, NULL, Rpm ),
+    VAR_FIELD(Motor_GetIPhase_Fract16,     NULL, Amps ),
+    VAR_FIELD(Motor_GetStateId,            NULL, None, Motor_StateId_T ), /* this should evaluate to uint8_t */
+    VAR_FIELD(Motor_GetPathId,             NULL, None ),
+};
+
+// static_assert(sizeof(VARS)/sizeof(VARS[0]) == _MOTOR_VAR_USER_OUT_END, "count");
+
+int _Motor_Var_UserOut_Get(Motor_Context_T * p_state, Motor_Var_UserOut_T varId)
+{
+    VarTableFn_T fn = VARS[varId].GET_VOID;
+    return VARS[varId].GET_ADAPTER(fn, p_state);
+}
+
+/******************************************************************************/
+/*
+    unified list through shared macro def
+*/
+/******************************************************************************/
 /*
     Un-materialize Meta struct pattern
     .def file style with individual def to avoid #undef
@@ -220,6 +291,25 @@ int _Motor_Var_UserOut_Get(const Motor_Context_T *p_motor, int index)
    }
 }
 
+
+
+/*
+    .def file style e.g
+*/
+#define MOTOR_USER_OUT_IDS(X) /* id, units, C type */ \
+    X(MOTOR_VAR_SPEED,     UNITS_RPM,  fract16_t)      \
+    X(MOTOR_VAR_I_PHASE,   UNITS_AMPS, fract16_t)      \
+    X(MOTOR_VAR_STATE,     UNITS_NONE, Motor_StateId_T)
+
+#define _ID(id, units, type)  id,
+typedef enum Motor_Var_UserOut { MOTOR_USER_OUT_IDS(_ID) _MOTOR_VAR_USER_OUT_END } Motor_Var_UserOut_T;
+
+/*
+the exporter is the preprocessor.
+
+$ arm-none-eabi-gcc -E -DEXPORT enum.h | grep @@
+"MOTOR_VAR_SPEED" , "Rpm" , "fract16_t" ,
+"MOTOR_VAR_STATE" , "None" , "Motor_StateId_T" , */
 
 
 /*
@@ -321,35 +411,6 @@ int32_t Motor_Var_UserOut_Get(const Motor_Context_T * p_motor, Motor_Var_UserOut
 // };
 
 
-/*
-
-    A2L files are usually generated from the build artifact, not hand-written.
-    Which answers "compiler outputs the function name with its index" — it already does. From your own toolchain, on a test object:
-    $ arm-none-eabi-gcc -E -DEXPORT enum.h | grep @@
-
-    [0] "Motor_User_GetSpeed_Fract16" , "Rpm" , "accum32_t" ,       <- dwarf file
-    [1] "Motor_GetIPhase_Fract16" , "Amps" , "fract16_t" ,
-    [2] "Motor_GetStateId", "None" , "Motor_StateId_T" ,
-*/
-
-
-/*
-    .def file style e.g
-*/
-#define MOTOR_USER_OUT_IDS(X) /* id, units, C type */ \
-    X(MOTOR_VAR_SPEED,     UNITS_RPM,  fract16_t)      \
-    X(MOTOR_VAR_I_PHASE,   UNITS_AMPS, fract16_t)      \
-    X(MOTOR_VAR_STATE,     UNITS_NONE, Motor_StateId_T)
-
-#define _ID(id, units, type)  id,
-typedef enum Motor_Var_UserOut { MOTOR_USER_OUT_IDS(_ID) _MOTOR_VAR_USER_OUT_END } Motor_Var_UserOut_T;
-
-
-the exporter is the preprocessor.
-
-$ arm-none-eabi-gcc -E -DEXPORT enum.h | grep @@
-"MOTOR_VAR_SPEED" , "Rpm" , "fract16_t" ,
-"MOTOR_VAR_STATE" , "None" , "Motor_StateId_T" ,
 
 
 /* MotorUserOut.def — NO include guard: this file is meant to be included many times */
