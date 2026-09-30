@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "VBus_Config.h"
-#include "../Phase_Input/Phase_Calibration.h" /* optionally seperate */
+#include "../Phase_Input/Phase_Board.h" /* optionally seperate */
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 
 #include "Math/Fixed/fract16.h"
@@ -56,8 +56,8 @@
         the layer that binds the physical channel (MotorController).
 */
 /*
-    PHASE_CALIBRATION.V_MAX -> ADC Saturation
-    PHASE_CALIBRATION.V_RATED -> controller voltage max
+    PHASE_BOARD.V_MAX -> ADC Saturation
+    PHASE_BOARD.V_RATED -> controller voltage max
     Config.Nominal -> user set nominal voltage
     VBus -> live voltage
 */
@@ -120,7 +120,7 @@ static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBu
 /******************************************************************************/
 static inline ufract16_t VBus_Fract16(const VBus_T * p_vbus) { return p_vbus->VBus_Fract16; }
 static inline uint32_t VBus_Inv_Fract32(const VBus_T * p_vbus) { return p_vbus->PerV_Accum32; }
-static inline uint16_t VBus_Volts(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, Phase_Calibration_GetVMaxVolts()); }
+static inline uint16_t VBus_Volts(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, Phase_VMaxVolts()); }
 
 /* Runtime phase peak references — VBus/2 (sine) and VBus/√3 (SVPWM) */
 static inline ufract16_t VBus_GetVPhaseRef(const VBus_T * p_vbus) { return p_vbus->VBus_Fract16 / 2U; }

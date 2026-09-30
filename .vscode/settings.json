@@ -3,12 +3,13 @@
     //     "${default}",
     //     "__GNUC__",
     // ],
-    "C_Cpp.default.intelliSenseMode": "windows-gcc-x64",
+    "C_Cpp.default.intelliSenseMode": "windows-gcc-arm",
     "C_Cpp.default.cStandard": "gnu23",
     "C_Cpp.default.cppStandard": "gnu++23",
     "C_Cpp.default.mergeConfigurations": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cpptools",
     "C_Cpp.formatting": "vcFormat",
+
     "C_Cpp.vcFormat.wrap.preserveBlocks": "allOneLineScopes",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "newLine",
@@ -63,9 +64,7 @@
         200,
     ],
     "files.trimTrailingWhitespace": true,
-    "[jsonc]": {
-        "editor.defaultFormatter": "vscode.json-language-features",
-    },
+
     "cSpell.words": [
         "${default}",
         "Blinky",
@@ -89,5 +88,5 @@
         "txsize",
         "ufract"
     ],
-    "cmake.sourceDirectory": "E:/Workspace/Project/Kelly_KMC/CMake",
+
 }

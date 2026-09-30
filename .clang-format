@@ -1,9 +1,9 @@
 ---
-# https://zed0.co.uk/clang-format-configurator/
+# https://clang-format-configurator.site/
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 # BasedOnStyle: Microsoft
 IndentWidth: 4
-ColumnLimit: 160
+ColumnLimit: 0
 UseTab: Never
 
 BreakBeforeBraces: Custom
@@ -13,11 +13,9 @@ BraceWrapping:
   AfterCaseLabel: true
   AfterClass: true
   AfterControlStatement: true
-  AfterEnum: true
   AfterFunction: true
   AfterNamespace: true
   AfterObjCDeclaration: true
-  AfterStruct: true
   AfterUnion: true
   AfterExternBlock: true
   BeforeCatch: true

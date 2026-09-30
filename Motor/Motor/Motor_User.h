@@ -195,6 +195,7 @@ extern void Motor_SetRegenCmd(Motor_Context_T * p_motor, int16_t scalar_fract16)
 
 extern void Motor_SetICmd(Motor_Context_T * p_motor, int16_t i_fract16);
 extern void Motor_SetICmd_Norm(Motor_Context_T * p_motor, int16_t scalar_fract16);
+extern void Motor_SetITest(Motor_Context_T * p_motor, int16_t scalar_fract16);
 
 extern void Motor_ApplyTorque0(Motor_T * p_motor);
 extern void Motor_ApplyRampDown(Motor_T * p_motor);

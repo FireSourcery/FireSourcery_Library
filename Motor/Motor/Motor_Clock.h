@@ -24,18 +24,14 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   _Motor_ControlFreq.h
+    @file   Motor_Clock.h
     @author FireSourcery
     @brief  Time/Clock References
 */
 /******************************************************************************/
-#include "Math/Fixed/fract16.h"
 #include "Math/Angle/angle_speed_math.h"
 #include <assert.h>
 
-/*
-    Part of Motor.h
-*/
 
 /******************************************************************************/
 /*
@@ -59,24 +55,20 @@
 
 
 /*
-    Max representable speed angle16 base
+    ANGLE_DT_MAX <=> 1/2 electrical cycle <=> Fs/2 electrical cps
 
-    [max angle per poll]: 32768 <=> 1/2 electrical cycle <=> pollingFreq/2 electrical cps
+    [rpm] = [angle16_dt] * Fs / ANGLE16_PER_REVOLUTION * SECONDS_PER_MINUTE
+        => 20 kHz Fs => ~600000 erpm, 4 pole pairs:  150,001 RPM mechanical
 
-    [rpm] = [angle] * pollingFreq / ANGLE16_PER_REVOLUTION * SECONDS_PER_MINUTE
-        => 20 kHz pollingFreq => ~600000 erpm
-        4 pole pairs:  150,001 RPM mechanical
-*/
-/*
     alternatively /k, compile time const, uneven psi
     e.g.
         speed max = 6000 rpm /60 · 4 = 400 Hz
-        speed base = anglespeedmax · f_s / 65536 = 2048 · 20000 / 65536 = 625 Hz
+        speed base = ANGLE_DT_MAX · Fs / 65536 = 2048 · 20000 / 65536 = 625 Hz
 */
 #define MOTOR_ANGLE_SPEED_MAX       (32768)
-#define MOTOR_ANGLE_SPEED_MAX_RADS  ANGLE_SPEED_MAX_RADS(MOTOR_CONTROL_FREQ)
-#define MOTOR_ANGLE_SPEED_MAX_RPM   ANGLE_SPEED_MAX_RPM(MOTOR_CONTROL_FREQ)
-#define MOTOR_ANGLE_SPEED_MAX_MECH_RPM(polePairs)   (ANGLE_SPEED_MAX_RPM(MOTOR_CONTROL_FREQ) / (polePairs))
+#define MOTOR_ANGLE_SPEED_MAX_RADS  ANGLE_DT_MAX_RADS(MOTOR_CONTROL_FREQ)
+#define MOTOR_ANGLE_SPEED_MAX_RPM   ANGLE_DT_MAX_RPM(MOTOR_CONTROL_FREQ)
+#define MOTOR_ANGLE_SPEED_MAX_MECH_RPM(polePairs)   (ANGLE_DT_MAX_RPM(MOTOR_CONTROL_FREQ) / (polePairs))
 
 /*
     Motor_Config   use

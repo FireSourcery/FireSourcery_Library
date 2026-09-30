@@ -170,22 +170,17 @@ void MotNvm_LoadConfigAll(const MotNvm_T * p_motNvm)
 /******************************************************************************/
 /*
     Caller handle erase, if needed.
-    Phase_Calibration_T is packed, or wrap addtional packet interface
+    Phase_Board_T is packed, or wrap addtional packet interface
 */
-NvMemory_Status_T MotNvm_WritePhaseCalibration(const MotNvm_T * p_motNvm, const Phase_Calibration_T * p_source)
+NvMemory_Status_T MotNvm_WritePhaseBoard(const MotNvm_T * p_motNvm, const Phase_Board_T * p_source)
 {
-    static_assert(sizeof(Phase_Calibration_T) == 8U);
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, (const void *)p_source, sizeof(Phase_Calibration_T));
+    static_assert(sizeof(Phase_Board_T) == 16U);
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_BOARD, (const void *)p_source, sizeof(Phase_Board_T));
 }
 
-NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_motNvm, const Phase_AnalogBoard_T * p_source)
+NvMemory_Status_T MotNvm_WritePhaseAnalogBoard(const MotNvm_T * p_motNvm, const Phase_AnalogBoard_T * p_source)
 {
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_BOARD, (const void *)&p_source, sizeof(Phase_AnalogBoard_T));
-}
-
-NvMemory_Status_T MotNvm_WriteMotorCalibration(const MotNvm_T * p_motNvm, const Motor_ElectricalCalib_T * p_source)
-{
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ELECTRICAL_CALIBRATION, (const void *)p_source, sizeof(Motor_ElectricalCalib_T));
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_BOARD, (const void *)p_source, sizeof(Phase_AnalogBoard_T));
 }
 
 
@@ -211,8 +206,7 @@ By Id
 // {
 //     switch (id)
 //     {
-//         case MOT_NVM_MEM_BOARD_REF_0: return MotNvm_WritePhaseCalibration(p_motNvm, (const Phase_Calibration_T *)p_source);
-//         case MOT_NVM_MEM_BOARD_REF_1: return MotNvm_WriteMotorCalibration(p_motNvm, (const Motor_ElectricalCalib_T *)p_source);
+//         case MOT_NVM_MEM_BOARD_REF_0: return MotNvm_WritePhaseBoard(p_motNvm, (const Phase_Board_T *)p_source);
 //         default: return NV_MEMORY_STATUS_ERROR_OTHER;
 //     }
 // }
@@ -224,9 +218,9 @@ By Id
 /******************************************************************************/
 // NvMemory_Status_T MotNvm_WritePhaseCalibrationFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
 // {
-//     Phase_Calibration_T buffer = { 0 };
+//     Phase_Board_T buffer = { 0 };
 //     HAL_Nvm_MapPhaseCalibration(p_source, &buffer);
-//     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, (const void *)&buffer, sizeof(Phase_Calibration_T));
+//     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_BOARD, (const void *)&buffer, sizeof(Phase_Board_T));
 // }
 
 // NvMemory_Status_T MotNvm_WritePhaseSensorRefFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
@@ -240,7 +234,7 @@ By Id
 // NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
 // {
 //     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-//     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, FLASH_UNIT_ERASE_SIZE); /* assume contigous start from PHASE_CALIBRATION  */
+//     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_BOARD, FLASH_UNIT_ERASE_SIZE); /* assume contiguous start from PHASE_BOARD  */
 
 //     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseSensorRefFrom(p_motNvm, p_source); }
 //     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseCalibrationFrom(p_motNvm, p_source); }
@@ -254,7 +248,7 @@ By Id
 
 //     // if (HAL_Nvm_IsValidManufacture(p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE) == true)
 
-//     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, FLASH_UNIT_ERASE_SIZE);
+//     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_BOARD, FLASH_UNIT_ERASE_SIZE);
 
 //     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseSensorRefFrom(p_motNvm, (Nvm_Manufacturer_T *)&buffer[0U]); }
 //     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseCalibrationFrom(p_motNvm, (Nvm_Manufacturer_T *)&buffer[0U]); }

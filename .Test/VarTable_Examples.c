@@ -207,9 +207,9 @@ typedef enum Motor_Var_Board
 Motor_Var_Board_T;
 
 #define BOARD_LIST(X)                                                                                 \
-    X(MOTOR_VAR_BOARD_V_RATED,      Phase_Calibration_GetVRated_Fract16,     NULL, Volts, fract16_t)  \
-    X(MOTOR_VAR_BOARD_I_RATED_PEAK, Phase_Calibration_GetIRatedPeak_Fract16, NULL, Amps,  fract16_t)  \
-    X(MOTOR_VAR_BOARD_V_MAX_VOLTS,  Phase_Calibration_GetVMaxVolts,          NULL, Volts, uint16_t)
+    X(MOTOR_VAR_BOARD_V_RATED,      Phase_VRated_Fract16,     NULL, Volts, fract16_t)  \
+    X(MOTOR_VAR_BOARD_I_RATED_PEAK, Phase_IRatedPeak_Fract16, NULL, Amps,  fract16_t)  \
+    X(MOTOR_VAR_BOARD_V_MAX_VOLTS,  Phase_VMaxVolts,          NULL, Volts, uint16_t)
 
 static const VField_T BOARD_FIELDS[] = { BOARD_LIST(ROW_CONST) };
 

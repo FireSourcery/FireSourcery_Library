@@ -135,6 +135,7 @@ typedef enum Motor_Var_OpenLoopCmd
     MOTOR_VAR_OPEN_LOOP_JOG,
     MOTOR_VAR_OPEN_LOOP_RUN,
     // MOTOR_VAR_OPEN_LOOP_HOMING,
+    // MOTOR_VAR_USER_SETPOINT_CURRENT_TEST, // Scalar of board rated peak I. Checks I calibration against an external meter
 }
 Motor_Var_OpenLoopCmd_T;
 

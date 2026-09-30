@@ -169,7 +169,7 @@ static void Rs_Proc(Motor_T * p_motor)
         fract16_t rs_f = rs_fract16(vd_avg, id_avg);
 
         p_results->Rs_Fract16 = rs_f;
-        p_results->Rs_MilliOhms = rs_mohms_of_fract16(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), rs_f);
+        p_results->Rs_MilliOhms = rs_mohms_of_fract16(Phase_VMaxVolts(), Phase_IMaxAmps(), rs_f);
 
         /* Store for L  */
         p_buffer->VdBias = (fract16_t)vd_avg;
@@ -456,7 +456,7 @@ static State_T * Lq_Next(Motor_T * p_motor)
         int64_t i_norm = (Accumulator_Output(&p_runtime->Accumulators[0]) * 2) / p_runtime->CalibrationTimer;
         int64_t q_norm = (Accumulator_Output(&p_runtime->Accumulators[1]) * 2) / p_runtime->CalibrationTimer;
         uint32_t mag = fixed_sqrt(i_norm * i_norm + q_norm * q_norm);
-        p_results->Lq_MicroHenries = l_uh_of_hfi(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), PARAMID_HF_FREQ_HZ, PARAMID_VHF_FRACT16, mag);
+        p_results->Lq_MicroHenries = l_uh_of_hfi(Phase_VMaxVolts(), Phase_IMaxAmps(), PARAMID_HF_FREQ_HZ, PARAMID_VHF_FRACT16, mag);
         return &MOTOR_STATE_CALIBRATION;
     }
     return NULL;

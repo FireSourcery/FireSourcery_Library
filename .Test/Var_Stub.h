@@ -25,9 +25,9 @@ static inline void Motor_SetSpeedCmd(Motor_Context_T * p, int v)   { p->Directio
 static inline void Motor_SetTorqueCmd(Motor_Context_T * p, int v)  { p->Direction = v; }
 static inline void Motor_SetICmd(Motor_Context_T * p, int v)       { p->Direction = v; }
 /* --- board: NO context --- */
-static inline fract16_t Phase_Calibration_GetVRated_Fract16(void) { return 100; }
-static inline fract16_t Phase_Calibration_GetIRatedPeak_Fract16(void) { return 200; }
-static inline uint16_t  Phase_Calibration_GetVMaxVolts(void) { return 300; }
+static inline fract16_t Phase_VRated_Fract16(void) { return 100; }
+static inline fract16_t Phase_IRatedPeak_Fract16(void) { return 200; }
+static inline uint16_t  Phase_VMaxVolts(void) { return 300; }
 /* --- config: keyed, already uniform --- */
 static inline int  _Motor_Var_ConfigPid_Get(const Motor_Config_T * p, int id) { return id ? p->PidSpeedKi : p->PidSpeedKp; }
 static inline void _Motor_Var_ConfigPid_Set(Motor_Config_T * p, int id, int v) { if (id) p->PidSpeedKi = v; else p->PidSpeedKp = v; }

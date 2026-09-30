@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "FOC.h"
+#include "motor_electrical_math.h"
 #include "../Phase/Phase_VOut.h"
 #include "Math/PID/PID.h"
 #include "Math/Ramp/Ramp.h"
@@ -103,6 +104,12 @@ static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
 static inline void FOC_Electrical_SetPsi_Kv(FOC_Electrical_T * p_electrical, uint32_t vBase, uint32_t rpmBase, uint16_t kv)
 {
     p_electrical->Psi = psi_pu_rpm_of_kv(vBase, rpmBase, kv);
+}
+
+static inline void FOC_Electrical_RebaseL(FOC_Electrical_T * p_electrical, uint32_t speedBaseFrom, uint32_t speedBaseTo)
+{
+    p_electrical->Ld = l_pu_rebase(p_electrical->Ld, speedBaseFrom, speedBaseTo);
+    p_electrical->Lq = l_pu_rebase(p_electrical->Lq, speedBaseFrom, speedBaseTo);
 }
 
 

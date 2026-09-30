@@ -28,6 +28,7 @@
 */
 /******************************************************************************/
 #include "Motor_User.h"
+#include "Phase_Input/Phase_Board.h"
 
 
 /******************************************************************************/
@@ -220,7 +221,7 @@ static inline int32_t Motor_UserForwardOf(const Motor_Context_T * p_motor, int32
 static inline int32_t Motor_UserMotoringOf(const Motor_Context_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
 
 /* Input from scalar always != INT16_MIN */
-// assert(math_clamp(userCmd, -Phase_Calibration_GetIRatedPeak_Fract16(), Phase_Calibration_GetIRatedPeak_Fract16()));
+// assert(math_clamp(userCmd, -Phase_IRatedPeak_Fract16(), Phase_IRatedPeak_Fract16()));
 static inline void _Motor_SetTorqueCmd(Motor_Context_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_UserForwardOf(p_motor, userCmd)); }
 static inline void _Motor_SetTorqueMotoringCmd(Motor_Context_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_UserMotoringOf(p_motor, userCmd)); }
 // assert(math_clamp(userCmd, -Motor_SpeedType, 32767)); Motor_SpeedTypeMax
@@ -263,6 +264,9 @@ void Motor_SetICmd(Motor_Context_T * p_motor, int16_t i_fract16) { _Motor_SetTor
 
 /*  Per-unit of limit reference Config.Limit - maintain same proportion through runtime. set by user. */
 void Motor_SetICmd_Norm(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16)); }
+
+/* Scale to the board limit for testing */
+void Motor_SetITest(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, Phase_IRatedPeak_Fract16())); }
 
 
 

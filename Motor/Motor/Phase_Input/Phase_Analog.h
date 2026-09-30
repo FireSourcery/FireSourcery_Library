@@ -29,11 +29,11 @@
     @brief  Analog component for every Phase_Input module
 */
 /******************************************************************************/
-// #include "Phase_Calibration.h"
-#include "Math/Fixed/fract16.h"
 #include "Phase_Input.h"
 #include "../Phase/Phase_Types.h"
 #include "Peripheral/ADC/ADC_Conversion.h"
+#include "Peripheral/ADC/ADC_Reference.h"
+#include "Math/Fixed/fract16.h"
 
 
 /******************************************************************************/
@@ -91,8 +91,8 @@ Phase_AnalogBoard_T;
 
 extern const Phase_AnalogBoard_T PHASE_ANALOG_BOARD;
 
-// static inline uint16_t Phase_Analog_VMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.V_PHASE_R1, PHASE_ANALOG_BOARD.V_PHASE_R2); }
-// static inline uint16_t Phase_Analog_IMax(void) { return PHASE_ANALOG_I_MAX_AMPS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT, PHASE_ANALOG_BOARD.I_PHASE_GAIN); }
+static inline uint16_t Phase_Analog_VMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.V_PHASE_R1, PHASE_ANALOG_BOARD.V_PHASE_R2); }
+static inline uint16_t Phase_Analog_IMax(void) { return PHASE_ANALOG_I_MAX_AMPS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT, PHASE_ANALOG_BOARD.I_PHASE_GAIN); }
 
 
 /******************************************************************************/

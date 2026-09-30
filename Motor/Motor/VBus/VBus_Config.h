@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "../Phase_Input/Phase_Calibration.h"
+#include "../Phase_Input/Phase_Board.h"
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 
 #include "Math/Fixed/fract16.h"
@@ -94,7 +94,7 @@ VBus_Config_T;
 
 static inline VBus_Config_T VBus_Config_LiIon(uint16_t vNominal_V)
 {
-    return VBUS_CONFIG_LIION(math_min(vNominal_V, Phase_Calibration_GetVRated_V()), Phase_Calibration_GetVMaxVolts());
+    return VBUS_CONFIG_LIION(math_min(vNominal_V, Phase_VRated_Volts()), Phase_VMaxVolts());
 }
 
 static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_V)
@@ -121,7 +121,7 @@ static inline ufract16_t VBus_VLowDerate_Fract16(const VBus_Config_T * p_config)
 static inline uint16_t VBus_VSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
 static inline void VBus_SetVSupplyNominal_V(VBus_Config_T * p_vbus, uint16_t vSupplyNominal_V)
 {
-    p_vbus->VSupplyNominal_V = math_min(vSupplyNominal_V, Phase_Calibration_GetVRated_V());
+    p_vbus->VSupplyNominal_V = math_min(vSupplyNominal_V, Phase_VRated_Volts());
     p_vbus->MonitorConfig.Nominal = Phase_V_Fract16OfVolts(p_vbus->VSupplyNominal_V);
 }
 
@@ -136,7 +136,7 @@ static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { ret
 /******************************************************************************/
 static inline void VBus_Config_Validate(VBus_Config_T * p_config)
 {
-    p_config->VSupplyNominal_V           = math_min(p_config->VSupplyNominal_V, Phase_Calibration_GetVRated_V());
+    p_config->VSupplyNominal_V           = math_min(p_config->VSupplyNominal_V, Phase_VRated_Volts());
     p_config->IDerateUnderVFloor_Fract16 = math_min(p_config->IDerateUnderVFloor_Fract16, INT16_MAX);
     p_config->IDerateOverVFloor_Fract16  = math_min(p_config->IDerateOverVFloor_Fract16,  INT16_MAX);
     p_config->SpeedDerateFloor_Fract16   = math_min(p_config->SpeedDerateFloor_Fract16,   INT16_MAX);
@@ -145,7 +145,7 @@ static inline void VBus_Config_Validate(VBus_Config_T * p_config)
 static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
 {
     return ((p_config->VSupplyNominal_V != 0U)
-        && (p_config->VSupplyNominal_V           <= Phase_Calibration_GetVRated_V())
+        && (p_config->VSupplyNominal_V           <= Phase_VRated_Volts())
         && (p_config->IDerateUnderVFloor_Fract16 <= INT16_MAX)
         && (p_config->IDerateOverVFloor_Fract16  <= INT16_MAX)
         && (p_config->SpeedDerateFloor_Fract16   <= INT16_MAX)
@@ -201,7 +201,7 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
 }
 
 /* interface for alternate value */
-// static inline uint16_t VBus_PerUnitRef( ) { return Phase_Calibration_GetVMaxVolts(); }
+// static inline uint16_t VBus_PerUnitRef( ) { return Phase_VMaxVolts(); }
 
 /*  */
 static inline uint32_t VBus_BoardId_Get(VDivider_ConfigId_T var_id)

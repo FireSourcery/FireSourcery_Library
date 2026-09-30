@@ -190,8 +190,7 @@ static Protocol_ReqCode_T ReadMem_Blocking(MotorController_T * p_dev, Packet_Xfe
     {
         case MOT_PROTOCOL_MEM_CONFIG_RAM:  memcpy(p_buffer, (void *)p_rxPayload->Address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
         case MOT_PROTOCOL_MEM_CONFIG_ONCE: status = MotNvm_ReadManufacture_Blocking(&p_dev->MOT_NVM, p_rxPayload->Address, size, p_buffer); break;
-        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_0: status = NV_MEMORY_STATUS_SUCCESS; memcpy(p_buffer, &PHASE_CALIBRATION, sizeof(Phase_Calibration_T));                 break;
-        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_1: status = NV_MEMORY_STATUS_SUCCESS; memcpy(p_buffer, &MOTOR_ELECTRICAL_CALIBRATION, sizeof(Motor_ElectricalCalib_T));  break;
+        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_0: status = NV_MEMORY_STATUS_SUCCESS; memcpy(p_buffer, &PHASE_BOARD, sizeof(Phase_Board_T));             break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }
 
@@ -211,8 +210,7 @@ static Protocol_ReqCode_T WriteMem_Blocking(MotorController_T * p_dev, Packet_Xf
     else switch ((MotProtocol_MemConfig_T)p_rxPayload->Config)
     {
         case MOT_PROTOCOL_MEM_CONFIG_ONCE:        status = MotNvm_WriteManufacture_Blocking(&p_dev->MOT_NVM, p_rxPayload->Address, p_rxPayload->ByteData, p_rxPayload->Size); break;
-        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_0: status = MotNvm_WritePhaseCalibration(&p_dev->MOT_NVM, (const Phase_Calibration_T *)p_rxPayload->ByteData); break;
-        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_1: status = MotNvm_WriteMotorCalibration(&p_dev->MOT_NVM, (const Motor_ElectricalCalib_T *)p_rxPayload->ByteData); break;
+        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_0: status = MotNvm_WritePhaseBoard(&p_dev->MOT_NVM, (const Phase_Board_T *)p_rxPayload->ByteData); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }
 

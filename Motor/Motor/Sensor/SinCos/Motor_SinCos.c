@@ -54,20 +54,19 @@ static void Calibration_Proc(Motor_T * p_motor)
 {
     const SinCos_RotorSensor_T * p_sensor = GetSinCosSensor(p_motor);
     SinCos_State_T * p_sinCosState = p_sensor->SIN_COS.P_STATE;
-    const uint16_t duty = _Motor_GetVAlign_Duty(p_motor->P_MOTOR);
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
         switch (p_motor->P_MOTOR->CalibrationStateIndex)
         {
             case 0U:
-                Phase_Align(&p_motor->PHASE, PHASE_ID_A, duty);
+                Phase_Align_V(&p_motor->PHASE, PHASE_ID_A, VBus_Inv_Fract32(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
                 p_motor->P_MOTOR->CalibrationStateIndex = 1U;
                 break;
 
             case 1U:
                 SinCos_CalibrateAngleOffset(p_sinCosState, SinCos_Analog_GetSin(&p_sensor->ANALOG), SinCos_Analog_GetCos(&p_sensor->ANALOG));
-                Phase_Align(&p_motor->PHASE, PHASE_ID_INV_C, duty);  /* electrical +120° */
+                Phase_Align_V(&p_motor->PHASE, PHASE_ID_INV_C, VBus_Inv_Fract32(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));  /* electrical +120° */
                 p_motor->P_MOTOR->CalibrationStateIndex = 2U;
                 break;
 

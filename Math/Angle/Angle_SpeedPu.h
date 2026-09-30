@@ -70,7 +70,7 @@ Angle_SpeedUnitRef_T;
 
 /* Config Options in RPM */
 #define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedUnitRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
-#define ANGLE_SPEED_FRACT_REF_FROM_RPM(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
+#define ANGLE_SPEED_FRACT_REF_FROM_RPM(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE_DT_OF_RPM(pollingFreq, maxRpm))
 
 static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
 static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef_FromRpm(uint32_t pollingFreq, uint32_t maxRpm) { return ANGLE_SPEED_FRACT_REF_FROM_RPM(pollingFreq, maxRpm); }

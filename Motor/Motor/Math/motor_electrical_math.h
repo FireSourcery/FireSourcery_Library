@@ -296,9 +296,11 @@ static inline uint32_t psi_uwb_of_pu_rpm(uint16_t v_base_V, uint32_t speed_base_
     ω_base from constants: ψ_pu = .5
         0.5 = ψ_f · ω_base / V_base
         ω_base = 0.5 · V_base / ψ_f
-        e.g. V_base = 94 V, ψ_f = 15 mWb → ω_base = 3133 rad/s = 29,900 rpm_mech (4p)
+        e.g. V_base = 94 V, ψ_f = 15 mWb → ω_base = 3133 rad/s_e = 7,480 rpm_mech (4p)
 */
 // #define MOTOR_SPEED_BASE_RPM_OF_PSI_WB(V_Base, Psi_Webers) ((uint32_t)((V_Base) / (Psi_Webers) / 2U * 60  / (2 * FRACT16_PI)))
+/* inverse of psi_pu_rpm_of_wb for the base: speed_base_rpm = ψ_pu · 30 · V_base / (π · P · ψ_f) */
+static inline uint32_t speed_base_rpm_of_psi_wb(uint16_t v_base_V, uint8_t polePairs, uint32_t psi_pu, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)30UL * psi_pu * v_base_V * scale / ((uint64_t)FRACT16_PI * polePairs * psi_Wb); }
 
 /******************************************************************************/
 /*!
@@ -364,6 +366,12 @@ static inline uint32_t l_pu_rpm_of_uh(uint16_t v_base_V, uint16_t i_base_A, uint
 static inline uint32_t l_uh_of_pu_rpm(uint16_t v_base_V, uint16_t i_base_A, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t l_pu) { return l_h_of_pu_rpm(v_base_V, i_base_A, speed_base_rpm, polePairs, l_pu, 1000000UL); }
 
 /*
+    L_pu ∝ ω_base. Re-reference to a new speed base, preserving L [H]. Bases in any common unit.
+    No prior base, no L [H] to preserve.
+*/
+static inline uint32_t l_pu_rebase(uint32_t l_pu, uint32_t speed_base_from, uint32_t speed_base_to) { return (speed_base_from != 0U) ? (uint64_t)l_pu * speed_base_to / speed_base_from : l_pu; }
+
+/*
     rpm form — ω_base = π·P·n/30 substituted directly. Constants cancel:
     L_pu = Rs_pu · π·P·n · τ_cycles / (30 · Fs)                  [RL τ]
     L_pu = (v/di) · π·P·n · dt_cycles / (30 · Fs)                [step]
@@ -418,6 +426,9 @@ static inline uint32_t kt_unm_per_a_of_psi(uint32_t psi_uWb, uint8_t polePairs) 
 /* Speed envelope from Kv. */
 static inline uint32_t rpm_of_kv_v(uint16_t kv, uint32_t volts) { return (uint32_t)kv * volts; }
 static inline uint32_t v_of_kv_rpm(uint16_t kv, uint32_t rpm) { return rpm / kv; }
+
+/* Ke [mV/krpm] in the Kv basis: Ke = 1000 / Kv */
+static inline uint32_t rpm_of_ke_v(uint32_t ke_mV_per_krpm, uint32_t volts) { return (uint64_t)volts * 1000000UL / ke_mV_per_krpm; }
 
 /* Kv basis conversions — parse vendor specs into internal phase-peak. */
 static inline uint16_t kv_phase_of_kv_ll(uint16_t kv_ll_pk) { return v_ll_of_phase(kv_ll_pk); }

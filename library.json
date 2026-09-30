@@ -1,37 +1,37 @@
-{
-  "name": "FireSourcery_Library",
-  "version": "0.0.1",
-  "description": "Embedded C Library, Motor Control, Peripheral Abstraction Layer",
-  "keywords": "motor, foc, hal",
-  "repository":
-  {
-    "type": "git",
-    "url": "https://github.com/FireSourcery/FireSourcery_Library.git"
-  },
-  "authors":
-  [
-    {
-      "name": "FireSourcery"
-    }
-  ],
-  "license": "GNU",
-  "homepage": "https://github.com/FireSourcery/FireSourcery_Library",
-  "dependencies": {    },
-  "frameworks": "*",
-  "platforms": "*",
-  "build":
-  {
-    "srcFilter":
-    [
-      "-<*>",
-      "+<Arduino/KellyController/KellyController.cpp>",
-      "+<Motor/MotorCmdr/MotorCmdr.c>",
-      "+<Motor/MotorCmdr/MotorCmdr_MotProtocol.c>",
-      "+<Motor/MotProtocol/MotProtocol.c>",
-      "+<Motor/MotProtocol/MotPacket.c>",
-      "+<Framework/Protocol/Protocol_Cmdr.c>",
-      "+<Framework/Protocol/Protocol.c>",
-      "+<Peripheral/Xcvr/Xcvr.c>"
-    ]
-  }
-}
+// {
+//   "name": "FireSourcery_Library",
+//   "version": "0.0.1",
+//   "description": "Embedded C Library, Motor Control, Peripheral Abstraction Layer",
+//   "keywords": "motor, foc, hal",
+//   "repository":
+//   {
+//     "type": "git",
+//     "url": "https://github.com/FireSourcery/FireSourcery_Library.git"
+//   },
+//   "authors":
+//   [
+//     {
+//       "name": "FireSourcery"
+//     }
+//   ],
+//   "license": "GNU",
+//   "homepage": "https://github.com/FireSourcery/FireSourcery_Library",
+//   "dependencies": {    },
+//   "frameworks": "*",
+//   "platforms": "*",
+//   "build":
+//   {
+//     "srcFilter":
+//     [
+//       "-<*>",
+//       "+<Arduino/KellyController/KellyController.cpp>",
+//       "+<Motor/MotorCmdr/MotorCmdr.c>",
+//       "+<Motor/MotorCmdr/MotorCmdr_MotProtocol.c>",
+//       "+<Motor/MotProtocol/MotProtocol.c>",
+//       "+<Motor/MotProtocol/MotPacket.c>",
+//       "+<Framework/Protocol/Protocol_Cmdr.c>",
+//       "+<Framework/Protocol/Protocol.c>",
+//       "+<Peripheral/Xcvr/Xcvr.c>"
+//     ]
+//   }
+// }

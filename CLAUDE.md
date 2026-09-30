@@ -19,8 +19,8 @@
 - Challenge your own work before presenting it
 
 ### Documentation
-- Use visualizations with mermaid diagrams for describing what the code is doing, in place of extensive comments.
 - Keep comments concise. Comments are reserved for points that the code cannot express, not what the code is doing.
+- Rather than describing what the code is doing using comments, use visualizations i.e mermaid diagrams in a separate markdown file.
 - When referring to a concept that is already modeled by a type or struct in code, refer to that type using `[]` e.g. `[TypeName_T]`.
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
 

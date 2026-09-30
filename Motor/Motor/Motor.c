@@ -99,7 +99,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
     Ramp_Init_Slope(&p_motor->TorqueRamp, p_motor->Config.TorqueRampSlope_Accum32);
     // Motor_ResolveSpeedLimits(p_motor);
     // Motor_ResolveILimits(p_motor);
-    // Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_Calibration_GetVRated_Fract16());
+    // Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_VRated_Fract16());
 
     /* Preset rate ramps do not need output limits */
     /* Start at 0 speed in FOC mode for continuous angle displacements */
@@ -153,10 +153,10 @@ bool Motor_IsConfigValid(Motor_T * p_motor)
 void Motor_ValidateConfig(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    (void)p_context;
+    Motor_Config_ValidateVAlign(&p_context->Config, p_context->Foc.Config.Electrical.Rs);
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit = math_min(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, MOTOR_ELECTRICAL_CALIBRATION.FIELD_WEAKENING_LIMIT_PU);
-    p_motor->P_MOTOR->Config.ILimitMotoring_Fract16 = math_min(p_motor->P_MOTOR->Config.ILimitMotoring_Fract16, fract16_vector_component(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, Phase_Calibration_GetIRatedPeak_Fract16()));
+    p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit = math_min(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, Phase_IRatedFw_Fract16());
+    p_motor->P_MOTOR->Config.ILimitMotoring_Fract16 = math_min(p_motor->P_MOTOR->Config.ILimitMotoring_Fract16, fract16_vector_component(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, Phase_IRatedPeak_Fract16()));
     // optionally add runtime current limit
 #endif
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
@@ -165,14 +165,25 @@ void Motor_ValidateConfig(Motor_T * p_motor)
 #endif
 }
 
-/* propagate kv config — re-derive FOC Psi from Kv */
-// void Motor_ResolvePsi(Motor_Context_T * p_motor)
-// {
-//     FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_Calibration_GetVMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
-// // #ifdef MOTOR_PU_BASIS_ANGLE16
-// //     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_Calibration_GetVMaxVolts(),  p_motor->Config.SpeedRating.Kv);
-// // #endif
-// }
+/*
+    [Motor_Kv_T] defines the speed base. Re-reference FOC params from the prior base.
+    ψ_pu is fixed by the base. L_pu ∝ ω_base, preserving L [H].
+*/
+void Motor_ResolveFocParams(Motor_Context_T * p_motor, const Motor_Kv_T * p_prevRating)
+{
+    FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_VMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
+    FOC_Electrical_RebaseL(&p_motor->Foc.Config.Electrical, _Motor_GetSpeedTypeMax_ElRpm(p_prevRating), _Motor_GetSpeedTypeMax_ElRpm(&p_motor->Config.SpeedRating));
+// #ifdef MOTOR_PU_BASIS_ANGLE16
+//     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_VMaxVolts(),  p_motor->Config.SpeedRating.Kv);
+// #endif
+}
+
+/* Kv 0 is unset, not a base */
+void Motor_SetKv(Motor_Context_T * p_motor, uint16_t kv)
+{
+    const Motor_Kv_T prevRating = p_motor->Config.SpeedRating;
+    if (kv != 0U) { p_motor->Config.SpeedRating.Kv = kv; Motor_ResolveFocParams(p_motor, &prevRating); }
+}
 
 /******************************************************************************/
 /*

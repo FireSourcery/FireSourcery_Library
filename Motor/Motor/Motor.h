@@ -28,10 +28,11 @@
     @brief  Per Motor State Control.
 */
 /******************************************************************************/
+#include "Math/Fixed/fract16.h"
 #include "Phase/Phase_VOut.h"
 #include "Phase_Input/Phase_Input.h"
 #include "Phase_Input/Phase_Analog.h"
-#include "Phase_Input/Phase_Calibration.h"
+#include "Phase_Input/Phase_Board.h"
 #include "VBus/VBus.h"
 #include "VBus/VBus_Monitor.h"
 
@@ -66,7 +67,7 @@
 #include <assert.h>
 
 /* Static Def */
-#include "Motor_ControlFreq.h"
+#include "Motor_Clock.h"
 #include "Motor_Electrical.h"
 
 
@@ -209,7 +210,7 @@ typedef struct Motor_Config
     */
     RotorSensor_Id_T SensorMode;
     Motor_Direction_T DirectionForward;         /* CCW/CW Assigned positive direction. Effectively Direction actual CCW */
-    Motor_ElectricalSpeedRating_T SpeedRating;  /* PolePairs, Kv, SpeedRated_Rpm */
+    Motor_Kv_T SpeedRating;                     /* PolePairs, Kv, SpeedRated_Rpm, seed Psi to .5 */
     Phase_Triplet_T IabcZeroRef_Adcu;
 
     /*
@@ -236,10 +237,6 @@ typedef struct Motor_Config
     /*
         OpenLoop
     */
-    /* All OpenLoop Modes - UserCmd, Align */
-    /* optionally keep precompile limit only, or hide on view side without using a seperate region of memory */
-    uint16_t OpenLoopLimitRatio;    /* Limit of rated. as scalar [0:1.0F] [0:32768]. V/I Align_Fract16 < OpenLoopLimitRatio * V/I RATED */
-
     /* Calibration and Jog Align */
     uint16_t IAlign_Fract16;                 /* OpenLoop/Calibration Align Current, as fract16 of I_TYPE_MAX_AMPS. */
     uint16_t VAlign_Fract16;                 /* OpenLoop/Calibration Align Voltage, as fract16 of V_TYPE_MAX_VOLTS. */
@@ -406,11 +403,12 @@ static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
 static inline Phase_VOut_T * Motor_PhaseVOut(Motor_T * p_motor) { return &p_motor->PHASE; }
 /* handle single selection case */
 static inline RotorSensor_T * Motor_RotorSensor(Motor_T * p_motor) { return p_motor->P_MOTOR->p_ActiveSensor; }
-
 static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_motor->P_MOTOR->SensorState.AngleSpeed; }
-
 static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
 
+/*
+    S
+*/
 /* getter for runtime configurable or compile time fixed */
 static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
 static inline uint16_t Motor_SpeedTypeMax_Rads(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rads(&Motor_Config(p_motor)->SpeedRating); }
@@ -636,19 +634,9 @@ static inline bool Motor_IsDirectionStopped(const Motor_Context_T * p_motor) { r
     minimal or no runtime processing
 */
 /******************************************************************************/
-/* OpenLoop UserCmd. maybe > IAlign */
-static inline uint16_t _Motor_OpenLoopILimit(const Motor_Context_T * p_motor) { return fract16_mul(p_motor->Config.OpenLoopLimitRatio, p_motor->Config.ILimitMotoring_Fract16); }
 static inline uint16_t _Motor_GetIAlign(const Motor_Context_T * p_motor) { return p_motor->Config.IAlign_Fract16; }
 
 static inline uint16_t _Motor_GetVAlign(const Motor_Context_T * p_motor) { return p_motor->Config.VAlign_Fract16; }
-
-/* VAlign = (2/3) * duty * VBus. scales Ratio to 1/2 VBus */
-static inline uint16_t _Motor_GetVAlign_Duty(const Motor_Context_T * p_motor) { return (uint32_t)p_motor->Config.OpenLoopLimitRatio * 3 / 4; }
-
-/* resolved against the live vbus state */
-/* duty = (3/2) · VAlign / VBus  =  (3/4) · VAlign / (VBus/2) */
-// static inline uint16_t _Motor_GetVAlign_Duty(const Motor_Context_T * p_motor, uint32_t vBusInv_accum32)
-//  { return math_min(svpwm_norm_vbus_inv(vBusInv_accum32, _Motor_GetVAlign(p_motor)) * 3 / 2, FRACT16_MAX); }
 
 /******************************************************************************/
 /*!
@@ -663,6 +651,8 @@ extern void Motor_Reinit(Motor_T * p_motor);
 extern void Motor_InitUnits(Motor_Context_T * p_motor);
 extern bool Motor_IsConfigValid(Motor_T * p_motor);
 extern void Motor_ValidateConfig(Motor_T * p_motor);
+extern void Motor_ResolveFocParams(Motor_Context_T * p_motor, const Motor_Kv_T * p_prevRating);
+extern void Motor_SetKv(Motor_Context_T * p_motor, uint16_t kv);
 
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_ResolveFeedbackLimits(Motor_T * p_motor);

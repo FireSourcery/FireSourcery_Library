@@ -518,7 +518,7 @@ void Motor_Encoder_StartUpChain(Motor_T * p_motor)
 static inline void StartDirection(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
-    Phase_WriteDuty_Fract16(&p_motor->PHASE, _Motor_GetVAlign_Duty(p_motor->P_MOTOR), 0U, 0U);
+    Phase_Align_V(&p_motor->PHASE, PHASE_ID_A, VBus_Inv_Fract32(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
 }
 
 static inline bool ProcDirection(Motor_T * p_motor)
@@ -531,7 +531,7 @@ static inline bool ProcDirection(Motor_T * p_motor)
         {
             case 0U:
                 Encoder_CaptureQuadratureReference(GetEncoder(p_motor));
-                Phase_WriteDuty_Fract16(&p_motor->PHASE, 0U, _Motor_GetVAlign_Duty(p_motor->P_MOTOR), 0U);
+                Phase_Align_V(&p_motor->PHASE, PHASE_ID_B, VBus_Inv_Fract32(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
                 p_motor->P_MOTOR->CalibrationStateIndex = 1U;
                 break;
 

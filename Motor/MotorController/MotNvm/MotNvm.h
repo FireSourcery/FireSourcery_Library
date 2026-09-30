@@ -30,8 +30,7 @@
 */
 /******************************************************************************/
 #include "Motor/Motor/Phase_Input/Phase_Analog.h"
-#include "Motor/Motor/Phase_Input/Phase_Calibration.h"
-#include "Motor/Motor/Motor_Electrical.h"
+#include "Motor/Motor/Phase_Input/Phase_Board.h"
 
 #include "System/BootRef/BootRef.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
@@ -98,9 +97,8 @@ extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_mot
 extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm);
 
-extern NvMemory_Status_T MotNvm_WritePhaseCalibration(const MotNvm_T * p_motNvm, const Phase_Calibration_T * p_source);
-extern NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_motNvm, const Phase_AnalogBoard_T * p_source);
-extern NvMemory_Status_T MotNvm_WriteMotorCalibration(const MotNvm_T * p_motNvm, const Motor_ElectricalCalib_T * p_source);
+extern NvMemory_Status_T MotNvm_WritePhaseBoard(const MotNvm_T * p_motNvm, const Phase_Board_T * p_source);
+extern NvMemory_Status_T MotNvm_WritePhaseAnalogBoard(const MotNvm_T * p_motNvm, const Phase_AnalogBoard_T * p_source);
 
 
 // extern NvMemory_Status_T MotNvm_WriteConstRef(const MotNvm_T * p_motNvm);
@@ -110,7 +108,7 @@ extern NvMemory_Status_T MotNvm_WriteMotorCalibration(const MotNvm_T * p_motNvm,
 // struct Nvm_Manufacturer;
 // typedef const struct Nvm_Manufacturer Nvm_Manufacturer_T;
 
-// extern void HAL_Nvm_MapPhaseCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
+// extern void HAL_Nvm_MapPhaseCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_Board_T * p_buffer);
 // extern void HAL_Nvm_MapPhaseAnalogCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_AnalogBoard_T * p_buffer);
 
 // NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source);

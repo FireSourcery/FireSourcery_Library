@@ -185,7 +185,7 @@ static State_T * Init_Next(MotorController_T * p_dev)
     {
         MotorController_PollFaultFlags(p_dev); /* Clear latching fault flags set by sensor polling in Main thread */
 
-        if (Phase_Calibration_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; }
+        if (Phase_Board_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; }
         if (VBus_Config_IsValid(&p_dev->P_VBUS->Config) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
         /* Enforce VMonitor Enable */
         if (VBus_IsEnabled(p_dev->P_VBUS) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
@@ -658,7 +658,7 @@ static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t fault
     if (cmd.FaultClear != 0U)
     {
         p_mc->FaultFlags.Value &= ~cmd.FaultClear;
-        if (Phase_Calibration_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; } /* clear on reset only */
+        if (Phase_Board_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; } /* clear on reset only */
         MotorController_PollFaultFlags(p_dev); /* Re-verify conditions resolved before allowing exit */
         p_mc->FaultFlags.Motors = !Motor_Table_ForEvery(&p_dev->MOTORS, Motor_StateMachine_TryClearFaultAll); /* if any remain, stay in fault */
         Blinky_Stop(&p_dev->BUZZER);

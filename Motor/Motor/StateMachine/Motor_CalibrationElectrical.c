@@ -29,8 +29,8 @@
 /******************************************************************************/
 #include "Motor_Calibration.h"
 #include "../Motor_FOC.h"
-#include "../Motor_ControlFreq.h"
-#include "../Phase_Input/Phase_Calibration.h"
+#include "../Motor_Clock.h"
+#include "../Phase_Input/Phase_Board.h"
 
 #include "Math/Fixed/fract16.h"
 #include "Math/math_general.h"
@@ -289,8 +289,8 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_params->CycleCount = 0U;
 
     /* Capture PU base — rpm-anchored ω_base, identical to the FOC runtime electrical config basis. */
-    p_params->VBase        = Phase_Calibration_GetVMaxVolts();
-    p_params->IBase        = Phase_Calibration_GetIMaxAmps();
+    p_params->VBase        = Phase_VMaxVolts();
+    p_params->IBase        = Phase_IMaxAmps();
     p_params->SpeedBaseRpm = _Motor_GetSpeedTypeMax_Rpm(&p_context->Config.SpeedRating);
     p_params->PolePairs    = p_context->Config.SpeedRating.PolePairs;
 
@@ -388,6 +388,6 @@ void Motor_Calibration_StartElectrical(Motor_T * p_motor)
 // psi spin test
 // Motor_Context_T * p_context = p_motor->P_MOTOR;
 // p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_emf(FOC_GetVPhase(&p_context->Foc), Motor_GetSpeedFeedback(p_context));
-// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
+// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_VMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
 // p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_running(p_context->Config.ElectricalParams_Pu.Rs, p_context->Config.ElectricalParams_Pu.Ld, Motor_GetSpeedFeedback(p_context), p_context->Foc.Vq, p_context->Foc.Id, p_context->Foc.Iq);
-// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
+// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_VMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);

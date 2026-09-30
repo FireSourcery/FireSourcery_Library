@@ -96,10 +96,10 @@ static void Calibration_Entry(Motor_T * p_motor)
 /*
     Voltage-mode align: open-loop fixed duty (one-shot per call is sufficient).
 */
-static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
-{
-    Phase_Align(&p_motor->PHASE, id, _Motor_GetVAlign_Duty(p_motor->P_MOTOR));
-}
+// static void Calibration_AlignV(Motor_T * p_motor, Phase_Id_T id)
+// {
+//     Phase_Align(&p_motor->PHASE, id, _Motor_GetVAlign_Duty(p_motor->P_MOTOR));
+// }
 
 /*
     Current-mode align: PID Id -> Vd,  Must run every tick to close the current loop.

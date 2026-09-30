@@ -35,7 +35,7 @@
 #include "Math/math_general.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdfix.h>
+// #include <stdfix.h>
 #include <assert.h>
 
 #define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Resolution 1/(2^15) == .000030517578125 */

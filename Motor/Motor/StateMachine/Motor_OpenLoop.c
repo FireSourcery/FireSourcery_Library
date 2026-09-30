@@ -64,11 +64,11 @@ static State_T * OpenLoop_Jog(Motor_T * p_motor, state_value_t direction)
 {
     (void)direction;
     // if (Phase_IsFloat(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
-    if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, _Motor_GetVAlign_Duty(p_motor->P_MOTOR)); }
-    else
-    {
-        Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, _Motor_GetVAlign_Duty(p_motor->P_MOTOR))));
-    }
+    // if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, _Motor_GetVAlign_Duty(p_motor->P_MOTOR)); }
+    // else
+    // {
+    //     Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, _Motor_GetVAlign_Duty(p_motor->P_MOTOR))));
+    // }
     return NULL;
 }
 
