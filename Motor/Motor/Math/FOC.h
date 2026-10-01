@@ -79,6 +79,7 @@ FOC_Electrical_T;
 
 /*
     Nvm Storage. caller owns Config nvm mapping
+    optionally move up to motor layer
 */
 typedef struct
 {

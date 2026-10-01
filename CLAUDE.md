@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**FireSourcery_Library** is a modular, layered embedded systems library written in **C** for motor control applications targeting **ARM Cortex-M** microcontrollers (primarily NXP S32K / Kinetis KE0x families). It implements a full motor controller stack including FOC (Field-Oriented Control), sensor feedback, protocol communication, and peripheral abstraction.
+**FireSourcery_Library** is a modular, layered embedded systems library written in **C** for motor control applications (primarily targeting **ARM Cortex-M** microcontrollers NXP S32K / Kinetis KE0x families). It implements a full motor controller stack including FOC (Field-Oriented Control), sensor feedback, protocol communication, and peripheral abstraction.
 
 ## Core Principles
 - **Expression through code**: Use code as the language to express what its doing. Favor code that expresses itself over extensive comments.
@@ -60,12 +60,13 @@
 - Utility functions pass context that is the closest layer the logic requires. No tramp parameters. Don't pass bool.
 <!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
 - **Expression style**: Prefer concise, declarative expressions over procedural manipulation. Use library primitives (`math_clamp`, `fract16_div`, `fract16_mul`, `math_min/max`) composed into single expressions that mirror the domain formula. Avoid early-return ladders and temporaries that break a formula into steps. Function body should look like the equation in its docstring, not reconstruct it.
-- For functions called with known constant values at compile time, input parameter correctness is a part of the API contract. favor `assert` instead of runtime error checking logic.
+- For functions called with known constant values at compile time, input parameter correctness is a part of the API contract. favor `assert` instead of runtime error checking logic
+- No token pasting technique for preprocessor macros. VA_ARGS for generic handling ergonomics is okay.
 
 ### Important Rules
 - **No heap allocation** (`malloc`/`free` are never used)
 - **No floating point** in runtime code paths — all math is integer/fixed-point
-- **ISR-safe**: Shared data between ISR and thread contexts uses volatile and critical sections (`System/Critical/`)
+- **ISR-safe**: Shared data between ISR and thread contexts uses volatile and critical sections
 - **Const-correctness**: Config/calibration data is `const` qualified and stored in non-volatile memory regions
 - **Reentrant-safe**: Module functions operate on explicit instance pointers, no hidden global state
 

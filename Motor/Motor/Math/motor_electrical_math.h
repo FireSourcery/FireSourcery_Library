@@ -195,8 +195,13 @@ static inline accum32_t motor_emf(accum32_t Rs_pu, accum32_t Ls_pu, fract16_t i_
     PU encoding (float):  Rs_pu  = Rs · I_base / V_base
 */
 /******************************************************************************/
-#define MOTOR_R_PU(V_Base, I_Base, R_Ohm, SI_Scale) ((R_Ohm) * I_Base * FRACT16_SCALE / ((uint64_t)V_Base * SI_Scale))
+#define MOTOR_R_PU(V_Base, I_Base, R_Ohm, SI_Scale) ((uint64_t)(R_Ohm) * I_Base * FRACT16_SCALE / ((uint64_t)V_Base * SI_Scale))
 #define MOTOR_R_PU_OF_MOHM(V_Base, I_Base, R_mOhm) MOTOR_R_PU(V_Base, I_Base, R_mOhm, 1000UL)
+
+
+// #define MOTOR_R_PU(V_Base, I_Base, R_Ohm) ((R_Ohm) * I_Base * MOTOR_PU_SCALE / ((V_Base)))
+// static inline float rs_pu_of_ohm(uint16_t v_base_V, uint16_t i_base_A, float rs_ohm) { return MOTOR_R_PU(v_base_V, i_base_A, rs_ohm); }
+// static inline uint32_t rs_pu_of_ohm(uint16_t v_base_V, uint16_t i_base_A, uint32_t rs_ohm, uint32_t si_scale) { return MOTOR_R_PU(v_base_V * (uint64_t)si_scale, i_base_A, rs_ohm); }
 
 static inline accum32_t rs_pu_of_vi(fract16_t vd_pu, fract16_t id_pu) { return fract16_div_sat(vd_pu, id_pu); }
 

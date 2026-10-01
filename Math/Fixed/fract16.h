@@ -79,7 +79,7 @@ static const fract16_t FRACT16_SIN_240 = -FRACT16_SQRT3_DIV_2;  /* sin(240°) = 
 /* Calculation with over saturation */
 static const accum32_t FRACT16_1_OVERSAT      = 0x00008000; /* 32768 */
 static const accum32_t FRACT16_2_DIV_SQRT3    = 0x000093CD; /* 1.15470053838f */
-static const accum32_t FRACT16_SQRT2          = 0x0001D4F3; /* 1.41421508789f */
+static const accum32_t FRACT16_SQRT2          = 0x0000B505; /* 1.41421508789f */
 static const accum32_t FRACT16_SQRT3          = 0x0000DDB3; /* 1.73202514648f */
 static const accum32_t FRACT16_PI             = 0x0001921F;
 static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;

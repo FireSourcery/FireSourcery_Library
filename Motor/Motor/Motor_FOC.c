@@ -255,7 +255,7 @@ void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
 /*  */
 /******************************************************************************/
 /*
-    Ramp towards Preset AlignScalar_Fract16 * IRatedPeak
+    Ramp towards Preset IAlign
     Caller sets time
 */
 void Motor_FOC_StartStartUpAlign(Motor_Context_T * p_motor)

@@ -265,8 +265,8 @@ void Motor_SetICmd(Motor_Context_T * p_motor, int16_t i_fract16) { _Motor_SetTor
 /*  Per-unit of limit reference Config.Limit - maintain same proportion through runtime. set by user. */
 void Motor_SetICmd_Norm(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16)); }
 
-/* Scale to the board limit for testing */
-void Motor_SetITest(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, Phase_IRatedPeak_Fract16())); }
+// /* Scale to the board limit for testing */
+// void Motor_SetITest(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, Phase_IRatedPeak_Fract16())); }
 
 
 

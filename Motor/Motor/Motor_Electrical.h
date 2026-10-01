@@ -137,7 +137,7 @@ Motor_FieldWeakeningTuning_T;
 */
 typedef struct
 {
-    uint32_t Ls;
+    uint32_t Ls; /* alternatively L_tau = L_tick · SpeedMax_Angle16 / 32768 */
     uint32_t Ldelta;
     uint32_t Rs;
     uint32_t Psi;

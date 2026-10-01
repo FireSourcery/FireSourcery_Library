@@ -8,7 +8,7 @@
     "C_Cpp.default.cppStandard": "gnu++23",
     "C_Cpp.default.mergeConfigurations": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cpptools",
-    "C_Cpp.formatting": "vcFormat",
+    // "C_Cpp.formatting": "vcFormat",
 
     "C_Cpp.vcFormat.wrap.preserveBlocks": "allOneLineScopes",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
