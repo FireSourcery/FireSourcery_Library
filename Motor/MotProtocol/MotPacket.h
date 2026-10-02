@@ -51,13 +51,11 @@
 
 #define MOT_PACKET_PACKED __attribute__((packed, aligned(4)))
 
-
-
-// #if (__STDC_VERSION__ >= 202311L)
-// #define ENUM8_T (: uint8_t)
-// #else
+#if (__STDC_VERSION__ >= 202311L)
+#define ENUM8_T : uint8_t
+#else
 #define ENUM8_T
-// #endif
+#endif
 
 typedef uint16_t checksum_t;
 
@@ -220,8 +218,6 @@ extern const Packet_Codec_T MOT_PACKET_CODEC;
 /******************************************************************************/
 static inline uint8_t _MotPacket_PayloadLength(const MotPacket_T * p_packet) { return p_packet->Long.Header.Length - sizeof(MotPacket_Header_T); }
 static inline uint8_t _MotPacket_FrameLength(const MotPacket_T * p_packet) { return p_packet->Long.Header.Length; }
-// static inline void MotPacket_BuildPayloadLength(MotPacket_T * p_packet, uint8_t payloadLength) { p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T); }
-// static inline void MotPacket_BuildTotalLength(MotPacket_T * p_packet, uint8_t totalLength) { p_packet->Header.Length = totalLength; }
 
 /******************************************************************************/
 /*

@@ -410,8 +410,8 @@ static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return P
 
 */
 /* getter for runtime configurable or compile time fixed */
-static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
-static inline uint16_t Motor_SpeedTypeMax_Rads(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rads(&Motor_Config(p_motor)->SpeedRating); }
+static inline uint32_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
+static inline uint32_t Motor_SpeedTypeMax_Rads(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rads(&Motor_Config(p_motor)->SpeedRating); }
 
 /*
     Speed VBus Ref

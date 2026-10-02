@@ -201,6 +201,9 @@ static Protocol_ReqCode_T ReadMem_Blocking(MotorController_T * p_dev, Packet_Xfe
     return PROTOCOL_REQ_DONE;
 }
 
+/* Board records are written whole, in a single request */
+static_assert(sizeof(Phase_Board_T) <= MOT_PACKET_MEM_WRITE_SIZE_MAX);
+
 /* Host handles the reboot */
 static Protocol_ReqCode_T WriteMem_Blocking(MotorController_T * p_dev, Packet_Xfer_T * p_xfer, const MotPacket_MemWriteReq_T * p_rxPayload, MotPacket_MemWriteResp_T * p_txPayload)
 {
@@ -210,7 +213,7 @@ static Protocol_ReqCode_T WriteMem_Blocking(MotorController_T * p_dev, Packet_Xf
     else switch ((MotProtocol_MemConfig_T)p_rxPayload->Config)
     {
         case MOT_PROTOCOL_MEM_CONFIG_ONCE:        status = MotNvm_WriteManufacture_Blocking(&p_dev->MOT_NVM, p_rxPayload->Address, p_rxPayload->ByteData, p_rxPayload->Size); break;
-        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_0: status = MotNvm_WritePhaseBoard(&p_dev->MOT_NVM, (const Phase_Board_T *)p_rxPayload->ByteData); break;
+        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_0: status = (p_rxPayload->Size == sizeof(Phase_Board_T)) ? MotNvm_WritePhaseBoard(&p_dev->MOT_NVM, (const Phase_Board_T *)p_rxPayload->ByteData) : NV_MEMORY_STATUS_ERROR_BOUNDARY; break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }
 

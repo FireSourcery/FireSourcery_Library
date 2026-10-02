@@ -386,6 +386,65 @@ static inline uint32_t l_pu_rpm_of_step(uint32_t fs_hz, uint32_t speed_base_rpm,
 static inline uint32_t l_pu_rpm_of_rs_tau_cycles(uint32_t fs_hz, uint32_t speed_base_rpm, uint8_t polePairs, fract16_t rs_pu, uint32_t tau_cycles) { return (uint64_t)rs_pu * FRACT16_PI * polePairs * speed_base_rpm * tau_cycles / ((uint64_t)30UL * FRACT16_SCALE * fs_hz); }
 static inline uint32_t l_pu_rpm_of_hfi(uint32_t speed_base_rpm, uint8_t polePairs, uint32_t fhfi_Hz, ufract16_t v_pk_pu, ufract16_t i_pk_pu) { return (uint64_t)fract16_div(v_pk_pu, i_pk_pu) * polePairs * speed_base_rpm / (60UL * fhfi_Hz); }
 
+
+/******************************************************************************/
+/*!
+    @brief  ψ_pu, L_pu per Hz — speed-base-free storage [pu/Hz]
+
+    time base factored out. storage in seconds base * angle16
+    conversion to
+
+    ψ_pu, L_pu ∝ ω_base. Held at a 1 Hz base, either time basis is one multiply:
+        x_pu      = x_pu_per_hz · f_base        pu_of_pu_per_hz(f_base, x)                   [ω_base-anchored]
+        x_pu_tick = x_pu_per_hz · Fs/2          pu_of_pu_per_hz(angle_freq_nyquist(Fs), x)   [Fs-anchored]
+            fract16_mul(angle_dt, ψ_pu_tick) → v_emf_pu
+
+        ψ_pu_per_hz = 2π · ψ / V_base
+        L_pu_per_hz = 2π · L · I_base / V_base = ψ_pu_per_hz(L · I_base)
+
+    A measurement at frequency f is the PU value at base f. Frequency ratios cancel π:
+        ψ_pu_per_hz = pu_per_hz_of_pu(f_emf, v_emf_pu)                                   [spin test]
+        L_pu_per_hz = pu_per_hz_of_pu(angle_freq_of_hz(f_hfi), fract16_div(v_pk, i_pk))  [HFI]
+    π remains at the radian-defined boundary: Wb, H, and τ (ω·τ in rad).
+
+    Q30: ψ_pu ≈ 0.5 over f_base 20 Hz – 3 kHz holds 17–24 significant bits.
+*/
+/******************************************************************************/
+#define PU_PER_HZ_N_BITS (30U)
+#define PU_PER_HZ_2PI ((uint64_t)FRACT16_PI << (PU_PER_HZ_N_BITS + 1U - FRACT16_N_BITS)) /* 2π [rad/turn] */
+
+/*
+    ω_base_storage : 1256.6 rad/s stores as 13,107,200
+        =>
+    ψ_base_storage: 15.92 mWb stores as  1,142,128 20V/94V base, 200 f_base to stay in seconds base) which keeps precision for conversion to both time bases, Ts and Tau.
+*/
+#define _OMEGA_BASE(rps) ((rps) * ANGLE16_PER_REVOLUTION)
+
+#define _PSI_BASE(V_Base, AngleFreq) ((psi) * ANGLE16_PER_REVOLUTION)
+
+static inline uint32_t pu_of_pu_per_hz(angle_freq_t f_base, uint32_t x_pu_per_hz) { return ((uint64_t)x_pu_per_hz * f_base / ANGLE16_PER_REVOLUTION) >> (PU_PER_HZ_N_BITS - FRACT16_N_BITS); }
+static inline uint32_t pu_per_hz_of_pu(angle_freq_t f_base, uint32_t x_pu) { return ((uint64_t)x_pu << (PU_PER_HZ_N_BITS - FRACT16_N_BITS)) * ANGLE16_PER_REVOLUTION / f_base; }
+
+static inline uint32_t psi_pu_per_hz_of_wb(uint16_t v_base_V, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)psi_Wb * PU_PER_HZ_2PI / ((uint64_t)v_base_V * scale); }
+static inline uint32_t psi_wb_of_pu_per_hz(uint16_t v_base_V, uint32_t psi_pu_per_hz, uint32_t scale) { return (uint64_t)psi_pu_per_hz * v_base_V * scale / PU_PER_HZ_2PI; }
+
+static inline uint32_t l_pu_per_hz_of_h(uint16_t v_base_V, uint16_t i_base_A, uint32_t l_H, uint32_t scale) { return psi_pu_per_hz_of_wb(v_base_V, l_H * i_base_A, scale); }
+static inline uint32_t l_h_of_pu_per_hz(uint16_t v_base_V, uint16_t i_base_A, uint32_t l_pu_per_hz, uint32_t scale) { return (uint64_t)l_pu_per_hz * v_base_V * scale / ((uint64_t)i_base_A * PU_PER_HZ_2PI); }
+
+/* Kv [rpm/V]: Ke_pu_per_hz = 60 / (Kv · P · V_base), M = 1/2 per psi_pu_rpm_of_kv */
+static inline uint32_t psi_pu_per_hz_of_kv(uint16_t v_base_V, uint8_t polePairs, uint16_t kv) { return ((uint64_t)SECONDS_PER_MINUTE << PU_PER_HZ_N_BITS) / ((uint32_t)kv * polePairs * v_base_V) / 2U; }
+
+/*
+    L = R · τ:  L_pu_per_hz = 2π · R_pu · τ_cycles / Fs
+    step:       L = v · dt / di
+*/
+static inline uint32_t l_pu_per_hz_of_rs_tau_cycles(uint32_t fs_hz, accum32_t rs_pu, uint32_t tau_cycles) { return (uint64_t)rs_pu * tau_cycles * (PU_PER_HZ_2PI / FRACT16_SCALE) / fs_hz; }
+static inline uint32_t l_pu_per_hz_of_step(uint32_t fs_hz, fract16_t v_pu, fract16_t di_pu, uint32_t dt_cycles) { return l_pu_per_hz_of_rs_tau_cycles(fs_hz, fract16_div(v_pu, di_pu), dt_cycles); }
+
+// static inline uint32_t l_pu_sec_of_rs_tau_cycles(uint32_t fs_hz, accum32_t rs_pu, uint32_t tau_cycles) { return (uint64_t)rs_pu * tau_cycles * RADS_PER_HZ_Q31 / ((uint64_t)FRACT16_SCALE * fs_hz); }
+// static inline uint32_t l_pu_sec_of_step(uint32_t fs_hz, fract16_t v_pu, fract16_t di_pu, uint32_t dt_cycles) { return l_pu_sec_of_rs_tau_cycles(fs_hz, fract16_div(v_pu, di_pu), dt_cycles); }
+// static inline uint32_t l_pu_sec_of_hfi(uint32_t fhfi_Hz, ufract16_t v_pk_pu, ufract16_t i_pk_pu) { return pu_sec_of_pu(fract16_div(v_pk_pu, i_pk_pu), fhfi_Hz * ANGLE16_PER_REVOLUTION); }
+
 /******************************************************************************/
 /*!
     @brief  Kt — Torque Constant [Nm/A]

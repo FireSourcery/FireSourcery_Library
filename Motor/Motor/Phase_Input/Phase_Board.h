@@ -82,16 +82,17 @@ static inline int16_t Phase_IRatedRms_Amps(void) { return Phase_IRatedPeak_Fract
 
 /******************************************************************************/
 static inline bool _Phase_Board_IsValid(uint16_t value) { return ((value != 0U) && (value != 0xFFFFU)); }
+static inline bool _Phase_Board_IsValidRated(uint16_t value) { return ((value != 0U) && (value <= FRACT16_SCALE)); } /* (0, 1.0] of the base */
 
-static bool Phase_Board_IsValid(void)
+static inline bool Phase_Board_IsValid(void)
 {
     return
     (
         _Phase_Board_IsValid(Phase_VMaxVolts()) &&
         _Phase_Board_IsValid(Phase_IMaxAmps()) &&
-        _Phase_Board_IsValid(Phase_VRated_Fract16()) &&
-        _Phase_Board_IsValid(Phase_IRatedPeak_Fract16()) &&
-        (Phase_IRatedFw_Fract16() <= Phase_IRatedPeak_Fract16()) /* Id component of the rated vector. 0 disables FW */
+        _Phase_Board_IsValidRated(Phase_VRated_Fract16()) &&
+        _Phase_Board_IsValidRated(Phase_IRatedPeak_Fract16()) &&
+        (Phase_IRatedFw_Fract16() < Phase_IRatedPeak_Fract16()) /* Id within the rated vector, leaving Iq > 0. 0 disables FW */
     );
 }
 

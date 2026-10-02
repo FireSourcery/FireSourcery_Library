@@ -34,7 +34,7 @@
 
 
 /*
-    Convert between ω/Fs [angle16/dt] and standard representations: [rad/s] or [turns/time].
+    Convert between ω/Fs [angle16/dt], [angle16/s] and standard representations: [rad/s] or [turns/time].
         AngleDt: dθ/dt [angle16/dt]
         AngleFreq: n [turns per second or minute]
     e.g.
@@ -50,20 +50,26 @@
 
 */
 #define PI_FLOAT (3.14159265358979323846F)
+#define SECONDS_PER_MINUTE (60U)
 
 #define ANGLE_DT_MAX (32767)
 #define ANGLE_DT_MAX_RPS(Fs) (Fs / 2) /* Nyquist Equivalent */
 #define ANGLE_DT_MAX_RADS(Fs) (Fs * PI_FLOAT)
 #define ANGLE_DT_MAX_RPM(Fs) (Fs * 30)
 
-/*
-    t in control periods: dt = Ts = 1/Fs.
+/******************************************************************************/
+/*!
+    @brief [angle16/dt]
+
+    t_base in control periods: dt = Ts = 1/Fs.
     dθ/dt = ω·Ts, expressly in binary angle measurement [angle16] per period, not radians.
 */
+/******************************************************************************/
 typedef angle16_t angle_dt_t;
 
 /* via int32_t: float out of int16 range is UB, int32 → int16 wraps as angle16 */
 #define ANGLE_DT(Fs, rps)   ((angle_dt_t)(int32_t)(((float)(rps) * ANGLE16_PER_REVOLUTION) / (Fs)))
+
 
 /******************************************************************************/
 /*
@@ -76,6 +82,8 @@ typedef angle16_t angle_dt_t;
 /* freq in turns per second base, wide unit Fs parameter for generic use. e.g. rps at Fs, rpm at Fs·60 */
 /* alternatively split macro for float */
 #define ANGLE_DT_OF(Fs, freq)       (((int64_t)(freq) * ANGLE16_PER_REVOLUTION) / (Fs))
+// depreciate
+/* discards fractional part */
 #define ANGLE_FREQ_OF(Fs, angle_dt) (((int64_t)(angle_dt) * (Fs)) / ANGLE16_PER_REVOLUTION)
 
 /* direct for comparison */
@@ -107,6 +115,55 @@ static inline int32_t angle_dt_of(uint32_t fs, int32_t freq) { return freq * (in
 static inline int32_t angle_freq_of(uint32_t fs, int32_t angle_dt) { return ANGLE_FREQ_OF(fs, angle_dt); }
 
 
+
+/******************************************************************************/
+/*!
+    @brief  Angle Freq [angle16/s] — frequency storage, storage in per second base
+
+        freq [angle16/s] = f [Hz] · 65536 = ω [rad/s] · 32768 / π
+        [turn.angle16 / s]: [31:16] turns (Hz) | [15:0] angle16 (fraction of a turn)
+        dθ/dt [angle16/Ts] = freq / Fs
+
+    Common form of rpm, rad/s, and the Fs-anchored base. π enters only at the rad/s boundary.
+        e.g. 200 Hz = 1256.6 rad/s => 13,107,200 => 655 [angle16/Ts] at Fs = 20 kHz
+*/
+/******************************************************************************/
+typedef uint32_t angle_freq_t;
+
+#define ANGLE_FREQ_TURNS_SHIFT (16U)
+static_assert(ANGLE16_PER_REVOLUTION == (1UL << ANGLE_FREQ_TURNS_SHIFT), "angle16 is the fraction of a turn");
+
+// #define ANGLE_FREQ(Turns)      ((angle_freq_t)((int32_t)(Turns) * (int32_t)ANGLE16_PER_REVOLUTION  ))
+#define ANGLE_FREQ(Turns, Angle16)      ((angle_freq_t)((int32_t)(Turns) * (int32_t)ANGLE16_PER_REVOLUTION + (uangle16_t)(Angle16)))
+#define ANGLE_FREQ_OF_HZ(Hz)            ANGLE_FREQ(Hz, 0)
+#define ANGLE_FREQ_OF_RPM(Rpm)          ((angle_freq_t)((int64_t)(Rpm) * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE))
+#define ANGLE_FREQ_OF_RADS(Rads, Scale) ((angle_freq_t)((int64_t)(Rads) * (ANGLE16_PER_REVOLUTION / 2U) * FRACT16_SCALE / ((int64_t)FRACT16_PI * (Scale))))
+#define ANGLE_FREQ_NYQUIST(Fs)          ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
+#define ANGLE_DT_OF_FREQ(Fs, Freq)      ((angle_dt_t)((Freq) / (int32_t)(Fs)))
+
+
+static inline angle_freq_t angle_freq(uint32_t hz) { return hz * ANGLE16_PER_REVOLUTION; }
+static inline int16_t angle_freq_to_turns(angle_freq_t freq) { return freq >> ANGLE_FREQ_TURNS_SHIFT; }
+
+static inline int32_t angle_dt_of_angle_freq(uint32_t fs, angle_freq_t freq) { return freq / fs; }
+static inline angle_freq_t angle_freq_of_angle_dt(uint32_t fs, angle_dt_t angle_dt) { return (int32_t)angle_dt * (int32_t)fs; }
+
+/*  */
+static inline angle_freq_t angle_freq_of_rpm(uint32_t rpm) { return (uint64_t)rpm * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE; }
+static inline uint32_t rpm_of_angle_freq(angle_freq_t freq) { return (uint64_t)freq * SECONDS_PER_MINUTE / ANGLE16_PER_REVOLUTION; }
+static inline angle_freq_t angle_freq_of_rads(uint32_t rads, uint32_t scale) { return (uint64_t)rads * (ANGLE16_PER_REVOLUTION / 2U) * FRACT16_SCALE / ((uint64_t)FRACT16_PI * scale); }
+static inline uint32_t rads_of_angle_freq(angle_freq_t freq, uint32_t scale) { return (uint64_t)freq * FRACT16_PI * scale / ((uint64_t)(ANGLE16_PER_REVOLUTION / 2U) * FRACT16_SCALE); }
+
+/* Fs-anchored base: ω_base = π·Fs, Δθ_base = 32768 [angle16/Ts] */
+static inline angle_freq_t angle_freq_nyquist(uint32_t fs) { return fs * (ANGLE16_PER_REVOLUTION / 2U); }
+
+
+
+/******************************************************************************/
+/*
+    functions with signatures matching input range.
+*/
+/******************************************************************************/
 /*
     dθ/dt [angle16/dt] = ω [rad/s] * (65536 / 2π) / Fs
 */
@@ -122,13 +179,6 @@ static inline int32_t angle_freq_of(uint32_t fs, int32_t angle_dt) { return ANGL
 static inline int32_t angle_dt_of_rads(uint32_t fs, int32_t rads, uint16_t scale) { return ((int64_t)rads * ANGLE16_PER_RADIAN) / fs / scale; }
 static inline int32_t rads_of_angle_dt(uint32_t fs, angle_dt_t angle_dt, uint16_t scale) { return ((int64_t)angle_dt * fs * scale) / ANGLE16_PER_RADIAN; }
 
-
-
-/******************************************************************************/
-/*
-    functions with signatures matching input range.
-*/
-/******************************************************************************/
 /******************************************************************************/
 /* Rpm */
 /******************************************************************************/
@@ -140,9 +190,6 @@ static inline int32_t rads_of_angle_dt(uint32_t fs, angle_dt_t angle_dt, uint16_
         = rpm * ANGLE16_PER_REVOLUTION / (60 * Fs)
         = rpm * minutes_fract32 / (INT32_MAX / ANGLE16_PER_REVOLUTION)
 */
-
-#define SECONDS_PER_MINUTE (60U)
-
 #define ANGLE_DT_OF_RPM(Fs, rpm)      ANGLE_DT_OF((int64_t)Fs * SECONDS_PER_MINUTE, rpm)
 #define RPM_OF_ANGLE_DT(Fs, angle_dt) ANGLE_FREQ_OF((int64_t)Fs * SECONDS_PER_MINUTE, angle_dt)
 
@@ -159,6 +206,8 @@ static inline int32_t rpm_of_angle_dt(uint32_t fs, angle_dt_t angle_dt) { return
 /* rps [0:Fs/2] */
 static inline int32_t angle_dt_of_rps(uint32_t fs, int16_t rps) { return angle_dt_of(fs, rps); }
 static inline int32_t rps_of_angle_dt(uint32_t fs, angle_dt_t angle_dt) { return angle_dt * (int32_t)RPS_PER_ANGLE_DT(fs) / FRACT16_SCALE; }
+
+
 
 
 /******************************************************************************/
@@ -198,6 +247,21 @@ static inline angle_dt_t angle_dt_of_rads_fract16(uint32_t fs, uint32_t base_rad
 static inline int32_t rads_fract16_of_angle_dt(uint32_t fs, uint32_t base_rads, angle_dt_t angle_dt)
 {
     return (int64_t)angle_dt * FRACT16_PI * fs / (base_rads * FRACT16_SCALE);
+}
+
+/*
+    Angle Rate Ref — π-free
+*/
+/* angle_dt = ω_pu_fract16 · (rate_base / Fs) */
+static inline angle_dt_t angle_dt_of_angle_freq_pu(uint32_t fs, angle_freq_t base_rate, int16_t pu_fract16)
+{
+    return ((int64_t)pu_fract16 * base_rate) / ((int64_t)fs * FRACT16_SCALE);
+}
+
+/* ω_pu_fract16 = angle_dt · Fs / rate_base */
+static inline int32_t angle_freq_pu_of_angle_dt(uint32_t fs, angle_freq_t base_rate, angle_dt_t angle_dt)
+{
+    return ((int64_t)angle_dt * fs * FRACT16_SCALE) / base_rate;
 }
 
 
