@@ -313,7 +313,7 @@ typedef struct Motor_Context
     Ramp_T OpenLoopIRamp;           /* Preset I Ramp */
     // Ramp_T OpenLoopTorqueRamp;   /* Preset V/I Ramp */
     Angle_T OpenLoopAngle;
-    Angle_SpeedUnitRef_T OpenLoopSpeedRef;
+    Angle_SpeedPuRef_T OpenLoopSpeedRef;
 
     /*  */
     HeatMonitor_State_T HeatMonitorState;
@@ -407,8 +407,8 @@ static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return P
 
 */
 /* getter for runtime configurable or compile time fixed */
-static inline uint32_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
-static inline uint32_t Motor_SpeedTypeMax_Rads(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rads(&Motor_Config(p_motor)->SpeedRating); }
+static inline uint32_t Motor_SpeedBase_Rpm(Motor_T * p_motor) { return _Motor_SpeedBase_Rpm(&Motor_Config(p_motor)->SpeedRating); }
+static inline angle_freq_t Motor_AngleFreqBase(Motor_T * p_motor) { return _Motor_AngleFreqBase(&Motor_Config(p_motor)->SpeedRating); }
 
 /*
     Speed VBus Ref

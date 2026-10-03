@@ -127,7 +127,7 @@ static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_se
     {
         .CountsPerRevolution = 6U * p_config->PolePairs, /* Mechanical CPR for speed/RPM */
         .PollingFreq = p_sensor->POLLING_FREQ,
-        .SpeedPuRef_Rpm = p_config->SpeedTypeMax_Rpm,
+        .SpeedPuRef_Rpm = p_config->SpeedBase_Rpm,
     };
     AngleCounter_InitFrom(p_counter, &config);
     /* Override angle delta factor for electrical interpolation: 6 edges per electrical cycle */
@@ -140,7 +140,7 @@ static void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sens
     {
         .CountsPerRevolution = 6U,
         .PollingFreq = p_sensor->POLLING_FREQ,
-        .SpeedPuRef_Rpm = p_config->SpeedTypeMax_Rpm * p_config->PolePairs,
+        .SpeedPuRef_Rpm = p_config->SpeedBase_Rpm * p_config->PolePairs,
     };
     AngleCounter_InitFrom(PulseEncoder_Counter(&p_sensor->PULSE), &config);
 }

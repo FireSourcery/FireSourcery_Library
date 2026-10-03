@@ -78,8 +78,8 @@ typedef struct RotorSensor_UnitRef
 {
     uint8_t PolePairs;              /* Motor Pole Pairs. Config Mech/Electrical conversion */
     /* Config scalar speed. Caller derive  */
-    uint16_t SpeedTypeMax_Rpm; /* mechanical */
-    uint16_t SpeedTypeMax_Angle16; /* electrical */
+    uint16_t SpeedBase_Rpm;     /* mechanical */
+    angle_dt_t AngleDtBase;     /* electrical */
     /* uint32_t PollingFreq */
 }
 RotorSensor_UnitRef_T;
@@ -101,7 +101,7 @@ RotorSensor_UnitRef_T;
 typedef struct RotorSensor_State
 {
     Angle_T AngleSpeed;     /* Electrical angle and speed state. */
-    Angle_SpeedUnitRef_T SpeedFractRef;
+    Angle_SpeedPuRef_T SpeedPuRef;
     accum32_t Speed_Fract16;
     angle16_t MechanicalAngle; /* optionally supported */
 }
@@ -184,8 +184,8 @@ static inline bool RotorSensor_VerifyCalibration(const RotorSensor_T * p_sensor)
 
 static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
-    p_sensor->P_STATE->SpeedFractRef = ANGLE_SPEED_FRACT_REF(p_config->SpeedTypeMax_Angle16);
-    // p_sensor->P_STATE->SpeedFractRef = Angle_SpeedFractRef_FromRpm(p_config->PollingFreq, p_config->SpeedTypeMax_Rpm);
+    p_sensor->P_STATE->SpeedPuRef = ANGLE_SPEED_PU_REF(p_config->AngleDtBase);
+    // p_sensor->P_STATE->SpeedPuRef = Angle_SpeedPuRef_FromRpm(p_config->PollingFreq, p_config->SpeedBase_Rpm);
     p_sensor->P_VTABLE->INIT_UNITS_FROM(p_sensor, p_config);
 }
 

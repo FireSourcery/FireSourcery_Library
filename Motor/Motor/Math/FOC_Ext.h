@@ -93,12 +93,13 @@ static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
 
 */
 /******************************************************************************/
-#define FOC_ELECTRICAL_FROM_SI(V_Base, I_Base, ERads_Base, Ld_uH, Lq_uH, Rs_mOhm, Psi_uWb) (FOC_Electrical_T) \
+/* Freq_Base [angle16/s] */
+#define FOC_ELECTRICAL_FROM_SI(Freq_Base, V_Base, I_Base, Ld_uH, Lq_uH, Rs_mOhm, Psi_uWb) (FOC_Electrical_T) \
 { \
-    .Ld  = MOTOR_L_PU(V_Base, I_Base, ERads_Base, Ld_uH, 1000000UL), \
-    .Lq  = MOTOR_L_PU(V_Base, I_Base, ERads_Base, Lq_uH, 1000000UL), \
-    .Rs  = MOTOR_R_PU(V_Base, I_Base, Rs_mOhm, 1000UL), \
-    .Psi = MOTOR_PSI_PU(V_Base, ERads_Base, Psi_uWb, 1000000UL), \
+    .Ld  = MOTOR_L_PU(Freq_Base, V_Base, I_Base, (Ld_uH) * 1.0E-6F), \
+    .Lq  = MOTOR_L_PU(Freq_Base, V_Base, I_Base, (Lq_uH) * 1.0E-6F), \
+    .Rs  = MOTOR_R_PU_OF_MOHM(V_Base, I_Base, Rs_mOhm), \
+    .Psi = MOTOR_PSI_PU(Freq_Base, V_Base, (Psi_uWb) * 1.0E-6F), \
 }
 
 static inline void FOC_Electrical_SetPsi_Kv(FOC_Electrical_T * p_electrical, uint32_t vBase, uint32_t rpmBase, uint16_t kv)
@@ -106,10 +107,14 @@ static inline void FOC_Electrical_SetPsi_Kv(FOC_Electrical_T * p_electrical, uin
     p_electrical->Psi = psi_pu_rpm_of_kv(vBase, rpmBase, kv);
 }
 
-static inline void FOC_Electrical_RebaseL(FOC_Electrical_T * p_electrical, uint32_t speedBaseFrom, uint32_t speedBaseTo)
+/* L_pu ∝ ω_base, preserving L [H]. No prior base, no L [H] to preserve. */
+static inline void FOC_Electrical_RebaseL(FOC_Electrical_T * p_electrical, angle_freq_t baseFrom, angle_freq_t baseTo)
 {
-    p_electrical->Ld = l_pu_rebase(p_electrical->Ld, speedBaseFrom, speedBaseTo);
-    p_electrical->Lq = l_pu_rebase(p_electrical->Lq, speedBaseFrom, speedBaseTo);
+    if (baseFrom != 0)
+    {
+        p_electrical->Ld = pu_rebase(p_electrical->Ld, baseFrom, baseTo);
+        p_electrical->Lq = pu_rebase(p_electrical->Lq, baseFrom, baseTo);
+    }
 }
 
 

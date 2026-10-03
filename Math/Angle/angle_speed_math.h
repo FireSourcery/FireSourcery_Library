@@ -143,15 +143,15 @@ typedef rot32_t angle_freq_t;
 #define ANGLE_FREQ_TURNS_SHIFT (16U)
 static_assert(ANGLE16_PER_REVOLUTION == (1UL << ANGLE_FREQ_TURNS_SHIFT), "angle16 is the fraction of a turn");
 
-#define ANGLE_FREQ(Hz)                  ((angle_freq_t)((float)(Hz) * (int32_t)ANGLE16_PER_REVOLUTION))
-#define ANGLE_FREQ_OF_RADS(Rads)        ((angle_freq_t)((float)(Rads) * ANGLE16_PER_REVOLUTION / (2 * PI_FLOAT)))
-#define ANGLE_FREQ_OF_RPM(Rpm)          ((angle_freq_t)((int64_t)(Rpm) * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE))
-#define ANGLE_FREQ_BASE(Fs)             ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
+#define ANGLE_FREQ(Hz)           ((angle_freq_t)((float)(Hz) * (int32_t)ANGLE16_PER_REVOLUTION))
+#define ANGLE_FREQ_OF_RADS(Rads) ((angle_freq_t)((float)(Rads) * ANGLE16_PER_REVOLUTION / (2 * PI_FLOAT)))
+#define ANGLE_FREQ_OF_RPM(Rpm)   ((angle_freq_t)((int64_t)(Rpm) * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE))
+#define ANGLE_FREQ_MAX(Fs)       ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
 
 // #define ANGLE_FREQ(Turns, Angle16)      ((angle_freq_t)((int32_t)(Turns) * (int32_t)ANGLE16_PER_REVOLUTION + (uangle16_t)(Angle16)))
 // #define ANGLE_FREQ_OF_HZ(Hz)            ANGLE_FREQ(Hz, 0)
 // #define ANGLE_FREQ_OF_RADS(Rads, Scale) ((angle_freq_t)((int64_t)(Rads) * (ANGLE16_PER_REVOLUTION / 2U) * FRACT16_SCALE / ((int64_t)FRACT16_PI * (Scale))))
-// #define ANGLE_FREQ_NYQUIST(Fs)          ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
+#define ANGLE_FREQ_NYQUIST(Fs)          ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
 
 #define ANGLE_DT_OF_FREQ(Fs, Freq)      ((angle_dt_t)((Freq) / (int32_t)(Fs)))
 

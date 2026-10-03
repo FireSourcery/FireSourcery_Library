@@ -345,10 +345,10 @@ static inline int Motor_FocConfig_GetSi(Motor_T * p_motor, FOC_ConfigId_T var)
     {
         case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
         case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
-        case FOC_CONFIG_ELECTRICAL_LD:  return l_h_of_pu_rpm(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, p_config->Electrical.Ld, 1000000UL);
-        case FOC_CONFIG_ELECTRICAL_LQ:  return l_h_of_pu_rpm(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, p_config->Electrical.Lq, 1000000UL);
+        case FOC_CONFIG_ELECTRICAL_LD:  return l_h_of_pu(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_AngleFreqBase(p_motor), p_config->Electrical.Ld, 1000000UL);
+        case FOC_CONFIG_ELECTRICAL_LQ:  return l_h_of_pu(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_AngleFreqBase(p_motor), p_config->Electrical.Lq, 1000000UL);
         case FOC_CONFIG_ELECTRICAL_RS:  return rs_mohm_of_pu(Phase_VMaxVolts(), Phase_IMaxAmps(), p_config->Electrical.Rs);
-        case FOC_CONFIG_ELECTRICAL_PSI: return psi_wb_of_pu_rpm(Phase_VMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, p_config->Electrical.Psi, 1000000UL);
+        case FOC_CONFIG_ELECTRICAL_PSI: return psi_wb_of_pu(Phase_VMaxVolts(), Motor_AngleFreqBase(p_motor), p_config->Electrical.Psi, 1000000UL);
         default: return 0;
     }
 }
@@ -361,10 +361,10 @@ static inline void Motor_FocConfig_SetSi(Motor_T * p_motor, FOC_ConfigId_T var, 
     {
         case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
         case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
-        case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = l_pu_rpm_of_h(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, value, 1000000UL);    break;
-        case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = l_pu_rpm_of_h(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, value, 1000000UL);    break;
+        case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = l_pu_of_h(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_AngleFreqBase(p_motor), value, 1000000UL);    break;
+        case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = l_pu_of_h(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_AngleFreqBase(p_motor), value, 1000000UL);    break;
         case FOC_CONFIG_ELECTRICAL_RS:  p_config->Electrical.Rs = rs_pu_of_mohm(Phase_VMaxVolts(), Phase_IMaxAmps(), value);    break;
-        case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = psi_pu_rpm_of_wb(Phase_VMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, value, 1000000UL);   break;
+        case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = psi_pu_of_wb(Phase_VMaxVolts(), Motor_AngleFreqBase(p_motor), value, 1000000UL);   break;
         default: break;
     }
 }

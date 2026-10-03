@@ -52,12 +52,12 @@ static void Sensorless_Sensor_CaptureAngle(const Sensorless_Sensor_T * p_sensor)
     p_rotor->AngleSpeed.Delta = FOC_Sensorless_GetDelta(p_sensor->P_OBSERVER);
 }
 
-/* Project observer ω̂ → fract16 speed via the configured SpeedFractRef.
+/* Project observer ω̂ → fract16 speed via the configured SpeedPuRef.
    Assumes CAPTURE_ANGLE already published Delta into AngleSpeed this tick. */
 static void Sensorless_Sensor_CaptureSpeed(const Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
-    p_rotor->Speed_Fract16 = Angle_ResolveSpeed_Fract16(&p_rotor->AngleSpeed, &p_rotor->SpeedFractRef);
+    p_rotor->Speed_Fract16 = Angle_ResolveSpeed_Fract16(&p_rotor->AngleSpeed, &p_rotor->SpeedPuRef);
 }
 
 static bool Sensorless_Sensor_IsFeedbackAvailable(const Sensorless_Sensor_T * p_sensor)
@@ -80,7 +80,7 @@ static bool Sensorless_Sensor_VerifyCalibration(const Sensorless_Sensor_T * p_se
 }
 
 /* No sensor-local unit state: the observer works entirely in the motor's per-unit
-   basis. SpeedFractRef — the only field CAPTURE_SPEED reads — is written by the
+   basis. SpeedPuRef — the only field CAPTURE_SPEED reads — is written by the
    RotorSensor base before dispatching here, and the remaining scale factor (G_pu)
    needs the FOC electrical params, so Motor_ValidateConfig owns it. */
 static void Sensorless_Sensor_InitFrom(const Sensorless_Sensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)

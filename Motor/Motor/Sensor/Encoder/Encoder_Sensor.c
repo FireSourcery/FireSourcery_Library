@@ -84,7 +84,7 @@ static bool Encoder_RotorSensor_IsSensorAvailable(const Encoder_RotorSensor_T * 
 // counts per electrical revolution = cpr/polepairs
 static void Encoder_RotorSensor_InitFrom(const Encoder_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
 {
-    p_sensor->ENCODER.P_STATE->Config.SpeedPerUnitRef_Rpm = p_config->SpeedTypeMax_Rpm;
+    p_sensor->ENCODER.P_STATE->Config.SpeedPerUnitRef_Rpm = p_config->SpeedBase_Rpm;
     Encoder_ModeDT_InitValuesFrom(&p_sensor->ENCODER, &p_sensor->ENCODER.P_STATE->Config);
 }
 

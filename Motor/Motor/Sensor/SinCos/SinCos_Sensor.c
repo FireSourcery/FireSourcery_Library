@@ -45,12 +45,12 @@ static void SinCos_RotorSensor_CaptureAngle(const SinCos_RotorSensor_T * p_senso
 }
 
 /*
-    1ms speed update — project Delta to fract16 via SpeedFractRef, low-pass filter.
+    1ms speed update — project Delta to fract16 via SpeedPuRef, low-pass filter.
 */
 static void SinCos_RotorSensor_CaptureSpeed(const SinCos_RotorSensor_T * p_sensor)
 {
     RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
-    accum32_t speed = Angle_ResolveSpeed_Fract16(&p_state->AngleSpeed, &p_state->SpeedFractRef);
+    accum32_t speed = Angle_ResolveSpeed_Fract16(&p_state->AngleSpeed, &p_state->SpeedPuRef);
     p_state->Speed_Fract16 = (speed + p_state->Speed_Fract16) / 2;
 }
 

@@ -107,7 +107,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
     // Ramp_SetLimits(&p_motor->OpenLoopSpeedRamp, -_Motor_SpeedRated_Fract16(p_motor), _Motor_SpeedRated_Fract16(p_motor));
     // Ramp_SetLimits(&p_motor->OpenLoopIRamp, -_Motor_OpenLoopILimit(p_motor), _Motor_OpenLoopILimit(p_motor));
-    Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating));
+    Angle_SpeedPuRef_Init(&p_motor->OpenLoopSpeedRef, _Motor_AngleDtBase(&p_motor->Config.SpeedRating));
 
     PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
     PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
@@ -161,7 +161,7 @@ void Motor_ValidateConfig(Motor_T * p_motor)
 #endif
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
     /* G_pu = 1/(L_pu · Fs/ω_base) — the one observer gain derived from motor params rather than stored tuning. */
-    FOC_Sensorless_InitG(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, _Motor_GetSpeedTypeMax_Angle(&p_context->Config.SpeedRating), (p_context->Foc.Config.Electrical.Ld + p_context->Foc.Config.Electrical.Lq) / 2);
+    FOC_Sensorless_InitG(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, _Motor_AngleDtBase(&p_context->Config.SpeedRating), (p_context->Foc.Config.Electrical.Ld + p_context->Foc.Config.Electrical.Lq) / 2);
 #endif
 }
 
@@ -171,8 +171,8 @@ void Motor_ValidateConfig(Motor_T * p_motor)
 */
 void Motor_ResolveFocParams(Motor_Context_T * p_motor, const Motor_Kv_T * p_prevRating)
 {
-    FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_VMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
-    FOC_Electrical_RebaseL(&p_motor->Foc.Config.Electrical, _Motor_GetSpeedTypeMax_ElRpm(p_prevRating), _Motor_GetSpeedTypeMax_ElRpm(&p_motor->Config.SpeedRating));
+    FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_VMaxVolts(), _Motor_SpeedBase_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
+    FOC_Electrical_RebaseL(&p_motor->Foc.Config.Electrical, _Motor_AngleFreqBase(p_prevRating), _Motor_AngleFreqBase(&p_motor->Config.SpeedRating));
 // #ifdef MOTOR_PU_BASIS_ANGLE16
 //     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_VMaxVolts(),  p_motor->Config.SpeedRating.Kv);
 // #endif
@@ -198,8 +198,8 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
     RotorSensor_UnitRef_T config =
     {
         .PolePairs = p_motor->Config.SpeedRating.PolePairs,
-        .SpeedTypeMax_Angle16 = _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating),
-        .SpeedTypeMax_Rpm = _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating),
+        .AngleDtBase = _Motor_AngleDtBase(&p_motor->Config.SpeedRating),
+        .SpeedBase_Rpm = _Motor_SpeedBase_Rpm(&p_motor->Config.SpeedRating),
     };
 
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);

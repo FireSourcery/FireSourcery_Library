@@ -78,11 +78,10 @@ ElectricalCalibraton_Stage_T;
 */
 typedef struct ElectricalCalibration
 {
-    /* PU base captured at entry — rpm-anchored ω_base, matches the FOC runtime config basis. */
+    /* PU base captured at entry — matches the FOC runtime config basis. */
     uint16_t VBase;             /* V_max [V] */
     uint16_t IBase;             /* I_max [A] */
-    uint16_t SpeedBaseRpm;      /* mechanical rpm at ω_base */
-    uint8_t  PolePairs;
+    angle_freq_t AngleFreqBase; /* ω_base, electrical */
 
     ElectricalCalibraton_Stage_T  Step;              /* ElectricalCalibraton_Stage_T */
     uint32_t CycleCount;        /* cycles within current step */
@@ -112,7 +111,7 @@ typedef struct ElectricalCalibration
 
     int TauSet;
 
-    FOC_Electrical_T Results;
+    FOC_Electrical_T Results;   /* L at tick base */
     FOC_Electrical_T ResultsSi;
 }
 ElectricalCalibration_T;
@@ -129,7 +128,7 @@ static ElectricalCalibration_T * ElectricalCalibrationBuffer(Motor_Context_T * p
     RS_MEASURE    : average Vd / Id at steady state, Rs = Vd/Id
     LD_INJECT     : voltage-mode square wave on Vd, fit first-order tau, Ld = Rs * tau
     LQ_HFI        : HFI sinusoid on Vq with DC Id bias, demodulate Iq, Lq = V_hf / (2*pi*fh*|Iq|)
-    COMMIT        : write SI + fract16 forms to Config, recompute KLd/KLq/KPsi
+    COMMIT        : rebase Ld, Lq from tick to speed base, write Rs, Ld, Lq to FOC Config
     RAMPDOWN      : ramp Id back to zero, exit to parent
 */
 /******************************************************************************/
@@ -194,7 +193,7 @@ static void ProcLd(ElectricalCalibration_T * p_params, fract16_t id)
     {
         if (p_params->IdTauCycles == 0U) { p_params->IdTauCycles = p_params->CycleCount; }
         /* Ld = Rs·τ — PU and SI each derived directly from the measurement (Rs, τ), independently. */
-        p_params->Results.Ld   = l_pu_rpm_of_rs_tau_cycles(MOTOR_CONTROL_FREQ, p_params->SpeedBaseRpm, p_params->PolePairs, p_params->Results.Rs, p_params->IdTauCycles);
+        p_params->Results.Ld   = l_pu_tick_of_rs_tau_cycles(p_params->Results.Rs, p_params->IdTauCycles);
         p_params->ResultsSi.Ld = l_uh_of_rs_tau_cycles(MOTOR_CONTROL_FREQ, p_params->ResultsSi.Rs, p_params->IdTauCycles);
         SetNext(p_params, PARAMID_STEP_LQ_HFI);
     }
@@ -223,7 +222,7 @@ static void ProcLq(ElectricalCalibration_T * p_params, fract16_t iq)
         int32_t q_norm = (int32_t)((p_params->IqSumQ * 2) / p_params->AccumN / 32768);
         uint16_t i_mag = fixed_sqrt(i_norm * i_norm + q_norm * q_norm);
         /* Lq = V_pk / (2π·f·I_pk) — PU derived directly from the PU amplitudes; SI from their mV/mA equivalents, independently. */
-        p_params->Results.Lq   = l_pu_rpm_of_hfi(p_params->SpeedBaseRpm, p_params->PolePairs, p_params->HfiFreqHz, p_params->Vhfi, i_mag);
+        p_params->Results.Lq   = l_pu_tick_of_hfi(MOTOR_CONTROL_FREQ, p_params->HfiFreqHz, p_params->Vhfi, i_mag);
         p_params->ResultsSi.Lq = l_uh_of_hfi(p_params->HfiFreqHz, (uint64_t)p_params->Vhfi * p_params->VBase / 32768UL, (uint64_t)i_mag * p_params->IBase / 32768UL);
         SetNext(p_params, PARAMID_STEP_COMMIT);
     }
@@ -244,11 +243,11 @@ static void ProcRampDown(ElectricalCalibration_T * p_params)
     if (p_params->CycleCount >= MOTOR_CONTROL_CYCLES(PARAMID_RAMPDOWN_MS)) { SetNext(p_params, PARAMID_STEP_DONE); }
 }
 
-/* Results in rpm-anchored PU, matching FOC runtime basis */
+/* Tick base to the FOC runtime speed base */
 static void CommitResults(ElectricalCalibration_T * p_params, FOC_Electrical_T * p_storage)
 {
-    p_storage->Ld = p_params->Results.Ld;
-    p_storage->Lq = p_params->Results.Lq;
+    p_storage->Ld = pu_rebase(p_params->Results.Ld, angle_freq_nyquist(MOTOR_CONTROL_FREQ), p_params->AngleFreqBase);
+    p_storage->Lq = pu_rebase(p_params->Results.Lq, angle_freq_nyquist(MOTOR_CONTROL_FREQ), p_params->AngleFreqBase);
     p_storage->Rs = p_params->Results.Rs;
     SetNext(p_params, PARAMID_STEP_RAMPDOWN);
 }
@@ -288,11 +287,10 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_params->Step = PARAMID_STEP_ALIGN;
     p_params->CycleCount = 0U;
 
-    /* Capture PU base — rpm-anchored ω_base, identical to the FOC runtime electrical config basis. */
-    p_params->VBase        = Phase_VMaxVolts();
-    p_params->IBase        = Phase_IMaxAmps();
-    p_params->SpeedBaseRpm = _Motor_GetSpeedTypeMax_Rpm(&p_context->Config.SpeedRating);
-    p_params->PolePairs    = p_context->Config.SpeedRating.PolePairs;
+    /* Capture PU base — identical to the FOC runtime electrical config basis. */
+    p_params->VBase         = Phase_VMaxVolts();
+    p_params->IBase         = Phase_IMaxAmps();
+    p_params->AngleFreqBase = _Motor_AngleFreqBase(&p_context->Config.SpeedRating);
 
     p_params->IdBias = _Motor_GetIAlign(p_context);
     p_params->HfiFreqHz = PARAMID_HFI_FREQ_HZ;
