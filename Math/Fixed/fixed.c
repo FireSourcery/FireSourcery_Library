@@ -92,8 +92,7 @@ uint8_t _leading_sign_bits(int32_t x)
 uint8_t fixed_bit_width(uint32_t x)
 {
 #if defined(__GNUC__)
-    assert(x != 0U); /* undefined for 0, but we can define as 0 or 32 */
-    return (32U - __builtin_clz(x));
+    return (32U - __builtin_clzg(x, 32));
 #elif (__STDC_VERSION__ >= 202311L)
     return stdc_bit_width(x);
 #else
@@ -104,12 +103,13 @@ uint8_t fixed_bit_width(uint32_t x)
 }
 
 /*
-    0xFFFFFFFF -> 1
+    0xFFFFFFFF -> 0
+    0xFFFF8000 -> 15
     0x7FFFFFFF -> 31
     0x80000000 -> 31
     0x00000000 -> 0
 */
-uint8_t fixed_bit_width_signed(int32_t x) { return fixed_bit_width(math_abs(x)); }
+uint8_t fixed_bit_width_signed(int32_t x) { return (31U - _leading_sign_bits(x)); }
 
 /*
     determine scaling factor
@@ -124,10 +124,6 @@ uint8_t fixed_lshift_max_unsigned(uint32_t x) { return _leading_zeros(x); }
 /* fixed32_norm_shift */
 uint8_t fixed_lshift_max_signed(int32_t x) { return _leading_sign_bits(x); }
 
-
-// input_range(int32_t x0, int32_t xRef)
-// (int32_t factor)
-// (int32_t factor)
 
 /*
     65535 -> 15

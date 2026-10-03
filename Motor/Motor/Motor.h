@@ -197,9 +197,6 @@ static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck     
 
 
 
-//todo
-// real_t, fract_t
-
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
 */

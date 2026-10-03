@@ -44,11 +44,11 @@
 #define FRACT16_SCALE (32768) /* 2^15 */
 #define FRACT32_SCALE (2147483648)
 
-#define ACCUM32_SAT (0x3FFFFFFF) /* Soft max for ACCUM32_SAT * 2 without overflow */
+#define ACCUM32_SAT (0x3FFFFFFFUL) /* Soft max for ACCUM32_SAT * 2 without overflow */
 #define ACCUM32_SCALE ((int32_t)FRACT16_SCALE * FRACT16_SCALE)
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
-typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
+typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2), √2 vector magnitude. */
 
 typedef int32_t accum32_t;      /*!< Q17.15 [-65536.0, 65535.0] extended integer bits. */
                                 /*!< Q2.30 [-2, 2) scaled fract16_t, [-1, 1) for fast saturated add. */
@@ -86,11 +86,13 @@ static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 
 #define FRACT16_FLOAT_MAX (0.999969482421875F)
 #define FRACT16_FLOAT_MIN (-1.0F)
+#define FRACT16_EPSILON 0.000030517578125F
+
 #define FRACT16(x) ((fract16_t)(((x) < FRACT16_FLOAT_MAX) ? (((x) >= FRACT16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
 
 #define ACCUM32(x) ((accum32_t)((x)*32768.0F))
 
-static inline fract16_t fract16(int16_t value, int32_t max) { return (fract16_t)(((int32_t)value << FRACT16_N_BITS) / max); }
+// static inline fract16_t fract16(int16_t value, int32_t max) { return (fract16_t)(((int32_t)value << FRACT16_N_BITS) / max); }
 static inline fract16_t fract16_sat(accum32_t value) { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
 static inline ufract16_t fract16_sat_positive(accum32_t value) { return math_clamp(value, 0, FRACT16_MAX); }
 
@@ -111,7 +113,7 @@ static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac) { return (
 /*!
     Saturate to FRACT16_MIN, FRACT16_MAX
 
-    Paramters as accum32_t, saturation by upper and lower bounds
+    Parameters as accum32_t, saturation by upper and lower bounds
 
     case of fract16_mul(int16_t, int16_t) still needs to check for 32768
     fract16_mul(-32768, -32768) => 32768 == 0x8000, over sat 1
@@ -133,6 +135,7 @@ static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac) { retu
     @param[in] dividend [-65536:65535] <=> [-2:2)
     @return int32_t [-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
 */
+/* accum32_div */
 static inline accum32_t fract16_div(accum32_t dividend, accum32_t divisor)
 {
     assert(dividend < (FRACT16_SCALE * 2)); /* caller must handle divide by zero */
@@ -160,36 +163,51 @@ static inline accum32_t accum32_mul(accum32_t a, accum32_t b) { return ((int64_t
 /*
     alternative to accum32_t, accum32_t multiply without 64-bit intermediate
 */
-/* shift without divisor on max ref */
-/* right shift as positive */
-// static inline int8_t fract16_norm_shift(accum32_t value) { return (int8_t)(fixed_bit_width_signed(value) - FRACT16_N_BITS); }
-// static inline int8_t accum32_norm_shift(int16_t value) { return (int8_t)(fixed_lshift_max_signed(value) - 1); }
-
-// typedef struct { int16_t mantissa; int8_t exp; } fract16e_t;
-
 /* value = mantissa × 2^exp */
-// static inline fract16e_t fract16e(accum32_t value)
-// {
-//     assert(value <= ACCUM32_SAT);
-//     int8_t exp = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0);
-//     return (fract16e_t) { .mantissa = (int16_t)(value >> exp), .exp = exp };
-// }
+// typedef struct { int16_t mantissa; int8_t exp; } fract16e_t;
+// static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b) { return ((int32_t)a.mantissa * b >> (FRACT16_N_BITS - a.exp)); }
 
-// static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b) { return ((int32_t)a.mantissa * b >> (FRACT16_N_BITS - a.shift)); }
+/* value = mantissa × 2^-shift */
+/* frexp16_t  */
+typedef struct { int16_t mantissa; uint8_t shift; } fract16e_t;
+static inline int8_t fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a.shift; }
 
-// typedef struct { int16_t value; int8_t n; } exp16_t;
-typedef struct { int16_t factor; int8_t shift; } fract16e_t;
-/* value = factor / 2^exp */
-static inline fract16e_t fract16e(accum32_t value)
+/* value × 2^-shift */
+static inline fract16e_t _fract16e(int32_t value, uint8_t shift)
 {
-    assert(value <= ACCUM32_SAT);
-    int8_t m = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0); /* value < 1.0 keep as is */
-    return (fract16e_t) { .factor = (int16_t)(value >> m), .shift = FRACT16_N_BITS - m };
+    uint8_t m = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0); /* within int16 keep as is */
+    assert(m <= shift);
+    return (fract16e_t) { .mantissa = (int16_t)(value >> m), .shift = shift - m };
 }
 
-static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b) { return ((int32_t)a.factor * b >> a.shift); }
+/* accum in [-2^30, 2^30) */
+static inline fract16e_t fract16e(accum32_t accum) { return _fract16e(accum, FRACT16_N_BITS); }
+// static inline fract16e_t fract16e(accum32_t accum)
+// {
+//     uint8_t m = math_max(fixed_bit_width_signed(accum) - FRACT16_N_BITS, 0); /* accum < 1.0 keep as is */
+//     assert(m <= FRACT16_N_BITS); /* accum in [-2^30, 2^30) */
+//     return (fract16e_t) { .mantissa = (int16_t)(accum >> m), .shift = FRACT16_N_BITS - m };
+// }
 
-// static inline int fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a.shift; }
+/*
+    num / den, |num / den| < 2^15
+    s places |(num << s) / den| in [2^14, 2^16] before dividing: full mantissa at any magnitude
+*/
+static inline fract16e_t fract16e_of_ratio(int32_t num, uint16_t den)
+{
+    int8_t s = FRACT16_N_BITS + fixed_bit_width(den) - fixed_bit_width_signed(num);
+    assert(den != 0U);
+    assert(s >= 0);
+    return _fract16e((num << s) / den, s);
+}
+
+
+static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b)
+{
+    assert(math_abs(b) < FRACT16_SCALE * 2); /* |mantissa * b| < 2^31 */
+    return ((int32_t)a.mantissa * b >> a.shift);
+}
+
 
 
 /******************************************************************************/
@@ -234,7 +252,10 @@ typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angl
 typedef uint16_t uangle16_t;    /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
 typedef uint32_t angle32_t; /* fract32 */
-// typedef int32_t nangle32_t; /* rev.angle16 */
+typedef int32_t rot32_t; /* n.angle16 */
+
+#define ROT32_TURN_BITS (16)
+#define ROT32_ANGLE_BITS (16)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
 static const angle16_t ANGLE16_30 = 0x1555U;   /*! 5461 */
@@ -253,15 +274,21 @@ static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 /*
     radian si scaled
     [0:1.0f/2pi] ~0.16 of rev
+
+    Reciprocal of FRACT16_PI in Q30, both map the half turn 32768 ⇔ π:
+        ANGLE16_PER_RADIAN = 32768 / π                  rad [Q15] → angle16:  rad · ANGLE16_PER_RADIAN >> 15
+        FRACT16_PI         = 32768 · π                  angle16 → rad [Q15]:  angle16 · FRACT16_PI >> 15
+        ANGLE16_PER_RADIAN · FRACT16_PI = 2^30          π cancels
+    Truncation: 10430 is −3.6e-5, 102943 is −6.9e-6. Derive through FRACT16_PI for the closer value.
 */
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / (2 * PI) */
 
-#define ANGLE16(radians) ((angle16_t)((radians) * ANGLE16_PER_REVOLUTION / (2.0F * PI_FLOAT)))
+#define ANGLE16_OF_RADIANS(radians) ((angle16_t)((radians) * ANGLE16_PER_REVOLUTION / (2.0F * PI_FLOAT)))
 #define ANGLE16_OF_TURNS(turns) ((angle16_t)((turns) * 65536.0F))
 
 /* from scaled storage */
+static inline angle16_t angle16_of_radians(int32_t rad, int32_t scaling) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) / scaling); }
 static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) >> FRACT16_N_BITS); }
-// static inline angle16_t angle16_of_radians(int32_t rad, int32_t scaling) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) / scaling); }
 
 /*
 

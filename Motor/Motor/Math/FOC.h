@@ -323,7 +323,6 @@ static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, i
     Only M0 benefits from micro-optimizing.
     optionally select/drop additional int64 multiply in fast loop
 */
-#if !defined(FOC_DECOUPLE_FF_SAT16)
 static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 {
     p_foc->ElectricalSpeed.OmegaLd = accum32_mul(p_foc->Config.Electrical.Ld, speed);
@@ -333,17 +332,17 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 
 static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff_wide(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
 static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff_wide(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
-#else
-static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
-{
-    p_foc->ElectricalSpeed.OmegaLd = fract16_sat(accum32_mul(p_foc->Config.Electrical.Ld, speed));
-    p_foc->ElectricalSpeed.OmegaLq = fract16_sat(accum32_mul(p_foc->Config.Electrical.Lq, speed));
-    p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Config.Electrical.Psi, speed));
-}
+// #else
+// static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
+// {
+//     p_foc->ElectricalSpeed.OmegaLd = fract16_sat(accum32_mul(p_foc->Config.Electrical.Ld, speed));
+//     p_foc->ElectricalSpeed.OmegaLq = fract16_sat(accum32_mul(p_foc->Config.Electrical.Lq, speed));
+//     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Config.Electrical.Psi, speed));
+// }
 
-static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
-static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
-#endif
+// static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
+// static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
+
 
 /*
     Vd_cmd = Vd_PI + Vd_ff,

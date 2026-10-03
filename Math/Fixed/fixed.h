@@ -33,8 +33,6 @@
 
 #include <stdint.h>
 
-
-typedef struct { int32_t Factor; uint8_t Shift; } scale_t;
 extern uint16_t fixed_sqrt(uint32_t x);
 extern uint8_t fixed_log2(uint32_t x);
 extern uint8_t fixed_log2_ceiling(uint32_t x);
