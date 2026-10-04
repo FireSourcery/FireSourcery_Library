@@ -244,7 +244,8 @@ static void ProcRampDown(ElectricalCalibration_T * p_params)
 
 static void CommitResults(ElectricalCalibration_T * p_params, Motor_Electrical_T * p_storage)
 {
-    *p_storage = Motor_Electrical_OfLdq(p_params->Results.Ld, p_params->Results.Lq, p_params->Results.Rs);
+    Motor_Electrical_SetLdq(p_storage, p_params->Results.Ld, p_params->Results.Lq);
+    p_storage->Rs = p_params->Results.Rs;
     SetNext(p_params, PARAMID_STEP_RAMPDOWN);
 }
 

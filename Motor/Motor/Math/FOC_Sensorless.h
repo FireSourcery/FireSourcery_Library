@@ -250,20 +250,13 @@ static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, const FOC_SensorlessCo
 }
 
 /*
-    G_pu = Ts·V_max / (L·I_max) = 1 / (L·I_max·Fs/V_max)
-    1 / (L_pu · Fs / ω_base)
-    From
-    Ls_pu = L · ω_base · I_max / V_max
+    G_pu = Ts·V_max / (L·I_max) = 1 / (L_pu · Fs / ω_base)
+    The speed base cancels. L at the tick base, (Ld + Lq) / 2
 */
-static void FOC_Sensorless_InitG(FOC_Sensorless_T * p_obs, uint32_t angle_speed_max, uint32_t lAvg_pu)
+static void FOC_Sensorless_InitG(FOC_Sensorless_T * p_obs, uint32_t lAvg_pu_tick)
 {
-    p_obs->Config.G_pu = foc_g_pu_of_angle_speed(angle_speed_max, lAvg_pu);
+    p_obs->Config.G_pu = foc_g_pu_of_l_tick(lAvg_pu_tick);
 }
-
-// static void FOC_Sensorless_InitG_Rads(FOC_Sensorless_T * p_obs, uint32_t erads, uint32_t lAvg_pu)
-// {
-//     p_obs->G_pu = foc_g_pu_rads(erads, lAvg_pu);
-// }
 
 
 

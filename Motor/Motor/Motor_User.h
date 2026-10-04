@@ -86,7 +86,7 @@ static inline fract16_t _Motor_GetIBus_Pu(Motor_T * p_motor) { return _FOC_GetIB
 static inline uint16_t Motor_GetHeat_Adcu(const Motor_Context_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
 
 // #ifdef MOTOR_UNIT_CONVERSION_LOCAL
-static inline int16_t Motor_GetSpeed_Rpm(const Motor_Context_T * p_motor)             { return  fract16_mul(Motor_User_GetSpeed_Pu(p_motor), Motor_KSpeed_SpeedBase_Rpm(&p_motor->Config.KSpeed)); }
+static inline int16_t Motor_GetSpeed_Rpm(const Motor_Context_T * p_motor)             { return  fract16_mul(Motor_User_GetSpeed_Pu(p_motor), Motor_SpeedBase_Rpm(&p_motor->Config.Electrical)); }
 static inline int16_t Motor_GetIPhase_Amps(const Motor_Context_T * p_motor)           { return  Phase_I_AmpsOfPu(Motor_GetIPhase_Pu(p_motor) ); }
 static inline int16_t Motor_GetVPhase_Volts(const Motor_Context_T * p_motor)          { return  Phase_V_VoltsOfPu(Motor_GetVPhase_Pu(p_motor)); }
 // static inline int32_t Motor_GetElectricalPower_VA(const Motor_Context_T * p_motor)    { return  (Motor_GetElectricalPower_Pu(p_motor)); }

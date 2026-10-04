@@ -207,8 +207,7 @@ typedef struct Motor_Config
     */
     RotorSensor_Id_T SensorMode;
     Motor_Direction_T DirectionForward;         /* CCW/CW Assigned positive direction. Effectively Direction actual CCW */
-    Motor_KSpeed_T KSpeed;                      /* PolePairs, BEMF speed per volt. Derives the speed base */
-    Motor_Electrical_T Electrical;              /* Rs, Ls, Ldelta at the tick base. Derives the FOC parameters */
+    Motor_Electrical_T Electrical;              /* PolePairs, BEMF speed per volt, Rs, Ls, Ldelta. Derives the speed base and the FOC parameters */
     uint16_t VSpeedAdjustment;                  /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
     Phase_Triplet_T IabcZeroRef_Adcu;
 
@@ -406,27 +405,17 @@ static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_mo
 static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
 
 /*
-
-*/
-/* getter for runtime configurable or compile time fixed */
-static inline uint32_t Motor_SpeedBase_Rpm(Motor_T * p_motor) { return Motor_KSpeed_SpeedBase_Rpm(&Motor_Config(p_motor)->KSpeed); }
-static inline angle_freq_t Motor_AngleFreqBase(Motor_T * p_motor) { return Motor_KSpeed_AngleFreqBase(&Motor_Config(p_motor)->KSpeed); }
-
-/*
     Speed VBus Ref
     [SpeedRated] at VBusNominal. Speed_pu = VNominal_pu
 */
 static inline uint16_t Motor_GetSpeedVNominalRef_Pu(Motor_T * p_motor) { return VBus_VNominal_Pu(&p_motor->P_VBUS->Config); } /* VBus handles sync V / VPu */
-static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Speed_RpmOfPu(&Motor_Config(p_motor)->KSpeed, Motor_GetSpeedVNominalRef_Pu(p_motor)); }
-static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return 0; }
+static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Speed_RpmOfPu(&Motor_Config(p_motor)->Electrical, Motor_GetSpeedVNominalRef_Pu(p_motor)); }
+// static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return 0; }
 
 /*
     Uniform interface for parameter variations.
 */
 static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return Motor_GetSpeedVNominalRef_Rpm(p_motor); }
-/* Alternatively store to config with VBus value */
-// static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
-
 static inline uint16_t Motor_SpeedRated_Pu(Motor_T * p_motor) { return Motor_GetSpeedVNominalRef_Pu(p_motor); }
 
 static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }

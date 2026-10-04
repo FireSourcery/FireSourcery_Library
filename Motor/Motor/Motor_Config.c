@@ -57,7 +57,7 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
     (
         (p_config->DirectionForward != MOTOR_DIRECTION_NULL) &&
         (p_config->IabcZeroRef_Adcu.A != 0U) && (p_config->IabcZeroRef_Adcu.B != 0U) && (p_config->IabcZeroRef_Adcu.C != 0U) &&
-        (p_config->KSpeed.PolePairs != 0U) && (p_config->KSpeed.AngleFreqPerVolt > 0) && (p_config->VSpeedAdjustment <= INT16_MAX) &&
+        (p_config->Electrical.PolePairs != 0U) && (p_config->Electrical.AngleFreqPerVolt > 0) && (p_config->VSpeedAdjustment <= INT16_MAX) &&
         (p_config->ILimitMotoring_Pu <= _Motor_IRatedLimit()) &&
         (p_config->ILimitGenerating_Pu <= _Motor_IRatedLimit()) &&
         (p_config->IAlign_Pu <= p_config->ILimitMotoring_Pu) &&
@@ -127,11 +127,11 @@ void Motor_Config_ValidateVAlign(Motor_Config_T * p_config)
 /* Reboot unless deinit is implemented in HAL */
 void Motor_Config_SetSensorMode(Motor_Config_T * p_config, RotorSensor_Id_T mode) { p_config->SensorMode = mode; }
 
-/* Holds the electrical KSpeed. Kv entered after PolePairs, in id order, holds Kv */
-void Motor_Config_SetPolePairs(Motor_Config_T * p_config, uint8_t polePairs) { p_config->KSpeed.PolePairs = polePairs; }
+/* Holds the electrical AngleFreqPerVolt. Kv entered after PolePairs, in id order, holds Kv */
+void Motor_Config_SetPolePairs(Motor_Config_T * p_config, uint8_t polePairs) { p_config->Electrical.PolePairs = polePairs; }
 
 /* Setting Kv overwrites SpeedRefs. SpeedRefs can be set independently from Kv or lock */
-void Motor_Config_SetKv(Motor_Config_T * p_config, uint16_t kv) { p_config->KSpeed.AngleFreqPerVolt = angle_freq_per_v_of_kv(kv, p_config->KSpeed.PolePairs); }
+void Motor_Config_SetKv(Motor_Config_T * p_config, uint16_t kv) { p_config->Electrical.AngleFreqPerVolt = angle_freq_of_kv(kv, p_config->Electrical.PolePairs); }
 
 /*
     V of Speed Ref
@@ -172,8 +172,8 @@ static inline void Motor_Config_SetDirectionCalibration(Motor_Config_T * p_confi
 // static inline void Motor_Config_SetCcwPositive(Motor_Config_T * p_motor, bool isCcwPositive) { p_motor->DirectionForward = (isCcwPositive) ? MOTOR_DIRECTION_CCW : MOTOR_DIRECTION_CW; }
 
 static inline RotorSensor_Id_T Motor_Config_GetSensorMode(const Motor_Config_T * p_config) { return p_config->SensorMode; }
-static inline uint8_t Motor_Config_GetPolePairs(const Motor_Config_T * p_config) { return p_config->KSpeed.PolePairs; }
-static inline uint16_t Motor_Config_GetKv(const Motor_Config_T * p_config) { return kv_of_angle_freq_per_v(p_config->KSpeed.AngleFreqPerVolt, p_config->KSpeed.PolePairs); }
+static inline uint8_t Motor_Config_GetPolePairs(const Motor_Config_T * p_config) { return p_config->Electrical.PolePairs; }
+static inline uint16_t Motor_Config_GetKv(const Motor_Config_T * p_config) { return kv_of_angle_freq(p_config->Electrical.AngleFreqPerVolt, p_config->Electrical.PolePairs); }
 // static inline uint16_t Motor_Config_GetSpeedRated(const Motor_Config_T * p_config) { return _Motor_SpeedRated_Rpm(&p_config->SpeedRating); }
 static inline uint16_t Motor_Config_GetVSpeedRatio(const Motor_Config_T * p_config) { return p_config->VSpeedAdjustment; }
 
@@ -238,13 +238,13 @@ void Motor_Config_SetTorqueRampTime_Millis(Motor_Config_T * p_config, uint16_t m
 /*
     Interface in Physical Units (display/readout)
 */
-static inline uint32_t Motor_Config_GetSpeedRampSlope_RpmPerS(const Motor_Config_T * p_config) { return Motor_Speed_RpmOfPu(&p_config->KSpeed, (int64_t)p_config->SpeedRampSlope_PuPerTick * MOTOR_SPEED_LOOP_FREQ / ACCUMULATOR_SCALE); }
+static inline uint32_t Motor_Config_GetSpeedRampSlope_RpmPerS(const Motor_Config_T * p_config) { return Motor_Speed_RpmOfPu(&p_config->Electrical, (int64_t)p_config->SpeedRampSlope_PuPerTick * MOTOR_SPEED_LOOP_FREQ / ACCUMULATOR_SCALE); }
 static inline uint32_t Motor_Config_GetTorqueRampSlope_AmpPerS(const Motor_Config_T * p_config) { return Phase_I_AmpsOfPu((int64_t)p_config->TorqueRampSlope_PuPerTick * MOTOR_CONTROL_FREQ / ACCUMULATOR_SCALE); }
 
 /*
     Ticks Time coversion first to prevent overflow
 */
-void Motor_Config_SetSpeedRampSlope_RpmPerS(Motor_Config_T * p_config, uint32_t rpm) { p_config->SpeedRampSlope_PuPerTick = Motor_Speed_PuOfRpm(&p_config->KSpeed, rpm * ACCUMULATOR_SCALE / MOTOR_SPEED_LOOP_FREQ); }
+void Motor_Config_SetSpeedRampSlope_RpmPerS(Motor_Config_T * p_config, uint32_t rpm) { p_config->SpeedRampSlope_PuPerTick = Motor_Speed_PuOfRpm(&p_config->Electrical, rpm * ACCUMULATOR_SCALE / MOTOR_SPEED_LOOP_FREQ); }
 void Motor_Config_SetTorqueRampSlope_AmpPerS(Motor_Config_T * p_config, uint32_t amps) { p_config->TorqueRampSlope_PuPerTick = Phase_I_PuOfAmps(amps * ACCUMULATOR_SCALE / MOTOR_CONTROL_FREQ); }
 
 /*

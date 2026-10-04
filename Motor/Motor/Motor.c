@@ -108,7 +108,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Pu);
     // Ramp_SetLimits(&p_motor->OpenLoopSpeedRamp, -_Motor_SpeedRated_Pu(p_motor), _Motor_SpeedRated_Pu(p_motor));
     // Ramp_SetLimits(&p_motor->OpenLoopIRamp, -_Motor_OpenLoopILimit(p_motor), _Motor_OpenLoopILimit(p_motor));
-    Angle_SpeedPuRef_Init_Freq(&p_motor->OpenLoopSpeedRef, MOTOR_CONTROL_FREQ, Motor_KSpeed_AngleFreqBase(&p_motor->Config.KSpeed));
+    Angle_SpeedPuRef_Init_Freq(&p_motor->OpenLoopSpeedRef, MOTOR_CONTROL_FREQ, Motor_SpeedBase_AngleFreq(&p_motor->Config.Electrical));
 
     PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
     PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
@@ -161,18 +161,18 @@ void Motor_ValidateConfig(Motor_T * p_motor)
     // optionally add runtime current limit
 #endif
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-    /* G_pu = 1/(L_pu · Fs/ω_base) — the one observer gain derived from motor params rather than stored tuning. */
-    FOC_Sensorless_InitG(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_KSpeed_AngleDtBase(&p_context->Config.KSpeed), (p_context->Foc.Electrical.Ld + p_context->Foc.Electrical.Lq) / 2);
+    /* The one observer gain derived from motor params rather than stored tuning. */
+    FOC_Sensorless_InitG(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, p_context->Config.Electrical.Ls);
 #endif
 }
 
 /*
-    FOC params at the [Motor_KSpeed_T] speed base, from [Motor_Electrical_T] at the tick base.
-    Re-resolve on a change of either.
+    FOC params at the speed base, from [Motor_Electrical_T] at the tick base.
+    Re-resolve on a change of the model or the board base.
 */
 void Motor_ResolveFocParams(Motor_Context_T * p_motor)
 {
-    p_motor->Foc.Electrical = Motor_Electrical_FocOf(&p_motor->Config.Electrical, &p_motor->Config.KSpeed);
+    p_motor->Foc.Electrical = Motor_Electrical_FocOf(&p_motor->Config.Electrical);
 }
 
 /******************************************************************************/
@@ -187,8 +187,8 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 {
     RotorSensor_UnitRef_T config =
     {
-        .PolePairs = p_motor->Config.KSpeed.PolePairs,
-        .AngleFreqBase = Motor_KSpeed_AngleFreqBase(&p_motor->Config.KSpeed),
+        .PolePairs = p_motor->Config.Electrical.PolePairs,
+        .AngleFreqBase = Motor_SpeedBase_AngleFreq(&p_motor->Config.Electrical),
         .PollingFreq = MOTOR_CONTROL_FREQ,
     };
 

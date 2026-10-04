@@ -82,16 +82,6 @@ typedef struct RotorSensor_UnitRef
 }
 RotorSensor_UnitRef_T;
 
-/* RotorSensor_SpeedCalibration_T */
-// typedef struct RotorSensor_Config
-// {
-//     // optionally move
-//     // Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
-//     // uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
-//     // uint16_t Kv;                        /* [RpmPerVolt] Motor Constant. Use to derive SpeedVRef. Optionally sets SpeedRated */
-//     // uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. Derives Angle and Fract16 */
-// }
-// RotorSensor_Config_T;
 
 /*
     [Angle_T] Wrap
