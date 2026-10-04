@@ -121,8 +121,8 @@ Motor_Var_UserOut_T;
 
 /*  Implicitly indexed - row order is the id.      id, get, set, units, ctype */
 #define USER_OUT_LIST(X)                                                          \
-    X(MOTOR_VAR_SPEED,     Motor_User_GetSpeed_Fract16, NULL, Rpm,  accum32_t)    \
-    X(MOTOR_VAR_I_PHASE,   Motor_GetIPhase_Fract16,     NULL, Amps, fract16_t)    \
+    X(MOTOR_VAR_SPEED,     Motor_User_GetSpeed_Pu, NULL, Rpm,  accum32_t)    \
+    X(MOTOR_VAR_I_PHASE,   Motor_GetIPhase_Pu,     NULL, Amps, fract16_t)    \
     X(MOTOR_VAR_STATE,     Motor_GetStateId,            NULL, None, Motor_StateId_T) \
     X(MOTOR_VAR_SUB_STATE, Motor_GetPathId,             NULL, None, state_t)
 
@@ -165,7 +165,7 @@ static const GetAdapter_Dev_T GET_ADAPTERS_DEV[_SIG_END] =
 typedef enum Motor_Var_DevOut { MOTOR_VAR_I_BUS, _MOTOR_VAR_DEV_OUT_END } Motor_Var_DevOut_T;
 
 #define DEV_OUT_LIST(X) \
-    X(MOTOR_VAR_I_BUS, Motor_GetIBus_Fract16, NULL, Amps, fract16_t)
+    X(MOTOR_VAR_I_BUS, _Motor_GetIBus_Pu, NULL, Amps, fract16_t)
 
 static const VField_T DEV_OUT_FIELDS[] = { DEV_OUT_LIST(ROW_DEV) };
 
@@ -207,8 +207,8 @@ typedef enum Motor_Var_Board
 Motor_Var_Board_T;
 
 #define BOARD_LIST(X)                                                                                 \
-    X(MOTOR_VAR_BOARD_V_RATED,      Phase_VRated_Fract16,     NULL, Volts, fract16_t)  \
-    X(MOTOR_VAR_BOARD_I_RATED_PEAK, Phase_IRatedPeak_Fract16, NULL, Amps,  fract16_t)  \
+    X(MOTOR_VAR_BOARD_V_RATED,      Phase_VRated_Pu,     NULL, Volts, fract16_t)  \
+    X(MOTOR_VAR_BOARD_I_RATED_PEAK, Phase_IRatedPeak_Pu, NULL, Amps,  fract16_t)  \
     X(MOTOR_VAR_BOARD_V_MAX_VOLTS,  Phase_VMaxVolts,          NULL, Volts, uint16_t)
 
 static const VField_T BOARD_FIELDS[] = { BOARD_LIST(ROW_CONST) };

@@ -97,7 +97,7 @@
 //         Speed Feedback
 //     */
 //     Ramp_T SpeedRamp;                   /* { Target, Output, Limit, Coefficient } — full speed setpoint contract */
-//     PID_T PidSpeed;                     /* Input PidSpeed(RampCmd - Speed_Fract16), Output => VPwm, Vq, Iq. */
+//     PID_T PidSpeed;                     /* Input PidSpeed(RampCmd - Speed_Pu), Output => VPwm, Vq, Iq. */
 //     // PID_T PidPosition;
 
 //     volatile Phase_Input_T PhaseInput;

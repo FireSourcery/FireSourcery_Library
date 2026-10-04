@@ -48,9 +48,9 @@ typedef const struct Phase_Board
 
     /* Limits for config input */
     /* Optionally include si units */
-    volatile uint16_t V_RATED_FRACT16;
-    volatile uint16_t I_RATED_PEAK_FRACT16;
-    volatile uint16_t I_RATED_FW_FRACT16;
+    volatile uint16_t V_RATED_PU;
+    volatile uint16_t I_RATED_PEAK_PU;
+    volatile uint16_t I_RATED_FW_PU;
     volatile uint16_t _RESV[3U];
 }
 Phase_Board_T;
@@ -63,19 +63,19 @@ extern const Phase_Board_T PHASE_BOARD;
 #define PHASE_V_TYPE_MAX_VOLTS PHASE_BOARD.V_MAX_VOLTS
 #define PHASE_I_TYPE_MAX_AMPS PHASE_BOARD.I_MAX_AMPS
 #else /* Compile time def only */
-#define PHASE_V_FRACT16(volts) FRACT16((float)volts / PHASE_V_TYPE_MAX_VOLTS)
-#define PHASE_I_FRACT16(amps) FRACT16((float)amps / PHASE_I_TYPE_MAX_AMPS)
+#define PHASE_V_PU(volts) FRACT16((float)volts / PHASE_V_TYPE_MAX_VOLTS)
+#define PHASE_I_PU(amps) FRACT16((float)amps / PHASE_I_TYPE_MAX_AMPS)
 #endif
 
 static inline uint16_t Phase_IMaxAmps(void) { return PHASE_BOARD.I_MAX_AMPS; }
 static inline uint16_t Phase_VMaxVolts(void) { return PHASE_BOARD.V_MAX_VOLTS; }
 /* Keep virtual getters in case structure changes */
-static inline uint16_t Phase_VRated_Fract16(void) { return PHASE_BOARD.V_RATED_FRACT16; }
-static inline uint16_t Phase_IRatedPeak_Fract16(void) { return PHASE_BOARD.I_RATED_PEAK_FRACT16; }
-static inline uint16_t Phase_IRatedFw_Fract16(void) { return PHASE_BOARD.I_RATED_FW_FRACT16; }
-static inline uint16_t Phase_VRated_Volts(void) { return Phase_VRated_Fract16() * Phase_VMaxVolts() / 32768; }
-static inline int16_t Phase_IRatedPeak_Amps(void) { return Phase_IRatedPeak_Fract16() * Phase_IMaxAmps() / 32768; }
-static inline int16_t Phase_IRatedRms_Amps(void) { return Phase_IRatedPeak_Fract16() * Phase_IMaxAmps() / FRACT16_SQRT2; }
+static inline uint16_t Phase_VRated_Pu(void) { return PHASE_BOARD.V_RATED_PU; }
+static inline uint16_t Phase_IRatedPeak_Pu(void) { return PHASE_BOARD.I_RATED_PEAK_PU; }
+static inline uint16_t Phase_IRatedFw_Pu(void) { return PHASE_BOARD.I_RATED_FW_PU; }
+static inline uint16_t Phase_VRated_Volts(void) { return Phase_VRated_Pu() * Phase_VMaxVolts() / 32768; }
+static inline int16_t Phase_IRatedPeak_Amps(void) { return Phase_IRatedPeak_Pu() * Phase_IMaxAmps() / 32768; }
+static inline int16_t Phase_IRatedRms_Amps(void) { return Phase_IRatedPeak_Pu() * Phase_IMaxAmps() / FRACT16_SQRT2; }
 
 
 /******************************************************************************/
@@ -90,9 +90,9 @@ static inline bool Phase_Board_IsValid(void)
     (
         _Phase_Board_IsValid(Phase_VMaxVolts()) &&
         _Phase_Board_IsValid(Phase_IMaxAmps()) &&
-        _Phase_Board_IsValidRated(Phase_VRated_Fract16()) &&
-        _Phase_Board_IsValidRated(Phase_IRatedPeak_Fract16()) &&
-        (Phase_IRatedFw_Fract16() < Phase_IRatedPeak_Fract16()) /* Id within the rated vector, leaving Iq > 0. 0 disables FW */
+        _Phase_Board_IsValidRated(Phase_VRated_Pu()) &&
+        _Phase_Board_IsValidRated(Phase_IRatedPeak_Pu()) &&
+        (Phase_IRatedFw_Pu() < Phase_IRatedPeak_Pu()) /* Id within the rated vector, leaving Iq > 0. 0 disables FW */
     );
 }
 
@@ -102,32 +102,32 @@ static inline bool Phase_Board_IsValid(void)
     Local unit conversions
 */
 /******************************************************************************/
-static inline accum32_t Phase_I_Fract16OfAmps(int16_t amps) { return amps * INT16_MAX / Phase_IMaxAmps(); }
-static inline int16_t   Phase_I_AmpsOfFract16(accum32_t fract16) { return fract16 * Phase_IMaxAmps() / 32768; }
-static inline accum32_t Phase_V_Fract16OfVolts(int16_t volts) { return volts * INT16_MAX / Phase_VMaxVolts(); }
-static inline int16_t   Phase_V_VoltsOfFract16(accum32_t fract16) { return fract16 * Phase_VMaxVolts() / 32768; }
-static inline accum32_t Phase_Power_VoltAmpsOfFract16(accum32_t fract16) { return fract16 * Phase_IMaxAmps() * Phase_VMaxVolts() / 32768; }
+static inline accum32_t Phase_I_PuOfAmps(int16_t amps) { return amps * INT16_MAX / Phase_IMaxAmps(); }
+static inline int16_t   Phase_I_AmpsOfPu(accum32_t fract16) { return fract16 * Phase_IMaxAmps() / 32768; }
+static inline accum32_t Phase_V_PuOfVolts(int16_t volts) { return volts * INT16_MAX / Phase_VMaxVolts(); }
+static inline int16_t   Phase_V_VoltsOfPu(accum32_t fract16) { return fract16 * Phase_VMaxVolts() / 32768; }
+static inline accum32_t Phase_Power_VoltAmpsOfPu(accum32_t fract16) { return fract16 * Phase_IMaxAmps() * Phase_VMaxVolts() / 32768; }
 
 /*
     Resistance Ref
     R_REF = V_MAX_VOLTS / I_MAX_AMPS [Ohm]
-    Rs_Fract16 represents (R_Ohm / R_REF) in fract16.
-    Rs_MilliOhms = Rs_Fract16 * V_MAX_VOLTS * 1000 / (I_MAX_AMPS * 32768)
+    Rs_Pu represents (R_Ohm / R_REF) in fract16.
+    Rs_MilliOhms = Rs_Pu * V_MAX_VOLTS * 1000 / (I_MAX_AMPS * 32768)
 */
-static inline accum32_t Phase_R_Fract16OfMilliOhms(uint16_t milliOhms)
+static inline accum32_t Phase_R_PuOfMilliOhms(uint16_t milliOhms)
 {
     return ((accum32_t)milliOhms * Phase_IMaxAmps() * INT16_MAX) / ((accum32_t)Phase_VMaxVolts() * 1000);
 }
 
-static inline uint16_t Phase_R_MilliOhmsOfFract16(accum32_t fract16)
+static inline uint16_t Phase_R_MilliOhmsOfPu(accum32_t fract16)
 {
     return ((accum32_t)fract16 * Phase_VMaxVolts() * 1000) / ((accum32_t)Phase_IMaxAmps() * 32768);
 }
 
-/* speedBase_rads = 1 / tauBase_seconds */
-static inline accum32_t Phase_L_PuTauOfMicroHenries(uint32_t speedBase_rads, uint16_t microHenries)
+/* τ_base = 1 / ω_base */
+static inline accum32_t Phase_L_PuTauOfMicroHenries(angle_freq_t speedBase, uint16_t microHenries)
 {
-    return l_pu_rads_of_h(Phase_VMaxVolts(), Phase_IMaxAmps(), speedBase_rads, microHenries, 1000000UL);
+    return l_pu_of_h(Phase_VMaxVolts(), Phase_IMaxAmps(), speedBase, microHenries, 1000000UL);
 }
 
 static inline accum32_t Phase_L_PuTickOfMicroHenries(uint32_t fs, uint16_t microHenries)

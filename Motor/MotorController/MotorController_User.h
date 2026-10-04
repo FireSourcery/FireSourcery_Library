@@ -95,13 +95,13 @@ static inline void MotorController_ForceDisableControl(MotorController_T * p_dev
 /******************************************************************************/
 /*
     User Setting Speed/I Limit
-    Physical value in PU: speed_ufract16 of SpeedTypeMax, i_ufract16 of I_TYPE_MAX.
+    Physical value in PU: speed_pu of SpeedTypeMax, i_pu of I_TYPE_MAX.
     Writes each motor's single value channel — user/OptDin/protocol overwrite the same channel.
 */
 /******************************************************************************/
-static inline void MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t speed_ufract16) { Motor_Table_SetSpeedLimit(&p_dev->MOTORS, speed_ufract16); }
+static inline void MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t speed_pu) { Motor_Table_SetSpeedLimit(&p_dev->MOTORS, speed_pu); }
 static inline void MotorController_ClearUserSpeedLimitAll(MotorController_T * p_dev) { Motor_Table_ResetSpeedLimit(&p_dev->MOTORS); }
-static inline void MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t i_ufract16) { Motor_Table_SetILimit(&p_dev->MOTORS, i_ufract16); }
+static inline void MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t i_pu) { Motor_Table_SetILimit(&p_dev->MOTORS, i_pu); }
 static inline void MotorController_ClearUserILimitAll(MotorController_T * p_dev) { Motor_Table_ResetILimit(&p_dev->MOTORS); }
 
 

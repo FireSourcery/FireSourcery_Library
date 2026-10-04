@@ -166,10 +166,10 @@ static inline bool Motor_Table_IsAnyState(Motor_Table_T * p_table, State_T * p_s
 /*
     Limit broadcast. Derate: shared system arbitration result. Value: common physical cap written to each motor's channel.
 */
-static inline void Motor_Table_SetSpeedLimitDerate(Motor_Table_T * p_table, uint16_t scalar_ufract16) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimitDerate(p_table->P_DEVS[iMotor].P_MOTOR, scalar_ufract16); } }
-static inline void Motor_Table_SetILimitDerate(Motor_Table_T * p_table, uint16_t scalar_ufract16) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimitDerate(p_table->P_DEVS[iMotor].P_MOTOR, scalar_ufract16); } }
-static inline void Motor_Table_SetSpeedLimit(Motor_Table_T * p_table, uint16_t speed_ufract16) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimit(p_table->P_DEVS[iMotor].P_MOTOR, speed_ufract16); } }
-static inline void Motor_Table_SetILimit(Motor_Table_T * p_table, uint16_t i_ufract16) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimit(p_table->P_DEVS[iMotor].P_MOTOR, i_ufract16); } }
+static inline void Motor_Table_SetSpeedLimitDerate(Motor_Table_T * p_table, uint16_t scalar) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimitDerate(p_table->P_DEVS[iMotor].P_MOTOR, scalar); } }
+static inline void Motor_Table_SetILimitDerate(Motor_Table_T * p_table, uint16_t scalar) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimitDerate(p_table->P_DEVS[iMotor].P_MOTOR, scalar); } }
+static inline void Motor_Table_SetSpeedLimit(Motor_Table_T * p_table, uint16_t speed_pu) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimit(p_table->P_DEVS[iMotor].P_MOTOR, speed_pu); } }
+static inline void Motor_Table_SetILimit(Motor_Table_T * p_table, uint16_t i_pu) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimit(p_table->P_DEVS[iMotor].P_MOTOR, i_pu); } }
 static inline void Motor_Table_ResetSpeedLimit(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ResetSpeedLimit(p_table->P_DEVS[iMotor].P_MOTOR); } }
 static inline void Motor_Table_ResetILimit(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ResetILimit(p_table->P_DEVS[iMotor].P_MOTOR); } }
 
@@ -193,7 +193,7 @@ static inline void Motor_Table_ResetILimit(Motor_Table_T * p_table) { for (uint8
 
 
 
-// static  void Motor_SetSpeedLimitTest(Motor_T * p_motor, int speed_ufract16) { Motor_SetSpeedLimits(p_motor, speed_ufract16, speed_ufract16); }
+// static  void Motor_SetSpeedLimitTest(Motor_T * p_motor, int speed_pu) { Motor_SetSpeedLimits(p_motor, speed_pu, speed_pu); }
 
 // static Motor_Table_T testTable;
 

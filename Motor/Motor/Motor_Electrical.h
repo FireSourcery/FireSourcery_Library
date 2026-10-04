@@ -40,26 +40,24 @@
 
 /******************************************************************************/
 /*
-    Storage as Kv, Derive SpeedTypeMax and SpeedRated
-    store entirely motor side property, whereas SpeedRated is a function of v supply
+    [Motor_KSpeed_T] Speed constant: BEMF speed per volt. Canonical storage, free of rpm, rad/s, and the board base.
+        F(V) = AngleFreqPerVolt · V        [angle16/s], V phase peak
+    Kv and rpm are views at the user boundary.
 */
 /******************************************************************************/
 typedef struct
 {
-    uint8_t  PolePairs;
-    uint16_t Kv;
-    uint16_t VSpeedAdjustment; /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
-    /* alternatively store speedRated_Rpm, with option to resolve with VBus during init. */
+    uint8_t PolePairs;
+    angle_freq_t AngleFreqPerVolt;  /* Electrical [angle16/s per V], phase peak. 1 / ψ */
 }
-Motor_Kv_T;
+Motor_KSpeed_T;
+/* Motor_Rotor_T */
 
-static inline int16_t _Motor_AngleOfRpm(const Motor_Kv_T * p_config, accum32_t speed_rpm) { return el_angle_dt_of_mech_rpm(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_rpm); }
-static inline int16_t _Motor_RpmOfAngle(const Motor_Kv_T * p_config, accum32_t speed_angle16) { return mech_rpm_of_el_angle_dt(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_angle16); }
-
+#define MOTOR_K_SPEED_OF_KV(kv, polePairs) (Motor_KSpeed_T) { .PolePairs = (polePairs), .AngleFreqPerVolt = MOTOR_ANGLE_FREQ_PER_V_OF_KV(kv, polePairs), }
 
 /******************************************************************************/
 /*
-    Numerical Type Max
+
 */
 /******************************************************************************/
 /*
@@ -78,51 +76,35 @@ static inline int16_t _Motor_RpmOfAngle(const Motor_Kv_T * p_config, accum32_t s
 /*
     alteratively pid use separate base 2x vnominal ~10000, ui use angle for invariant ui
 */
+/* BEMF at the speed base [V_base], so ψ_pu at the speed base */
+#define MOTOR_SPEED_BASE_V_PU (FRACT16_SCALE / 2)
+
 /*
     One base, three encodings: AngleFreqBase [angle16/s], AngleDtBase = AngleFreqBase / Fs [angle16/Ts], SpeedBase_Rpm [mechanical]
 */
-static inline uint32_t _Motor_SpeedBase_Rpm(const Motor_Kv_T * p_config) { return (uint32_t)p_config->Kv * Phase_VMaxVolts(); }
-static inline angle_freq_t _Motor_AngleFreqBase(const Motor_Kv_T * p_config) { return angle_freq_of_rpm(_Motor_SpeedBase_Rpm(p_config) * p_config->PolePairs); }
-static inline angle_dt_t _Motor_AngleDtBase(const Motor_Kv_T * p_config) { return angle_dt_of_angle_freq(MOTOR_CONTROL_FREQ, _Motor_AngleFreqBase(p_config)); }
-
-/* Local Unit Conversion */
-static inline accum32_t Motor_Speed_Fract16OfRpm(const Motor_Kv_T * p_config, int16_t speed_rpm) { return speed_rpm * INT16_MAX / (int32_t)_Motor_SpeedBase_Rpm(p_config); }
-static inline int16_t Motor_Speed_RpmOfFract16(const Motor_Kv_T * p_config, accum32_t speed_fract16) { return speed_fract16 * (int32_t)_Motor_SpeedBase_Rpm(p_config) / 32768; }
+static inline angle_freq_t Motor_KSpeed_AngleFreqBase(const Motor_KSpeed_T * p_kSpeed) { return angle_freq_at_v(p_kSpeed->AngleFreqPerVolt, Phase_VMaxVolts(), MOTOR_SPEED_BASE_V_PU); }
+static inline angle_dt_t Motor_KSpeed_AngleDtBase(const Motor_KSpeed_T * p_kSpeed) { return angle_dt_of_angle_freq(MOTOR_CONTROL_FREQ, Motor_KSpeed_AngleFreqBase(p_kSpeed)); }
+static inline uint32_t Motor_KSpeed_SpeedBase_Rpm(const Motor_KSpeed_T * p_kSpeed) { return mech_rpm_of_el_angle_freq(p_kSpeed->PolePairs, Motor_KSpeed_AngleFreqBase(p_kSpeed)); }
 
 /*
-    [V_Fract16 / Speed_Fract16]
+    ψ, L between the tick base and the speed base.
+    Up to the midpoint of the interval x_pu stands for, (x_pu + 1/2) · F_tick / F_base, so Motor_KSpeed_PuOfTick returns x_pu.
 */
-// static inline accum32_t _Motor_GetKe_Fract16(const Motor_Kv_T * p_config) { return ke_pu_rpm_of_kv(Phase_VMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
-// static inline accum32_t _Motor_GetPsi_Fract16(const Motor_Kv_T * p_config) { return psi_pu_rpm_of_kv(Phase_VMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
+static inline uint32_t Motor_KSpeed_PuOfTick(const Motor_KSpeed_T * p_kSpeed, uint32_t x_tick) { return pu_tau_rebase(x_tick, angle_freq_nyquist(MOTOR_CONTROL_FREQ), Motor_KSpeed_AngleFreqBase(p_kSpeed)); }
+static inline uint32_t Motor_KSpeed_TickOfPu(const Motor_KSpeed_T * p_kSpeed, uint32_t x_pu) { return ((uint64_t)x_pu * 2U + 1U) * angle_freq_nyquist(MOTOR_CONTROL_FREQ) / ((uint64_t)Motor_KSpeed_AngleFreqBase(p_kSpeed) * 2U); }
+
+/* Local Unit Conversion */
+static inline accum32_t Motor_Speed_PuOfRpm(const Motor_KSpeed_T * p_kSpeed, int16_t speed_rpm) { return speed_rpm * INT16_MAX / (int32_t)Motor_KSpeed_SpeedBase_Rpm(p_kSpeed); }
+static inline int16_t Motor_Speed_RpmOfPu(const Motor_KSpeed_T * p_kSpeed, accum32_t speed_pu) { return speed_pu * (int32_t)Motor_KSpeed_SpeedBase_Rpm(p_kSpeed) / 32768; }
+// static inline int16_t Motor_Rated_AngleOfRpm(const Motor_Rated_T * p_rated, accum32_t speed_rpm) { return el_angle_dt_of_mech_rpm(MOTOR_CONTROL_FREQ, p_rated->PolePairs, speed_rpm); }
+// static inline int16_t Motor_Rated_RpmOfAngle(const Motor_Rated_T * p_rated, accum32_t speed_angle16) { return mech_rpm_of_el_angle_dt(MOTOR_CONTROL_FREQ, p_rated->PolePairs, speed_angle16); }
+
+/*
+    [V_Pu / Speed_Pu]
+*/
+// static inline accum32_t _Motor_GetKe_Pu(const Motor_Kv_T * p_config) { return ke_pu_rpm_of_kv(Phase_VMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
+// static inline accum32_t _Motor_GetPsi_Pu(const Motor_Kv_T * p_config) { return psi_pu_rpm_of_kv(Phase_VMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 // static inline accum32_t Motor_GetPsi_Angle16(const Motor_Kv_T * p_config) { return psi_pu_angle_of_kv(Phase_VMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
-
-
-// /******************************************************************************/
-// /*
-//     Alternative input shapes.
-//     Each resolves the same speed base as [Motor_Kv_T]: the speed at which ψ_pu = MOTOR_SPEED_BASE_PSI_PU.
-// */
-// /******************************************************************************/
-// #define MOTOR_SPEED_BASE_PSI_PU (FRACT16_SCALE / 2)
-
-// /* Ke in the Kv voltage basis. Ke = 1000 / Kv */
-// typedef struct
-// {
-//     uint8_t  PolePairs;
-//     uint32_t Ke_mVPerKrpm;
-// }
-// Motor_Ke_T;
-
-/* ψ_f phase peak */
-// typedef struct
-// {
-//     uint8_t  PolePairs;
-//     uint32_t Psi_uWb;
-// }
-// Motor_Psi_T;
-
-// static inline uint32_t Motor_Ke_GetSpeedTypeMax_Rpm(const Motor_Ke_T * p_config) { return rpm_of_ke_v(p_config->Ke_mVPerKrpm, Phase_VMaxVolts()); }
-// static inline uint32_t Motor_Psi_GetSpeedTypeMax_Rpm(const Motor_Psi_T * p_config) { return speed_base_rpm_of_psi_wb(Phase_VMaxVolts(), p_config->PolePairs, MOTOR_SPEED_BASE_PSI_PU, p_config->Psi_uWb, 1000000UL); }
 
 
 // typedef struct
@@ -134,19 +116,11 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_Kv_T * p_config, accu
 // Motor_FieldWeakeningTuning_T;
 
 // /* same shape for SI and PU  */
-// /*
-typedef struct
-{
-    uint8_t  PolePairs;
-    uint32_t V_Pu;      /* numerator of Psi */
-    uint32_t AngleDt;   /* denominator of Psi*/
-}
-Motor_Rated_T;
-
 /*
     Canonical Storage
-    Tick base. pu_rebase derives the speed base form.
+    Tick base. pu_tau_rebase derives the speed base form.
 */
+/* Motor_Stator_T */
 typedef struct
 {
     uint32_t Ls; /* speed base: L_pu = L_tick · AngleDtBase / 32768 */
@@ -155,7 +129,7 @@ typedef struct
 }
 Motor_Electrical_T;
 
-// static inline accum32_t _Motor_Psi_Pu( ) {
+
 /* Ls = (Ld + Lq) / 2, Ldelta = Lq - Ld. PM rotor: Lq >= Ld */
 #define MOTOR_ELECTRICAL_FROM_SI(Fs, V_Base, I_Base, Ld_uH, Lq_uH, Rs_mOhm) (Motor_Electrical_T) \
 { \
@@ -171,73 +145,61 @@ Motor_Electrical_T;
     Id budget bounded by the board FW rating. Iq budget is the remaining component of the rated current vector.
 */
 /******************************************************************************/
-static inline ufract16_t Motor_FieldWeakening_IdLimit(const Motor_FieldWeakeningTuning_T * p_tuning) { return math_min(p_tuning->IfwLimit, Phase_IRatedFw_Fract16()); }
-static inline ufract16_t Motor_FieldWeakening_IqLimit(const Motor_FieldWeakeningTuning_T * p_tuning) { return fract16_vector_component(Motor_FieldWeakening_IdLimit(p_tuning), Phase_IRatedPeak_Fract16()); }
+static inline ufract16_t Motor_FieldWeakening_IdLimit(const FOC_FieldWeakeningTuning_T * p_tuning) { return math_min(p_tuning->IdLimit, Phase_IRatedFw_Pu()); }
+static inline ufract16_t Motor_FieldWeakening_IqLimit(const FOC_FieldWeakeningTuning_T * p_tuning) { return fract16_vector_component(Motor_FieldWeakening_IdLimit(p_tuning), Phase_IRatedPeak_Pu()); }
 
 
 /******************************************************************************/
 /*
     [Motor_Electrical_T]
-    SI storage: Rs [µΩ], Ls, Ldelta [µH], Psi [µWb]
+    Tick base storage. Same shape in SI: Rs [µΩ], Ls, Ldelta [µH]
     Ls = (Ld + Lq) / 2, Ldelta = Lq - Ld. SPM: Ldelta = 0
 */
 /******************************************************************************/
-/* Either shape */
+/* Either shape. Lq from Ld, exact where Ls + Ldelta / 2 truncates twice */
 static inline uint32_t Motor_Electrical_Ld(const Motor_Electrical_T * p_electrical) { return p_electrical->Ls - p_electrical->Ldelta / 2U; }
-static inline uint32_t Motor_Electrical_Lq(const Motor_Electrical_T * p_electrical) { return p_electrical->Ls + p_electrical->Ldelta / 2U; }
+static inline uint32_t Motor_Electrical_Lq(const Motor_Electrical_T * p_electrical) { return Motor_Electrical_Ld(p_electrical) + p_electrical->Ldelta; }
 
 /* PM rotor Lq >= Ld. Ld > Lq clamps to non-salient */
-static inline void Motor_Electrical_SetLdq(Motor_Electrical_T * p_electrical, uint32_t ld, uint32_t lq) { p_electrical->Ls = (ld + lq) / 2U; p_electrical->Ldelta = lq - math_min(ld, lq); }
+static inline Motor_Electrical_T Motor_Electrical_OfLdq(uint32_t ld, uint32_t lq, uint32_t rs) { return (Motor_Electrical_T) { .Ls = (ld + lq) / 2U, .Ldelta = lq - math_min(ld, lq), .Rs = rs, }; }
+static inline void Motor_Electrical_SetLdq(Motor_Electrical_T * p_electrical, uint32_t ld, uint32_t lq) { *p_electrical = Motor_Electrical_OfLdq(ld, lq, p_electrical->Rs); }
 
 /*
-    SI -> PU on the board base [Phase_Board_T] and the speed base.
-    Pure. Re-resolve on a change of either base.
-    Psi 0 is unset, ψ_pu by the speed base definition.
+    SI -> PU on the board base [Phase_Board_T], tick base.
 */
 static inline uint32_t Motor_Electrical_RsPu(const Motor_Electrical_T * p_si) { return rs_pu_of_ohm(Phase_VMaxVolts(), Phase_IMaxAmps(), p_si->Rs, 1000000UL); }
 
-static inline Motor_Electrical_T Motor_Electrical_PuOfSi(const Motor_Electrical_T * p_si, uint32_t speedBase_Rpm, uint8_t polePairs)
+static inline Motor_Electrical_T Motor_Electrical_PuOfSi(const Motor_Electrical_T * p_si)
 {
     return (Motor_Electrical_T)
     {
-        .Ls     = l_pu_rpm_of_uh(Phase_VMaxVolts(), Phase_IMaxAmps(), speedBase_Rpm, polePairs, p_si->Ls),
-        .Ldelta = l_pu_rpm_of_uh(Phase_VMaxVolts(), Phase_IMaxAmps(), speedBase_Rpm, polePairs, p_si->Ldelta),
+        .Ls     = l_pu_tick_of_h(MOTOR_CONTROL_FREQ, Phase_VMaxVolts(), Phase_IMaxAmps(), p_si->Ls, 1000000UL),
+        .Ldelta = l_pu_tick_of_h(MOTOR_CONTROL_FREQ, Phase_VMaxVolts(), Phase_IMaxAmps(), p_si->Ldelta, 1000000UL),
         .Rs     = Motor_Electrical_RsPu(p_si),
-        .Psi    = (p_si->Psi != 0U) ? psi_pu_rpm_of_uwb(Phase_VMaxVolts(), speedBase_Rpm, polePairs, p_si->Psi) : MOTOR_SPEED_BASE_PSI_PU,
     };
 }
 
-/* FOC view, d-q frame */
-static inline FOC_Electrical_T Motor_Electrical_FocOf(const Motor_Electrical_T * p_pu)
+/*
+    FOC view, d-q frame at the speed base [Motor_KSpeed_T].
+    Pure in the current base, no prior base to rebase from.
+*/
+static inline FOC_Electrical_T Motor_Electrical_FocOf(const Motor_Electrical_T * p_pu, const Motor_KSpeed_T * p_kSpeed)
 {
-    return (FOC_Electrical_T) { .Ld = Motor_Electrical_Ld(p_pu), .Lq = Motor_Electrical_Lq(p_pu), .Rs = p_pu->Rs, .Psi = p_pu->Psi, };
+    return (FOC_Electrical_T)
+    {
+        .Ld     = Motor_KSpeed_PuOfTick(p_kSpeed, Motor_Electrical_Ld(p_pu)),
+        .Lq     = Motor_KSpeed_PuOfTick(p_kSpeed, Motor_Electrical_Lq(p_pu)),
+        .Rs     = p_pu->Rs,
+        .Psi    = MOTOR_SPEED_BASE_V_PU,
+    };
+}
+
+/* ψ is 1 / KSpeed, not stored */
+static inline Motor_Electrical_T Motor_Electrical_OfFoc(const FOC_Electrical_T * p_foc, const Motor_KSpeed_T * p_kSpeed)
+{
+    return Motor_Electrical_OfLdq(Motor_KSpeed_TickOfPu(p_kSpeed, p_foc->Ld), Motor_KSpeed_TickOfPu(p_kSpeed, p_foc->Lq), p_foc->Rs);
 }
 
 
 
 
-
-
-
-
-/*
-    Alternative Storage
-
-    resolved speed
-    alternatively store as control domain units angldt, rps <<15 as 1 step from either
-*/
-
-/* separate data object for ui */
-/* si units for per motor base */
-/* optionally resolve reference on device side*/
-// struct Motor_ElectricalBase
-// {
-//     int32_t V ;
-//     int32_t I ;
-//     int32_t W ;
-//     int32_t Psi ;
-//     int32_t Tau ;
-//     int32_t L ;
-//     int32_t R ;
-//     int32_t T ;
-// } Motor_ElectricalBase_T;

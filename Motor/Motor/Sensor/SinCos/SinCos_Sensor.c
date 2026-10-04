@@ -50,8 +50,8 @@ static void SinCos_RotorSensor_CaptureAngle(const SinCos_RotorSensor_T * p_senso
 static void SinCos_RotorSensor_CaptureSpeed(const SinCos_RotorSensor_T * p_sensor)
 {
     RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
-    accum32_t speed = Angle_ResolveSpeed_Fract16(&p_state->AngleSpeed, &p_state->SpeedPuRef);
-    p_state->Speed_Fract16 = (speed + p_state->Speed_Fract16) / 2;
+    accum32_t speed = Angle_ResolveSpeed_Pu(&p_state->AngleSpeed, &p_state->SpeedPuRef);
+    p_state->Speed_Pu = (speed + p_state->Speed_Pu) / 2;
 }
 
 /* Direct-sample sensor: feedback always available once init/calibrated */
@@ -63,7 +63,7 @@ static void SinCos_RotorSensor_ZeroInitial(const SinCos_RotorSensor_T * p_sensor
     SinCos_CaptureAngle(p_sinCosState, SinCos_Analog_GetSin(&p_sensor->ANALOG), SinCos_Analog_GetCos(&p_sensor->ANALOG));
     Angle_SetAngle(&p_sensor->BASE.P_STATE->AngleSpeed, SinCos_GetElectricalAngle(p_sinCosState));
     Angle_StopDelta(&p_sensor->BASE.P_STATE->AngleSpeed);
-    p_sensor->BASE.P_STATE->Speed_Fract16 = 0;
+    p_sensor->BASE.P_STATE->Speed_Pu = 0;
 }
 
 /* Min/Max ADC must form a valid scaling window */

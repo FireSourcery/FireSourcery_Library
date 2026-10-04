@@ -73,7 +73,7 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
 {
     if (!Phase_IsFloat(&p_motor->PHASE))
     {
-        Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Fract32(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
+        Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
     }
 }
 
@@ -87,7 +87,7 @@ static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 // #if defined(MOTOR_PU_BASIS_ANGLE16)
 //     return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
 // #else
-    return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor);
+    return RotorSensor_GetSpeed_Pu(p_motor->p_ActiveSensor);
 // #endif
 }
 /// static inline void Motor_FOC_CaptureVSpeed(Motor_T * p_motor)

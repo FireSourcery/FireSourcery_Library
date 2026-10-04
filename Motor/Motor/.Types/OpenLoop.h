@@ -39,9 +39,9 @@
 
 // typedef struct
 // {
-//     uint16_t SpeedFinal_Fract16;
+//     uint16_t SpeedFinal_Pu;
 //     uint32_t SpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
-//     uint16_t IFinal_Fract16;
+//     uint16_t IFinal_Pu;
 //     uint32_t ITime_Cycles;          /* Time to reach OpenLoopI */
 //     angle16_t SpeedHandover;        /* min ω̂_e in angle16/poll for handover */
 // }

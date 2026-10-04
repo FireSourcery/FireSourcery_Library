@@ -51,9 +51,9 @@ typedef enum MotVar_Sig { SIG_I8, SIG_U8, SIG_I16, SIG_U16, SIG_I32, SIG_U32, _S
 /* This list each entry describes one variable */
 static const VField_T  MOTOR_USER_OUT_VARS[] =
 {
-    [MOTOR_VAR_SPEED]       = { Motor_User_GetSpeed_Fract16, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t, ) },
-    [MOTOR_VAR_I_PHASE]     = { Motor_GetIPhase_Fract16, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t) },
-    [MOTOR_VAR_V_PHASE]     = { Motor_GetVPhase_Fract16, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t) },
+    [MOTOR_VAR_SPEED]       = { Motor_User_GetSpeed_Pu, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t, ) },
+    [MOTOR_VAR_I_PHASE]     = { Motor_GetIPhase_Pu, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t) },
+    [MOTOR_VAR_V_PHASE]     = { Motor_GetVPhase_Pu, NULL, MOTOR_VAR_FIELD_META(Rpm, fract16_t) },
     [MOTOR_VAR_STATE]       = { Motor_GetStateId, NULL, MOTOR_VAR_FIELD_META(Rpm, Motor_StateId_T) },
     [MOTOR_VAR_SUB_STATE]   = { Motor_GetPathId, NULL, MOTOR_VAR_FIELD_META(Rpm, Motor_StateId_T) }
 };
@@ -95,8 +95,8 @@ static const VarGroup_T MOTOR_VAR_GROUPS[] =
     compiler outputs the function name with its index
     $ arm-none-eabi-gcc -E -DEXPORT enum.h | grep @@
 
-    [0] "Motor_User_GetSpeed_Fract16" , "Rpm" , "accum32_t"  dwarf file for
-    [1] "Motor_GetIPhase_Fract16" , "Amps" , "fract16_t" ,
+    [0] "Motor_User_GetSpeed_Pu" , "Rpm" , "accum32_t"  dwarf file for
+    [1] "Motor_GetIPhase_Pu" , "Amps" , "fract16_t" ,
     [2] "Motor_GetStateId", "None" , "Motor_StateId_T" ,
 */
 
@@ -113,7 +113,7 @@ static const VarGroup_T MOTOR_VAR_GROUPS[] =
         original format -> annotation export by dwarf file. materialize enum to encode calling convention, auto through _Generic
             pays through switch on sig enum
 */
-static fract16_t Motor_User_GetSpeed(const Motor_Context_T * p_state) { return p_state->SensorState.Speed_Fract16; }
+static fract16_t Motor_User_GetSpeed(const Motor_Context_T * p_state) { return p_state->SensorState.Speed_Pu; }
 // static fract16_t MotorSpeed_Fract16(const Motor_Context_T * p_state) { return Motor_User_GetSpeed(p_state); }
 static int MotorSpeed(const Motor_Context_T * p_state) { return Motor_User_GetSpeed(p_state); }
 
@@ -148,9 +148,9 @@ int _Motor_Var_UserOut_Get(const Motor_Context_T * p_state, Motor_Var_UserOut_T 
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_SPEED:       value = Motor_User_GetSpeed_Fract16(p_state);           break;
-        case MOTOR_VAR_I_PHASE:     value = Motor_GetIPhase_Fract16(p_state);               break;
-        case MOTOR_VAR_V_PHASE:     value = Motor_GetVPhase_Fract16(p_state);               break;
+        case MOTOR_VAR_SPEED:       value = Motor_User_GetSpeed_Pu(p_state);           break;
+        case MOTOR_VAR_I_PHASE:     value = Motor_GetIPhase_Pu(p_state);               break;
+        case MOTOR_VAR_V_PHASE:     value = Motor_GetVPhase_Pu(p_state);               break;
         case MOTOR_VAR_STATE:       value = Motor_GetStateId(p_state);                      break;
         case MOTOR_VAR_SUB_STATE:   value = Motor_GetPathId(p_state);                       break;
         case MOTOR_VAR_FAULT_FLAGS: value = Motor_GetFaultFlags(p_state).Value;             break;
@@ -209,8 +209,8 @@ VFieldA_T;
 
 static const VFieldA_T VARS[] =
 {
-    VAR_FIELD(Motor_User_GetSpeed_Fract16, NULL, Rpm ),
-    VAR_FIELD(Motor_GetIPhase_Fract16,     NULL, Amps ),
+    VAR_FIELD(Motor_User_GetSpeed_Pu, NULL, Rpm ),
+    VAR_FIELD(Motor_GetIPhase_Pu,     NULL, Amps ),
     VAR_FIELD(Motor_GetStateId,            NULL, None, Motor_StateId_T ), /* this should evaluate to uint8_t */
     VAR_FIELD(Motor_GetPathId,             NULL, None ),
 };
@@ -236,10 +236,10 @@ int _Motor_Var_UserOut_Get(Motor_Context_T * p_state, Motor_Var_UserOut_T varId)
 */
 #define MOTOR_VAR_META_STRUCT(get, set, units, ...)  get, set, units, type, typeof(get)
 
-#define MOTOR_VAR_SPEED_META    MOTOR_VAR_META_STRUCT(Motor_User_GetSpeed_Fract16, NULL, Rpm, )
-// #define MOTOR_VAR_SPEED_META    MOTOR_VAR_META_STRUCT(MOTOR_VAR_SPEED, Motor_User_GetSpeed_Fract16, NULL, Rpm, )
-#define MOTOR_VAR_I_META        MOTOR_VAR_META_STRUCT(Motor_GetIPhase_Fract16, NULL, Rpm, )
-#define MOTOR_VAR_V_META        MOTOR_VAR_META_STRUCT(Motor_GetVPhase_Fract16, NULL, Rpm, )
+#define MOTOR_VAR_SPEED_META    MOTOR_VAR_META_STRUCT(Motor_User_GetSpeed_Pu, NULL, Rpm, )
+// #define MOTOR_VAR_SPEED_META    MOTOR_VAR_META_STRUCT(MOTOR_VAR_SPEED, Motor_User_GetSpeed_Pu, NULL, Rpm, )
+#define MOTOR_VAR_I_META        MOTOR_VAR_META_STRUCT(Motor_GetIPhase_Pu, NULL, Rpm, )
+#define MOTOR_VAR_V_META        MOTOR_VAR_META_STRUCT(Motor_GetVPhase_Pu, NULL, Rpm, )
 
 #define MOTOR_USER_OUT_LIST(X) /* id, units, C type */ \
     X(MOTOR_VAR_SPEED_META)      \
@@ -320,9 +320,9 @@ $ arm-none-eabi-gcc -E -DEXPORT enum.h | grep @@
 #define MOTOR_VAR_DEF(get, set, units, type, ...)
 #endif
 
-MOTOR_VAR_DEF(Motor_User_GetSpeed_Fract16, NULL, Rpm, fract16_t,)
-MOTOR_VAR_DEF(Motor_GetIPhase_Fract16, NULL, Rpm, fract16_t) ,
-MOTOR_VAR_DEF(Motor_GetVPhase_Fract16, NULL, Rpm, fract16_t) ,
+MOTOR_VAR_DEF(Motor_User_GetSpeed_Pu, NULL, Rpm, fract16_t,)
+MOTOR_VAR_DEF(Motor_GetIPhase_Pu, NULL, Rpm, fract16_t) ,
+MOTOR_VAR_DEF(Motor_GetVPhase_Pu, NULL, Rpm, fract16_t) ,
 MOTOR_VAR_DEF(Motor_GetStateId, NULL, Rpm, Motor_StateId_T) ,
 MOTOR_VAR_DEF(Motor_GetPathId, NULL, Rpm, Motor_StateId_T)
 #undef MOTOR_VAR_DEF
@@ -377,8 +377,8 @@ VField_T;
 /* ---- (A) POSITIONAL: the index is row order. Count still matches. -------- */
 static const VField_T VARS[] =
 {
-    VAR_FIELD(Motor_User_GetSpeed_Fract16, NULL, Rpm ),
-    VAR_FIELD(Motor_GetIPhase_Fract16,     NULL, Amps ),
+    VAR_FIELD(Motor_User_GetSpeed_Pu, NULL, Rpm ),
+    VAR_FIELD(Motor_GetIPhase_Pu,     NULL, Amps ),
     VAR_FIELD(Motor_GetStateId,            NULL, None, Motor_StateId_T ),
     VAR_FIELD(Motor_GetPathId,             NULL, None ),
 };
@@ -397,16 +397,16 @@ int32_t Motor_Var_UserOut_Get(const Motor_Context_T * p_motor, Motor_Var_UserOut
 // static const VField_T VARS_DESIGNATED[_MOTOR_VAR_USER_OUT_END] =
 // {
 // #ifndef SWAP
-//     [MOTOR_VAR_SPEED]     = FIELD(Motor_User_GetSpeed_Fract16, NULL, Rpm,  accum32_t),
-//     [MOTOR_VAR_I_PHASE]   = FIELD(Motor_GetIPhase_Fract16,     NULL, Amps, fract16_t),
+//     [MOTOR_VAR_SPEED]     = FIELD(Motor_User_GetSpeed_Pu, NULL, Rpm,  accum32_t),
+//     [MOTOR_VAR_I_PHASE]   = FIELD(Motor_GetIPhase_Pu,     NULL, Amps, fract16_t),
 // #else                                    /* same transposition */
-//     [MOTOR_VAR_I_PHASE]   = FIELD(Motor_GetIPhase_Fract16,     NULL, Amps, fract16_t),
-//     [MOTOR_VAR_SPEED]     = FIELD(Motor_User_GetSpeed_Fract16, NULL, Rpm,  accum32_t),
+//     [MOTOR_VAR_I_PHASE]   = FIELD(Motor_GetIPhase_Pu,     NULL, Amps, fract16_t),
+//     [MOTOR_VAR_SPEED]     = FIELD(Motor_User_GetSpeed_Pu, NULL, Rpm,  accum32_t),
 // #endif
 //     [MOTOR_VAR_STATE]     = FIELD(Motor_GetStateId,            NULL, None, Motor_StateId_T),
 //     [MOTOR_VAR_SUB_STATE] = FIELD(Motor_GetPathId,             NULL, None, state_t),
 // #ifdef DUPLICATE
-//     [MOTOR_VAR_I_PHASE]   = FIELD(Motor_GetIBus_Fract16,       NULL, Amps, fract16_t),
+//     [MOTOR_VAR_I_PHASE]   = FIELD(_Motor_GetIBus_Pu,       NULL, Amps, fract16_t),
 // #endif
 // };
 
@@ -419,8 +419,8 @@ int32_t Motor_Var_UserOut_Get(const Motor_Context_T * p_motor, Motor_Var_UserOut
 #endif
 
 /*          id                  accessor                     units        C type          */
-MOTOR_VAR(MOTOR_VAR_SPEED,    Motor_User_GetSpeed_Fract16,  UNITS_RPM,   fract16_t)
-MOTOR_VAR(MOTOR_VAR_I_PHASE,  Motor_GetIPhase_Fract16,      UNITS_AMPS,  fract16_t)
+MOTOR_VAR(MOTOR_VAR_SPEED,    Motor_User_GetSpeed_Pu,  UNITS_RPM,   fract16_t)
+MOTOR_VAR(MOTOR_VAR_I_PHASE,  Motor_GetIPhase_Pu,      UNITS_AMPS,  fract16_t)
 MOTOR_VAR(MOTOR_VAR_STATE,    Motor_GetStateId,             UNITS_NONE,  Motor_StateId_T)
 MOTOR_VAR(MOTOR_VAR_IS_FAULT, Motor_IsFault,                UNITS_NONE,  bool)
 

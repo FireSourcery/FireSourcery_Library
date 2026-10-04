@@ -60,13 +60,13 @@ static void Calibration_Proc(Motor_T * p_motor)
         switch (p_motor->P_MOTOR->CalibrationStateIndex)
         {
             case 0U:
-                Phase_Align_V(&p_motor->PHASE, PHASE_ID_A, VBus_Inv_Fract32(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
+                Phase_Align_V(&p_motor->PHASE, PHASE_ID_A, VBus_Inv_Pu(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
                 p_motor->P_MOTOR->CalibrationStateIndex = 1U;
                 break;
 
             case 1U:
                 SinCos_CalibrateAngleOffset(p_sinCosState, SinCos_Analog_GetSin(&p_sensor->ANALOG), SinCos_Analog_GetCos(&p_sensor->ANALOG));
-                Phase_Align_V(&p_motor->PHASE, PHASE_ID_INV_C, VBus_Inv_Fract32(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));  /* electrical +120° */
+                Phase_Align_V(&p_motor->PHASE, PHASE_ID_INV_C, VBus_Inv_Pu(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));  /* electrical +120° */
                 p_motor->P_MOTOR->CalibrationStateIndex = 2U;
                 break;
 

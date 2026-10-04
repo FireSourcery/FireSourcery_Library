@@ -130,7 +130,7 @@ static inline accum32_t foc_g_pu_rads(uint32_t polling_freq, uint32_t erads, uin
 
 static inline accum32_t foc_g_pu_of_angle_speed(uint32_t angle_speed_max, uint32_t l_pu)
 {
-    return (uint64_t)angle_speed_max * FRACT16_SCALE * FRACT16_SCALE / (ANGLE16_PER_RADIAN * l_pu);
+    return (uint64_t)angle_speed_max * FRACT16_SCALE * FRACT16_SCALE * ANGLE16_PER_REVOLUTION / ((uint64_t)ANGLE32_PER_RADIAN * l_pu);
 }
 
 

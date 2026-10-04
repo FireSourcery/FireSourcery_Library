@@ -81,7 +81,6 @@ typedef struct ElectricalCalibration
     /* PU base captured at entry — matches the FOC runtime config basis. */
     uint16_t VBase;             /* V_max [V] */
     uint16_t IBase;             /* I_max [A] */
-    angle_freq_t AngleFreqBase; /* ω_base, electrical */
 
     ElectricalCalibraton_Stage_T  Step;              /* ElectricalCalibraton_Stage_T */
     uint32_t CycleCount;        /* cycles within current step */
@@ -128,7 +127,7 @@ static ElectricalCalibration_T * ElectricalCalibrationBuffer(Motor_Context_T * p
     RS_MEASURE    : average Vd / Id at steady state, Rs = Vd/Id
     LD_INJECT     : voltage-mode square wave on Vd, fit first-order tau, Ld = Rs * tau
     LQ_HFI        : HFI sinusoid on Vq with DC Id bias, demodulate Iq, Lq = V_hf / (2*pi*fh*|Iq|)
-    COMMIT        : rebase Ld, Lq from tick to speed base, write Rs, Ld, Lq to FOC Config
+    COMMIT        : write Rs, Ld, Lq at the tick base to Motor Config, resolve the FOC params
     RAMPDOWN      : ramp Id back to zero, exit to parent
 */
 /******************************************************************************/
@@ -243,12 +242,9 @@ static void ProcRampDown(ElectricalCalibration_T * p_params)
     if (p_params->CycleCount >= MOTOR_CONTROL_CYCLES(PARAMID_RAMPDOWN_MS)) { SetNext(p_params, PARAMID_STEP_DONE); }
 }
 
-/* Tick base to the FOC runtime speed base */
-static void CommitResults(ElectricalCalibration_T * p_params, FOC_Electrical_T * p_storage)
+static void CommitResults(ElectricalCalibration_T * p_params, Motor_Electrical_T * p_storage)
 {
-    p_storage->Ld = pu_rebase(p_params->Results.Ld, angle_freq_nyquist(MOTOR_CONTROL_FREQ), p_params->AngleFreqBase);
-    p_storage->Lq = pu_rebase(p_params->Results.Lq, angle_freq_nyquist(MOTOR_CONTROL_FREQ), p_params->AngleFreqBase);
-    p_storage->Rs = p_params->Results.Rs;
+    *p_storage = Motor_Electrical_OfLdq(p_params->Results.Ld, p_params->Results.Lq, p_params->Results.Rs);
     SetNext(p_params, PARAMID_STEP_RAMPDOWN);
 }
 
@@ -290,13 +286,12 @@ static void Electrical_Entry(Motor_T * p_motor)
     /* Capture PU base — identical to the FOC runtime electrical config basis. */
     p_params->VBase         = Phase_VMaxVolts();
     p_params->IBase         = Phase_IMaxAmps();
-    p_params->AngleFreqBase = _Motor_AngleFreqBase(&p_context->Config.SpeedRating);
 
     p_params->IdBias = _Motor_GetIAlign(p_context);
     p_params->HfiFreqHz = PARAMID_HFI_FREQ_HZ;
     p_params->HfiDelta = PARAMID_HFI_PHASE_DELTA;
-    p_params->Vhfi = VBus_Fract16(p_motor->P_VBUS) / 10;
-    p_params->VdStep = VBus_Fract16(p_motor->P_VBUS) / 20;
+    p_params->Vhfi = VBus_Pu(p_motor->P_VBUS) / 10;
+    p_params->VdStep = VBus_Pu(p_motor->P_VBUS) / 20;
     // p_params->VdStep = _Motor_GetVAlign(p_context) / 2;
     // p_params->Vhfi = _Motor_GetVAlign(p_context) / 2;
 }
@@ -309,12 +304,12 @@ static void Electrical_Proc(Motor_T * p_motor)
     switch (p_params->Step)
     {
         case PARAMID_STEP_ALIGN:
-            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
+            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, p_params->IdBias);
             Motor_FOC_ProcAngleAlign(p_motor, 0, p_params->IdBias);
             ProcAlign(p_params);
             break;
         case PARAMID_STEP_RS_MEASURE:
-            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
+            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, p_params->IdBias);
             Motor_FOC_ProcAngleAlign(p_motor, 0, p_params->IdBias);
             ProcRs(p_params, FOC_Vd(&p_context->Foc), FOC_Id(&p_context->Foc));
             break;
@@ -329,10 +324,11 @@ static void Electrical_Proc(Motor_T * p_motor)
             ProcLq(p_params, FOC_Iq(&p_context->Foc));
             break;
         case PARAMID_STEP_COMMIT:
-            CommitResults(p_params, &p_context->Foc.Config.Electrical);
+            CommitResults(p_params, &p_context->Config.Electrical);
+            Motor_ResolveFocParams(p_context);
             break;
         case PARAMID_STEP_RAMPDOWN:
-            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);
+            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, 0);
             Motor_FOC_ProcAngleAlign(p_motor, 0, 0);
             ProcRampDown(p_params);
             break;

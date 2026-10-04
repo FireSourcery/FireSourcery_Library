@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2025 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,13 +24,19 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Hall_RotorSensor.c
+    @file   math_general_float.h
     @author FireSourcery
-    @brief  Hall sensor RotorSensor implementation.
-            PulseTimer_T (edge timing) and AngleCounter_T (count/freq/interp via Angle_T Base) as collaborators.
-            AngleSpeed in RotorSensor_State_T is the final output interface.
+    @brief  float overloads of the [math_general.h] order helpers.
+            Integer callers (ticks, counts, angles) keep the int32_t versions.
 */
 /******************************************************************************/
-// #include "Hall_Sensor.h"
-#include "Math/Angle/Angle.h"
+#include "Math/math_general.h"
+#include <math.h>
 
+static inline float math_absf(float value) { return fabsf(value); }
+
+static inline float math_maxf(float value1, float value2) { return ((value1 > value2) ? value1 : value2); }
+static inline float math_minf(float value1, float value2) { return ((value1 < value2) ? value1 : value2); }
+static inline float math_clampf(float value, float lower, float upper) { return math_minf(math_maxf(value, lower), upper); }
+
+static inline sign_t math_signf(float value) { return (value > 0.0F) - (value < 0.0F); }

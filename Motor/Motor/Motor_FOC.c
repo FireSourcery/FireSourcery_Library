@@ -74,7 +74,7 @@ void _Motor_FOC_ProcTorqueReq(Motor_Context_T * p_context, ufract16_t vbus, frac
 
 void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 {
-    _Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), req);
+    _Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR, VBus_Pu(p_motor->P_VBUS), req);
 }
 
 /* Common state machine call for align */
@@ -89,7 +89,7 @@ void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, ufract16_t vBus, angle
 
 void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idReq)
 {
-    _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), angle, idReq);
+    _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Pu(p_motor->P_VBUS), angle, idReq);
 }
 
 /*
@@ -165,7 +165,7 @@ void Motor_FOC_ProcAngleV(Motor_T * p_motor)
     fract16_t vReq = _Ramp_ProcNextOf(&p_context->TorqueRamp, Ramp_GetTarget(&p_context->TorqueRamp)); /* inner loop clips with VLimit */
     FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
     FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I); /* Still capture I for overcurrent */
-    FOC_ProcVControl(&p_context->Foc, fract16_mul(VBus_Fract16(p_motor->P_VBUS), FRACT16_1_DIV_SQRT3), 0, vReq);
+    FOC_ProcVControl(&p_context->Foc, fract16_mul(VBus_Pu(p_motor->P_VBUS), FRACT16_1_DIV_SQRT3), 0, vReq);
     FOC_ProcInvClarkePark(&p_context->Foc);
 }
 
@@ -247,7 +247,7 @@ void Motor_FOC_StartAlignCmd(Motor_Context_T * p_motor)
 void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), Angle_Value(&p_context->OpenLoopAngle), Ramp_GetTarget(&p_context->TorqueRamp));
+    _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), Angle_Value(&p_context->OpenLoopAngle), Ramp_GetTarget(&p_context->TorqueRamp));
 }
 
 
@@ -268,7 +268,7 @@ void Motor_FOC_StartStartUpAlign(Motor_Context_T * p_motor)
 void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), Angle_Value(&p_context->OpenLoopAngle), _Motor_GetIAlign(p_context));
+    _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), Angle_Value(&p_context->OpenLoopAngle), _Motor_GetIAlign(p_context));
 }
 
 
@@ -293,10 +293,10 @@ void Motor_FOC_StartOpenLoop(Motor_Context_T * p_motor)
 void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Fract16 * p_context->Direction);
-    angle16_t angle = Angle_IntegrateSpeed_Fract16(&p_context->OpenLoopAngle, &p_context->OpenLoopSpeedRef, speed);
-    fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, math_min(p_context->Config.OpenLoopRampIFinal_Fract16, Motor_ILimitMotoring(p_context)) * p_context->Direction);
-    Motor_FOC_AngleControl(p_context, VBus_Fract16(p_motor->P_VBUS), angle, 0, iq);
+    fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Pu * p_context->Direction);
+    angle16_t angle = Angle_IntegrateSpeed_Pu(&p_context->OpenLoopAngle, &p_context->OpenLoopSpeedRef, speed);
+    fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, math_min(p_context->Config.OpenLoopRampIFinal_Pu, Motor_ILimitMotoring(p_context)) * p_context->Direction);
+    Motor_FOC_AngleControl(p_context, VBus_Pu(p_motor->P_VBUS), angle, 0, iq);
 }
 
 // void Motor_FOC_ProcSensorless(Motor_T * p_motor)
@@ -305,7 +305,7 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
 //     FOC_SetTheta(&p_context->Foc, angle);
 //     if (FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I) == true)
 //     {
-//         FOC_ProcIFeedback(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), 0, iq);
+//         FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), 0, iq);
 //     }
 //     // Step
 //     FOC_ProcInvClarkePark(&p_context->Foc);

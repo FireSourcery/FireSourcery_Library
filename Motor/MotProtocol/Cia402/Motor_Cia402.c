@@ -150,7 +150,7 @@ void Motor_Cia402_BuildTxPdo_Sw(Motor_T * p_motor, Cia402_TxPdo_Status_T * p_pdo
 void Motor_Cia402_BuildTxPdo_SwVelocity(Motor_T * p_motor, Cia402_TxPdo_StatusVelocity_T * p_pdo)
 {
     p_pdo->Statusword     = Motor_Cia402_ReadStatus(p_motor);
-    p_pdo->VelocityActual = (int32_t)Motor_User_GetSpeed_Fract16(p_motor->P_MOTOR);
+    p_pdo->VelocityActual = (int32_t)Motor_User_GetSpeed_Pu(p_motor->P_MOTOR);
 }
 
 void Motor_Cia402_BuildTxPdo_SwTorque(Motor_T * p_motor, Cia402_TxPdo_StatusTorque_T * p_pdo)
@@ -289,11 +289,11 @@ OD_Status_T Motor_Cia402_Od_Get(Motor_T * p_motor, const Cia402_Adapter_T * p_ad
         case CIA402_OD_MODES_OF_OPERATION:      *p_value = (int8_t)p_adapter->Input.ActiveMode;                                     break;
         case CIA402_OD_MODES_OF_OPERATION_DISP: *p_value = (int8_t)p_adapter->Input.ActiveMode;                                     break;
         case CIA402_OD_POSITION_ACTUAL:         *p_value = (int32_t)RotorSensor_GetMechanicalAngle(p_motor->P_MOTOR->p_ActiveSensor);    break; /* optional */
-        case CIA402_OD_VELOCITY_ACTUAL:         *p_value = (int32_t)Motor_User_GetSpeed_Fract16(p_motor->P_MOTOR);                       break;
+        case CIA402_OD_VELOCITY_ACTUAL:         *p_value = (int32_t)Motor_User_GetSpeed_Pu(p_motor->P_MOTOR);                       break;
         case CIA402_OD_TARGET_TORQUE:           *p_value = (int16_t)_Motor_GetTorqueSetpoint(p_motor->P_MOTOR);                     break;
         case CIA402_OD_TORQUE_ACTUAL:           *p_value = (int16_t)p_motor->P_MOTOR->Foc.Iq;                                       break;
-        case CIA402_OD_CURRENT_ACTUAL:          *p_value = (int16_t)Motor_GetIPhase_Fract16(p_motor->P_MOTOR);                      break;
-        case CIA402_OD_DC_LINK_VOLTAGE:         *p_value = (int32_t)VBus_Fract16(p_motor->P_VBUS);                                   break;
+        case CIA402_OD_CURRENT_ACTUAL:          *p_value = (int16_t)Motor_GetIPhase_Pu(p_motor->P_MOTOR);                      break;
+        case CIA402_OD_DC_LINK_VOLTAGE:         *p_value = (int32_t)VBus_Pu(p_motor->P_VBUS);                                   break;
         case CIA402_OD_TARGET_VELOCITY:         *p_value = (int32_t)Motor_GetSpeedSetpoint(p_motor->P_MOTOR);                       break;
         case CIA402_OD_QUICK_STOP_DECELERATION: *p_value = (int32_t)p_adapter->Config.QuickStopDecel;                               break;
         case CIA402_OD_SUPPORTED_DRIVE_MODES:   *p_value = (int32_t)MOTOR_CIA402_SUPPORTED_DRIVE_MODES;                             break;
@@ -349,11 +349,11 @@ static int32_t OdGet_Controlword(Motor_T * p, const Motor_Cia402_T * a)        {
 static int32_t OdGet_Statusword (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_Cia402_ReadStatus(p).Word; }
 static int32_t OdGet_Modes      (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return (int8_t)a->Input.ActiveMode; }
 static int32_t OdGet_PosActual  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return RotorSensor_GetMechanicalAngle(p->P_MOTOR->p_ActiveSensor); }
-static int32_t OdGet_VelActual  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_User_GetSpeed_Fract16(p->P_MOTOR); }
+static int32_t OdGet_VelActual  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_User_GetSpeed_Pu(p->P_MOTOR); }
 static int32_t OdGet_TorqueTgt  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return _Motor_GetTorqueSetpoint(p->P_MOTOR); }
 static int32_t OdGet_TorqueAct  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return p->P_MOTOR->Foc.Iq; }
-static int32_t OdGet_CurrentAct (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetIPhase_Fract16(p->P_MOTOR); }
-static int32_t OdGet_VBus       (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return VBus_Fract16(p->P_VBUS); }
+static int32_t OdGet_CurrentAct (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetIPhase_Pu(p->P_MOTOR); }
+static int32_t OdGet_VBus       (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return VBus_Pu(p->P_VBUS); }
 static int32_t OdGet_VelTarget  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetSpeedSetpoint(p->P_MOTOR); }
 static int32_t OdGet_QsDecel    (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return (int32_t)a->Config.QuickStopDecel; }
 static int32_t OdGet_Supported  (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; (void)a; return MOTOR_CIA402_SUPPORTED_DRIVE_MODES; }

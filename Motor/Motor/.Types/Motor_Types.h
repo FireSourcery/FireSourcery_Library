@@ -146,17 +146,17 @@ DTOs
 /* Operating envelope */
 // typedef struct
 // {
-//     uint16_t SpeedLimitForward_Fract16;
-//     uint16_t SpeedLimitReverse_Fract16;
-//     uint16_t ILimitMotoring_Fract16;
-//     uint16_t ILimitGenerating_Fract16;
+//     uint16_t SpeedLimitForward_Pu;
+//     uint16_t SpeedLimitReverse_Pu;
+//     uint16_t ILimitMotoring_Pu;
+//     uint16_t ILimitGenerating_Pu;
 // } Motor_Limits_T;
 
 /* Open-loop / alignment phase */
 // typedef struct
 // {
-//     uint16_t LimitScalar_Fract16;
-//     uint16_t IAlign_Fract16;
-//     uint16_t VAlign_Fract16;
+//     uint16_t LimitScalar;
+//     uint16_t IAlign_Pu;
+//     uint16_t VAlign_Pu;
 // }
 // Motor_OpenLoopAlign_T;

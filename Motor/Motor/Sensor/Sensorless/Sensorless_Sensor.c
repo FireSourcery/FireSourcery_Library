@@ -57,7 +57,7 @@ static void Sensorless_Sensor_CaptureAngle(const Sensorless_Sensor_T * p_sensor)
 static void Sensorless_Sensor_CaptureSpeed(const Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
-    p_rotor->Speed_Fract16 = Angle_ResolveSpeed_Fract16(&p_rotor->AngleSpeed, &p_rotor->SpeedPuRef);
+    p_rotor->Speed_Pu = Angle_ResolveSpeed_Pu(&p_rotor->AngleSpeed, &p_rotor->SpeedPuRef);
 }
 
 static bool Sensorless_Sensor_IsFeedbackAvailable(const Sensorless_Sensor_T * p_sensor)

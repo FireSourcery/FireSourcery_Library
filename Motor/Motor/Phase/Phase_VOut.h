@@ -356,7 +356,7 @@ static inline void Phase_WriteDuty_Thread(Phase_VOut_T * p_phase, uint16_t pwmA,
 extern void Phase_Init(Phase_VOut_T * p_phase);
 
 extern void Phase_Align(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t duty);
-extern void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_accum32, uint16_t v_fract16);
+extern void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_pu, uint16_t v_pu);
 
 extern Phase_Id_T Phase_ReadAlign(Phase_VOut_T * p_phase);
 extern Phase_Id_T Phase_ReadAlignNext(Phase_VOut_T * p_phase);

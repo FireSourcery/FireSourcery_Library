@@ -71,12 +71,14 @@ typedef struct AngleCounter
 }
 AngleCounter_T;
 
+#define ANGLE_COUNTER_ALLOC() (&(AngleCounter_T){})
+
 /* Units conversion */
 typedef struct AngleCounter_Config
 {
     uint16_t CountsPerRevolution;       /* Counter counts per mechanical revolution */
     uint32_t PollingFreq;               /* Polling frequency [Hz] */
-    uint16_t SpeedPuRef_Rpm;            /* Reference speed for Fract16 normalization */
+    angle_freq_t AngleFreqBase;         /* Speed at 1.0 pu [angle16/s] of the counter revolution */
 }
 AngleCounter_Config_T;
 
@@ -179,7 +181,7 @@ static inline void AngleCounter_InitLimits(AngleCounter_T * p_counter, angle16_t
 */
 /******************************************************************************/
 static inline angle16_t AngleCounter_GetAngleDelta(AngleCounter_T * p_counter) { return Angle_Delta(&p_counter->Base); }
-static inline int32_t AngleCounter_GetSpeed_Fract16(AngleCounter_T * p_counter) { return (p_counter->FreqD * (int32_t)p_counter->UnitRef.SpeedFractPerCount >> 15); }
+static inline int32_t AngleCounter_GetSpeed_Pu(AngleCounter_T * p_counter) { return (p_counter->FreqD * (int32_t)p_counter->UnitRef.SpeedFractPerCount >> 15); }
 
 /* FreqD-based RPM/RPS using stored CountsPerRevolution */
 static inline int32_t AngleCounter_GetRpm(const AngleCounter_T * p_counter) { return rpm_of_count_freq(p_counter->UnitRef.CountsPerRevolution, p_counter->FreqD); }
@@ -219,7 +221,7 @@ static inline void AngleCounter_Ref_Init(AngleCounter_Ref_T * p_ref, const Angle
     p_ref->AngleSpeed32PerCount = angle32_speed_per_count(p_config->PollingFreq, p_ref->Angle32PerCount);
     p_ref->CountsPerRevolution = p_config->CountsPerRevolution;
     /* base time freq == 1, runtime (timerFreq / periodTk) */
-    p_ref->SpeedFractPerCount = rpm_accum32_per_count(1, p_config->CountsPerRevolution, p_config->SpeedPuRef_Rpm); /* For FreqD for now, or split */
+    p_ref->SpeedFractPerCount = angle_freq_accum32_per_count(1, p_config->CountsPerRevolution, p_config->AngleFreqBase); /* For FreqD for now, or split */
 }
 
 

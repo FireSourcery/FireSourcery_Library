@@ -107,7 +107,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 */
 static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 {
-    // _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), Phase_AngleOf(id), _Motor_GetIAlign(p_motor->P_MOTOR));
+    // _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Pu(p_motor->P_VBUS), Phase_AngleOf(id), _Motor_GetIAlign(p_motor->P_MOTOR));
     Motor_FOC_ProcAngleAlign(p_motor, Phase_AngleOf(id), _Motor_GetIAlign(p_motor->P_MOTOR));
 }
 

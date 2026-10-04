@@ -90,7 +90,7 @@ extern bool Motor_Calibration_IsElectrical(Motor_T * p_motor);
 
 // typedef enum Motor_Tuning_Channel
 // {
-//     MOTOR_TUNING_CHANNEL_SPEED,     /* Drive SpeedRamp.Target, capture Speed_Fract16 */
+//     MOTOR_TUNING_CHANNEL_SPEED,     /* Drive SpeedRamp.Target, capture Speed_Pu */
 //     MOTOR_TUNING_CHANNEL_IQ,        /* Drive TorqueRamp.Target, capture FOC_Iq */
 // }
 // Motor_Tuning_Channel_T;

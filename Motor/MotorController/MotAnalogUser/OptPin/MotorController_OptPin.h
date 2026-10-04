@@ -39,7 +39,7 @@ static inline void MotorController_CallSpeedLimitPin(MotorController_T * p_dev, 
 {
     switch (edge)
     {
-        case USER_DIN_EDGE_RISING:  MotorController_SetUserSpeedLimitAll(p_dev, p_dev->P_MC->Config.OptDinConfig.SpeedLimit_Fract16); break;
+        case USER_DIN_EDGE_RISING:  MotorController_SetUserSpeedLimitAll(p_dev, p_dev->P_MC->Config.OptDinConfig.SpeedLimit_Pu); break;
         case USER_DIN_EDGE_FALLING: MotorController_ClearUserSpeedLimitAll(p_dev); break;
         default: break;
     };
@@ -49,7 +49,7 @@ static inline void MotorController_CallILimitPin(MotorController_T * p_dev, User
 {
     switch (edge)
     {
-        case USER_DIN_EDGE_RISING:  MotorController_SetUserILimitAll(p_dev, p_dev->P_MC->Config.OptDinConfig.TorqueLimit_Fract16); break;
+        case USER_DIN_EDGE_RISING:  MotorController_SetUserILimitAll(p_dev, p_dev->P_MC->Config.OptDinConfig.TorqueLimit_Pu); break;
         case USER_DIN_EDGE_FALLING: MotorController_ClearUserILimitAll(p_dev); break;
         default: break;
     };

@@ -342,7 +342,7 @@ extern void MotorController_ResetBootDefault(MotorController_Context_T * p_mc);
 
 extern MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorController_T * p_dev);
 
-extern bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);
+extern bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit);
 extern bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id);
-extern bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit_fract16);
+extern bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit);
 extern bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id);

@@ -51,9 +51,9 @@ typedef struct VBus_Config
     // uint16_t VFullPower_V;               /* Full I at/above this. Typically same as VSupplyNominal, but may be raised for headroom. */
 
     /* Derate floor scales — fraction of the respective limit at the ramp's saturated end */
-    uint16_t IDerateUnderVFloor_Fract16;   /* I-limit scale at VLowDerate  (e.g. 0.30). Floor for VBus_IDerate_UnderV ramp */
-    uint16_t IDerateOverVFloor_Fract16;    /* Regen-I scale at VHighDerate (e.g. 0.10). Floor for VBus_IDerate_OverV  ramp (regen) */
-    uint16_t SpeedDerateFloor_Fract16;     /* Speed-limit scale clamp (e.g. 0.70) — back-EMF headroom preserved even at low VBus. Floor for speed derate (back-EMF ceiling) */
+    uint16_t IDerateUnderVFloor;   /* I-limit scale at VLowDerate  (e.g. 0.30). Floor for VBus_IDerate_UnderV ramp */
+    uint16_t IDerateOverVFloor;    /* Regen-I scale at VHighDerate (e.g. 0.10). Floor for VBus_IDerate_OverV  ramp (regen) */
+    uint16_t SpeedDerateFloor;     /* Speed-limit scale clamp (e.g. 0.70) — back-EMF headroom preserved even at low VBus. Floor for speed derate (back-EMF ceiling) */
 
     VMonitor_Config_T MonitorConfig;    /* Nominal, Warn/Fault Low/High, Hysteresis. In runtime units */
 }
@@ -85,9 +85,9 @@ VBus_Config_T;
 #define VBUS_CONFIG_LIION(VNominal, VMax) (VBus_Config_T) \
 {                                                                                                  \
     .VSupplyNominal_V           = (VNominal),                                                    \
-    .IDerateUnderVFloor_Fract16 = FRACT16(0.30F),  /* 30% I-max at ramp bottom */                \
-    .IDerateOverVFloor_Fract16  = FRACT16(0.10F),  /* 10% regen at ramp top */                   \
-    .SpeedDerateFloor_Fract16   = FRACT16(0.70F),  /* speed clamp never below 70% */             \
+    .IDerateUnderVFloor = FRACT16(0.30F),  /* 30% I-max at ramp bottom */                \
+    .IDerateOverVFloor  = FRACT16(0.10F),  /* 10% regen at ramp top */                   \
+    .SpeedDerateFloor   = FRACT16(0.70F),  /* speed clamp never below 70% */             \
     .MonitorConfig              = _VBUS_VMONITOR_CONFIG_LIION(VNominal, VMax)                    \
 }
 
@@ -108,26 +108,26 @@ static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_V
     VMonitor alias
 */
 /******************************************************************************/
-static inline uint16_t VBus_VNominal_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
+static inline uint16_t VBus_VNominal_Pu(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
 
 /*
     - Regen-derate uses [VFullPower:VHighDerate] (OV ramp). Full regen below VFullPower, floor regen above VHighDerate.
     - I-derate uses [VLowDerate:VFullPower] (UV ramp). Full I above VFullPower, floor I below VLowDerate.
 */
-static inline ufract16_t VBus_VFullPower_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
-static inline ufract16_t VBus_VHighDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitHigh; }
-static inline ufract16_t VBus_VLowDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitLow; }
+static inline ufract16_t VBus_VFullPower_Pu(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
+static inline ufract16_t VBus_VHighDerate_Pu(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitHigh; }
+static inline ufract16_t VBus_VLowDerate_Pu(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitLow; }
 
 static inline uint16_t VBus_VSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
 static inline void VBus_SetVSupplyNominal_V(VBus_Config_T * p_vbus, uint16_t vSupplyNominal_V)
 {
     p_vbus->VSupplyNominal_V = math_min(vSupplyNominal_V, Phase_VRated_Volts());
-    p_vbus->MonitorConfig.Nominal = Phase_V_Fract16OfVolts(p_vbus->VSupplyNominal_V);
+    p_vbus->MonitorConfig.Nominal = Phase_V_PuOfVolts(p_vbus->VSupplyNominal_V);
 }
 
 static inline uint16_t VBus_VFullPower_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
-static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitLow); }
-static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitHigh); }
+static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfPu(p_vbus->MonitorConfig.Warning.LimitLow); }
+static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfPu(p_vbus->MonitorConfig.Warning.LimitHigh); }
 
 /******************************************************************************/
 /*!
@@ -137,18 +137,18 @@ static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { ret
 static inline void VBus_Config_Validate(VBus_Config_T * p_config)
 {
     p_config->VSupplyNominal_V           = math_min(p_config->VSupplyNominal_V, Phase_VRated_Volts());
-    p_config->IDerateUnderVFloor_Fract16 = math_min(p_config->IDerateUnderVFloor_Fract16, INT16_MAX);
-    p_config->IDerateOverVFloor_Fract16  = math_min(p_config->IDerateOverVFloor_Fract16,  INT16_MAX);
-    p_config->SpeedDerateFloor_Fract16   = math_min(p_config->SpeedDerateFloor_Fract16,   INT16_MAX);
+    p_config->IDerateUnderVFloor = math_min(p_config->IDerateUnderVFloor, INT16_MAX);
+    p_config->IDerateOverVFloor  = math_min(p_config->IDerateOverVFloor,  INT16_MAX);
+    p_config->SpeedDerateFloor   = math_min(p_config->SpeedDerateFloor,   INT16_MAX);
 }
 
 static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
 {
     return ((p_config->VSupplyNominal_V != 0U)
         && (p_config->VSupplyNominal_V           <= Phase_VRated_Volts())
-        && (p_config->IDerateUnderVFloor_Fract16 <= INT16_MAX)
-        && (p_config->IDerateOverVFloor_Fract16  <= INT16_MAX)
-        && (p_config->SpeedDerateFloor_Fract16   <= INT16_MAX)
+        && (p_config->IDerateUnderVFloor <= INT16_MAX)
+        && (p_config->IDerateOverVFloor  <= INT16_MAX)
+        && (p_config->SpeedDerateFloor   <= INT16_MAX)
         // optionally passthrough
         && (p_config->MonitorConfig.Warning.LimitLow  < p_config->MonitorConfig.Nominal)
         && (p_config->MonitorConfig.Warning.LimitHigh > p_config->MonitorConfig.Nominal)
@@ -178,9 +178,9 @@ static int VBus_ConfigId_Get(const VBus_Config_T * p_config, VBus_ConfigId_T id)
     switch (id)
     {
         case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        value = p_config->VSupplyNominal_V; break;
-        case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    value = p_config->IDerateUnderVFloor_Fract16; break;
-        case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     value = p_config->IDerateOverVFloor_Fract16; break;
-        case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       value = p_config->SpeedDerateFloor_Fract16; break;
+        case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    value = p_config->IDerateUnderVFloor; break;
+        case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     value = p_config->IDerateOverVFloor; break;
+        case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       value = p_config->SpeedDerateFloor; break;
         default: break;
     }
     return value;
@@ -193,9 +193,9 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
     {
         // case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        p_config->VSupplyNominal_V = value; break;
         case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        VBus_Config_Init_LiIon(p_config, value); break; /* re-init whole config to maintain internal consistency of thresholds */
-        case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    p_config->IDerateUnderVFloor_Fract16 = value; break;
-        case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor_Fract16 = value; break;
-        case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor_Fract16 = value; break;
+        case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    p_config->IDerateUnderVFloor = value; break;
+        case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor = value; break;
+        case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor = value; break;
         default: break;
     }
 }

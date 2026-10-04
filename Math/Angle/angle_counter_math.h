@@ -112,6 +112,8 @@ static inline uint32_t rpm_fract16_per_count(uint32_t freq_t, uint32_t cpr, uint
 /* angle_accum_per_count */
 static inline uint32_t accum32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)(FRACT16_SCALE << 15) * freq_t) / cpr; }
 static inline uint32_t rpm_accum32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return accum32_per_count(freq_t * 60U, cpr * max_rpm); }
+/* base [angle16/s] of the counter revolution */
+static inline uint32_t angle_freq_accum32_per_count(uint32_t freq_t, uint32_t cpr, angle_freq_t base) { return ((uint64_t)(FRACT16_SCALE << 15) * ANGLE16_PER_REVOLUTION * freq_t) / ((uint64_t)cpr * base); }
 
 // static inline uint32_t fract32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)FRACT32_SCALE * freq_t) / cpr; }
 // static inline uint32_t rpm_fract32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return fract32_per_count(freq_t * 60U, cpr * max_rpm); }

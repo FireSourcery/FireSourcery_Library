@@ -52,6 +52,7 @@ typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2), √2 vector magnitude. */
 
 typedef int32_t accum32_t;      /*!< Q17.15 [-65536.0, 65535.0] extended integer bits. */
                                 /*!< Q2.30 [-2, 2) scaled fract16_t, [-1, 1) for fast saturated add. */
+typedef uint32_t uaccum32_t;    /*!< Q2.30 [0, 4) extended unsigned fraction bits. Typemarker for hal. */
 
 typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) extended fraction bits. */
 typedef uint16_t uq16_t;        /*!< Q0.16 [0, 1) */ // percent16
@@ -279,16 +280,18 @@ static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
         ANGLE16_PER_RADIAN = 32768 / π                  rad [Q15] → angle16:  rad · ANGLE16_PER_RADIAN >> 15
         FRACT16_PI         = 32768 · π                  angle16 → rad [Q15]:  angle16 · FRACT16_PI >> 15
         ANGLE16_PER_RADIAN · FRACT16_PI = 2^30          π cancels
-    Truncation: 10430 is −3.6e-5, 102943 is −6.9e-6. Derive through FRACT16_PI for the closer value.
+    Truncation: 10430 is −3.6e-5, 102943 is −6.9e-6, 683565275 is −8.4e-10.
+    With an int64 intermediate, ANGLE32_PER_RADIAN · x / 65536 is the closest form.
 */
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / (2 * PI) */
+static const angle32_t ANGLE32_PER_RADIAN = 683565275UL; /* 2^32 / (2 * PI) */
 
 #define ANGLE16_OF_RADIANS(radians) ((angle16_t)((radians) * ANGLE16_PER_REVOLUTION / (2.0F * PI_FLOAT)))
 #define ANGLE16_OF_TURNS(turns) ((angle16_t)((turns) * 65536.0F))
 
 /* from scaled storage */
-static inline angle16_t angle16_of_radians(int32_t rad, int32_t scaling) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) / scaling); }
-static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) >> FRACT16_N_BITS); }
+static inline angle16_t angle16_of_radians(int32_t rad, int32_t scaling) { return (angle16_t)((int64_t)rad * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / scaling); }
+static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)((int64_t)rad * ANGLE32_PER_RADIAN / ((int64_t)ANGLE16_PER_REVOLUTION * FRACT16_SCALE)); }
 
 /*
 

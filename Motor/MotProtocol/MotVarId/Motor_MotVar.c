@@ -106,7 +106,7 @@ int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typ
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              return _Motor_Var_PidTuning_Get(p_motor, varId);
 
         case MOTOR_VAR_TYPE_FOC_OUT:                    return FOC_Var_Get(&p_motor->P_MOTOR->Foc, varId);
-        case MOTOR_VAR_TYPE_FOC_CONFIG:                 return FOC_Config_Get(&p_motor->P_MOTOR->Foc.Config, varId);
+        case MOTOR_VAR_TYPE_FOC_CONFIG:                 return _Motor_Var_FocConfig_Get(p_motor, varId);
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
         /* Read the table entry, not p_ActiveSensor — observer telemetry stays visible while tuning against another selected sensor. */
         case MOTOR_VAR_TYPE_FOC_SENSORLESS:             return FOC_Sensorless_GetVar(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, varId);
@@ -125,7 +125,7 @@ void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T ty
         case MOTOR_VAR_TYPE_PHASE:                      break;
         case MOTOR_VAR_TYPE_PHASE_INPUT:                break;
         case MOTOR_VAR_TYPE_FOC_OUT:                    break;
-        case MOTOR_VAR_TYPE_FOC_CONFIG:                 FOC_Config_Set(&p_motor->P_MOTOR->Foc.Config, varId, varValue);          break;
+        case MOTOR_VAR_TYPE_FOC_CONFIG:                 _Motor_Var_FocConfig_Set(p_motor, varId, varValue);                      break;
         case MOTOR_VAR_TYPE_ROTOR_OUT:                  break;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           break;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR, varId, varValue);              break;

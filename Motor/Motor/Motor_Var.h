@@ -223,6 +223,9 @@ void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_
 int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId);
 void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
 
+int _Motor_Var_FocConfig_Get(Motor_T * p_motor, FOC_ConfigId_T varId);
+void _Motor_Var_FocConfig_Set(Motor_T * p_motor, FOC_ConfigId_T varId, int varValue);
+
 
 /* static */
 extern int Motor_Var_Board_Get(Motor_Var_Board_T varId);

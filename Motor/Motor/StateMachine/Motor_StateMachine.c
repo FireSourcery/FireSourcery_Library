@@ -129,7 +129,7 @@ static State_T * Init_Next(Motor_T * p_motor)
 
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT) /* wait for Speed and Heat sensors */
     {
-        Motor_ValidateConfig(p_motor); /* re-derive FOC Psi from Kv, limit field weakening */
+        Motor_ValidateConfig(p_motor); /* limit VAlign and field weakening, observer gain from the FOC params */
         // if (Phase_Board_IsValid() == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
         if (Motor_IsConfigValid(p_motor) == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; }
 
@@ -246,8 +246,9 @@ const State_T MOTOR_STATE_DEACTIVATED =
 */
 static void Passive_Entry(Motor_T * p_motor)
 {
-    // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_Deactivate(&p_motor->PHASE); } else { Phase_ActivateV0(&p_motor->PHASE); }
-    Phase_Deactivate(&p_motor->PHASE);
+    /* check on transition. duplicate */
+    if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
+    else { Phase_ActivateV0(&p_motor->PHASE); }
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */
  //optionally set backup vspeed
@@ -387,7 +388,7 @@ static void Run_Entry(Motor_T * p_motor)
     if (Phase_ReadVOut(&p_motor->PHASE) == PHASE_VOUT_Z) /* prev state is freewheel */
     {
         /* Vabc maybe 0 on entry, if capture vbemf did not complete */
-        Motor_FOC_MatchVFreewheel(p_context, VBus_Fract16(p_motor->P_VBUS));
+        Motor_FOC_MatchVFreewheel(p_context, VBus_Pu(p_motor->P_VBUS));
         Phase_ActivateT0(&p_motor->PHASE);
     }
     else  /* else previous state is run/intervention */
@@ -811,8 +812,8 @@ const State_T MOTOR_STATE_FAULT =
 
 // static void Ccw_Process(Motor_T * p_motor, state_value_t value)
 // {
-//     // uint16_t iLimitCcw = p_motor->P_MOTOR->ILimitMotoring_Fract16;
-//     // uint16_t iLimitCw = p_motor->P_MOTOR->ILimitGenerating_Fract16;
+//     // uint16_t iLimitCcw = p_motor->P_MOTOR->ILimitMotoring_Pu;
+//     // uint16_t iLimitCw = p_motor->P_MOTOR->ILimitGenerating_Pu;
 // }
 
 // const State_T CCW_STATE =

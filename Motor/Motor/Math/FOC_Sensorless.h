@@ -167,8 +167,8 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     // p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Valpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
     // p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Vbeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
     /* p_foc->Electrical.Rs < FRACT16_MAX */
-    p_obs->SmoIAlpha = smo_i(p_obs->Config.G_pu, p_foc->Config.Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
-    p_obs->SmoIBeta = smo_i(p_obs->Config.G_pu, p_foc->Config.Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
+    p_obs->SmoIAlpha = smo_i(p_obs->Config.G_pu, p_foc->Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
+    p_obs->SmoIBeta = smo_i(p_obs->Config.G_pu, p_foc->Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
 
     /* 2. LPF to extract equivalent control / smooth measurement noise. */
     p_obs->EmfAlpha = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfAlpha, p_obs->SmoZAlpha);

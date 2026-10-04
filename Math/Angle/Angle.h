@@ -54,7 +54,7 @@
 
 /*
     [Angle_T] Pure stateful tracker — 12 bytes, all fields used by all modes.
-    Speed_Fract16 and SpeedPuRef are sibling types composed by the caller.
+    Speed_Pu and SpeedPuRef are sibling types composed by the caller.
 */
 typedef struct Angle
 {

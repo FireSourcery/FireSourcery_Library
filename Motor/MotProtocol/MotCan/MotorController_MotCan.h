@@ -140,10 +140,10 @@ static inline void _BuildTelemetry1(MotorController_T * p_mc, MotCan_Telemetry1_
 
     *p_data = (const MotCan_Telemetry1_T)
     {
-        .Speed = Motor_User_GetSpeed_Fract16(p_motor),
-        .IPhase = Motor_GetIPhase_UFract16(p_motor),
-        .VPhase = Motor_GetVPhase_UFract16(p_motor),
-        .VBus = VBus_Fract16(p_mc->P_VBUS),
+        .Speed = Motor_User_GetSpeed_Pu(p_motor),
+        .IPhase = Motor_GetIPhaseMagnitude_Pu(p_motor),
+        .VPhase = Motor_GetVPhaseMagnitude_Pu(p_motor),
+        .VBus = VBus_Pu(p_mc->P_VBUS),
     };
 }
 

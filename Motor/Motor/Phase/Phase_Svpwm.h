@@ -35,19 +35,19 @@
 #include "Math/Fixed/fract16.h"
 #include "../Math/svpwm_math.h"
 
-static inline void Phase_WriteSvpwm(Phase_VOut_T * p_phase, uint32_t vBusInv_fract32, fract16_t vA, fract16_t vB, fract16_t vC)
+static inline void Phase_WriteSvpwm(Phase_VOut_T * p_phase, uint32_t vBusInv_pu, fract16_t vA, fract16_t vB, fract16_t vC)
 {
-    struct svpwm_abc duty = svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_fract32, vA), svpwm_norm_vbus_inv(vBusInv_fract32, vB), svpwm_norm_vbus_inv(vBusInv_fract32, vC));
+    struct svpwm_abc duty = svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC));
 
     Phase_WriteDuty_Fract16(p_phase, duty.a, duty.b, duty.c);
 }
 
-// void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_fract32, fract16_t v_pu)
+// void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_pu, fract16_t v_pu)
 // {
-//     Phase_Align(p_phase, id, svpwm_norm_vbus_inv(vBusInv_fract32, v_pu));
+//     Phase_Align(p_phase, id, svpwm_norm_vbus_inv(vBusInv_pu, v_pu));
 // }
 
-// static inline void Phase_WriteSvpwm_Vector(Phase_VOut_T * p_phase, uint32_t vBusInv_fract32, Phase_Triplet_T v_abc)
+// static inline void Phase_WriteSvpwm_Vector(Phase_VOut_T * p_phase, uint32_t vBusInv_pu, Phase_Triplet_T v_abc)
 // {
 // }
 

@@ -43,7 +43,7 @@ void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Co
     {
         .CountsPerRevolution = p_encoder->P_STATE->Config.CountsPerRevolution,
         .PollingFreq = p_encoder->POLLING_FREQ,
-        .SpeedPuRef_Rpm = p_encoder->P_STATE->Config.SpeedPerUnitRef_Rpm,
+        .AngleFreqBase = angle_freq_of_rpm(p_encoder->P_STATE->Config.SpeedPerUnitRef_Rpm),
     };
 
     AngleCounter_InitFrom(&p_encoder->P_STATE->AngleCounter, &angleCounterConfig);

@@ -297,7 +297,7 @@
 //         // p_motor->P_MOTOR->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->P_MOTOR->Config.PolePairs;
 //         // p_motor->P_MOTOR->ElectricalAngle += (angleDelta * p_motor->P_MOTOR->Config.PolePairs);
 //         // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
-//         // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, p_motor->P_MOTOR->Config.OpenLoopRampIFinal_Fract16 * 2, 0);
+//         // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, p_motor->P_MOTOR->Config.OpenLoopRampIFinal_Pu * 2, 0);
 //         // Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
 //     // }
 

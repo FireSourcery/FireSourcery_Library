@@ -54,9 +54,9 @@ static inline uint16_t _Phase_VAlignDutyOfRatio(uint16_t ratio) { return (uint32
 
 /* resolved against the live vbus state */
 /* duty = (3/2) · VAlign / VBus  =  (3/4) · VAlign / (VBus/2) */
-// static inline uint16_t _Phase_VDutyOfPu(uint16_t pu, uint32_t vBusInv_accum32) { return math_min( (int32_t)vphase_fract16 * (int32_t)vBusInv_accum32 / FRACT16_SCALE * 3 / 2, FRACT16_MAX); }
+// static inline uint16_t _Phase_VDutyOfPu(uint16_t pu, uint32_t vBusInv_pu) { return math_min( (int32_t)vphase_pu * (int32_t)vBusInv_pu / FRACT16_SCALE * 3 / 2, FRACT16_MAX); }
 /* 3/2 on the inverse holds precision at low VBus; the 64-bit product saturates where the int32 form overflows at VAlign >= 2 VBus */
-static inline uint16_t _Phase_VAlignDutyOfPu(uint16_t pu, uint32_t vBusInv_accum32) { return fract16_sat_positive(accum32_mul(pu, vBusInv_accum32 * 3U / 2U)); }
+static inline uint16_t _Phase_VAlignDutyOfPu(uint16_t pu, uint32_t vBusInv_pu) { return fract16_sat_positive(accum32_mul(pu, vBusInv_pu * 3U / 2U)); }
 
 /*
     Duty only
@@ -68,15 +68,15 @@ void Phase_Align(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t duty)
 }
 
 /* 1 as 1/2 vBus */
-void Phase_Align_VScalar(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t scalar_fract16)
+void Phase_Align_VScalar(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t scalar)
 {
-    Phase_Align(p_phase, id, _Phase_VAlignDutyOfRatio(scalar_fract16));
+    Phase_Align(p_phase, id, _Phase_VAlignDutyOfRatio(scalar));
 }
 
 /* v in the pu base of VBus */
-void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_accum32, uint16_t v_fract16)
+void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_pu, uint16_t v_pu)
 {
-    Phase_Align(p_phase, id, _Phase_VAlignDutyOfPu(v_fract16, vBusInv_accum32));
+    Phase_Align(p_phase, id, _Phase_VAlignDutyOfPu(v_pu, vBusInv_pu));
 }
 
 /*

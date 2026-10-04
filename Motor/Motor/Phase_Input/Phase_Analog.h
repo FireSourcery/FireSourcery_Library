@@ -46,12 +46,12 @@
 */
 #ifndef PHASE_ANALOG_V_MAX_ADCU
 #define PHASE_ANALOG_V_MAX_ADCU (4096U)
-#define PHASE_ANALOG_V_FRACT16_PER_ADCU (1L << 3U)
+#define PHASE_ANALOG_V_PU_PER_ADCU (1L << 3U)
 #endif
 
 #ifndef PHASE_ANALOG_I_MAX_ADCU
 #define PHASE_ANALOG_I_MAX_ADCU (2048U)
-#define PHASE_ANALOG_I_FRACT16_PER_ADCU (1L << 4U)
+#define PHASE_ANALOG_I_PU_PER_ADCU (1L << 4U)
 #endif
 
 #ifndef PHASE_ANALOG_I_POLARITY
@@ -62,8 +62,8 @@
 #endif
 #endif
 
-static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_PER_ADCU; }
-static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_PER_ADCU * PHASE_ANALOG_I_POLARITY); }
+static inline fract16_t Phase_Analog_VPuOf(uint16_t adcu) { return adcu * PHASE_ANALOG_V_PU_PER_ADCU; }
+static inline fract16_t Phase_Analog_IPuOf(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_PU_PER_ADCU * PHASE_ANALOG_I_POLARITY); }
 
 /******************************************************************************/
 /*!
@@ -146,8 +146,8 @@ static void Phase_Analog_Mark(const Phase_Analog_T * p_analog, Phase_Bitmask_T s
 static inline void Phase_Analog_CaptureV(volatile Phase_Input_T * p_phase, Phase_Index_T channel, adc_result_t adcu)
 {
     // assert(adcu <= PHASE_ANALOG_V_MAX_ADCU);
-    Phase_Capture(&p_phase->V, channel, Phase_Analog_VFract16Of(adcu));
-    // Phase_Capture(&p_phase->V, channel, Phase_Analog_VFract16Of(adcu) + p_phase->V.Values[channel] / 2);
+    Phase_Capture(&p_phase->V, channel, Phase_Analog_VPuOf(adcu));
+    // Phase_Capture(&p_phase->V, channel, Phase_Analog_VPuOf(adcu) + p_phase->V.Values[channel] / 2);
 }
 
 static inline void Phase_Analog_CaptureVa(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_Analog_CaptureV(p_phase, PHASE_INDEX_A, adcu); }
@@ -158,7 +158,7 @@ static inline void Phase_Analog_CaptureVc(volatile Phase_Input_T * p_phase, adc_
 static inline void Phase_Analog_CaptureI(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, Phase_Index_T channel, adc_result_t adcu)
 {
     // assert(adcu <= PHASE_ANALOG_I_MAX_ADCU);
-    Phase_Capture(&p_phase->I, channel, Phase_Analog_IFract16Of(p_zeros->Values[channel], adcu));
+    Phase_Capture(&p_phase->I, channel, Phase_Analog_IPuOf(p_zeros->Values[channel], adcu));
 }
 
 static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeros, PHASE_INDEX_A, adcu); }
@@ -172,9 +172,9 @@ static inline Phase_Data_T Phase_Iabc_PuOfAdcu(const Phase_Triplet_T * p_zeros, 
     {
         .Values =
         {
-            .A = Phase_Analog_IFract16Of(p_zeros->Values[PHASE_INDEX_A], a),
-            .B = Phase_Analog_IFract16Of(p_zeros->Values[PHASE_INDEX_B], b),
-            .C = Phase_Analog_IFract16Of(p_zeros->Values[PHASE_INDEX_C], c),
+            .A = Phase_Analog_IPuOf(p_zeros->Values[PHASE_INDEX_A], a),
+            .B = Phase_Analog_IPuOf(p_zeros->Values[PHASE_INDEX_B], b),
+            .C = Phase_Analog_IPuOf(p_zeros->Values[PHASE_INDEX_C], c),
         },
         .Flags.Bits = PHASE_ID_ABC,
     };
@@ -186,9 +186,9 @@ static inline Phase_Data_T Phase_Vabc_PuOfAdcu(adc_result_t a, adc_result_t b, a
     {
         .Values =
         {
-            .A = Phase_Analog_VFract16Of(a),
-            .B = Phase_Analog_VFract16Of(b),
-            .C = Phase_Analog_VFract16Of(c),
+            .A = Phase_Analog_VPuOf(a),
+            .B = Phase_Analog_VPuOf(b),
+            .C = Phase_Analog_VPuOf(c),
         },
         .Flags.Bits = PHASE_ID_ABC,
     };

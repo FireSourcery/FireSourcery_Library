@@ -102,20 +102,6 @@ static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
     .Psi = MOTOR_PSI_PU(Freq_Base, V_Base, (Psi_uWb) * 1.0E-6F), \
 }
 
-static inline void FOC_Electrical_SetPsi_Kv(FOC_Electrical_T * p_electrical, uint32_t vBase, uint32_t rpmBase, uint16_t kv)
-{
-    p_electrical->Psi = psi_pu_rpm_of_kv(vBase, rpmBase, kv);
-}
-
-/* L_pu ∝ ω_base, preserving L [H]. No prior base, no L [H] to preserve. */
-static inline void FOC_Electrical_RebaseL(FOC_Electrical_T * p_electrical, angle_freq_t baseFrom, angle_freq_t baseTo)
-{
-    if (baseFrom != 0)
-    {
-        p_electrical->Ld = pu_rebase(p_electrical->Ld, baseFrom, baseTo);
-        p_electrical->Lq = pu_rebase(p_electrical->Lq, baseFrom, baseTo);
-    }
-}
 
 
 

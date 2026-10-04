@@ -120,7 +120,7 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
     switch (HeatMonitor_Group_PollCollective(&p_dev->HEAT_MOSFETS))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:    MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT);            break;
-        case HEAT_MONITOR_STATUS_WARNING_HIGH:      _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetDerate_Fract16(&p_dev->HEAT_MOSFETS));            break;
+        case HEAT_MONITOR_STATUS_WARNING_HIGH:      _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetDerate(&p_dev->HEAT_MOSFETS));            break;
         case HEAT_MONITOR_STATUS_NORMAL:
             if (Monitor_IsWarningClearing(p_dev->HEAT_MOSFETS.P_STATE)) { _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC); } break;
         default: break;
@@ -219,7 +219,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
-        // VBus_Capture(p_dev->P_VBUS, Phase_Analog_VFract16Of(ADC_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
+        // VBus_Capture(p_dev->P_VBUS, Phase_Analog_VPuOf(ADC_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 

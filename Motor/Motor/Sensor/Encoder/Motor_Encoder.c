@@ -76,7 +76,7 @@ static void ProcHoming(Motor_T * p_motor)
     /* alternatively openloop speed/angle ramp */
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        angle16_t angle = Encoder_GetHomingDelta(GetEncoderState(p_motor)) * p_state->Config.SpeedRating.PolePairs;
+        angle16_t angle = Encoder_GetHomingDelta(GetEncoderState(p_motor)) * p_state->Config.KSpeed.PolePairs;
         Angle_Integrate(&p_state->OpenLoopAngle, angle);
         Motor_FOC_ProcAngleFeedforwardV(p_state, Angle_Value(&p_state->OpenLoopAngle), _Motor_GetVAlign(p_state), 0);
         //Motor_FOC_WriteDuty(p_motor);
@@ -518,7 +518,7 @@ void Motor_Encoder_StartUpChain(Motor_T * p_motor)
 static inline void StartDirection(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
-    Phase_Align_V(&p_motor->PHASE, PHASE_ID_A, VBus_Inv_Fract32(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
+    Phase_Align_V(&p_motor->PHASE, PHASE_ID_A, VBus_Inv_Pu(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
 }
 
 static inline bool ProcDirection(Motor_T * p_motor)
@@ -531,7 +531,7 @@ static inline bool ProcDirection(Motor_T * p_motor)
         {
             case 0U:
                 Encoder_CaptureQuadratureReference(GetEncoder(p_motor));
-                Phase_Align_V(&p_motor->PHASE, PHASE_ID_B, VBus_Inv_Fract32(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
+                Phase_Align_V(&p_motor->PHASE, PHASE_ID_B, VBus_Inv_Pu(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
                 p_motor->P_MOTOR->CalibrationStateIndex = 1U;
                 break;
 

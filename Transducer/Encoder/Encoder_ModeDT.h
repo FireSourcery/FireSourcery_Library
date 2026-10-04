@@ -84,7 +84,7 @@ static inline angle16_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 */
 /******************************************************************************/
 /* Signed with capture reference */
-static inline int32_t Encoder_ModeDT_GetSpeed_PerUnit(Encoder_State_T * p_encoder) { return AngleCounter_GetSpeed_Fract16(&p_encoder->AngleCounter); }
+static inline int32_t Encoder_ModeDT_GetSpeed_PerUnit(Encoder_State_T * p_encoder) { return AngleCounter_GetSpeed_Pu(&p_encoder->AngleCounter); }
 
 
 /******************************************************************************/

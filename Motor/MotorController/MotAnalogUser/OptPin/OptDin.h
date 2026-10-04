@@ -49,9 +49,9 @@ MotorController_OptDinMode_T;
 
 typedef struct OptDin_Config
 {
-    uint16_t       SpeedPreset_Fract16; // unimplemented
-    uint16_t       SpeedLimit_Fract16;  /* Physical PU of SpeedTypeMax. Writes the motor user value channel */
-    uint16_t       TorqueLimit_Fract16; /* Physical PU of I_TYPE_MAX. Writes the motor user value channel */
+    uint16_t       SpeedPreset_Pu; // unimplemented
+    uint16_t       SpeedLimit_Pu;  /* Physical PU of SpeedTypeMax. Writes the motor user value channel */
+    uint16_t       TorqueLimit_Pu; /* Physical PU of I_TYPE_MAX. Writes the motor user value channel */
     uint16_t       SwitchBrakeFloor_Percent16;
 }
 OptDin_Config_T;
@@ -138,9 +138,9 @@ static inline int OptDin_ConfigId_Get(const OptDin_Config_T * p_config, OptDin_C
     int value = 0;
     switch (id)
     {
-        case OPT_DIN_CONFIG_ID_SPEED_PRESET_FRACT16:    value = p_config->SpeedPreset_Fract16; break;
-        case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     value = p_config->SpeedLimit_Fract16;  break;
-        case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    value = p_config->TorqueLimit_Fract16; break;
+        case OPT_DIN_CONFIG_ID_SPEED_PRESET_FRACT16:    value = p_config->SpeedPreset_Pu; break;
+        case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     value = p_config->SpeedLimit_Pu;  break;
+        case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    value = p_config->TorqueLimit_Pu; break;
         case OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR:     value = p_config->SwitchBrakeFloor_Percent16;   break;
         // case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       value = p_config->AutoParkOnStop;      break;
         default: break;
@@ -152,9 +152,9 @@ static inline void OptDin_ConfigId_Set(OptDin_Config_T * p_config, OptDin_Config
 {
     switch (id)
     {
-        case OPT_DIN_CONFIG_ID_SPEED_PRESET_FRACT16:    p_config->SpeedPreset_Fract16 = value; break;
-        case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     p_config->SpeedLimit_Fract16  = value; break;
-        case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    p_config->TorqueLimit_Fract16 = value; break;
+        case OPT_DIN_CONFIG_ID_SPEED_PRESET_FRACT16:    p_config->SpeedPreset_Pu = value; break;
+        case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     p_config->SpeedLimit_Pu  = value; break;
+        case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    p_config->TorqueLimit_Pu = value; break;
         case OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR:     p_config->SwitchBrakeFloor_Percent16   = value; break;
         // case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       p_config->AutoParkOnStop      = value; break;
         default: break;
