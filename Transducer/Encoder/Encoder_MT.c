@@ -37,14 +37,8 @@
 */
 void Encoder_MT_InitUnits(const Encoder_T * p_encoder)
 {
-    AngleCounter_Config_T angleCounterConfig =
-    {
-        .CountsPerRevolution = p_encoder->P_STATE->Config.CountsPerRevolution,
-        .PollingFreq = p_encoder->POLLING_FREQ,
-        .AngleFreqBase = p_encoder->P_STATE->Config.AngleFreqBase,
-    };
-
-    AngleCounter_InitFrom(&p_encoder->P_STATE->AngleCounter, &angleCounterConfig);
+    AngleCounter_InitFrom(&p_encoder->P_STATE->AngleCounter,
+                          AngleCounter_Ref(p_encoder->POLLING_FREQ, p_encoder->P_STATE->Config.CountsPerRevolution, p_encoder->P_STATE->Config.AngleFreqBase));
 }
 
 /*

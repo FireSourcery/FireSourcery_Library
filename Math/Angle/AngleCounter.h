@@ -73,16 +73,6 @@ AngleCounter_T;
 
 #define ANGLE_COUNTER_ALLOC() (&(AngleCounter_T){})
 
-//todounify
-/* Units conversion */
-typedef struct AngleCounter_Config
-{
-    uint16_t CountsPerRevolution;       /* Counter counts per mechanical revolution */
-    uint32_t PollingFreq;               /* Polling frequency [Hz] */
-    angle_freq_t AngleFreqBase;         /* Speed at 1.0 pu [angle16/s] of the counter revolution */
-}
-AngleCounter_Config_T;
-
 
 static inline Angle_T * AngleCounter_Angle(AngleCounter_T * p_counter) { return &p_counter->Base; }
 
@@ -203,6 +193,7 @@ static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { 
 /******************************************************************************/
 /*
     Counter Ref Init - Compute runtime units from calibration
+    The caller owns the inputs and builds the complete Ref. No Config: nothing here is persisted.
 */
 /******************************************************************************/
 /* sample_freq 1: FreqD is per second, runtime (timerFreq / periodTk) */
@@ -217,17 +208,12 @@ static inline AngleCounter_Ref_T AngleCounter_Ref(uint32_t pollingFreq, uint16_t
     };
 }
 
-static inline void AngleCounter_Ref_Init(AngleCounter_Ref_T * p_ref, const AngleCounter_Config_T * p_config)
+static inline void AngleCounter_InitFrom(AngleCounter_T * p_counter, AngleCounter_Ref_T unitRef)
 {
-    *p_ref = AngleCounter_Ref(p_config->PollingFreq, p_config->CountsPerRevolution, p_config->AngleFreqBase);
+    p_counter->UnitRef = unitRef;
+    AngleCounter_ZeroCount(p_counter);
 }
 
-
-static inline void AngleCounter_InitFrom(AngleCounter_T * p_angle, const AngleCounter_Config_T * p_config)
-{
-    AngleCounter_Ref_Init(&p_angle->UnitRef, p_config);
-    AngleCounter_ZeroCount(p_angle);
-}
 
 
 

@@ -28,7 +28,6 @@
 */
 /******************************************************************************/
 #include "Motor.h"
-#include "Math/FOC_Ext.h"
 #include "Motor_Config.h"
 #include <string.h>
 
@@ -165,15 +164,6 @@ void Motor_ValidateConfig(Motor_T * p_motor)
 #endif
 }
 
-/*
-    FOC params at the speed base, from [Motor_Electrical_T] at the tick base.
-    Re-resolve on a change of the model or the board base.
-*/
-void Motor_ResolveFocParams(Motor_Context_T * p_motor)
-{
-    p_motor->Foc.Electrical = Motor_Electrical_FocOf(&p_motor->Config.Electrical);
-}
-
 /******************************************************************************/
 /*
 
@@ -187,6 +177,15 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 {
     RotorSensor_UnitRef_T unitRef = RotorSensor_UnitRef(MOTOR_CONTROL_FREQ, p_motor->Config.Electrical.PolePairs, Motor_SpeedBase_AngleFreq(&p_motor->Config.Electrical));
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &unitRef);
+}
+
+/*
+    FOC params at the speed base, from [Motor_Electrical_T] at the tick base.
+    Re-resolve on a change of the model or the board base.
+*/
+void Motor_ResolveFocParams(Motor_Context_T * p_motor)
+{
+    p_motor->Foc.Electrical = Motor_Electrical_FocOf(&p_motor->Config.Electrical);
 }
 
 /******************************************************************************/

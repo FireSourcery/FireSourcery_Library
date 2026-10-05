@@ -264,8 +264,8 @@ static int _HandleVMonitor_Get(MotorController_T * p_dev, MotVarId_T varId)
     {
         case MOT_VAR_TYPE_VBUS_OUT:                         return VBus_VarId_Get(p_dev->P_VBUS, varId.Base);
         case MOT_VAR_TYPE_VBUS_CONFIG:                      return VBus_ConfigId_Get(&p_dev->P_VBUS->Config, varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:             return RangeMonitor_VarId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:            return RangeMonitor_ConfigId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:             return RangeMonitor_VarId_Get(&p_dev->P_VBUS->MonitorState, varId.Base);
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:            return RangeMonitor_ConfigId_Get(&p_dev->P_VBUS->MonitorState.Config, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:          return VBus_BoardId_Get(varId.Base);
 
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return VMonitor_VarId_Get(&p_dev->V_ACCESSORIES, varId.Base);
@@ -284,11 +284,17 @@ static MotVarId_Status_T _HandleVMonitor_Set(MotorController_T * p_dev, MotVarId
     {
         case MOT_VAR_TYPE_VBUS_OUT:                         return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_VBUS_CONFIG:
-            VBus_DisableMonitor(p_dev->P_VBUS); /* ensure monitor is disabled while changing config to prevent bad states */
-            VBus_ConfigId_Set(&p_dev->P_VBUS->Config, varId.Base, value); /* VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V resets limits */
-            VBus_EnableMonitor(p_dev->P_VBUS);
+            VBus_PauseMonitor(p_dev->P_VBUS); /* ensure monitor is paused while changing config to prevent bad states */
+            VBus_Config_Set(p_dev->P_VBUS, varId.Base, value); /* VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V resets limits */
+            VBus_Reinit(p_dev->P_VBUS);
+            VBus_ResumeMonitor(p_dev->P_VBUS);
             break;
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:            RangeMonitor_ConfigId_Set(VBus_Monitor(p_dev->P_VBUS), varId.Base, value); break;
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:
+            VBus_PauseMonitor(p_dev->P_VBUS);
+            RangeMonitor_ConfigId_Set(&p_dev->P_VBUS->MonitorState.Config, varId.Base, value);
+            VBus_Reinit(p_dev->P_VBUS);
+            VBus_ResumeMonitor(p_dev->P_VBUS);
+            break;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:          return MOT_VAR_STATUS_ERROR_READ_ONLY;
 

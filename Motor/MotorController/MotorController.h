@@ -268,6 +268,7 @@ typedef const struct MotorController
     /* Monitor - Detection + response with full context */
     VBus_T * P_VBUS;                    /* DC bus — owns live fract16, derate config, monitor */
     const VBus_Config_T * P_VBUS_NVM_CONFIG;    /* hold vbus config */
+    const VMonitor_Config_T * P_VBUS_MONITOR_NVM_CONFIG;
     ADC_Conversion_T VBUS_CONVERSION;
 
     /* Keep as named rather than an array */

@@ -48,13 +48,11 @@ void RangeMonitor_InitFrom(RangeMonitor_T * p_monitor, const RangeMonitor_Config
     _Monitor_InitFrom(&p_monitor->MonitorHigh, &high);
     _Monitor_InitFrom(&p_monitor->MonitorLow, &low);
 
-    if (Monitor_Config_IsValidAsHigh(&high) == false) { p_monitor->Config.IsEnabled = false; }
-    if (Monitor_Config_IsValidAsLow(&low) == false) { p_monitor->Config.IsEnabled = false; }
-    /* always with both sides. single sided operation use Monitor_T */
-    if (high.IsEnabled == false || low.IsEnabled == false) { p_monitor->Config.IsEnabled = false; }
-
     /* Reset monitor state */
     RangeMonitor_Reset(p_monitor);
+
+    /* Last, Poll resumes on consistent thresholds. Always with both sides */
+    p_monitor->Mode = (high.IsEnabled && low.IsEnabled && Monitor_Config_IsValidAsHigh(&high) && Monitor_Config_IsValidAsLow(&low)) ? RANGE_MONITOR_MODE_ACTIVE : RANGE_MONITOR_MODE_DISABLED;
 }
 
 /*!
@@ -95,15 +93,18 @@ RangeMonitor_Status_T RangeMonitor_Evaluate(RangeMonitor_T * p_monitor, int32_t 
 */
 RangeMonitor_Status_T RangeMonitor_Poll(RangeMonitor_T * p_monitor, int32_t input)
 {
-    if (p_monitor->Config.IsEnabled == true)
+    switch (p_monitor->Mode)
     {
-        p_monitor->LastInput = input;
-        p_monitor->StatusPrev = p_monitor->Status;
-        p_monitor->Status = RangeMonitor_Evaluate(p_monitor, input);
-        return p_monitor->Status;
+        case RANGE_MONITOR_MODE_DISABLED:
+        case RANGE_MONITOR_MODE_PAUSED:
+            return RANGE_MONITOR_STATUS_NORMAL;
+        case RANGE_MONITOR_MODE_ACTIVE:
+            p_monitor->LastInput = input;
+            p_monitor->StatusPrev = p_monitor->Status;
+            p_monitor->Status = RangeMonitor_Evaluate(p_monitor, input);
+            return p_monitor->Status;
+        default: return RANGE_MONITOR_STATUS_NORMAL;
     }
-
-    return RANGE_MONITOR_STATUS_NORMAL;
 }
 
 void RangeMonitor_Reset(RangeMonitor_T * p_monitor)
@@ -154,7 +155,7 @@ void RangeMonitor_Reset(RangeMonitor_T * p_monitor)
     By Id
 */
 /******************************************************************************/
-int32_t _RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId)
+int32_t RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId)
 {
     switch (varId)
     {
@@ -164,7 +165,7 @@ int32_t _RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_V
     }
 }
 
-int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_Config_T * p_config, RangeMonitor_ConfigId_T configId)
+int32_t RangeMonitor_ConfigId_Get(const RangeMonitor_Config_T * p_config, RangeMonitor_ConfigId_T configId)
 {
     switch (configId)
     {
@@ -179,7 +180,7 @@ int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_Config_T * p_config, Range
     }
 }
 
-void _RangeMonitor_ConfigId_Set(RangeMonitor_Config_T * p_config, RangeMonitor_ConfigId_T configId, int32_t value)
+void RangeMonitor_ConfigId_Set(RangeMonitor_Config_T * p_config, RangeMonitor_ConfigId_T configId, int32_t value)
 {
     switch (configId)
     {
@@ -194,8 +195,4 @@ void _RangeMonitor_ConfigId_Set(RangeMonitor_Config_T * p_config, RangeMonitor_C
     }
 }
 
-int RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, int varId) { return (p_monitor != NULL) ? _RangeMonitor_VarId_Get(p_monitor, (RangeMonitor_VarId_T)varId) : 0; }
-
-int RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, int configId) { return (p_monitor != NULL) ? _RangeMonitor_ConfigId_Get(&p_monitor->Config, (RangeMonitor_ConfigId_T)configId) : 0; }
-void RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, int configId, int value) { if (p_monitor != NULL) { _RangeMonitor_ConfigId_Set(&p_monitor->Config, (RangeMonitor_ConfigId_T)configId, value); RangeMonitor_InitFrom(p_monitor, &p_monitor->Config); } }
 

@@ -116,13 +116,7 @@ static bool Hall_RotorSensor_VerifyCalibration(Hall_RotorSensor_T * p_sensor) { 
 */
 static void Hall_RotorSensor_InitUnits_ElSpeed(Hall_RotorSensor_T * p_sensor)
 {
-    AngleCounter_Config_T config =
-    {
-        .CountsPerRevolution = 6U,
-        .PollingFreq = p_sensor->POLLING_FREQ,
-        .AngleFreqBase = p_sensor->BASE.P_STATE->UnitRef.AngleFreqBase,
-    };
-    AngleCounter_InitFrom(p_sensor->P_COUNTER, &config);
+    AngleCounter_InitFrom(p_sensor->P_COUNTER, AngleCounter_Ref(p_sensor->POLLING_FREQ, 6U, p_sensor->BASE.P_STATE->UnitRef.AngleFreqBase));
 }
 
 /*
@@ -147,13 +141,7 @@ static const RotorSensor_VTable_T HALL_VTABLE =
 static void Hall_RotorSensor_InitUnits_MechSpeed(Hall_RotorSensor_T * p_sensor)
 {
     const RotorSensor_UnitRef_T * p_unitRef = &p_sensor->BASE.P_STATE->UnitRef;
-    AngleCounter_Config_T config =
-    {
-        .CountsPerRevolution = 6U * p_unitRef->PolePairs, /* Mechanical CPR for speed/RPM */
-        .PollingFreq = p_sensor->POLLING_FREQ,
-        .AngleFreqBase = p_unitRef->AngleFreqBase / p_unitRef->PolePairs,
-    };
-    AngleCounter_InitFrom(p_sensor->P_COUNTER, &config);
-    /* Override angle delta factor for electrical interpolation: 6 edges per electrical cycle */
-    p_sensor->P_COUNTER->UnitRef.AngleDt32PerCount = angle_dt32_per_count_cpr(p_sensor->POLLING_FREQ, 6U);
+    AngleCounter_Ref_T unitRef = AngleCounter_Ref(p_sensor->POLLING_FREQ, 6U * p_unitRef->PolePairs, p_unitRef->AngleFreqBase / p_unitRef->PolePairs); /* Mechanical CPR for speed/RPM */
+    unitRef.AngleDt32PerCount = angle_dt32_per_count_cpr(p_sensor->POLLING_FREQ, 6U); /* Electrical interpolation: 6 edges per electrical cycle */
+    AngleCounter_InitFrom(p_sensor->P_COUNTER, unitRef);
 }

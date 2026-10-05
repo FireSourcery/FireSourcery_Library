@@ -64,7 +64,9 @@ void MotorController_Init(MotorController_T * p_dev)
     OptDin_ResolveBindings(&p_mc->OptDinState, p_dev->DINS, MOT_USER_DIN_COUNT);
     // OptDin_ResolveCallbacks(p_dev->DINS, MOT_USER_DIN_COUNT);
 
-    VBus_InitFrom(p_dev->P_VBUS, p_dev->P_VBUS_NVM_CONFIG);
+    VBus_InitMonitor(p_dev->P_VBUS, p_dev->P_VBUS_MONITOR_NVM_CONFIG);
+    VBus_InitBase(p_dev->P_VBUS, p_dev->P_VBUS_NVM_CONFIG);
+    VBus_InitLive(p_dev->P_VBUS);
 
     VMonitor_Init(&p_dev->V_ACCESSORIES);
     VMonitor_Init(&p_dev->V_ANALOG);

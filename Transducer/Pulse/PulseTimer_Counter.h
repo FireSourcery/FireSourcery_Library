@@ -65,10 +65,10 @@ static inline void PulseTimer_CaptureFreq(PulseTimer_T * p_timer, AngleCounter_T
     }
 }
 
-static inline void PulseTimer_AngleCounter_Init(PulseTimer_T * p_encoder, AngleCounter_T * p_counter, const AngleCounter_Config_T * p_config)
+static inline void PulseTimer_AngleCounter_Init(PulseTimer_T * p_encoder, AngleCounter_T * p_counter, AngleCounter_Ref_T unitRef)
 {
     PulseTimer_Init(p_encoder);
-    AngleCounter_InitFrom(p_counter, p_config);
+    AngleCounter_InitFrom(p_counter, unitRef);
 }
 
 // static inline void PulseTimer_SetInitial(PulseTimer_T * p_encoder)

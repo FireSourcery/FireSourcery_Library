@@ -187,6 +187,7 @@ static State_T * Init_Next(MotorController_T * p_dev)
 
         if (Phase_Board_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; }
         if (VBus_Config_IsValid(&p_dev->P_VBUS->Config) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
+        if (VBus_MonitorConfig_IsValid(&p_dev->P_VBUS->MonitorState.Config) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
         /* Enforce VMonitor Enable */
         if (VBus_IsEnabled(p_dev->P_VBUS) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
 
@@ -553,9 +554,9 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 break;
 
             case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
-                VBus_DisableMonitor(p_dev->P_VBUS);
+                VBus_PauseMonitor(p_dev->P_VBUS);
                 p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_dev->MOT_NVM); /* NvM function will block + disable interrupts */
-                VBus_EnableMonitor(p_dev->P_VBUS);
+                VBus_ResumeMonitor(p_dev->P_VBUS);
                 Motor_Table_ForEach(&p_dev->MOTORS, Motor_Reinit); /* Reinit from config, which may have been updated by NvM save */
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 break;

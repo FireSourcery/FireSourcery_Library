@@ -148,6 +148,7 @@ static inline Motor_Electrical_T Motor_Electrical_PuOfSi(const Motor_Electrical_
     Pure in the current base, no prior base to rebase from.
 */
 /******************************************************************************/
+// todo this moves to FOC
 static inline FOC_Electrical_T Motor_Electrical_FocOf(const Motor_Electrical_T * p_electrical)
 {
     return (FOC_Electrical_T)

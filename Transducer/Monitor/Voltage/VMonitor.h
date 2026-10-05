@@ -91,8 +91,8 @@ static inline VMonitor_State_T * VMonitor_GetState(const VMonitor_T * p_context)
 /******************************************************************************/
 static inline int VMonitor_VarId_Get(const VMonitor_T * p_context, RangeMonitor_VarId_T id) { return RangeMonitor_VarId_Get(p_context->P_STATE, id); }
 
-static inline int VMonitor_ConfigId_Get(const VMonitor_T * p_context, RangeMonitor_ConfigId_T id) { return RangeMonitor_ConfigId_Get(p_context->P_STATE, id); }
-static inline void VMonitor_ConfigId_Set(const VMonitor_T * p_context, RangeMonitor_ConfigId_T id, int value) { RangeMonitor_ConfigId_Set(p_context->P_STATE, id, value); }
+static inline int VMonitor_ConfigId_Get(const VMonitor_T * p_context, RangeMonitor_ConfigId_T id) { return RangeMonitor_ConfigId_Get(&p_context->P_STATE->Config, id); }
+static inline void VMonitor_ConfigId_Set(const VMonitor_T * p_context, RangeMonitor_ConfigId_T id, int value) { RangeMonitor_ConfigId_Set(&p_context->P_STATE->Config, id, value); RangeMonitor_InitFrom(p_context->P_STATE, NULL); }
 
 static inline int VMonitor_VDivider_ConfigId_Get(const VMonitor_T * p_context, VDivider_ConfigId_T id) { return VDivider_ConfigId_Get(&p_context->VDIVIDER, id); }
 

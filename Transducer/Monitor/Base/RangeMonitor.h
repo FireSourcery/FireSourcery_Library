@@ -77,6 +77,17 @@ typedef struct RangeMonitor_Config
 }
 RangeMonitor_Config_T;
 
+/*
+    Resolved from Config by InitFrom. PAUSED is a runtime hold, Config is not written.
+*/
+typedef enum RangeMonitor_Mode
+{
+    RANGE_MONITOR_MODE_DISABLED,    /* Config.IsEnabled false, or thresholds invalid */
+    RANGE_MONITOR_MODE_PAUSED,      /* Held by the runtime. Resume returns to ACTIVE */
+    RANGE_MONITOR_MODE_ACTIVE,      /* Both sides. Single sided operation use Monitor_T */
+}
+RangeMonitor_Mode_T;
+
 typedef struct RangeMonitor
 {
     Monitor_Base_T MonitorHigh;
@@ -87,6 +98,7 @@ typedef struct RangeMonitor
     RangeMonitor_Status_T Status;        /* Overall status */
     RangeMonitor_Status_T StatusPrev;    /* Previous status for edge detection */
     int32_t LastInput;                   /* Last input value */
+    RangeMonitor_Mode_T Mode;
 
     RangeMonitor_Config_T Config;        /* Hold for runtime update */
 }
@@ -146,10 +158,12 @@ static inline bool RangeMonitor_IsDirectionCrossing(const RangeMonitor_T * p_mon
             (p_monitor->Status != RANGE_MONITOR_STATUS_NORMAL) && (p_monitor->StatusPrev != RANGE_MONITOR_STATUS_NORMAL);
 }
 
-/* On Full context in case implementation changes */
-static inline void RangeMonitor_Enable(RangeMonitor_T * p_monitor) { p_monitor->Config.IsEnabled = true; }
-static inline void RangeMonitor_Disable(RangeMonitor_T * p_monitor) { p_monitor->Config.IsEnabled = false; }
-static inline bool RangeMonitor_IsEnabled(const RangeMonitor_T * p_monitor) { return p_monitor->Config.IsEnabled; }
+/*
+    Mode
+*/
+static inline bool RangeMonitor_IsEnabled(const RangeMonitor_T * p_monitor) { return p_monitor->Mode != RANGE_MONITOR_MODE_DISABLED; }
+static inline void RangeMonitor_Pause(RangeMonitor_T * p_monitor) { if (p_monitor->Mode == RANGE_MONITOR_MODE_ACTIVE) { p_monitor->Mode = RANGE_MONITOR_MODE_PAUSED; } }
+static inline void RangeMonitor_Resume(RangeMonitor_T * p_monitor) { if (p_monitor->Mode == RANGE_MONITOR_MODE_PAUSED) { p_monitor->Mode = RANGE_MONITOR_MODE_ACTIVE; } }
 
 /******************************************************************************/
 /*
@@ -188,7 +202,7 @@ typedef enum RangeMonitor_VarId
 }
 RangeMonitor_VarId_T;
 
-extern int32_t _RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId);
+extern int32_t RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId);
 
 typedef enum RangeMonitor_ConfigId
 {
@@ -202,9 +216,6 @@ typedef enum RangeMonitor_ConfigId
 }
 RangeMonitor_ConfigId_T;
 
-extern int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_Config_T * p_config, RangeMonitor_ConfigId_T configId);
-extern void _RangeMonitor_ConfigId_Set(RangeMonitor_Config_T * p_config, RangeMonitor_ConfigId_T configId, int32_t value);
-
-extern int RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, int varId);
-extern int RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, int configId);
-extern void RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, int configId, int value);
+/* Config only. The holder re-derives with RangeMonitor_InitFrom */
+extern int32_t RangeMonitor_ConfigId_Get(const RangeMonitor_Config_T * p_config, RangeMonitor_ConfigId_T configId);
+extern void RangeMonitor_ConfigId_Set(RangeMonitor_Config_T * p_config, RangeMonitor_ConfigId_T configId, int32_t value);

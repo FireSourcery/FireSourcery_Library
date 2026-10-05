@@ -77,7 +77,7 @@ typedef struct VBus
     int32_t IDerateOverVSlope;      /* ((floor - FRACT16_MAX) << 15) / (FaultOver - WarnHigh), negative, falling */
 
     /* Specialized composition of VMonitor */
-    VMonitor_State_T MonitorState;
+    VMonitor_State_T MonitorState;  /* Holds the monitor partition, MonitorState.Config */
     VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
     /* Caller holds Nvm Address */
 }
@@ -178,10 +178,13 @@ static inline ufract16_t _VBus_IDerateOverVOf(const VBus_T * p_vbus, const VMoni
 }
 
 /* UV rising:  floor + (slope * (vBus - vCutoff) >> 15) */
-static inline ufract16_t VBus_GetIDerateUnderV(const VBus_T * p_vbus) { return _VBus_IDerateUnderVOf(p_vbus, &p_vbus->Config.MonitorConfig); }
+static inline ufract16_t VBus_GetIDerateUnderV(const VBus_T * p_vbus) { return _VBus_IDerateUnderVOf(p_vbus, &p_vbus->MonitorState.Config); }
 
 /* OV falling: FRACT16_MAX - (slope * (vBus - vWarnHigh) >> 15) */
-static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return _VBus_IDerateOverVOf(p_vbus, &p_vbus->Config.MonitorConfig); }
+static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return _VBus_IDerateOverVOf(p_vbus, &p_vbus->MonitorState.Config); }
+
+/* Derived from Config.VSupplyNominal_V by VBus_Reinit */
+static inline uint16_t VBus_VNominal_Pu(const VBus_T * p_vbus) { return p_vbus->MonitorState.Config.Nominal; }
 
 /*
     Speed-limit derate — back-EMF constraint.
@@ -193,7 +196,7 @@ static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return _V
 */
 static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
 {
-    uint16_t vNominal = VBus_VNominal_Pu(&p_vbus->Config);
+    uint16_t vNominal = VBus_VNominal_Pu(p_vbus);
     if (p_vbus->VBus_Pu >= vNominal) { return FRACT16_MAX; }
     return math_clamp(fract16_div(p_vbus->VBus_Pu, vNominal), p_vbus->Config.SpeedDerateFloor, FRACT16_MAX);
     // return math_clamp(fract16_mul(p_vbus->VBus_Pu, p_vbus->PerVNominal_Fract32), p_vbus->Config.SpeedDerateFloor, FRACT16_MAX);
@@ -208,7 +211,7 @@ static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
 /******************************************************************************/
 static inline uint32_t VBus_GetChargeLevel(const VBus_T * p_vbus)
 {
-    return fract16_normalize_sat(p_vbus->Config.MonitorConfig.Fault.LimitLow, p_vbus->Config.MonitorConfig.Warning.LimitHigh, p_vbus->VBus_Pu);
+    return fract16_normalize_sat(p_vbus->MonitorState.Config.Fault.LimitLow, p_vbus->MonitorState.Config.Warning.LimitHigh, p_vbus->VBus_Pu);
 }
 
 
@@ -229,19 +232,47 @@ static inline void VBus_InitLive(VBus_T * p_vbus)
 /* Precompute rising/falling slopes from config thresholds + floor values. Shift=15 is safe for fract16 range (max 32767<<15 = 1.07B < INT32_MAX). */
 static inline void VBus_InitDerateSlopes(VBus_T * p_vbus)
 {
-    int32_t underSpan = (int32_t)p_vbus->Config.MonitorConfig.Warning.LimitLow - p_vbus->Config.MonitorConfig.Fault.LimitLow;
-    int32_t overSpan = (int32_t)p_vbus->Config.MonitorConfig.Fault.LimitHigh - p_vbus->Config.MonitorConfig.Warning.LimitHigh;
+    int32_t underSpan = (int32_t)p_vbus->MonitorState.Config.Warning.LimitLow - p_vbus->MonitorState.Config.Fault.LimitLow;
+    int32_t overSpan = (int32_t)p_vbus->MonitorState.Config.Fault.LimitHigh - p_vbus->MonitorState.Config.Warning.LimitHigh;
     p_vbus->IDerateUnderVSlope = fract16_div((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor, underSpan);
     p_vbus->IDerateOverVSlope = fract16_div((int32_t)p_vbus->Config.IDerateOverVFloor - FRACT16_MAX, overSpan);
 }
 
-static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config)
+/*
+    Re-derive from both held partitions. Live state untouched.
+    Call after writing either partition in place.
+    Monitor last, its mode resolves once the derate slopes are consistent.
+*/
+static inline void VBus_Reinit(VBus_T * p_vbus)
+{
+    p_vbus->MonitorState.Config.Nominal = Phase_V_PuOfVolts(p_vbus->Config.VSupplyNominal_V);
+    VBus_InitDerateSlopes(p_vbus);
+    RangeMonitor_InitFrom(&p_vbus->MonitorState, NULL);
+}
+
+/*
+    Per partition. Monitor partition first at boot: the derate slopes divide by its threshold spans.
+*/
+static inline void VBus_InitMonitor(VBus_T * p_vbus, const VMonitor_Config_T * p_config)
+{
+    if (p_config != NULL) { p_vbus->MonitorState.Config = *p_config; }
+    VBus_Reinit(p_vbus);
+}
+
+static inline void VBus_InitBase(VBus_T * p_vbus, const VBus_Config_T * p_config)
 {
     if (p_config != NULL) { p_vbus->Config = *p_config; }
-    p_vbus->Config.MonitorConfig.Nominal = Phase_V_PuOfVolts(p_vbus->Config.VSupplyNominal_V); /* keep in sync */
-    RangeMonitor_InitFrom(&p_vbus->MonitorState, &p_vbus->Config.MonitorConfig);
-    VBus_InitDerateSlopes(p_vbus);
-    VBus_InitLive(p_vbus);
+    VBus_Reinit(p_vbus);
+}
+
+/*
+    The invariant across both partitions: thresholds anchored to nominal.
+    VSupplyNominal re-anchors the monitor partition with it. Caller re-derives with VBus_Reinit
+*/
+static inline void VBus_Config_Set(VBus_T * p_vbus, VBus_ConfigId_T id, int value)
+{
+    VBus_ConfigId_Set(&p_vbus->Config, id, value);
+    if (id == VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V) { p_vbus->MonitorState.Config = VBus_MonitorConfig_LiIon(p_vbus->Config.VSupplyNominal_V); }
 }
 
 /******************************************************************************/

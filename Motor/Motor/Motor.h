@@ -407,7 +407,7 @@ static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return P
     Speed VBus Ref
     [SpeedRated] at VBusNominal. Speed_pu = VNominal_pu
 */
-static inline uint16_t Motor_GetSpeedVNominalRef_Pu(Motor_T * p_motor) { return VBus_VNominal_Pu(&p_motor->P_VBUS->Config); } /* VBus handles sync V / VPu */
+static inline uint16_t Motor_GetSpeedVNominalRef_Pu(Motor_T * p_motor) { return VBus_VNominal_Pu(p_motor->P_VBUS); } /* VBus handles sync V / VPu */
 static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Speed_RpmOfPu(&Motor_Config(p_motor)->Electrical, Motor_GetSpeedVNominalRef_Pu(p_motor)); }
 // static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return 0; }
 
