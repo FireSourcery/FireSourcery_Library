@@ -24,12 +24,13 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Encoder_ModeDT.h
+    @file   Encoder_MT.h
     @author FireSourcery
-    @brief  Bridge to speed. Mixed Frequency Sampling
+    @brief  Bridge to speed. M/T method, ΔD counts over ΔT timer ticks, mixed frequency sampling
 */
 /******************************************************************************/
 #include "Encoder.h"
+#include "Transducer/Pulse/PulseTimer_Counter.h"
 
 /******************************************************************************/
 /*
@@ -39,23 +40,10 @@
 /******************************************************************************/
 /*
     Capture [FreqD] Pulse Frequency
-    Delegates to AngleCounter_CaptureFreq + PulseTimer_CaptureSampleTk_Freq
 */
-static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
-{
-    if (PulseTimer_IsExtendedStop(&p_encoder->TIMER) == false)
-    {
-        AngleCounter_CaptureFreq(&p_encoder->P_STATE->AngleCounter, PulseTimer_CaptureSampleTk_Freq(&p_encoder->TIMER));
-    }
-    else
-    {
-        p_encoder->P_STATE->AngleCounter.FreqD = 0;
-    }
-    // PulseTimer_CaptureFreq(&p_encoder->TIMER, &p_encoder->P_STATE->AngleCounter);
-}
+static inline void Encoder_MT_CaptureFreqD(Encoder_T * p_encoder) { PulseTimer_CaptureFreq(&p_encoder->TIMER, &p_encoder->P_STATE->AngleCounter); }
 
-
-static inline angle16_t Encoder_ModeDT_ResolveInterpolation(Encoder_T * p_encoder)
+static inline angle16_t Encoder_MT_ResolveInterpolation(Encoder_T * p_encoder)
 {
     return AngleCounter_ResolveAngleDelta(&p_encoder->P_STATE->AngleCounter);
 }
@@ -65,14 +53,14 @@ static inline angle16_t Encoder_ModeDT_ResolveInterpolation(Encoder_T * p_encode
     At POLLING_FREQ
 */
 /******************************************************************************/
-/* Write to a seperate angle or  */
-static inline angle16_t _Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
+/* Write to a separate angle or  */
+static inline angle16_t _Encoder_MT_InterpolateAngle(Encoder_T * p_encoder)
 {
     return Encoder_GetAngle(p_encoder) ;
 }
 
 /* |DeltaD| <= 1 */
-static inline angle16_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
+static inline angle16_t Encoder_MT_InterpolateAngle(Encoder_T * p_encoder)
 {
     // return (math_abs(p_encoder->P_STATE->AngleCounter.FreqD) < p_encoder->POLLING_FREQ / 2U) ?
     return Encoder_GetAngle(p_encoder);
@@ -83,8 +71,8 @@ static inline angle16_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 /*
 */
 /******************************************************************************/
-/* Signed with capture reference */
-static inline int32_t Encoder_ModeDT_GetSpeed_PerUnit(Encoder_State_T * p_encoder) { return AngleCounter_GetSpeed_Pu(&p_encoder->AngleCounter); }
+/* Signed in the calibrated direction, DirectionComp applied */
+static inline int32_t Encoder_MT_GetSpeed_Pu(Encoder_State_T * p_encoder) { return AngleCounter_GetSpeed_Pu(&p_encoder->AngleCounter) * p_encoder->DirectionComp; }
 
 
 /******************************************************************************/
@@ -92,19 +80,19 @@ static inline int32_t Encoder_ModeDT_GetSpeed_PerUnit(Encoder_State_T * p_encode
 
 */
 /******************************************************************************/
-static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder) { return rpm_of_count_freq(p_encoder->Config.CountsPerRevolution, p_encoder->AngleCounter.FreqD); }
+static inline int32_t Encoder_MT_GetRotationalSpeed_Rpm(const Encoder_State_T * p_encoder) { return AngleCounter_GetRpm(&p_encoder->AngleCounter); }
 
 
 /******************************************************************************/
 /*
 */
 /******************************************************************************/
-extern void Encoder_ModeDT_Init(Encoder_T *);
-extern void Encoder_ModeDT_InitValuesFrom(Encoder_T * p_encoder, const Encoder_Config_T * p_config);
-extern void Encoder_ModeDT_Init_Polling(Encoder_T *);
-extern void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T *);
+extern void Encoder_MT_InitUnits(Encoder_T * p_encoder);
+extern void Encoder_MT_InitValuesFrom(Encoder_T * p_encoder, const Encoder_Config_T * p_config);
+extern void Encoder_MT_Init_Polling(Encoder_T *);
+extern void Encoder_MT_Init_InterruptQuadrature(Encoder_T *);
 
-extern void Encoder_ModeDT_SetInitial(Encoder_T *);
+extern void Encoder_MT_SetInitial(Encoder_T *);
 
 
 /******************************************************************************/
@@ -116,7 +104,7 @@ extern void Encoder_ModeDT_SetInitial(Encoder_T *);
     Capture [FreqD] Pulse Frequency
     Call at SAMPLE_FREQ ~1ms
 */
-// static inline void _Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
+// static inline void _Encoder_MT_CaptureFreqD(Encoder_T * p_encoder)
 // {
 //     // const uint32_t sampleFreq = p_encoder->SAMPLE_FREQ; /* periodTs = 1 / SAMPLE_FREQ */
 //     const uint32_t timerFreq = p_encoder->TIMER_FREQ;

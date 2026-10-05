@@ -294,7 +294,7 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Pu * p_context->Direction);
-    angle16_t angle = Angle_IntegrateSpeed_Pu(&p_context->OpenLoopAngle, &p_context->OpenLoopSpeedRef, speed);
+    angle16_t angle = Angle_IntegrateSpeed_Pu(&p_context->OpenLoopAngle, &p_context->SensorState.UnitRef.SpeedPuRef, speed);
     fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, math_min(p_context->Config.OpenLoopRampIFinal_Pu, Motor_ILimitMotoring(p_context)) * p_context->Direction);
     Motor_FOC_AngleControl(p_context, VBus_Pu(p_motor->P_VBUS), angle, 0, iq);
 }

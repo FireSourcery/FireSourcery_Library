@@ -34,11 +34,10 @@
     Empty Instance
 */
 /******************************************************************************/
-static void Empty_InitFrom(const RotorSensor_T * p_sensor, const void * p_config) { (void)p_sensor; (void)p_config; }
-static void Empty_Proc(const RotorSensor_T * p_sensor) { (void)p_sensor; }
-static bool Empty_Test(const RotorSensor_T * p_sensor) { (void)p_sensor; return false; }
-static int Empty_Get(const RotorSensor_T * p_sensor) { (void)p_sensor; return 0; }
-static void Empty_Set(const RotorSensor_T * p_sensor, int value) { (void)p_sensor; (void)value; }
+static void Empty_Proc(RotorSensor_T * p_sensor) { (void)p_sensor; }
+static bool Empty_Test(RotorSensor_T * p_sensor) { (void)p_sensor; return false; }
+static int Empty_Get(RotorSensor_T * p_sensor) { (void)p_sensor; return 0; }
+static void Empty_Set(RotorSensor_T * p_sensor, int value) { (void)p_sensor; (void)value; }
 
 const RotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
 {
@@ -48,6 +47,6 @@ const RotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Empty_Test,
     // .SET_DIRECTION = (RotorSensor_Set_T)Empty_Set,
     .ZERO_INITIAL = (RotorSensor_Proc_T)Empty_Proc,
-    .INIT_UNITS_FROM = (RotorSensor_InitFrom_T)Empty_InitFrom,
+    .INIT_UNITS = (RotorSensor_Proc_T)Empty_Proc,
     .VERIFY_CALIBRATION = (RotorSensor_Test_T)Empty_Test,
 };

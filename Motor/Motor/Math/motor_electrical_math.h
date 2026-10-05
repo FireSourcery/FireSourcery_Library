@@ -136,6 +136,7 @@ static inline uint16_t kv_of_angle_freq(angle_freq_t rate, uint8_t polePairs) { 
 static inline angle_freq_t angle_freq_of_psi_wb(uint32_t psi_Wb, uint32_t scale) { return (uint64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / psi_Wb; }
 static inline uint32_t psi_wb_of_angle_freq(angle_freq_t rate, uint32_t scale) { return (uint64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / rate; }
 
+
 /* Join and split. The rate is F / V; the caller picks V */
 static inline angle_freq_t angle_freq_per_v(angle_freq_t freq, uint16_t v_base_V, ufract16_t v_pu) { return (uint64_t)freq * FRACT16_SCALE / ((uint64_t)v_pu * v_base_V); }
 static inline angle_freq_t angle_freq_at_v(angle_freq_t rate, uint16_t v_base_V, ufract16_t v_pu) { return (uint64_t)rate * v_pu * v_base_V / FRACT16_SCALE; }

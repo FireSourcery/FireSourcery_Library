@@ -138,7 +138,7 @@ Encoder_HomingStatus_T;
 typedef struct Encoder_Config
 {
     uint16_t CountsPerRevolution;           /* Derive Angular Units. */
-    uint32_t SpeedPerUnitRef_Rpm;           /* Derive Fract16 Units. */
+    angle_freq_t AngleFreqBase;             /* Speed at 1.0 pu, of the encoder revolution. Derive pu Units. 0 is unset */
     uint32_t IndexAngleOffset;              /* AngleZ. Commutation offset - d-axis to Z. Calibrated, not user set. */
     uint32_t VirtualHomeOffset;             /* Home offset - Z to application zero. User set, arbitrary. */
     uint16_t ExtendedDeltaTStop;            /* ExtendedTimer time read as deltaT stopped, default as 1s */
@@ -237,7 +237,7 @@ static inline void _Encoder_SetCounterD(Encoder_T * p_encoder, int32_t counterD)
 static inline uint32_t _Encoder_GetAngle32(Encoder_T * p_encoder)
 {
 #if     defined(ENCODER_HW_DECODER)
-    return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->P_STATE->AngleCounter.Ref.Angle32PerCount;
+    return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->P_STATE->AngleCounter.UnitRef.Angle32PerCount;
 #else
     return p_encoder->P_STATE->AngleCounter.Base.Angle;
 #endif
@@ -428,7 +428,7 @@ extern void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder);
 #endif
 
 extern void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t countsPerRevolution);
-extern void Encoder_SetSpeedPerUnitRef(Encoder_State_T * p_encoder, uint16_t speedRef);
+extern void Encoder_SetAngleFreqBase(Encoder_State_T * p_encoder, angle_freq_t speedBase);
 
 /******************************************************************************/
 /*!

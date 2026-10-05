@@ -45,7 +45,7 @@
 // #include "Peripheral/ADC/ADC_Conversion.h"
 // #include "Peripheral/ADC/Linear_ADC.h"
 
-// #include "Transducer/Encoder/Encoder_ModeDT.h"
+// #include "Transducer/Encoder/Encoder_MT.h"
 // #include "Transducer/Encoder/Encoder_ISR.h"
 // #include "Transducer/Monitor/Heat/HeatMonitor.h"
 

@@ -33,24 +33,27 @@
 
 static void Encoder_RotorSensor_Init(const Encoder_RotorSensor_T * p_sensor)
 {
-    Encoder_ModeDT_Init_InterruptQuadrature(&p_sensor->ENCODER);
+    Encoder_MT_Init_InterruptQuadrature(&p_sensor->ENCODER);
     Encoder_EnableQuadratureMode( p_sensor->ENCODER .P_STATE);
 }
 
-
+/*
+    20kHz. Count resolution, no interpolation between counts.
+    Mechanical in the calibrated direction, d-axis frame. Electrical valid when Encoder_IsAligned
+*/
 static void Encoder_RotorSensor_CaptureAngle(const Encoder_RotorSensor_T * p_sensor)
 {
-    // p_state->AngleSpeed.Angle = Encoder_GetAngle(&p_sensor->ENCODER) + Encoder_ModeDT_InterpolateAngle(p_sensor);
-    // p_state->AngleSpeed.Angle = Encoder_ModeDT_InterpolateAngle(p_sensor); to electrical
-
+    p_sensor->BASE.P_STATE->MechanicalAngle = Encoder_GetAngle(&p_sensor->ENCODER) * Encoder_GetDirectionRef(p_sensor->ENCODER.P_STATE);
+    Angle_SetAngle(&p_sensor->BASE.P_STATE->AngleSpeed, _RotorSensor_ElectricalAngleOf(p_sensor->BASE.P_STATE, p_sensor->BASE.P_STATE->MechanicalAngle));
 }
 
 static void Encoder_RotorSensor_CaptureSpeed(const Encoder_RotorSensor_T * p_sensor)
 {
     RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
-    Encoder_ModeDT_CaptureFreqD(&p_sensor->ENCODER);
-    Encoder_ModeDT_ResolveInterpolation(&p_sensor->ENCODER);
-    p_state->Speed_Pu = Encoder_ModeDT_GetSpeed_PerUnit(p_sensor->ENCODER.P_STATE);
+    Encoder_MT_CaptureFreqD(&p_sensor->ENCODER);
+    Encoder_MT_ResolveInterpolation(&p_sensor->ENCODER);
+    p_state->Speed_Pu = Encoder_MT_GetSpeed_Pu(p_sensor->ENCODER.P_STATE);
+    Angle_CaptureSpeed_Pu(&p_state->AngleSpeed, &p_state->UnitRef.SpeedPuRef, p_state->Speed_Pu);
     /* Promote on any index edge, not only during a homing sweep - an ordinary open loop start up reaches Z too */
     Encoder_PollIndexCapture(p_sensor->ENCODER.P_STATE);
 }
@@ -70,7 +73,7 @@ static bool Encoder_RotorSensor_VerifyCalibration(const Encoder_RotorSensor_T * 
 */
 static void Encoder_RotorSensor_ZeroSensor(const Encoder_RotorSensor_T * p_sensor)
 {
-    Encoder_ModeDT_SetInitial(&p_sensor->ENCODER);
+    Encoder_MT_SetInitial(&p_sensor->ENCODER);
 }
 
 /* Commutation needs the electrical datum only - ALIGNED or better */
@@ -82,17 +85,19 @@ static bool Encoder_RotorSensor_IsSensorAvailable(const Encoder_RotorSensor_T * 
 // angle resolution 65536/cpr
 // el angle per tick = 65536/cpr * polepairs
 // counts per electrical revolution = cpr/polepairs
-static void Encoder_RotorSensor_InitFrom(const Encoder_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
+/* The encoder revolution is mechanical: base AngleFreqBase / PolePairs */
+static void Encoder_RotorSensor_InitUnits(const Encoder_RotorSensor_T * p_sensor)
 {
-    p_sensor->ENCODER.P_STATE->Config.SpeedPerUnitRef_Rpm = mech_rpm_of_el_angle_freq(p_config->PolePairs, p_config->AngleFreqBase);
-    Encoder_ModeDT_InitValuesFrom(&p_sensor->ENCODER, &p_sensor->ENCODER.P_STATE->Config);
+    const RotorSensor_UnitRef_T * p_unitRef = &p_sensor->BASE.P_STATE->UnitRef;
+    p_sensor->ENCODER.P_STATE->Config.AngleFreqBase = p_unitRef->AngleFreqBase / p_unitRef->PolePairs;
+    Encoder_MT_InitUnits(&p_sensor->ENCODER);
 }
 
 
 const RotorSensor_VTable_T ENCODER_VTABLE =
 {
     .INIT = (RotorSensor_Proc_T)Encoder_RotorSensor_Init,
-    .INIT_UNITS_FROM = (RotorSensor_InitFrom_T)Encoder_RotorSensor_InitFrom,
+    .INIT_UNITS = (RotorSensor_Proc_T)Encoder_RotorSensor_InitUnits,
     .CAPTURE_ANGLE = (RotorSensor_Proc_T)Encoder_RotorSensor_CaptureAngle,
     .CAPTURE_SPEED = (RotorSensor_Proc_T)Encoder_RotorSensor_CaptureSpeed,
     .VERIFY_CALIBRATION = (RotorSensor_Test_T)Encoder_RotorSensor_VerifyCalibration,

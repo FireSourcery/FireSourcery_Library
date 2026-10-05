@@ -31,7 +31,7 @@
 /******************************************************************************/
 #include "../RotorSensor.h"
 #include "Transducer/Encoder/Encoder.h"
-#include "Transducer/Encoder/Encoder_ModeDT.h"
+#include "Transducer/Encoder/Encoder_MT.h"
 #include "Transducer/Encoder/Encoder_ISR.h"
 
 

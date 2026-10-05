@@ -81,10 +81,10 @@ typedef struct FOC_SensorlessConfig
 
     /* Lock detector. */
     ufract16_t LockEmfMin;  /* |ê| floor below which lock is indeterminate */
-    ufract16_t LockErrTol;  /* |err| tolerance (normalised PLL error) */
+    ufract16_t LockErrTol;  /* |err| tolerance (normalized PLL error) */
     uint16_t   LockHoldCount; /* consecutive cycles within tol+floor for lock */
 
-    /* PLL loop filter — output is ω̂ in angle16/poll units. */
+    /* PLL loop filter — output is ω̂ in angle16/dt units. */
     PID_Config_T PllPid;
 }
 FOC_SensorlessConfig_T;
@@ -92,7 +92,7 @@ FOC_SensorlessConfig_T;
 /*
     Conservative starting point; K_smo and PllPid will need tuning per motor.
     LpfCoef: ~100 Hz at 20 kHz (k_lp = dt/(τ+dt), τ = 1/(2π·100) = 1592 µs, dt = 50 µs).
-    PLL gains: normalised PllErr (fract16 ±1) → ω̂ (angle16/poll). Kp ≈ 0.01, Ki ≈ 0.001.
+    PLL gains: normalized PllErr (fract16 ±1) → ω̂ (angle16/dt). Kp ≈ 0.01, Ki ≈ 0.001.
 */
 #define FOC_SENSORLESS_CONFIG_DEFAULT(VBus, v_max, I, i_max) (FOC_SensorlessConfig_T)     \
 {                                                                                   \
@@ -100,7 +100,7 @@ FOC_SensorlessConfig_T;
     .SmoSat        = (fract16_t)FRACT16(.15F * I / i_max),          /* 15 % of IMax boundary layer */                       \
     .LpfCoef       = 998,                                           /* ~100 Hz LPF at 20 kHz */                             \
     .LockEmfMin    = (ufract16_t)FRACT16(.05F * VBus / v_max),      /* 5 % of VMax */                                        \
-    .LockErrTol    = (ufract16_t)FRACT16(.05F),                     /* 5 % normalised PLL error */                           \
+    .LockErrTol    = (ufract16_t)FRACT16(.05F),                     /* 5 % normalized PLL error */                           \
     .LockHoldCount = 200U,                                          /* 10 ms at 20 kHz */                                   \
     .PllPid =                                                                       \
     {                                                                               \
@@ -129,12 +129,12 @@ typedef struct FOC_Sensorless
     fract16_t EmfAlpha, EmfBeta;
     ufract16_t EmfMag;
 
-    /* Angle tracker (PLL). AngleSpeed.Angle is θ̂; AngleSpeed.Delta is ω̂ (angle16/poll). */
+    /* Angle tracker (PLL). AngleSpeed.Angle is θ̂; AngleSpeed.Delta is ω̂ (angle16/dt). */
     Angle_T AngleSpeed;
     // Angle_SpeedPuRef_T SpeedPuRef;
 
     PID_T PllPid;
-    fract16_t PllErr;                  /* last normalised PLL phase error */
+    fract16_t PllErr;                  /* last normalized PLL phase error */
 
     /* Lock detector. */
     uint16_t LockCount;
@@ -157,7 +157,7 @@ FOC_Sensorless_T;
 /*
     SMO — also updates î and z state in-place. Returns z (raw EMF candidate).
 */
-// , fract16_t i_alpha, fract16_t i_beta
+// const FOC_Electrical_T * p_foc, fract16_t i_alpha, fract16_t i_beta
 static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
 {
     /* 1. Raw ê (or SMO z) from previous v_αβ and current i_αβ + Δi. */
@@ -175,12 +175,12 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     p_obs->EmfBeta = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfBeta, p_obs->SmoZBeta);
     p_obs->EmfMag = fract16_vector_magnitude(p_obs->EmfAlpha, p_obs->EmfBeta);
 
-    /* 3. PLL phase detector — speed-normalised so loop gain is |e|-invariant. */
-    struct fract16_xy uv = Angle_UnitVector(&p_obs->AngleSpeed);  /* {x=cos, y=sin} */
-    p_obs->PllErr = foc_pll_error_normalized(p_obs->Config.LockEmfMin, p_obs->EmfAlpha, p_obs->EmfBeta, uv.y, uv.x);
+    /* 3. PLL phase detector — speed-normalized so loop gain is |e|-invariant. */
+    struct fract16_xy vec = Angle_UnitVector(&p_obs->AngleSpeed);  /* {x=cos, y=sin} */
+    p_obs->PllErr = foc_pll_error_normalized(p_obs->Config.LockEmfMin, p_obs->EmfAlpha, p_obs->EmfBeta, vec.y, vec.x);
     int16_t omega = PID_ProcPI(&p_obs->PllPid, p_obs->PllErr, 0);
 
-    /* 4. PID loop filter → ω̂ in angle16/poll. setpoint=err, feedback=0: PID error = err, output = Kp·err + Ki·∫err. Positive err (θ̂ lags) → +ω̂. */
+    /* 4. PID loop filter → ω̂ in angle16/dt. setpoint=err, feedback=0: PID error = err, output = Kp·err + Ki·∫err. Positive err (θ̂ lags) → +ω̂. */
     // int16_t omega = PID_ProcPI(&p_obs->PllPid, 0, p_obs->PllErr);
 
     /* 5. Integrate ω̂ → θ̂ (free-wrap). */

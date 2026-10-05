@@ -40,6 +40,7 @@ typedef enum MotVar_Sig { SIG_I8, SIG_U8, SIG_I16, SIG_U16, SIG_I32, SIG_U32, _S
 #define MOTOR_VAR_META(type, instances, accessGroup, units, description)  , #type, #instances, #accessGroup, #units, description
 #else                                 /* firmware - vanishes */
 #define MOTOR_VAR_META(type, instances, accessGroup, units, description)
+#define MOTOR_VAR_FIELD_META(...)
 #endif
 
 
@@ -80,8 +81,9 @@ static const VarGroup_T MOTOR_VAR_GROUPS[] =
 // like the static polymorphism pattern, a wider wrapper can unify handling without materializing an enum type id,
 // compiler optimization may strip away the widened wrapper.
 // however the trade off here is losing compiler generated meta data.
-// here widening to a unifrom function signature int32_t get(void*) means deriving return type through manual assignment.
-// runtime mapped indexs, can auto produce both piece, enforce type annotations and materialize type through an enum id,
+// runtime mapped indexs,
+// widening to a unifrom function signature int32_t get(void*) means deriving return type through manual assignment.
+// vs auto produce both piece, enforce type annotations and materialize type through an enum id,
 // but costs a run time switch,
 //      adapter be does not optimize away
 //      VarTableFn_T fn = VARS[varId].GET_VOID;
@@ -161,9 +163,10 @@ int _Motor_Var_UserOut_Get(const Motor_Context_T * p_state, Motor_Var_UserOut_T 
 
 #define VAR_ID_TAG_EXPORT(name, ...)  name
 
+/* tag the enum. same as meta struct */
 typedef enum Motor_Var_UserOut
 {
-    VAR_ID_TAG_EXPORT(MOTOR_VAR_SPEED, RPM, fract16_t, float),    /* User Direction */
+    VAR_ID_TAG_EXPORT(MOTOR_VAR_SPEED, Motor_User_GetSpeed_Pu, sRPM, fract16_t, float),    /* User Direction */
     MOTOR_VAR_I_PHASE,
     MOTOR_VAR_V_PHASE,
     MOTOR_VAR_STATE,
@@ -172,7 +175,7 @@ typedef enum Motor_Var_UserOut
 }
 Motor_Var_UserOut_T;
 
-
+/* Per type adapter doesnt optimize away and costs 2 virtual calls */
 typedef int (*VarGetAdapter_T)(void (*generic)(void), void * p_context);
 typedef void (*VarTableFn_T)(void);
 
@@ -229,7 +232,7 @@ int _Motor_Var_UserOut_Get(Motor_Context_T * p_state, Motor_Var_UserOut_T varId)
 */
 /******************************************************************************/
 /*
-    Un-materialize Meta struct pattern
+    Un-materialized Meta struct pattern
     .def file style with individual def to avoid #undef
 
     same as the prior cases + optional enum def and table def to unify to 1 list.

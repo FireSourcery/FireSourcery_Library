@@ -259,10 +259,9 @@ void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t counts
     // _Encoder_ResetUnits(p_encoder);
 }
 
-void Encoder_SetSpeedPerUnitRef(Encoder_State_T * p_encoder, uint16_t speedRef)
+void Encoder_SetAngleFreqBase(Encoder_State_T * p_encoder, angle_freq_t speedBase)
 {
-    p_encoder->Config.SpeedPerUnitRef_Rpm = speedRef;
-    // Angle_SetSpeedRef_Rpm(&p_encoder->Base, speedRef);
+    p_encoder->Config.AngleFreqBase = speedBase;
 }
 
 /******************************************************************************/
@@ -328,12 +327,6 @@ void Encoder_ConfigId_Set(const Encoder_T * p_encoder, Encoder_ConfigId_T varId,
     // _Encoder_ResetUnits(p_encoder);
 }
 
-/*
-    alternatively move to outer file
-*/
-static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder) { return rpm_of_count_freq(p_encoder->Config.CountsPerRevolution, p_encoder->AngleCounter.FreqD); }
-
-
 /******************************************************************************/
 /*!
 
@@ -346,7 +339,7 @@ int32_t Encoder_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T var
     {
         case ENCODER_VAR_FREQ:                  value = p_encoder->AngleCounter.FreqD;     break;
         case ENCODER_VAR_COUNTER_D:             value = p_encoder->AngleCounter.CounterD;  break;
-        case ENCODER_VAR_RPM:                   value = Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder);     break;
+        case ENCODER_VAR_RPM:                   value = AngleCounter_GetRpm(&p_encoder->AngleCounter);     break;
         // case ENCODER_VAR_DELTA_T_SPEED:      value = Encoder_DeltaT_GetRotationalSpeed_RPM(p_encoder);     break;
         // case ENCODER_VAR_DELTA_D_SPEED:      value = Encoder_DeltaD_GetRotationalSpeed_RPM(p_encoder);     break;
         case ENCODER_VAR_DELTA_T_SPEED:         break; /* not yet implemented */

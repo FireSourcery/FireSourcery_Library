@@ -50,7 +50,7 @@ static void SinCos_RotorSensor_CaptureAngle(const SinCos_RotorSensor_T * p_senso
 static void SinCos_RotorSensor_CaptureSpeed(const SinCos_RotorSensor_T * p_sensor)
 {
     RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
-    accum32_t speed = Angle_ResolveSpeed_Pu(&p_state->AngleSpeed, &p_state->SpeedPuRef);
+    accum32_t speed = Angle_ResolveSpeed_Pu(&p_state->AngleSpeed, &p_state->UnitRef.SpeedPuRef);
     p_state->Speed_Pu = (speed + p_state->Speed_Pu) / 2;
 }
 
@@ -76,16 +76,16 @@ static bool SinCos_RotorSensor_VerifyCalibration(const SinCos_RotorSensor_T * p_
 /*
     Wire mech-domain SpeedRated -> AngleSpeed projection via PolePairs.
 */
-static void SinCos_RotorSensor_InitUnitsFrom(const SinCos_RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
+static void SinCos_RotorSensor_InitUnits(const SinCos_RotorSensor_T * p_sensor)
 {
-    SinCos_Config_SetAngleRatio(p_sensor->SIN_COS.P_STATE, p_config->PolePairs);
+    SinCos_Config_SetAngleRatio(p_sensor->SIN_COS.P_STATE, p_sensor->BASE.P_STATE->UnitRef.PolePairs);
 }
 
 
 const RotorSensor_VTable_T SIN_COS_VTABLE =
 {
     .INIT                  = (RotorSensor_Proc_T)SinCos_RotorSensor_Init,
-    .INIT_UNITS_FROM       = (RotorSensor_InitFrom_T)SinCos_RotorSensor_InitUnitsFrom,
+    .INIT_UNITS            = (RotorSensor_Proc_T)SinCos_RotorSensor_InitUnits,
     .CAPTURE_ANGLE         = (RotorSensor_Proc_T)SinCos_RotorSensor_CaptureAngle,
     .CAPTURE_SPEED         = (RotorSensor_Proc_T)SinCos_RotorSensor_CaptureSpeed,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)SinCos_RotorSensor_IsFeedbackAvailable,

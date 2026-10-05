@@ -84,6 +84,21 @@ void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int 
     }
 }
 
+// static const VarGroup_T MOTOR_VAR_GROUPS[] =
+// {
+//     //Motor_VarType_Base_T
+//     [MOTOR_VAR_TYPE_USER_OUT]       = {  &MOTOR_USER_OUT_VARS[0],           MOTOR_VAR_OBJ_META(Motor_Var_UserOut_T, Motor_T    ) },
+//     [MOTOR_VAR_TYPE_USER_CONTROL]   = { &MOTOR_USER_CONTROL_VARS[0],        MOTOR_VAR_OBJ_META(Motor_Var_UserControl_T, Motor_T) },
+
+//     [MOTOR_VAR_TYPE_USER_OUT]       = { _Motor_Var_UserOut_Get,     NULL,   MOTOR_VAR_OBJ_META(Motor_Var_UserOut_T, Motor_T    ) },
+//     [MOTOR_VAR_TYPE_USER_CONTROL]   = { _Motor_Var_UserControl_Get, NULL,   MOTOR_VAR_OBJ_META(Motor_Var_UserControl_T, Motor_T) },
+//     // MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
+//     // MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
+// };
+
+
+
+
 /******************************************************************************/
 /*
     [VarType_SubModule]

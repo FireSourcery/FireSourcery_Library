@@ -21,7 +21,7 @@
 ### Documentation
 - Keep comments concise. Comments are reserved for points that the code cannot express, not what the code is doing.
 - Rather than describing what the code is doing using comments, use visualizations i.e mermaid diagrams in a separate markdown file.
-- When referring to a concept that is already modeled by a type or struct in code, refer to that type using `[]` e.g. `[TypeName_T]`.
+- When referring to a concept that is already modeled by a type or struct in code, refer to that type.
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
 
 ### Self-Improvement Loop
@@ -56,7 +56,7 @@
 <!-- - **Fixed-point math**: 16-bit fractional (`fract16`) and Q16 fixed-point arithmetic — no floating point at runtime -->
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
     This pattern is only for hardware descriptors and static polymorphism. Do not use it for what could be mutable only structs.
-- **Stateless pure functions layer**: function parameter contain the entire state.
+- **Stateless pure functions layer**: function parameter contain the entire state. Reusable or physically meaningful pieces.
 - Utility functions pass context that is the closest layer the logic requires. No tramp parameters. Don't pass bool.
 <!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
 - **Expression style**: Prefer concise, declarative expressions over procedural manipulation. Use library primitives (`math_clamp`, `fract16_div`, `fract16_mul`, `math_min/max`) composed into single expressions that mirror the domain formula. Avoid early-return ladders and temporaries that break a formula into steps. Function body should look like the equation in its docstring, not reconstruct it.

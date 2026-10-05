@@ -42,7 +42,10 @@
 /*
     [Motor_Electrical_T] Motor model. Canonical storage.
         F(V) = AngleFreqPerVolt · V     [angle16/s], V phase peak. Free of rpm, rad/s, and the board base
-        Rs [V_base / I_base]. Ls = (Ld + Lq) / 2, Ldelta = Lq - Ld at the tick base. SPM: Ldelta = 0
+        AngleFreqPerVolt stores Psi without V_base.
+        Rs [V_base / I_base].
+        Ls [V_base / I_base · Ts].
+        Ls = (Ld + Lq) / 2, Ldelta = Lq - Ld at the tick base. SPM: Ldelta = 0
     Kv and rpm are views at the user boundary.
 */
 /******************************************************************************/
@@ -81,13 +84,16 @@ Motor_Electrical_T;
 /*
     alteratively pid use separate base 2x vnominal ~10000, ui use angle for invariant ui
 */
-/* BEMF at the speed base [V_base], so ψ_pu at the speed base */
+/* VBemf_Pu at the speed base, so ψ_pu at the speed base */
+/* Speed_pu = 1.0 where phase peak BEMF = V_base / 2, the phase peak at VBus = V_base (M = 2). Equals ψ_pu at the speed base */
+/* VPhaseMax_Pu */
 #define MOTOR_SPEED_BASE_V_PU (FRACT16_SCALE / 2)
 
 /*
     One base, three encodings: AngleFreq [angle16/s], AngleDt = AngleFreq / Fs [angle16/Ts], Rpm [mechanical]
 */
 static inline angle_freq_t Motor_SpeedBase_AngleFreq(const Motor_Electrical_T * p_electrical) { return angle_freq_at_v(p_electrical->AngleFreqPerVolt, Phase_VMaxVolts(), MOTOR_SPEED_BASE_V_PU); }
+// static inline angle_freq_t Motor_SpeedBase_AngleFreq(const Motor_Electrical_T * p_electrical) { return accum32_mul(p_electrical->AngleFreqPerVolt * Phase_VMaxVolts(), MOTOR_SPEED_BASE_V_PU); }
 static inline angle_dt_t Motor_SpeedBase_AngleDt(const Motor_Electrical_T * p_electrical) { return angle_dt_of_angle_freq(MOTOR_CONTROL_FREQ, Motor_SpeedBase_AngleFreq(p_electrical)); }
 static inline uint32_t Motor_SpeedBase_Rpm(const Motor_Electrical_T * p_electrical) { return mech_rpm_of_el_angle_freq(p_electrical->PolePairs, Motor_SpeedBase_AngleFreq(p_electrical)); }
 

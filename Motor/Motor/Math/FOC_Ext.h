@@ -56,9 +56,10 @@ static inline bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc
     }
 }
 
-static inline void _FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
+// caller handle state marker
+static inline void _FOC_CaptureIabc(FOC_T * p_foc, const volatile Phase_Triplet_T * p_iabc)
 {
-    FOC_ProcClarkePark(p_foc, p_iabc->Values.A, p_iabc->Values.B, p_iabc->Values.C);
+    FOC_ProcClarkePark(p_foc, p_iabc->A, p_iabc->B, p_iabc->C);
 }
 
 static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_input)
@@ -70,11 +71,12 @@ static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_inp
     }
 }
 
+/* only speed sets async */
 /* FeedbackState */
-static inline void  _FOC_ProcIFeedbackLoop(FOC_T * p_foc, Phase_Data_T * p_iabc, ufract16_t vBus, angle16_t angle, int16_t dReq, int16_t qReq)
+static inline void _FOC_ProcIFeedbackLoop(FOC_T * p_foc, const volatile Phase_Triplet_T * p_iabc, ufract16_t vBus, angle16_t angle, int16_t dReq, int16_t qReq)
 {
     FOC_SetTheta(p_foc, angle);
-    FOC_CaptureIabc(p_foc, p_iabc);
+    _FOC_CaptureIabc(p_foc, p_iabc);
     FOC_ProcIFeedback(p_foc, vBus, dReq, qReq);
     FOC_ProcInvClarkePark(p_foc);
 }

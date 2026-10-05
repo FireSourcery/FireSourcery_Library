@@ -23,49 +23,57 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder_DeltaDT.c
+    @file   Encoder_MT.c
     @author FireSourcery
     @brief
 
 */
 /******************************************************************************/
-#include "Encoder_ModeDT.h"
+#include "Encoder_MT.h"
 
 
 /*
-    Capture Mode Init
+    Speed units from Config
 */
-void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Config_T * p_config)
+void Encoder_MT_InitUnits(const Encoder_T * p_encoder)
 {
-    if (p_config != NULL) { p_encoder->P_STATE->Config = *p_config; }
-
     AngleCounter_Config_T angleCounterConfig =
     {
         .CountsPerRevolution = p_encoder->P_STATE->Config.CountsPerRevolution,
         .PollingFreq = p_encoder->POLLING_FREQ,
-        .AngleFreqBase = angle_freq_of_rpm(p_encoder->P_STATE->Config.SpeedPerUnitRef_Rpm),
+        .AngleFreqBase = p_encoder->P_STATE->Config.AngleFreqBase,
     };
 
     AngleCounter_InitFrom(&p_encoder->P_STATE->AngleCounter, &angleCounterConfig);
+}
+
+/*
+    Capture Mode Init
+*/
+void Encoder_MT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Config_T * p_config)
+{
+    if (p_config != NULL) { p_encoder->P_STATE->Config = *p_config; }
+
+    Encoder_MT_InitUnits(p_encoder);
     PulseTimer_SetExtendedWatchStop_Millis(&p_encoder->TIMER, p_encoder->P_STATE->Config.ExtendedDeltaTStop);
 
     p_encoder->P_STATE->DirectionComp = _Encoder_ResolveDirectionComp(p_encoder->P_STATE);
-    Encoder_ModeDT_SetInitial(p_encoder);
+    Encoder_MT_SetInitial(p_encoder);
 }
 
 /*
     Init function coupled with HWs
 */
-void Encoder_ModeDT_Init_Polling(const Encoder_T * p_encoder)
+void Encoder_MT_Init_Polling(const Encoder_T * p_encoder)
 {
     PulseTimer_Init(&p_encoder->TIMER);
-    Encoder_ModeDT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
+    Encoder_MT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
 }
 
-void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T * p_encoder)
+void Encoder_MT_Init_InterruptQuadrature(const Encoder_T * p_encoder)
 {
     PulseTimer_Init(&p_encoder->TIMER);
-    Encoder_ModeDT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
+    Encoder_MT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
     p_encoder->P_STATE->Config.IsQuadratureCaptureEnabled = true;
     p_encoder->P_STATE->DirectionComp = _Encoder_ResolveDirectionComp(p_encoder->P_STATE);
 #if defined(ENCODER_HW_DECODER)
@@ -78,7 +86,7 @@ void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T * p_encoder)
 /*
     Zero Hw Counters
 */
-void Encoder_ModeDT_SetInitial(const Encoder_T * p_encoder)
+void Encoder_MT_SetInitial(const Encoder_T * p_encoder)
 {
     _Encoder_ZeroPulseCount(p_encoder);
     PulseTimer_SetInitial(&p_encoder->TIMER);

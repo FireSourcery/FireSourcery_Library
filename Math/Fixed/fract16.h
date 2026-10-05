@@ -324,6 +324,9 @@ static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1) { return (
 /* angle16_quarter_cycle */
 static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1) { return (((theta0 ^ theta1) & ANGLE16_QUADRANT_MASK) != (uint16_t)0U); }
 
+
+/* fractional functions stay with hal layer. */
+// extern accum32_t angle16_to_radians(angle16_t theta) { return (int64_t)theta * FRACT16_PI / (ANGLE16_PER_REVOLUTION / 2); }
 /*  */
 extern fract16_t fract16_sin(angle16_t theta);
 extern fract16_t fract16_cos(angle16_t theta);

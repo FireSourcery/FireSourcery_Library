@@ -36,24 +36,20 @@
 
 /*
     Canonical forms
-        angle_freq_t    n.angle16/s [rot32/s]   Fs-free form
-        angle_dt_t      dθ/dt [angle16/Ts]      control loop form
+        [angle_freq_t]    n.angle/s [rot32/s]         per seconds form storage, Fs-free
+        [angle_dt_t]      Δθ/Ts = dθ/dt [angle16/dt]    control loop form
         angle_dt = angle_freq / Fs. angle_dt → angle_freq is exact.
 
     [Hz], [rpm], [rad/s] are views, converted through [angle_freq_t].
         SI ↔ angle_dt composes through angle_freq_t.
 */
+
 #define PI_FLOAT (3.14159265358979323846F)
 #define SECONDS_PER_MINUTE (60U)
 
-#define ANGLE_DT_MAX (32767)
-#define ANGLE_DT_MAX_RPS(Fs) (Fs / 2) /* Nyquist Equivalent */
-#define ANGLE_DT_MAX_RADS(Fs) (Fs * PI_FLOAT)
-#define ANGLE_DT_MAX_RPM(Fs) (Fs * 30)
-
 /******************************************************************************/
 /*!
-    @brief [angle16/dt]
+    @brief [angle16/dt] — [rad/s] · 32768 / π / Fs
 
     t_base in control periods: dt = Ts = 1/Fs.
     dθ/dt = ω·Ts, expressly in binary angle measurement [angle16] per period, not radians.
@@ -63,14 +59,20 @@ typedef angle16_t angle_dt_t;
 
 #define ANGLE_DT(Fs, rps)   ((angle_dt_t)(int32_t)(((float)(rps) * ANGLE16_PER_REVOLUTION) / (Fs)))
 
+#define ANGLE_DT_MAX (32767)
+#define ANGLE_DT_MAX_RPS(Fs) (Fs / 2) /* Nyquist Equivalent */
+#define ANGLE_DT_MAX_RADS(Fs) (Fs * PI_FLOAT)
+#define ANGLE_DT_MAX_RPM(Fs) (Fs * 30)
+
 
 /******************************************************************************/
 /*!
-    @brief  Angle Freq [angle16/s] — frequency storage, storage in per second base
+    @brief  Angle Freq [angle16/s] — [rad/s] · 32768 / π
+        frequency storage, storage in per second base
 
-        freq [angle16/s] = f [Hz] · 65536 = ω [rad/s] · 32768 / π
+        ω [angle16/s] = ω [rad/s] · 32768 / π  = f [Hz] · 65536
+        dθ/dt [angle16/dt] = ω [angle16/s] / Fs
         [turn.angle16 / s]: [31:16] turns (Hz) | [15:0] angle16 (fraction of a turn)
-        dθ/dt [angle16/Ts] = freq / Fs
 
     Common form of rpm, rad/s, and the Fs-anchored base. π enters only at the rad/s boundary.
         e.g. 200 Hz = 1256.6 rad/s => 13,107,200 => 655 [angle16/Ts] at Fs = 20 kHz
@@ -83,10 +85,11 @@ static_assert(ANGLE16_PER_REVOLUTION == (1UL << ANGLE_FREQ_TURNS_SHIFT), "angle1
 
 #define ANGLE_FREQ(Hz)           ((angle_freq_t)((float)(Hz) * (int32_t)ANGLE16_PER_REVOLUTION))
 
-#define ANGLE_FREQ_OF_RADS(Rads) ((angle_freq_t)((float)(Rads) * ANGLE16_PER_REVOLUTION / (2 * PI_FLOAT)))
-#define ANGLE_FREQ_OF_RPM(Rpm)   ((angle_freq_t)((int64_t)(Rpm) * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE))
+
 // #define ANGLE_FREQ_MAX(Fs)       ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
 #define ANGLE_FREQ_NYQUIST(Fs)   ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
+#define ANGLE_FREQ_OF_RADS(Rads) ((angle_freq_t)((float)(Rads) * ANGLE16_PER_REVOLUTION / (2 * PI_FLOAT)))
+#define ANGLE_FREQ_OF_RPM(Rpm)   ((angle_freq_t)((int64_t)(Rpm) * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE))
 
 
 static inline angle_freq_t angle_freq(int16_t hz, uangle16_t angle) { return (int32_t)hz * (int32_t)ANGLE16_PER_REVOLUTION + angle; }
@@ -150,6 +153,8 @@ static inline int32_t rps_of_angle_dt(uint32_t fs, angle_dt_t angle_dt) { return
 
     ω_pu × FRACT16_SCALE = angle_freq · FRACT16_SCALE / F_base
         = angle_dt · Fs · FRACT16_SCALE / F_base     [F_base in angle16/s, π-free]
+
+    direct runtime conversion
 */
 /******************************************************************************/
 /*
@@ -221,6 +226,7 @@ static inline int32_t rps_of_angle_dt(uint32_t fs, angle_dt_t angle_dt) { return
 
 // static inline angle_dt_t angle_dt_of_pu_rads(uint32_t fs, uint32_t base_rads, int16_t pu_fract16) { return angle_dt_of_angle_freq_pu(fs, angle_freq_of_rads(base_rads, 1U), pu_fract16); }
 // static inline int32_t pu_rads_of_angle_dt(uint32_t fs, uint32_t base_rads, angle_dt_t angle_dt) { return angle_freq_pu_of_angle_dt(fs, angle_freq_of_rads(base_rads, 1U), angle_dt); }
+
 /******************************************************************************/
 /*
     si to si
@@ -245,6 +251,6 @@ static inline int32_t mech_rpm_of_el_angle_dt(uint32_t fs, uint8_t polePairs, an
 /* Rounds to nearest, inverting a truncated freq */
 static inline uint32_t mech_rpm_of_el_angle_freq(uint8_t polePairs, angle_freq_t freq) { return ((uint64_t)freq * SECONDS_PER_MINUTE + ANGLE16_PER_REVOLUTION / 2U * polePairs) / ((uint64_t)ANGLE16_PER_REVOLUTION * polePairs); }
 
-static inline uint32_t el_rads_of_mech_rpm(uint8_t pole_pairs, uint32_t mech_rpm) { return rads_of_rpm(mech_rpm, pole_pairs); }
-static inline uint32_t mech_rpm_of_el_rads(uint8_t pole_pairs, uint32_t el_rads) { return rpm_of_rads(el_rads, pole_pairs); }
+// static inline uint32_t el_rads_of_mech_rpm(uint8_t pole_pairs, uint32_t mech_rpm) { return rads_of_rpm(mech_rpm, pole_pairs); }
+// static inline uint32_t mech_rpm_of_el_rads(uint8_t pole_pairs, uint32_t el_rads) { return rpm_of_rads(el_rads, pole_pairs); }
 

@@ -108,7 +108,6 @@ void Motor_Reset(Motor_Context_T * p_motor)
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Pu);
     // Ramp_SetLimits(&p_motor->OpenLoopSpeedRamp, -_Motor_SpeedRated_Pu(p_motor), _Motor_SpeedRated_Pu(p_motor));
     // Ramp_SetLimits(&p_motor->OpenLoopIRamp, -_Motor_OpenLoopILimit(p_motor), _Motor_OpenLoopILimit(p_motor));
-    Angle_SpeedPuRef_Init_Freq(&p_motor->OpenLoopSpeedRef, MOTOR_CONTROL_FREQ, Motor_SpeedBase_AngleFreq(&p_motor->Config.Electrical));
 
     PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
     PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
@@ -182,17 +181,12 @@ void Motor_ResolveFocParams(Motor_Context_T * p_motor)
 /******************************************************************************/
 /*
     propagate Motor Config to sensor module params
+    SensorState.UnitRef.SpeedPuRef is the motor's speed reference, shared with open loop
 */
 void Motor_InitUnits(Motor_Context_T * p_motor)
 {
-    RotorSensor_UnitRef_T config =
-    {
-        .PolePairs = p_motor->Config.Electrical.PolePairs,
-        .AngleFreqBase = Motor_SpeedBase_AngleFreq(&p_motor->Config.Electrical),
-        .PollingFreq = MOTOR_CONTROL_FREQ,
-    };
-
-    RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
+    RotorSensor_UnitRef_T unitRef = RotorSensor_UnitRef(MOTOR_CONTROL_FREQ, p_motor->Config.Electrical.PolePairs, Motor_SpeedBase_AngleFreq(&p_motor->Config.Electrical));
+    RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &unitRef);
 }
 
 /******************************************************************************/

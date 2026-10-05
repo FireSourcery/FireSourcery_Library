@@ -93,6 +93,8 @@ static inline bool math_sign_bit(sign_t value) { return (value < 0); } /* reduce
 static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /* 0xFFFFFFFF for negative, 0x00000000 for positive */
 
 
+static inline int32_t math_div_round(int32_t n, int32_t d) { return (n + (d / 2)) / d; }
+
 /******************************************************************************/
 /*
     interval

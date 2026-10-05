@@ -124,6 +124,7 @@ static const RotorSensor_Enabled_T ROTOR_SENSOR_ENABLED =
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
     .SENSORLESS = true,
 #endif
+// normalize defs and these become one liners
 };
 
 

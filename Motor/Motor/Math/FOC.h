@@ -320,8 +320,6 @@ static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, i
 /******************************************************************************/
 /*
     accept the 1ms wide multiply by default
-    Only M0 benefits from micro-optimizing.
-    optionally select/drop additional int64 multiply in fast loop
 */
 static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 {
@@ -330,18 +328,13 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
     p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Electrical.Psi, speed);
 }
 
+/*
+    Only M0 benefits from frexp_t
+    optionally select/drop additional int64 multiply in fast loop
+*/
 static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff_wide(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
 static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff_wide(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
-// #else
-// static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
-// {
-//     p_foc->ElectricalSpeed.OmegaLd = fract16_sat(accum32_mul(p_foc->Electrical.Ld, speed));
-//     p_foc->ElectricalSpeed.OmegaLq = fract16_sat(accum32_mul(p_foc->Electrical.Lq, speed));
-//     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Electrical.Psi, speed));
-// }
 
-// static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
-// static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
 
 
 /*
@@ -718,7 +711,7 @@ static int FOC_Var_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
     return value;
 }
 
-
+/* optionally move all config up a layer. foc stays pure math layer like angle */
 /*
     Call holds struct
 */

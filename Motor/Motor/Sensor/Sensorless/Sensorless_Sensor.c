@@ -57,7 +57,7 @@ static void Sensorless_Sensor_CaptureAngle(const Sensorless_Sensor_T * p_sensor)
 static void Sensorless_Sensor_CaptureSpeed(const Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
-    p_rotor->Speed_Pu = Angle_ResolveSpeed_Pu(&p_rotor->AngleSpeed, &p_rotor->SpeedPuRef);
+    p_rotor->Speed_Pu = Angle_ResolveSpeed_Pu(&p_rotor->AngleSpeed, &p_rotor->UnitRef.SpeedPuRef);
 }
 
 static bool Sensorless_Sensor_IsFeedbackAvailable(const Sensorless_Sensor_T * p_sensor)
@@ -80,19 +80,19 @@ static bool Sensorless_Sensor_VerifyCalibration(const Sensorless_Sensor_T * p_se
 }
 
 /* No sensor-local unit state: the observer works entirely in the motor's per-unit
-   basis. SpeedPuRef — the only field CAPTURE_SPEED reads — is written by the
-   RotorSensor base before dispatching here, and the remaining scale factor (G_pu)
+   basis. UnitRef.SpeedPuRef — the only field CAPTURE_SPEED reads — is held by the
+   RotorSensor base, and the remaining scale factor (G_pu)
    needs the FOC electrical params, so Motor_ValidateConfig owns it. */
-static void Sensorless_Sensor_InitFrom(const Sensorless_Sensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
+static void Sensorless_Sensor_InitUnits(const Sensorless_Sensor_T * p_sensor)
 {
-    (void)p_sensor; (void)p_config;
+    (void)p_sensor;
 }
 
 
 const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE =
 {
     .INIT                  = (RotorSensor_Proc_T)Sensorless_Sensor_Init,
-    .INIT_UNITS_FROM       = (RotorSensor_InitFrom_T)Sensorless_Sensor_InitFrom,
+    .INIT_UNITS            = (RotorSensor_Proc_T)Sensorless_Sensor_InitUnits,
     .CAPTURE_ANGLE         = (RotorSensor_Proc_T)Sensorless_Sensor_CaptureAngle,
     .CAPTURE_SPEED         = (RotorSensor_Proc_T)Sensorless_Sensor_CaptureSpeed,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Sensorless_Sensor_IsFeedbackAvailable,

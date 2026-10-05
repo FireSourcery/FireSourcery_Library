@@ -42,13 +42,11 @@
     Implement as conventional interface pattern, Signature context as interface type.
 */
 struct RotorSensor;
-struct RotorSensor_UnitRef;
 
 typedef void(*RotorSensor_Proc_T)(const struct RotorSensor * p_sensor);
 typedef bool(*RotorSensor_Test_T)(const struct RotorSensor * p_sensor);
 typedef int (*RotorSensor_Get_T)(const struct RotorSensor * p_sensor);
 typedef void(*RotorSensor_Set_T)(const struct RotorSensor * p_sensor, int value);
-typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const struct RotorSensor_UnitRef * p_config);
 
 
 /*
@@ -64,23 +62,28 @@ typedef const struct RotorSensor_VTable
 
     /* Config */
     RotorSensor_Proc_T INIT; /* Re init peripheral registers */
-    RotorSensor_InitFrom_T INIT_UNITS_FROM;
+    RotorSensor_Proc_T INIT_UNITS; /* Sensor units from P_STATE->UnitRef */
     RotorSensor_Test_T VERIFY_CALIBRATION;
 }
 RotorSensor_VTable_T;
 
 
 /*
-    [RotorSensor_Units_T]
-    temporary args
+    [RotorSensor_UnitRef_T]
+    Built by the motor, held by the sensor base
 */
 typedef struct RotorSensor_UnitRef
 {
-    uint8_t PolePairs;              /* Motor Pole Pairs. Config Mech/Electrical conversion */
-    angle_freq_t AngleFreqBase;     /* Speed base, electrical */
-    uint32_t PollingFreq;           /* AngleSpeed.Delta per poll */
+    uint8_t PolePairs;              /* Mechanical to electrical */
+    angle_freq_t AngleFreqBase;     /* Speed base, electrical. Exact, for sensors deriving their own factors */
+    Angle_SpeedPuRef_T SpeedPuRef;  /* AngleDtBase at the control Fs, AngleSpeed.Delta per control cycle */
 }
 RotorSensor_UnitRef_T;
+
+static inline RotorSensor_UnitRef_T RotorSensor_UnitRef(uint32_t fs, uint8_t polePairs, angle_freq_t angleFreqBase)
+{
+    return (RotorSensor_UnitRef_T) { .PolePairs = polePairs, .AngleFreqBase = angleFreqBase, .SpeedPuRef = Angle_SpeedPuRef_FromFreq(fs, angleFreqBase), };
+}
 
 
 /*
@@ -89,7 +92,8 @@ RotorSensor_UnitRef_T;
 typedef struct RotorSensor_State
 {
     Angle_T AngleSpeed;     /* Electrical angle and speed state. */
-    Angle_SpeedPuRef_T SpeedPuRef;
+    RotorSensor_UnitRef_T UnitRef;
+
     accum32_t Speed_Pu;
     angle16_t MechanicalAngle; /* optionally supported */
 }
@@ -139,6 +143,9 @@ static void _RotorSensor_Reset(RotorSensor_State_T * p_state)
     p_state->Speed_Pu = 0;
 }
 
+/* θ_e = PolePairs · θ_m. For sensors reporting a mechanical angle */
+static inline angle16_t _RotorSensor_ElectricalAngleOf(const RotorSensor_State_T * p_state, angle16_t mechanical) { return mechanical * p_state->UnitRef.PolePairs; }
+
 
 /******************************************************************************/
 /*!
@@ -150,30 +157,30 @@ static void _RotorSensor_Reset(RotorSensor_State_T * p_state)
     Public Interface / Virtual Functions
 */
 /******************************************************************************/
-static inline void RotorSensor_Init(const RotorSensor_T * p_sensor)
+static inline void RotorSensor_Init(RotorSensor_T * p_sensor)
 {
     p_sensor->P_VTABLE->INIT(p_sensor);
     _RotorSensor_Reset(p_sensor->P_STATE);
 }
 
 /* OnControlLoop */
-static inline void RotorSensor_CaptureAngle(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_ANGLE(p_sensor); }
+static inline void RotorSensor_CaptureAngle(RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_ANGLE(p_sensor); }
 /* OnSpeedLoop */
-static inline void RotorSensor_CaptureSpeed(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_SPEED(p_sensor); }
+static inline void RotorSensor_CaptureSpeed(RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_SPEED(p_sensor); }
 /* OnStart */
-static inline void RotorSensor_ZeroInitial(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->ZERO_INITIAL(p_sensor); /* p_sensor->P_STATE->DirectionErrorCount = 0; */ }
+static inline void RotorSensor_ZeroInitial(RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->ZERO_INITIAL(p_sensor); /* p_sensor->P_STATE->DirectionErrorCount = 0; */ }
 
-static inline bool RotorSensor_IsFeedbackAvailable(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->IS_FEEDBACK_AVAILABLE(p_sensor); }
+static inline bool RotorSensor_IsFeedbackAvailable(RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->IS_FEEDBACK_AVAILABLE(p_sensor); }
 
 /*
     Config
 */
-static inline bool RotorSensor_VerifyCalibration(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->VERIFY_CALIBRATION(p_sensor); }
+static inline bool RotorSensor_VerifyCalibration(RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->VERIFY_CALIBRATION(p_sensor); }
 
-static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_config)
+static inline void RotorSensor_InitUnitsFrom(RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_unitRef)
 {
-    p_sensor->P_STATE->SpeedPuRef = Angle_SpeedPuRef_FromFreq(p_config->PollingFreq, p_config->AngleFreqBase);
-    p_sensor->P_VTABLE->INIT_UNITS_FROM(p_sensor, p_config);
+    p_sensor->P_STATE->UnitRef = *p_unitRef;
+    p_sensor->P_VTABLE->INIT_UNITS(p_sensor);
 }
 
 
@@ -183,27 +190,27 @@ static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, con
 */
 /******************************************************************************/
 /* Electrical Angle State. Subsitute getters */
-static inline const Angle_T * RotorSensor_GetAngleState(const RotorSensor_T * p_sensor) { return &p_sensor->P_STATE->AngleSpeed; }
+static inline const Angle_T * RotorSensor_GetAngleState(RotorSensor_T * p_sensor) { return &p_sensor->P_STATE->AngleSpeed; }
 
 /* Angle Feedback. Shared E-Cycle edge detect, User output */
-static inline angle16_t RotorSensor_GetElectricalAngle(const RotorSensor_T * p_sensor) { return Angle_Value(&p_sensor->P_STATE->AngleSpeed); }
+static inline angle16_t RotorSensor_GetElectricalAngle(RotorSensor_T * p_sensor) { return Angle_Value(&p_sensor->P_STATE->AngleSpeed); }
 // ElectricalDeltaAngle, DigitalSpeed [Degrees Per ControlCycle]
 /* Electrical Speed,  < 32768 by SpeedRated */
-static inline angle16_t RotorSensor_GetElectricalDelta(const RotorSensor_T * p_sensor) { return Angle_Delta(&p_sensor->P_STATE->AngleSpeed); }
+static inline angle16_t RotorSensor_GetElectricalDelta(RotorSensor_T * p_sensor) { return Angle_Delta(&p_sensor->P_STATE->AngleSpeed); }
 /* fract16 [-32767:32767]*2 Speed Feedback Variable. -/+ => virtual CW/CCW */
-static inline int32_t RotorSensor_GetSpeed_Pu(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->Speed_Pu; }
+static inline int32_t RotorSensor_GetSpeed_Pu(RotorSensor_T * p_sensor) { return p_sensor->P_STATE->Speed_Pu; }
 /* Speed sampled over 1ms */
-static inline sign_t RotorSensor_GetFeedbackDirection(const RotorSensor_T * p_sensor) { return math_sign(RotorSensor_GetSpeed_Pu(p_sensor)); }
+static inline sign_t RotorSensor_GetFeedbackDirection(RotorSensor_T * p_sensor) { return math_sign(RotorSensor_GetSpeed_Pu(p_sensor)); }
 
-static inline angle16_t RotorSensor_GetMechanicalAngle(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
+static inline angle16_t RotorSensor_GetMechanicalAngle(RotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
 
 
 // #ifndef ROTOR_DIRECTION_SPEED_THRESHOLD_PU
 // #define ROTOR_DIRECTION_SPEED_THRESHOLD_PU (((int32_t)INT16_MAX * 2) / 64) /* ~2% */
 // #endif
-// static inline bool RotorSensor_IsSpeedReliable(const RotorSensor_T * p_sensor) { return math_abs(RotorSensor_GetSpeed_Pu(p_sensor)) > ROTOR_DIRECTION_SPEED_THRESHOLD_PU; }
+// static inline bool RotorSensor_IsSpeedReliable(RotorSensor_T * p_sensor) { return math_abs(RotorSensor_GetSpeed_Pu(p_sensor)) > ROTOR_DIRECTION_SPEED_THRESHOLD_PU; }
 
-// static inline sign_t RotorSensor_GetEffectiveFeedbackDirection(const RotorSensor_T * p_sensor) { return (RotorSensor_IsSpeedReliable(p_sensor) ? RotorSensor_GetFeedbackDirection(p_sensor) : 0); }
+// static inline sign_t RotorSensor_GetEffectiveFeedbackDirection(RotorSensor_T * p_sensor) { return (RotorSensor_IsSpeedReliable(p_sensor) ? RotorSensor_GetFeedbackDirection(p_sensor) : 0); }
 
 /******************************************************************************/
 /*!

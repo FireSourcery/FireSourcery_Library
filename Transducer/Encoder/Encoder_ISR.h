@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "Encoder.h"
-#include "Encoder_ModeDT.h"
+#include "Encoder_MT.h"
 
 
 /******************************************************************************/
@@ -43,7 +43,7 @@
 /******************************************************************************/
 /*!
     @brief     SW Capture Functions -
-    ENCODER_HW_EMULATED mode DeltaD, ModeDT; DeltaT ISR Mode
+    ENCODER_HW_EMULATED mode. M/T: DeltaD counts, DeltaT edge timing
 */
 /******************************************************************************/
 static inline Encoder_Phases_T _Encoder_ReadPins(Encoder_T * p_encoder)

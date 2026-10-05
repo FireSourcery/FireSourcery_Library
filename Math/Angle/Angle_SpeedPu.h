@@ -72,6 +72,11 @@ Angle_SpeedPuRef_T;
 #define ANGLE_SPEED_PU_REF_FROM_FREQ(Fs, angleFreqBase) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_FREQ(Fs, angleFreqBase))
 #define ANGLE_SPEED_PU_REF_FROM_RPM(Fs, baseRpm) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_RPM(Fs, baseRpm))
 
+
+// #define _ANGLE_SPEED_PU_REF(angleDtBase) (Angle_SpeedPuRef_T) { .AngleDtBase = (angleDtBase), .InvAngleDtBase_Fract32 = INT32_MAX / (angleDtBase) }
+// #define ANGLE_SPEED_PU_REF(Fs, angleFreqBase) _ANGLE_SPEED_PU_REF(ANGLE_DT_OF_FREQ(Fs, angleFreqBase))
+// #define ANGLE_SPEED_PU_REF_FROM_RPM(Fs, baseRpm) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_RPM(Fs, baseRpm))
+
 static inline Angle_SpeedPuRef_T Angle_SpeedPuRef(angle_dt_t angleDtBase) { return (Angle_SpeedPuRef_T) { .AngleDtBase = (angleDtBase), .InvAngleDtBase_Fract32 = INT32_MAX / (angleDtBase) }; }
 static inline Angle_SpeedPuRef_T Angle_SpeedPuRef_FromFreq(uint32_t fs, angle_freq_t angleFreqBase) { return ANGLE_SPEED_PU_REF_FROM_FREQ(fs, angleFreqBase); }
 static inline Angle_SpeedPuRef_T Angle_SpeedPuRef_FromRpm(uint32_t fs, uint32_t baseRpm) { return ANGLE_SPEED_PU_REF_FROM_RPM(fs, baseRpm); }
@@ -95,7 +100,6 @@ static inline angle16_t Angle_IntegrateSpeed_Pu(Angle_T * p_angle, const Angle_S
     return Angle_IntegrateStep(p_angle);
 }
 
-// static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, angle16_t angle16) { return ((int32_t)angle16 * angleSpeedMaxInv_fract32) >> 16U; }
 /* |dθ/dt| ≤ Δθ_base bounds Inv · dθ/dt to INT32_MAX: resolved speed saturates at ±1.0 pu */
 static inline fract16_t Angle_ResolveSpeed_Pu(const Angle_T * p_angle, const Angle_SpeedPuRef_T * p_ref)
 {

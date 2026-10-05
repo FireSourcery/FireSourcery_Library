@@ -80,7 +80,8 @@ static inline fract16_t foc_pll_error_normalized(ufract16_t e_floor, fract16_t e
     @brief  Direct rotor angle from estimated back-EMF (atan2-based).
 
     For CCW rotation (ω > 0), with d aligned to rotor flux:
-        e_α =  ω·ψ·sin(θ),     e_β = -ω·ψ·cos(θ)
+        e_α =  ω·ψ·sin(θ),
+        e_β = -ω·ψ·cos(θ)
     therefore:
         θ = atan2( e_α, -e_β)               (ω > 0)
         θ = atan2(-e_α,  e_β)               (ω < 0)
@@ -101,16 +102,16 @@ static inline angle16_t foc_theta_of_emf(sign_t sign, fract16_t e_alpha, fract16
 
         |e| = |ω_e| · ψ_f       →       |ω̂_e| = |e| / ψ_f
 
-    With Psi_pu per psi_vfract16_per_angle16, the result is the electrical
+    With Psi_pu per psi_pu_tick, the result is the electrical
     angle increment per control cycle:
 
-        |Δθ̂_e| [angle16/poll] = |e_pu| / Psi_pu
+        |Δθ̂_e| [angle16/dt] = |e_pu| / Psi_pu
 
     Sign of ω is not recoverable from |e|; combine with foc_pll_error sign
-    or the open-loop reference. Returns 0 when Psi_pu is zero (uninitialised).
+    or the open-loop reference. Returns 0 when Psi_pu is zero (uninitialized).
 */
 /******************************************************************************/
-static inline angle16_t foc_speed_of_emf(fract16_t Psi_pu, ufract16_t e_mag) { return (angle16_t)fract16_div(e_mag, Psi_pu); }
+static inline angle16_t foc_speed_of_emf(accum32_t Psi_pu, ufract16_t e_mag) { return (angle16_t)fract16_div(e_mag, Psi_pu); }
 
 
 
@@ -118,9 +119,9 @@ static inline angle16_t foc_speed_of_emf(fract16_t Psi_pu, ufract16_t e_mag) { r
     Ts · V_max / (Ls · I_max)
     1 / (L_pu · Fs / ω_base)
 */
-static inline accum32_t foc_g_pu_of_angle_speed(uint32_t angle_speed_max, uint32_t l_pu)
+static inline accum32_t foc_g_pu_of_l_pu_tau(uint32_t angle_speed_base, uint32_t l_pu)
 {
-    return (uint64_t)angle_speed_max * FRACT16_SCALE * FRACT16_SCALE * ANGLE16_PER_REVOLUTION / ((uint64_t)ANGLE32_PER_RADIAN * l_pu);
+    return (uint64_t)angle_speed_base * FRACT16_SCALE * FRACT16_SCALE * ANGLE16_PER_REVOLUTION / ((uint64_t)ANGLE32_PER_RADIAN * l_pu);
 }
 
 /* Tick base, ω_base · Ts = π */

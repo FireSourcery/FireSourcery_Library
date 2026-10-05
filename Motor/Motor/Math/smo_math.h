@@ -55,13 +55,13 @@ static inline fract16_t smo_sat(fract16_t thr, fract16_t x) { return fract16_sat
         z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
         î[k+1]  = î[k] + G_int · ( v[k] - Rs_pu·î[k] - z[k] )
 
-        G_int = dt · V_max / (Ls · I_max) = 1 / Ls_pu_angle16
+        G_int = dt · V_max / (Ls · I_max) = 1 / Ls_pu_tick
 
     The switching variable z drives (î - i) → 0; its slow component
     (extracted by lpf_step) is the back-EMF estimate ê used by the
     angle tracker.
 
-    @param  G_pu        bserver integrator gain = 1 / Ls_pu
+    @param  G_pu      observer integrator gain = 1 / Ls_pu
     @param  K_smo     sliding gain; > peak EMF in pu so z dominates ê
     @param  thr       boundary-layer width (smo_sat); typ. 0.05..0.2 of i_max
 */

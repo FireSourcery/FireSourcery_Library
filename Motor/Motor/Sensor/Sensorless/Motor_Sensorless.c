@@ -77,6 +77,8 @@ static void Align_Entry(Motor_T * p_motor)
     Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR); /* zeroes OpenLoopAngle, selects current feedback */
     RotorSensor_ZeroInitial(&GetSensorless(p_motor)->BASE);
 }
+// FOC_SetVLimits(&p_context->Foc, (sign_t)Motor_GetDirectionForward(p_context), VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS));
+
 
 /*
     Observer runs through align even though EMF is ~0 and lock cannot assert:
@@ -130,7 +132,7 @@ static void StartUp_Proc(Motor_T * p_motor)
 // FOC_Sensorless_SeedAngle(&p_context->FocSensorless, Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
 
 // fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Pu * p_context->Direction);
-// angle16_t angle = Angle_IntegrateSpeed_Pu(&p_context->OpenLoopAngle, &p_context->OpenLoopSpeedRef, speed);
+// angle16_t angle = Angle_IntegrateSpeed_Pu(&p_context->OpenLoopAngle, &p_context->SensorState.UnitRef.SpeedPuRef, speed);
 // fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, (int32_t)p_context->Config.OpenLoopRampIFinal_Pu * p_context->Direction);
 // FOC_SetTheta(&p_context->Foc, angle);
 // FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);

@@ -46,7 +46,7 @@
 #include "Peripheral/ADC/ADC_Conversion.h"
 #include "Peripheral/ADC/Linear_ADC.h"
 
-#include "Transducer/Encoder/Encoder_ModeDT.h"
+#include "Transducer/Encoder/Encoder_MT.h"
 #include "Transducer/Encoder/Encoder_ISR.h"
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
 
@@ -313,8 +313,7 @@ typedef struct Motor_Context
     Ramp_T OpenLoopSpeedRamp;       /* Preset Speed Ramp */
     Ramp_T OpenLoopIRamp;           /* Preset I Ramp */
     // Ramp_T OpenLoopTorqueRamp;   /* Preset V/I Ramp */
-    Angle_T OpenLoopAngle;
-    Angle_SpeedPuRef_T OpenLoopSpeedRef;
+    Angle_T OpenLoopAngle;      /* Integrated through SensorState.UnitRef.SpeedPuRef */
 
     /*  */
     HeatMonitor_State_T HeatMonitorState;

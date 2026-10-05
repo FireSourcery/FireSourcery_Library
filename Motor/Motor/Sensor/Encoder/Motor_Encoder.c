@@ -40,6 +40,17 @@
 static inline Encoder_T * GetEncoder(Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.ENCODER.ENCODER; }
 static inline Encoder_State_T * GetEncoderState(Motor_T * p_motor) { return GetEncoder(p_motor)->P_STATE; }
 
+typedef struct CalibrationBuffer
+{
+    uint8_t Step;               /* Direction calibration */
+    uint16_t ValidateAngle;     /* Encoder_GetAngle at validate entry */
+}
+CalibrationBuffer_T;
+
+static_assert(sizeof(CalibrationBuffer_T) <= MOTOR_CALIBRATION_BUFFER_SIZE);
+
+static CalibrationBuffer_T * GetBuffer(Motor_T * p_motor) { return (CalibrationBuffer_T *)p_motor->P_MOTOR->CalibrationBuffer; }
+
 /******************************************************************************/
 /*
     Homing States
@@ -53,7 +64,7 @@ static bool PollAlignSettled(Motor_T * p_motor)
 {
     bool isSettled = TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER);
 
-    if ((isSettled == false) && (Encoder_ModeDT_GetSpeed_PerUnit(GetEncoderState(p_motor)) != 0))
+    if ((isSettled == false) && (Encoder_MT_GetSpeed_Pu(GetEncoderState(p_motor)) != 0))
     {
         TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     }
@@ -236,11 +247,9 @@ static void ValidateAlign(Motor_T * p_motor)
 {
     Motor_Context_T * p_state = p_motor->P_MOTOR;
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_state->Config.AlignTime_Cycles * 2U);
-    Encoder_ModeDT_SetInitial(GetEncoder(p_motor));
-    FOC_SetVd(&p_state->Foc, 0);
-    // Motor_FOC_MatchFeedbackState(p_motor);
+    Encoder_MT_SetInitial(GetEncoder(p_motor));
     Motor_FOC_StartOpenLoop(p_state);
-    p_state->SensorState.MechanicalAngle = Encoder_GetAngle(GetEncoder(p_motor));
+    GetBuffer(p_motor)->ValidateAngle = Encoder_GetAngle(GetEncoder(p_motor));
 }
 
 static void ProcOpenLoop(Motor_T * p_motor)
@@ -255,7 +264,7 @@ static State_T * ValidateAlignNext(Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        if (Encoder_GetAngle(GetEncoder(p_motor)) != p_motor->P_MOTOR->SensorState.MechanicalAngle)
+        if (Encoder_GetAngle(GetEncoder(p_motor)) == GetBuffer(p_motor)->ValidateAngle) /* static under open loop drive: encoder not tracking */
         {
             p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
             p_nextState = &MOTOR_STATE_FAULT;
@@ -288,7 +297,8 @@ static const State_T VALIDATE_ALIGN =
 static void ValidateClosedLoopEntry(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles * 2U);
-    Motor_FOC_MatchFeedbackState(p_motor);
+    Motor_FOC_MatchTorqueIState(p_motor->P_MOTOR);
+    Motor_FOC_MatchVOutput(p_motor->P_MOTOR);
 }
 
 static void ProcAngleControl(Motor_T * p_motor)
@@ -453,7 +463,7 @@ static State_T * StartUpValidateAlignTransition(Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        if (Encoder_GetAngle(GetEncoder(p_motor)) != p_motor->P_MOTOR->SensorState.MechanicalAngle)
+        if (Encoder_GetAngle(GetEncoder(p_motor)) == GetBuffer(p_motor)->ValidateAngle) /* static under open loop drive: encoder not tracking */
         {
             p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
             p_nextState = &MOTOR_STATE_FAULT;
@@ -518,6 +528,7 @@ void Motor_Encoder_StartUpChain(Motor_T * p_motor)
 static inline void StartDirection(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    GetBuffer(p_motor)->Step = 0U;
     Phase_Align_V(&p_motor->PHASE, PHASE_ID_A, VBus_Inv_Pu(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
 }
 
@@ -527,12 +538,12 @@ static inline bool ProcDirection(Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        switch (p_motor->P_MOTOR->CalibrationStateIndex)
+        switch (GetBuffer(p_motor)->Step)
         {
             case 0U:
                 Encoder_CaptureQuadratureReference(GetEncoder(p_motor));
                 Phase_Align_V(&p_motor->PHASE, PHASE_ID_B, VBus_Inv_Pu(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
-                p_motor->P_MOTOR->CalibrationStateIndex = 1U;
+                GetBuffer(p_motor)->Step = 1U;
                 break;
 
             case 1U:
