@@ -186,8 +186,10 @@ void MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, MotPacket_T * p_buf
     {
         (void)MotPacket_BuildControl((MotPacket_Control_T *)p_buffer, (MotPacket_Id_T)p_meta->Id);
     }
-
-    (void)MotPacket_BuildHeader((MotPacket_T *)p_buffer, (MotPacket_Id_T)p_meta->Id, p_meta->Length);
+    else
+    {
+        (void)MotPacket_BuildHeader((MotPacket_T *)p_buffer, (MotPacket_Id_T)p_meta->Id, p_meta->Length);
+    }
 }
 
 
