@@ -67,12 +67,13 @@ A speed is angle per time, and ψ and L hold time in the numerator, so their bas
 
 | Form | F_base [angle_freq_t] | ω_pu | Holds |
 |---|---|---|---|
-| Tick | Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts] | L storage and identification, in samples |
+| Tick | Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts] | identification, in samples; the observer gain |
 | Speed | AngleFreqPerVolt · V_base · `MOTOR_SPEED_BASE_V_PU` | `Speed_Pu` | speed loop, limits, FOC decoupling |
 
 - The tick form is time in ticks of Fs. Δθ_base = 2^15, so ω_pu and Δθ are one integer, Q15 of π rad per tick.
 - The speed form anchors to the motor and resolves k = Fs · 2^15 / F_base times finer.
 - ψ and L move between forms by F_to / F_from (`pu_tau_rebase`), ω_pu by F_from / F_to.
+- ψ and L are stored as rates, 1 / ψ [angle16/s / V] and 1 / L [angle16/s · A/V]. Each form is one division from the rate: x_pu = F_base / (rate · Z_base), Z_base = V_base for ψ and V_base / I_base for L (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`).
 
 A product's unit is the product of the bases. It is valid when that product is in the set (ω_pu · ψ_pu → v_pu), and when factors through ω_base share a form. Motor bases and the speed base in detail: [Motor/Motor/Math/_.md](../../Motor/Motor/Math/_.md).
 
@@ -102,7 +103,7 @@ A float build ([real.h](../../Math/HAL/real.h)) changes this family alone, to va
 
 ### Base dependence
 
-A stored pu value follows its base. Changing V_base or I_base (board), or F_base (Kv, V_base), rescales everything stored against it. A value relative by intent stays pu, as a limit is a fraction of capability. A value describing the motor is stored free of the motor-derived base: the motor constant as `AngleFreqPerVolt` [angle16/s per V]; in [Motor_Electrical_T], Rs, which is time-free, and L in its tick form, which Fs and the board fix, not the motor.
+A stored pu value follows its base. Changing V_base or I_base (board), or F_base (Kv, V_base), rescales everything stored against it. A value relative by intent stays pu, as a limit is a fraction of capability. A value describing the motor is stored free of the motor-derived base: in [Motor_Electrical_T], the motor constant as `AngleFreqPerVolt` [angle16/s / V], Ld and Lq as `AngleFreqPerOhmD`, `AngleFreqPerOhmQ` [angle16/s · A/V], free of Fs and the board, and Rs, which is time-free.
 
 ## Time
 
@@ -120,7 +121,7 @@ Time is a count of ticks of the loop or timer that runs it, with that clock's fr
 - ms and per second are an optional interface, in the Motor module for now (`Motor_Config_SetAlignTime_Millis`, `Motor_Config_SetSpeedRampSlope_RpmPerS`). Socket and the other modules come later.
 - Speed is an angle quantity, held per second in [angle_freq_t]. Each consumer applies its own clock, Δθ = F / Fs in the control loop.
 
-ψ and L hold time in the numerator, carried by their tick form (Bases).
+ψ and L hold time in the numerator. Stored as rates, 1 / ψ and 1 / L, the second is in the denominator at scale 1, as in [angle_freq_t]. Their tick form derives on init (Bases).
 
 ## Angle
 
@@ -173,7 +174,7 @@ Constants appear only where families meet.
 | ticks ↔ ms, per second | F_clk | build | optional interface |
 | `angle_freq_t` ↔ `angle_dt_t` | Fs | build | init, capture |
 | `angle_freq_t` ↔ ω_pu | F_base | motor config | [Angle_SpeedPuRef_T]: Δθ_base and its inverse, 32-bit products |
-| tick form ↔ speed form | F_base / (Fs · 2^15) | Fs, motor | init (`Motor_SpeedBase_PuOfTick`) |
+| rate ↔ tick or speed form | F_base / (rate · Z_base) | Fs, motor, board | init (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`) |
 | angle16 ↔ rad | 2^15 / π | constant | SI boundary |
 | pu ↔ V, A, Ω, H | bases | board, motor | user boundary |
 
@@ -201,7 +202,7 @@ In the tick form Fs / ω_base = 1 / π, so v_pu = L_tick · Δi_pu / π. Rotatio
 8. Saturate on store. `accum32_t` carries the pre-saturation value.
 9. Wrap only in the angle family, in unsigned arithmetic or by narrowing.
 10. π only at the radian. Derivative pu terms carry Fs / ω_base.
-11. One truncation per conversion: constant divisors first, the variable divisor last. Write-back paths scale to the midpoint (`Motor_SpeedBase_TickOfPu`); user views round to nearest (`kv_of_angle_freq`).
+11. One truncation per conversion: constant divisors first, the variable divisor last. Write-back paths return the value written: a reciprocal pair inverts exactly while the stored side has the more bits (`angle_freq_of_l_pu`), a scale-down pair scales up to the midpoint. User views round to nearest (`kv_of_angle_freq`).
 12. Constants are written in SI through macros the compiler folds (`FRACT16`, `ANGLE_FREQ`, `MOTOR_L_PU_TICK`). Runtime conversions are integer.
 13. 64-bit division at init or the user boundary, not in the control loop.
 

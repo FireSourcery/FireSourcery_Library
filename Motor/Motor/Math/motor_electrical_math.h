@@ -115,7 +115,7 @@ static inline uint32_t rs_mohm_of_vi_ll_y(uint32_t v_mV_ll, uint32_t i_mA) { ret
 
 /******************************************************************************/
 /*!
-    @brief  BEMF speed per volt [angle16/s per V] — the motor constant as a rate, free of a speed base.
+    @brief  BEMF speed per volt [angle16/s / Volt] — the motor constant as a rate, free of a speed base.
 
         F(V) = V / ψ        linear in V. The rate F / V = 1 / ψ, V phase peak.
         F at a V: angle_freq_at_v. At V = V_base, ψ_pu = 1.0 at F
@@ -123,11 +123,16 @@ static inline uint32_t rs_mohm_of_vi_ll_y(uint32_t v_mV_ll, uint32_t i_mA) { ret
 /******************************************************************************/
 /* Double, so it equals angle_freq_of_kv for an integer Kv, and keeps a fractional Kv */
 #define MOTOR_ANGLE_FREQ_OF_KV(Kv, PolePairs) ((angle_freq_t)((double)(Kv) * (PolePairs) * 2U * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE))
+
+// #define MOTOR_ANGLE_FREQ_PER_VOLT(Psi_Webers) ANGLE_FREQ_OF_RADS(1.0F / (Psi_Webers))
 #define MOTOR_ANGLE_FREQ_OF_PSI(Psi_Webers) ANGLE_FREQ_OF_RADS(1.0F / (Psi_Webers))
+
 /* Rating: V_Emf phase peak at Hz electrical, or at Rpm mechanical */
+/* 1/(V/Hz) */
 #define MOTOR_ANGLE_FREQ_OF_V_HZ(V_Emf, Hz) ANGLE_FREQ((float)(Hz) / (V_Emf))
 #define MOTOR_ANGLE_FREQ_OF_V_RPM(V_Emf, Rpm, PolePairs) MOTOR_ANGLE_FREQ_OF_V_HZ(V_Emf, (float)(Rpm) * (PolePairs) / SECONDS_PER_MINUTE)
 
+/* AngleFreq per phase peak volt */
 /* Kv [rpm/V], M = 2: phase peak = V_bus / 2 at Kv · V_bus rpm. Kv rounds to nearest, inverting the truncated rate */
 static inline angle_freq_t angle_freq_of_kv(uint16_t kv, uint8_t polePairs) { return angle_freq_of_rpm(kv * polePairs * 2U); }
 static inline uint16_t kv_of_angle_freq(angle_freq_t rate, uint8_t polePairs) { return ((uint64_t)rate * SECONDS_PER_MINUTE + (uint64_t)polePairs * ANGLE16_PER_REVOLUTION) / ((uint64_t)polePairs * 2U * ANGLE16_PER_REVOLUTION); }
@@ -136,10 +141,32 @@ static inline uint16_t kv_of_angle_freq(angle_freq_t rate, uint8_t polePairs) { 
 static inline angle_freq_t angle_freq_of_psi_wb(uint32_t psi_Wb, uint32_t scale) { return (uint64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / psi_Wb; }
 static inline uint32_t psi_wb_of_angle_freq(angle_freq_t rate, uint32_t scale) { return (uint64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / rate; }
 
-
 /* Join and split. The rate is F / V; the caller picks V */
 static inline angle_freq_t angle_freq_per_v(angle_freq_t freq, uint16_t v_base_V, ufract16_t v_pu) { return (uint64_t)freq * FRACT16_SCALE / ((uint64_t)v_pu * v_base_V); }
 static inline angle_freq_t angle_freq_at_v(angle_freq_t rate, uint16_t v_base_V, ufract16_t v_pu) { return (uint64_t)rate * v_pu * v_base_V / FRACT16_SCALE; }
+
+
+/******************************************************************************/
+/*!
+    @brief  Reactance speed per ohm [angle16/s · A/V] — the inductance as a rate, free of a speed base, Fs, and the board base.
+
+        F(X) = X / L        linear in X = ω · L. The rate F / X = 1 / L
+        F at X = V_base / I_base: L_pu = 1.0 at F
+
+        1 / L               [A / (V·s)]
+        · 2^16 / 2π         [angle16 / rad], L per radian of ω
+        AngleFreqPerOhm     [angle16/s · A/V]
+
+    int32 holds L ≥ 4.86 µH.
+    Per AngleFreqPerVolt [angle16/s / V], it is ψ / L [A], the short-circuit current.
+*/
+/******************************************************************************/
+// #define MOTOR_ANGLE_FREQ_PER_OHM(L_Henries) ANGLE_FREQ_OF_RADS(1.0F / (L_Henries))
+#define MOTOR_ANGLE_FREQ_OF_L(L_Henries) ANGLE_FREQ_OF_RADS(1.0F / (L_Henries))
+
+/* F / X · L = 2^15 / π: the same expression both ways */
+static inline angle_freq_t angle_freq_of_l_h(uint32_t l_H, uint32_t scale) { return (uint64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / l_H; }
+static inline uint32_t l_h_of_angle_freq(angle_freq_t rate, uint32_t scale) { return (uint64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / rate; }
 
 
 /******************************************************************************/
@@ -156,17 +183,26 @@ static inline uint32_t pu_tau_rebase(uint32_t x_pu, angle_freq_t base_from, angl
 
 /******************************************************************************/
 /*!
-    @brief  ψ_pu — Back-EMF and rotor flux, per-unit at a speed base [angle16/s]
+    @brief ψ_f — Back-EMF and rotor flux [Wb] [Volt·sec/rad]
+
+        ψ_pu — Back-EMF and rotor flux, per-unit at a speed base [angle16/s]
 
         ψ_pu = ψ_f · ω_base / V_base
         fract16_mul(ω_pu, ψ_pu) → v_emf_pu. Tick base: ω_pu ≡ Δθ [angle16/Ts]
 
         1 angle16/Ts = 2π·Fs/65536 rad/s = π·Fs / 2^15: π·Fs folds into ψ_pu, 2^15 is the fract16_mul shift.
         Fs · FRACT16_PI = Fs · π · 2^15 = Fs · 2^30 / ANGLE16_PER_RADIAN
+
+    Identification:
+        Spin test (generator at known speed):
+            ψ_f = V_phase / ω_elec = V_LL_pk / (√3 · ω_elec)
+        Steady-state FOC :
+            ψ_f = (vq − Rs·iq − ω_e·Ld·id) / ω_e
 */
 /******************************************************************************/
-/* ψ [V·s/rad] · F [angle16/s] · π [rad per 2^15 angle16] / V_base [V] */
+/* ψ [V·s/rad] · F [angle16/s] · π [rad / 2^15 angle16] / V_base [V] */
 #define MOTOR_PSI_PU(Freq_Base, V_Base, Psi_Webers) ((float)(Psi_Webers) * (Freq_Base) * PI_FLOAT / (V_Base))
+/* ψ_pu_tick [Volt·Fs/angle16] */
 #define MOTOR_PSI_PU_TICK(Fs, V_Base, Psi_Webers)   MOTOR_PSI_PU(ANGLE_FREQ_NYQUIST(Fs), V_Base, Psi_Webers)
 
 static inline uint32_t psi_pu_tick_of_wb(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)psi_Wb * FRACT16_PI * fs_hz / ((uint64_t)v_base_V * scale); }
@@ -176,24 +212,16 @@ static inline uint32_t psi_wb_of_pu_tick(uint32_t fs_hz, uint16_t v_base_V, uint
 static inline uint32_t psi_pu_of_wb(uint16_t v_base_V, angle_freq_t base, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)psi_Wb * base / FRACT16_SCALE * FRACT16_PI / ((uint64_t)v_base_V * scale); }
 static inline uint32_t psi_wb_of_pu(uint16_t v_base_V, angle_freq_t base, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_base_V * scale / FRACT16_PI * FRACT16_SCALE / base; }
 
-// static inline uint32_t psi_pu_tick_of_uwb(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_uWb) { return psi_pu_tick_of_wb(fs_hz, v_base_V, psi_uWb, 1000000UL); }
-// static inline uint32_t psi_uwb_of_pu_tick(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_pu) { return psi_wb_of_pu_tick(fs_hz, v_base_V, psi_pu, 1000000UL); }
 
-
-/* ψ_tick = Fs · 2^30 / (AngleFreqPerVolt · V_base) */
-/* ψ_pu_s [Volt·sec/angle16] */
-
-/******************************************************************************/
-/*!
-    @brief ψ_f — Back-EMF and rotor flux [Wb]
-
-    Identification:
-        Spin test (generator at known speed):
-            ψ_f = V_phase / ω_elec = V_LL_pk / (√3 · ω_elec)
-        Steady-state FOC :
-            ψ_f = (vq − Rs·iq − ω_e·Ld·id) / ω_e
+/*
+    [angle16/s / V]
+    From the rate: ψ_pu = F_base / (AngleFreqPerVolt · V_base)
+    Tick base: ψ_tick = Fs · 2^30 / (AngleFreqPerVolt · V_base)
+    fract16_div(fract16_div(Fs, AngleFreqPerVolt), V_base)
 */
-/******************************************************************************/
+static inline uint32_t psi_pu_of_angle_freq(angle_freq_t base, uint16_t v_base_V, angle_freq_t rate) { return ((uint64_t)base << 15) / ((uint64_t)rate * v_base_V); }
+
+
 static inline uint32_t psi_of_emf(fract16_t v_emf, fract16_t omega_rads, fract16_t scale) { return (v_emf * scale / omega_rads); }
 
 /*
@@ -249,24 +277,29 @@ static inline uint32_t psi_pu_of_emf_rate(uint16_t v_base_V, uint32_t omega_base
 
 /******************************************************************************/
 /*!
-    @brief  L_pu — Stator Inductance, per-unit at a speed base [angle16/s]
+    @brief  Ls / Ld / Lq — Stator Inductance [H] [Volt·sec/rad/Amp]
+
+        Ls = Ld = Lq for SPM; Ld ≠ Lq for IPM (rotor alignment selects axis).
+
+        L_pu — Stator Inductance, per-unit at a speed base [angle16/s]
 
         L_pu = L · I_base · ω_base / V_base = ψ_pu(L · I_base)
         fract16_mul(ω_pu, L_pu) → ω_e·L·i_pu term in v_pu. Tick base: ω_pu ≡ Δθ [angle16/Ts]
 
-    L [Volt·sec/rad/Amp]
-
-    L_pu_ticks [Volt·Fs/angle16/Amp]
-    accum32_mul(ω_pu, L_pu_ticks), ω_pu ≡ Δθ [angle16/Ts]
+    Identification:
+        Voltage step:    L = V · Δt / Δi,      (initial linear ramp, R drop <<)
+        RL τ (step):     L = Rs · τ,           (τ = 63.2% rise time)
+        HFI (ω·L >> R):  L = V_pk / (2π·f·I_pk)
 */
 /******************************************************************************/
 #define MOTOR_L_PU(Freq_Base, V_Base, I_Base, L_Henries) ((float)(L_Henries) * (I_Base) * (Freq_Base) * PI_FLOAT / (V_Base))
+
+/* L_pu_tick [Volt·Fs/angle16/Amp] */
 #define MOTOR_L_PU_TICK(Fs, V_Base, I_Base, L_Henries)   MOTOR_L_PU(ANGLE_FREQ_NYQUIST(Fs), V_Base, I_Base, L_Henries)
 
 // #define MOTOR_L_PU(Freq_Base, V_Base, I_Base, L_Henries) ((float)(L_Henries) * (I_Base) * (Freq_Base) * 2 * PI_FLOAT / (V_Base))
 // #define MOTOR_L_PU_TICK(Fs, V_Base, I_Base, L_Henries)   ((float)(L_Henries) * (I_Base) * ANGLE_FREQ_NYQUIST(Fs) * PI_FLOAT / (V_Base))
 
-/* f · ANGLE_FREQ(1) / Fs */
 static inline uint32_t l_pu_tick_of_h(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_base_A * FRACT16_PI * fs_hz / ((uint64_t)v_base_V * scale); }
 static inline uint32_t l_h_of_pu_tick(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / ((uint64_t)FRACT16_PI * fs_hz * i_base_A); }
 
@@ -275,32 +308,16 @@ static inline uint32_t l_pu_of_h(uint16_t v_base_V, uint16_t i_base_A, angle_fre
 static inline uint32_t l_h_of_pu(uint16_t v_base_V, uint16_t i_base_A, angle_freq_t base, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / FRACT16_PI * FRACT16_SCALE / ((uint64_t)i_base_A * base); }
 
 /*
-    L_pu_s [Volt·sec/angle16/Amp·sec_scale] <=> fract16_div(L [Volt·sec/rad/Amp], ANGLE16_PER_RADIAN)
-    (ω_pu * L_pu_s) >> 31, ω_pu ≡ Δθ [angle16/s]
-
-    same as 1 [s] << 16 · MOTOR_PU_SCALE
-        1 [s] <=> FRACT32_SCALE for MOTOR_PU_SCALE == (FRACT16_SCALE) case
+    [angle16/s · A/V]
+    From the rate: L_pu = F_base / (AngleFreqPerOhm · V_base / I_base)
+    Tick base: L_tick = Fs · 2^30 · I_base / (AngleFreqPerOhm · V_base)
+    L_pu and the rate are reciprocal: the same expression both ways
 */
-// #define _MOTOR_L_PU_FREQ(Freq_Hz_Base, V_Base, I_Base, L_Henries) ((float)(L_Henries) * (I_Base) * ANGLE_FREQ(Freq_Hz_Base) * MOTOR_PU_SCALE * 2 * PI_FLOAT / (V_Base))
-// #define MOTOR_L_PU_FREQ(V_Base, I_Base, L_Henries)                ((float)(L_Henries) * (I_Base) * ANGLE_FREQ(1) * MOTOR_PU_SCALE * 2 * PI_FLOAT / (V_Base))
-// 411774.832291
+static inline uint32_t l_pu_of_angle_freq(angle_freq_t base, uint16_t v_base_V, uint16_t i_base_A, angle_freq_t rate) { return ((uint64_t)base << 15) * i_base_A / ((uint64_t)rate * v_base_V); }
+static inline angle_freq_t angle_freq_of_l_pu(angle_freq_t base, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_pu) { return ((uint64_t)base << 15) * i_base_A / ((uint64_t)l_pu * v_base_V); }
 
 
-// static inline uint32_t l_pu_tick_of_uh(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_uH) { return l_pu_tick_of_h(fs_hz, v_base_V, i_base_A, l_uH, 1000000UL); }
-// static inline uint32_t l_uh_of_pu_tick(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_pu) { return l_h_of_pu_tick(fs_hz, v_base_V, i_base_A, l_pu, 1000000UL); }
 
-/******************************************************************************/
-/*!
-    @brief  Ls / Ld / Lq — Stator Inductance [H]
-
-        Ls = Ld = Lq for SPM; Ld ≠ Lq for IPM (rotor alignment selects axis).
-
-    Identification:
-        Voltage step:    L = V · Δt / Δi,      (initial linear ramp, R drop <<)
-        RL τ (step):     L = Rs · τ,           (τ = 63.2% rise time)
-        HFI (ω·L >> R):  L = V_pk / (2π·f·I_pk)
-*/
-/******************************************************************************/
 /*
     PU identification — direct from FOC-loop quantities. Output uint32 (may exceed FRACT16_MAX).
 

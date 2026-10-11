@@ -722,9 +722,17 @@ const State_T MOTOR_STATE_CALIBRATION =
     @brief  State
 */
 /******************************************************************************/
-static void Fault_Entry(Motor_T * p_motor) { Phase_Deactivate(&p_motor->PHASE); }
+static void Fault_Entry(Motor_T * p_motor)
+{
+    // Phase_Deactivate(&p_motor->PHASE);
+    if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
+    else { Phase_ActivateV0(&p_motor->PHASE); }
+}
 
-static void Fault_Proc(Motor_T * p_motor) { Phase_Deactivate(&p_motor->PHASE); }
+static void Fault_Proc(Motor_T * p_motor)
+{
+    // Phase_Deactivate(&p_motor->PHASE);
+}
 
 /* Fault State: Set accumulates (latches), Clear removes flags and re-verifies */
 static State_T * Fault_InputFault(Motor_T * p_motor, state_value_t faultCmd)

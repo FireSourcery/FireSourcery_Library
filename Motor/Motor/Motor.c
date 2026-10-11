@@ -160,7 +160,7 @@ void Motor_ValidateConfig(Motor_T * p_motor)
 #endif
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
     /* The one observer gain derived from motor params rather than stored tuning. */
-    FOC_Sensorless_InitG(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, p_context->Config.Electrical.Ls);
+    FOC_Sensorless_InitG(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Electrical_LsTick(&p_context->Config.Electrical));
 #endif
 }
 

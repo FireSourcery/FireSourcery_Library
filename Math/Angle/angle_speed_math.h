@@ -126,6 +126,8 @@ static inline int32_t rpm_of_angle_freq(angle_freq_t freq) { return (int64_t)fre
 static inline angle_freq_t angle_freq_of_rads(int32_t rads, uint32_t scale) { return (int64_t)rads * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / scale; }
 static inline int32_t rads_of_angle_freq(angle_freq_t freq, uint32_t scale) { return (int64_t)freq * ANGLE16_PER_REVOLUTION * scale / ANGLE32_PER_RADIAN; }
 
+static inline angle_freq_t angle_freq_of_per_rads(int32_t per_rads, uint32_t scale) { return (int64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / per_rads; }
+
 /******************************************************************************/
 /*!
     @brief  SI views of [angle_dt_t], composed through [angle_freq_t]

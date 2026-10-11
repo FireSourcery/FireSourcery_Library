@@ -41,27 +41,22 @@
 /******************************************************************************/
 /*
     [Motor_Electrical_T] Motor model. Canonical storage.
-        F(V) = AngleFreqPerVolt · V     [angle16/s], V phase peak. Free of rpm, rad/s, and the board base
-        AngleFreqPerVolt stores Psi without V_base.
+        F(V) = AngleFreqPerVolt · V     [angle16/s], V phase peak. 1 / ψ
+        F(X) = AngleFreqPerOhm · X      [angle16/s], X = ω · L. 1 / Ld, 1 / Lq
+        The rates are free of rpm, rad/s, Fs, and the board base.
         Rs [V_base / I_base].
-        Ls [V_base / I_base · Ts].
-        Ls = (Ld + Lq) / 2, Ldelta = Lq - Ld at the tick base. SPM: Ldelta = 0
-    Kv and rpm are views at the user boundary.
+    Kv, rpm, and µH are views at the user boundary.
 */
 /******************************************************************************/
 typedef struct
 {
     uint8_t PolePairs;
-    angle_freq_t AngleFreqPerVolt;  /* Electrical [angle16/s per V], phase peak. 1 / ψ */
-    uint32_t Ls;                    /* storage in tick base. speed base: L_pu = Ls_tick · AngleDtBase / 32768 */
-    uint32_t Ldelta;
+    angle_freq_t AngleFreqPerVolt;  /* Electrical [angle16/s / V], phase peak. 1 / ψ */
+    angle_freq_t AngleFreqPerOhmD;  /* Electrical [angle16/s · A/V]. 1 / Ld */
+    angle_freq_t AngleFreqPerOhmQ;  /* Electrical [angle16/s · A/V]. 1 / Lq */
     uint32_t Rs;
 }
 Motor_Electrical_T;
-
-/* PM rotor: Lq >= Ld */
-#define MOTOR_LS_TICK_OF_UH(Fs, V_Base, I_Base, Ld_uH, Lq_uH)        MOTOR_L_PU_TICK(Fs, V_Base, I_Base, ((Ld_uH) + (Lq_uH)) * 0.5E-6F)
-#define MOTOR_LDELTA_TICK_OF_UH(Fs, V_Base, I_Base, Ld_uH, Lq_uH)    MOTOR_L_PU_TICK(Fs, V_Base, I_Base, ((Lq_uH) - (Ld_uH)) * 1.0E-6F)
 
 /******************************************************************************/
 /*
@@ -88,7 +83,7 @@ Motor_Electrical_T;
     fw_max => 2 * V_Nominal
 */
 /*
-    alteratively pid use separate base 2x vnominal ~10000, ui use angle for invariant ui
+    alteratively pid use separate base, ui use angle for invariant
 */
 /* VBemf_Pu at the speed base, so ψ_pu at the speed base */
 /* Speed_pu = 1.0 where phase peak BEMF = V_base / 2, the phase peak at VBus = V_base (M = 2). Equals ψ_pu at the speed base */
@@ -99,7 +94,13 @@ Motor_Electrical_T;
     SpeedVLimit = VBus and SpeedRated = VNominal hold exactly for SVPWM.
     Cost: 0.2 bit, MOTOR_SPEED_BASE_V_PU = FRACT16_1_DIV_SQRT3, and VSpeed = fract16_mul(speed, FRACT16_1_DIV_SQRT3) instead of /2.
 */
+/*
+    V_MAX / 2, e.g. 94 V / 2 = 47 V => V_emf_ll = 0.866 · V_MAX = 81.4 V
+    V_Rated / √3, e.g. 72 V / √3 ≈ 41.6 V
+*/
 #define MOTOR_SPEED_BASE_V_PU (FRACT16_SCALE / 2)
+
+
 
 /*
     One base, three encodings: AngleFreq [angle16/s], AngleDt = AngleFreq / Fs [angle16/Ts], Rpm [mechanical]
@@ -109,53 +110,62 @@ static inline angle_freq_t Motor_SpeedBase_AngleFreq(const Motor_Electrical_T * 
 static inline angle_dt_t Motor_SpeedBase_AngleDt(const Motor_Electrical_T * p_electrical) { return angle_dt_of_angle_freq(MOTOR_CONTROL_FREQ, Motor_SpeedBase_AngleFreq(p_electrical)); }
 static inline uint32_t Motor_SpeedBase_Rpm(const Motor_Electrical_T * p_electrical) { return mech_rpm_of_el_angle_freq(p_electrical->PolePairs, Motor_SpeedBase_AngleFreq(p_electrical)); }
 
-/*
-    ψ, L between the tick base and the speed base.
-    Up to the midpoint of the interval x_pu stands for, (x_pu + 1/2) · F_tick / F_base, so Motor_SpeedBase_PuOfTick returns x_pu.
-*/
-static inline uint32_t Motor_SpeedBase_PuOfTick(const Motor_Electrical_T * p_electrical, uint32_t x_tick) { return pu_tau_rebase(x_tick, angle_freq_nyquist(MOTOR_CONTROL_FREQ), Motor_SpeedBase_AngleFreq(p_electrical)); }
-static inline uint32_t Motor_SpeedBase_TickOfPu(const Motor_Electrical_T * p_electrical, uint32_t x_pu) { return ((uint64_t)x_pu * 2U + 1U) * angle_freq_nyquist(MOTOR_CONTROL_FREQ) / ((uint64_t)Motor_SpeedBase_AngleFreq(p_electrical) * 2U); }
-
 /* Local Unit Conversion */
 static inline accum32_t Motor_Speed_PuOfRpm(const Motor_Electrical_T * p_electrical, int16_t speed_rpm) { return speed_rpm * INT16_MAX / (int32_t)Motor_SpeedBase_Rpm(p_electrical); }
 static inline int16_t Motor_Speed_RpmOfPu(const Motor_Electrical_T * p_electrical, accum32_t speed_pu) { return speed_pu * (int32_t)Motor_SpeedBase_Rpm(p_electrical) / 32768; }
 // static inline int16_t Motor_Rated_AngleOfRpm(const Motor_Rated_T * p_rated, accum32_t speed_rpm) { return el_angle_dt_of_mech_rpm(MOTOR_CONTROL_FREQ, p_rated->PolePairs, speed_rpm); }
 // static inline int16_t Motor_Rated_RpmOfAngle(const Motor_Rated_T * p_rated, accum32_t speed_angle16) { return mech_rpm_of_el_angle_dt(MOTOR_CONTROL_FREQ, p_rated->PolePairs, speed_angle16); }
 
+/*
+
+*/
 /* ψ_tick = Fs·2^30 / (AngleFreqPerVolt·V_base), v_emf = Δθ·ψ_tick */
-static inline uint32_t Motor_Electrical_Psi(const Motor_Electrical_T * p_electrical) { return fract16_div(fract16_div(MOTOR_CONTROL_FREQ, p_electrical->AngleFreqPerVolt), Phase_VMaxVolts()); }
+static inline uint32_t Motor_Electrical_Psi(const Motor_Electrical_T * p_electrical) { return psi_pu_of_angle_freq(angle_freq_nyquist(MOTOR_CONTROL_FREQ), Phase_VMaxVolts(), p_electrical->AngleFreqPerVolt); }
 
 
 /******************************************************************************/
 /*
     [Motor_Electrical_T] Ld, Lq, Rs
-    Same shape in SI: Rs [µΩ], Ls, Ldelta [µH]. PolePairs and AngleFreqPerVolt are free of the board base
+    Same shape in SI: Rs [µΩ]. PolePairs and the rates are free of the board base
 */
 /******************************************************************************/
-/* Either shape. Lq from Ld, exact where Ls + Ldelta / 2 truncates twice */
-static inline uint32_t Motor_Electrical_Ld(const Motor_Electrical_T * p_electrical) { return p_electrical->Ls - p_electrical->Ldelta / 2U; }
-static inline uint32_t Motor_Electrical_Lq(const Motor_Electrical_T * p_electrical) { return Motor_Electrical_Ld(p_electrical) + p_electrical->Ldelta; }
-
-/* PM rotor Lq >= Ld. Ld > Lq clamps to non-salient */
-static inline void Motor_Electrical_SetLdq(Motor_Electrical_T * p_electrical, uint32_t ld, uint32_t lq) { p_electrical->Ls = (ld + lq) / 2U; p_electrical->Ldelta = lq - math_min(ld, lq); }
+/* L_pu at a base [angle16/s] and the rate are reciprocal. A rate ≤ 0 is unset, and L_pu = 0 has no rate: both read 0 */
+static inline uint32_t _Motor_Electrical_LPuOf(angle_freq_t base, angle_freq_t rate) { return (rate > 0) ? l_pu_of_angle_freq(base, Phase_VMaxVolts(), Phase_IMaxAmps(), rate) : 0U; }
+static inline angle_freq_t _Motor_Electrical_RateOfLPu(angle_freq_t base, uint32_t l_pu) { return (l_pu != 0U) ? angle_freq_of_l_pu(base, Phase_VMaxVolts(), Phase_IMaxAmps(), l_pu) : 0; }
 
 /*
-    SI -> PU on the board base [Phase_Board_T], tick base.
+    Tick base [V_base / I_base · Ts / π], identification in samples.
+    Ls = (Ld + Lq) / 2, the αβ average for the observer.
+*/
+// todo: Ls as the per-phase inductance, the phase to neutral winding self-inductance in the abc frame
+static inline uint32_t Motor_Electrical_LsTick(const Motor_Electrical_T * p_electrical)
+{
+    return ((uint64_t)_Motor_Electrical_LPuOf(angle_freq_nyquist(MOTOR_CONTROL_FREQ), p_electrical->AngleFreqPerOhmD) + _Motor_Electrical_LPuOf(angle_freq_nyquist(MOTOR_CONTROL_FREQ), p_electrical->AngleFreqPerOhmQ)) / 2U;
+}
+
+static inline void Motor_Electrical_SetLdqTick(Motor_Electrical_T * p_electrical, uint32_t ld_tick, uint32_t lq_tick)
+{
+    p_electrical->AngleFreqPerOhmD = _Motor_Electrical_RateOfLPu(angle_freq_nyquist(MOTOR_CONTROL_FREQ), ld_tick);
+    p_electrical->AngleFreqPerOhmQ = _Motor_Electrical_RateOfLPu(angle_freq_nyquist(MOTOR_CONTROL_FREQ), lq_tick);
+}
+
+/*
+    SI -> PU on the board base [Phase_Board_T].
 */
 // static inline uint32_t Motor_Electrical_RsPu(const Motor_Electrical_T * p_si) { return rs_pu_of_ohm(Phase_VMaxVolts(), Phase_IMaxAmps(), p_si->Rs, 1000000UL); }
 
 /* same shape for SI and PU  */
-static inline Motor_Electrical_T Motor_Electrical_PuOfSi(const Motor_Electrical_T * p_si)
-{
-    return (Motor_Electrical_T)
-    {
-        .PolePairs          = p_si->PolePairs,
-        .AngleFreqPerVolt   = p_si->AngleFreqPerVolt, /* or SI use Hz or rad/s */
-        .Ls                 = l_pu_tick_of_h(MOTOR_CONTROL_FREQ, Phase_VMaxVolts(), Phase_IMaxAmps(), p_si->Ls, 1000000UL),
-        .Ldelta             = l_pu_tick_of_h(MOTOR_CONTROL_FREQ, Phase_VMaxVolts(), Phase_IMaxAmps(), p_si->Ldelta, 1000000UL),
-        .Rs                 = rs_pu_of_ohm(Phase_VMaxVolts(), Phase_IMaxAmps(), p_si->Rs, 1000000UL),
-    };
-}
+// static inline Motor_Electrical_T Motor_Electrical_PuOfSi(const Motor_Electrical_T * p_si)
+// {
+//     return (Motor_Electrical_T)
+//     {
+//         .PolePairs          = p_si->PolePairs,
+//         .AngleFreqPerVolt   = p_si->AngleFreqPerVolt, /* or SI use Hz or rad/s */
+//         .AngleFreqPerOhmD   = p_si->AngleFreqPerOhmD,
+//         .AngleFreqPerOhmQ   = p_si->AngleFreqPerOhmQ,
+//         .Rs                 = rs_pu_of_ohm(Phase_VMaxVolts(), Phase_IMaxAmps(), p_si->Rs, 1000000UL),
+//     };
+// }
 
 /******************************************************************************/
 /*
@@ -168,8 +178,8 @@ static inline FOC_Electrical_T Motor_Electrical_FocOf(const Motor_Electrical_T *
 {
     return (FOC_Electrical_T)
     {
-        .Ld     = Motor_SpeedBase_PuOfTick(p_electrical, Motor_Electrical_Ld(p_electrical)),
-        .Lq     = Motor_SpeedBase_PuOfTick(p_electrical, Motor_Electrical_Lq(p_electrical)),
+        .Ld     = _Motor_Electrical_LPuOf(Motor_SpeedBase_AngleFreq(p_electrical), p_electrical->AngleFreqPerOhmD),
+        .Lq     = _Motor_Electrical_LPuOf(Motor_SpeedBase_AngleFreq(p_electrical), p_electrical->AngleFreqPerOhmQ),
         .Rs     = p_electrical->Rs,
         .Psi    = MOTOR_SPEED_BASE_V_PU,
     };
@@ -178,7 +188,8 @@ static inline FOC_Electrical_T Motor_Electrical_FocOf(const Motor_Electrical_T *
 /* Ld, Lq, Rs from the FOC view. ψ is 1 / AngleFreqPerVolt, not stored */
 static inline void Motor_Electrical_SetFoc(Motor_Electrical_T * p_electrical, const FOC_Electrical_T * p_foc)
 {
-    Motor_Electrical_SetLdq(p_electrical, Motor_SpeedBase_TickOfPu(p_electrical, p_foc->Ld), Motor_SpeedBase_TickOfPu(p_electrical, p_foc->Lq));
+    p_electrical->AngleFreqPerOhmD = _Motor_Electrical_RateOfLPu(Motor_SpeedBase_AngleFreq(p_electrical), p_foc->Ld);
+    p_electrical->AngleFreqPerOhmQ = _Motor_Electrical_RateOfLPu(Motor_SpeedBase_AngleFreq(p_electrical), p_foc->Lq);
     p_electrical->Rs = p_foc->Rs;
 }
 

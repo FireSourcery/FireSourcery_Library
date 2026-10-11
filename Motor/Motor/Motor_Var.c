@@ -340,9 +340,10 @@ int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T 
 /******************************************************************************/
 /*
     [FOC_ConfigId_T] Electrical ids in control PU at the speed base, the [FOC_Electrical_T] frame.
-    Written to the FOC view, the tick base store follows, so axes written one at a time stay clear of the Lq >= Ld clamp.
+    Written to the FOC view, the rates in [Motor_Electrical_T] follow, one per axis.
     ψ is set by [Motor_Electrical_T] AngleFreqPerVolt.
 */
+// todo foc updated to use Ref, these move to Motor
 int _Motor_Var_FocConfig_Get(Motor_T * p_motor, FOC_ConfigId_T varId)
 {
     const FOC_T * p_foc = &p_motor->P_MOTOR->Foc;

@@ -207,7 +207,7 @@ typedef struct Motor_Config
     */
     RotorSensor_Id_T SensorMode;
     Motor_Direction_T DirectionForward;         /* CCW/CW Assigned positive direction. Effectively Direction actual CCW */
-    Motor_Electrical_T Electrical;              /* PolePairs, BEMF speed per volt, Rs, Ls, Ldelta. Derives the speed base and the FOC parameters */
+    Motor_Electrical_T Electrical;              /* PolePairs, BEMF speed per volt, reactance speed per ohm d and q, Rs. Derives the speed base and the FOC parameters */
     uint16_t VSpeedAdjustment;                  /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
     Phase_Triplet_T IabcZeroRef_Adcu;
 
