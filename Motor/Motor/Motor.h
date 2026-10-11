@@ -527,6 +527,7 @@ static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_Context_T
     ψ_pu ~ .5
 */
 static_assert(MOTOR_SPEED_BASE_V_PU == FRACT16_SCALE / 2, "VSpeed = Speed / 2, SpeedVLimit = VBus, SpeedRated = VNominal");
+// static_assert(MOTOR_SPEED_BASE_V_PU == FRACT16_SCALE , "VSpeed = Speed ,  SpeedRated = VNominal/√3");
 static inline int32_t _Motor_GetVSpeed_Pu(Motor_T * p_motor) { return Motor_GetSpeedFeedback(p_motor->P_MOTOR) / 2; }
 static inline int32_t Motor_GetVSpeed_Pu(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Pu(p_motor), p_motor->P_MOTOR->Config.VSpeedAdjustment); }
 

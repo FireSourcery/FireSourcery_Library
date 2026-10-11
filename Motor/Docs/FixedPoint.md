@@ -241,7 +241,6 @@ The split matches the float HAL: per-unit values become `float`, while angles an
 
 1. **Signed wrap, rule 9.** `Angle_Integrate` and `Angle_IntegrateStep` add `int32_t` `.Delta` into `int32_t` `.Angle`, overflowing every half turn. Undefined in C; the build is `-O3 -mcpu=cortex-m0plus` without `-fwrapv`. `AngleCounter_CaptureCount` already adds unsigned.
 2. **Speed headroom, rule 7.** `AngleCounter_GetSpeed_Pu` (Hall, encoder) holds to 2.0 pu, its int32 product overflowing past it. `Angle_ResolveSpeed_Pu` (sensorless, SinCos) saturates at 1.0. With `MOTOR_SPEED_BASE_V_PU` = 0.5 the base is where phase-peak BEMF reaches V_base / 2. SVPWM applies a phase peak up to V_bus / √3, so speed passes 1.0 pu without field weakening once V_bus > 0.87 · V_base.
-3. **Derivative term, rule 10.** `motor_v_stator` (unused) computes Ls_pu · (i_prev − i): no Fs / ω_base factor, and the sign reversed (v_L = L · (i − i_prev) · Fs).
 
 ### Open
 

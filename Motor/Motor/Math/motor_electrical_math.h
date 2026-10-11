@@ -180,8 +180,8 @@ static inline uint32_t psi_wb_of_pu(uint16_t v_base_V, angle_freq_t base, uint32
 // static inline uint32_t psi_uwb_of_pu_tick(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_pu) { return psi_wb_of_pu_tick(fs_hz, v_base_V, psi_pu, 1000000UL); }
 
 
-/* ψ_pu_s [Volt·sec/angle16] */
 /* ψ_tick = Fs · 2^30 / (AngleFreqPerVolt · V_base) */
+/* ψ_pu_s [Volt·sec/angle16] */
 
 /******************************************************************************/
 /*!
@@ -275,7 +275,7 @@ static inline uint32_t l_pu_of_h(uint16_t v_base_V, uint16_t i_base_A, angle_fre
 static inline uint32_t l_h_of_pu(uint16_t v_base_V, uint16_t i_base_A, angle_freq_t base, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / FRACT16_PI * FRACT16_SCALE / ((uint64_t)i_base_A * base); }
 
 /*
-    L_pu_s [Volt·sec/angle16/Amp] <=> fract16_div(L [Volt·sec/rad/Amp], ANGLE16_PER_RADIAN)
+    L_pu_s [Volt·sec/angle16/Amp·sec_scale] <=> fract16_div(L [Volt·sec/rad/Amp], ANGLE16_PER_RADIAN)
     (ω_pu * L_pu_s) >> 31, ω_pu ≡ Δθ [angle16/s]
 
     same as 1 [s] << 16 · MOTOR_PU_SCALE

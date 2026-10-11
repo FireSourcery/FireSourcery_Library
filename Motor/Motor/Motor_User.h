@@ -50,7 +50,9 @@ static inline accum32_t Motor_User_GetSpeed_Pu(const Motor_Context_T * p_motor) 
 // /*! @return [0:65535] <=> [0:4) */
 // static inline ufract16_t Motor_GetSpeed_UFract16(const Motor_Context_T * p_motor) { return math_abs(Motor_GetSpeedFeedback(p_motor)); }
 
-static inline angle16_t Motor_User_GetSpeed_Angle16Dt(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor) * p_motor->Config.DirectionForward; }
+static inline angle16_t Motor_User_GetElectricalSpeed_AngleDt(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor) * p_motor->Config.DirectionForward; }
+// static inline angle16_t Motor_User_GetMechanicalSpeed_AngleDt(const Motor_Context_T * p_motor) { return RotorSensor_GetMechanicalDelta(p_motor->p_ActiveSensor) * p_motor->Config.DirectionForward; }
+
 
 static inline fract16_t Motor_User_GetVSpeed_Pu(Motor_T * p_motor) { return Motor_GetVSpeed_Pu(p_motor) * p_motor->P_MOTOR->Config.DirectionForward; }
 

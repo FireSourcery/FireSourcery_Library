@@ -53,7 +53,7 @@ typedef struct
 {
     uint8_t PolePairs;
     angle_freq_t AngleFreqPerVolt;  /* Electrical [angle16/s per V], phase peak. 1 / ψ */
-    uint32_t Ls;                    /* speed base: L_pu = Ls_tick · AngleDtBase / 32768 */
+    uint32_t Ls;                    /* storage in tick base. speed base: L_pu = Ls_tick · AngleDtBase / 32768 */
     uint32_t Ldelta;
     uint32_t Rs;
 }
@@ -69,17 +69,23 @@ Motor_Electrical_T;
 */
 /******************************************************************************/
 /*
-    Set ψ_pu = v_pu/speed_pu = ~ .5, where V_Max is inverter max with margin
-    when SpeedBase = Kv * V_Max
-    SpeedRated_pu = VNominal_pu, SpeedRated_Rpm = Kv * VNominal
-    Speed_pu = V_pu = V_phase_pu * 2
-    ke_pu = 1.0
-    ψ_pu = .5
+    Set ψ_pu == v_pu/speed_pu = .5, where V_Base is inverter max with margin
+    SpeedRated_pu = VNominal_pu, SpeedBase ~ ψ_pu
+    Speed_pu = V_phase_pu * 2
+    fw_max => V_Base, saturate, (e.g. 72 V Nominal, 94 V base, fw saturate at 1.30)
+    SpeedBase [rpm] = Kv * V_Base
+    SpeedRated [rpm] = Kv * VNominal
+
+    ψ_pu = 1.0
+    SpeedRated_pu = VNominal_Pu / √3
+    SpeedBase [rpm] = Kv * V_Base * √3
+    fw_max => V_Base * 1.73
 
     alternatively materialize the base speed and store as an additional parameter
     when SpeedBase = SpeedRated * 2 = Kv * V_Nominal * 2
     Ke = VNominal * 2
-    ψ_pu = V_Nominal / V_Max = V_Nominal_pu
+    ψ_pu = V_Nominal / V_Base = V_Nominal_pu
+    fw_max => 2 * V_Nominal
 */
 /*
     alteratively pid use separate base 2x vnominal ~10000, ui use angle for invariant ui
@@ -87,6 +93,12 @@ Motor_Electrical_T;
 /* VBemf_Pu at the speed base, so ψ_pu at the speed base */
 /* Speed_pu = 1.0 where phase peak BEMF = V_base / 2, the phase peak at VBus = V_base (M = 2). Equals ψ_pu at the speed base */
 /* VPhaseMax_Pu */
+/*
+    When PWM is off (fault or freewheel), the body diodes rectify the line-to-line peak BEMF into the bus. That one quantity sets two limits:
+    k = √3 makes speed_pu the line-to-line BEMF over V_MAX. Then:
+    SpeedVLimit = VBus and SpeedRated = VNominal hold exactly for SVPWM.
+    Cost: 0.2 bit, MOTOR_SPEED_BASE_V_PU = FRACT16_1_DIV_SQRT3, and VSpeed = fract16_mul(speed, FRACT16_1_DIV_SQRT3) instead of /2.
+*/
 #define MOTOR_SPEED_BASE_V_PU (FRACT16_SCALE / 2)
 
 /*
@@ -110,6 +122,8 @@ static inline int16_t Motor_Speed_RpmOfPu(const Motor_Electrical_T * p_electrica
 // static inline int16_t Motor_Rated_AngleOfRpm(const Motor_Rated_T * p_rated, accum32_t speed_rpm) { return el_angle_dt_of_mech_rpm(MOTOR_CONTROL_FREQ, p_rated->PolePairs, speed_rpm); }
 // static inline int16_t Motor_Rated_RpmOfAngle(const Motor_Rated_T * p_rated, accum32_t speed_angle16) { return mech_rpm_of_el_angle_dt(MOTOR_CONTROL_FREQ, p_rated->PolePairs, speed_angle16); }
 
+/* ψ_tick = Fs·2^30 / (AngleFreqPerVolt·V_base), v_emf = Δθ·ψ_tick */
+static inline uint32_t Motor_Electrical_Psi(const Motor_Electrical_T * p_electrical) { return fract16_div(fract16_div(MOTOR_CONTROL_FREQ, p_electrical->AngleFreqPerVolt), Phase_VMaxVolts()); }
 
 
 /******************************************************************************/
