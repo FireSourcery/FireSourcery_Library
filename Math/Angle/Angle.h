@@ -53,13 +53,13 @@
 #define ANGLE32_SHIFT (16U)
 
 /*
-    [Angle_T] Pure stateful tracker — 12 bytes, all fields used by all modes.
+    [Angle_T] Pure stateful tracker — all fields used by all modes.
     Speed_Pu and SpeedPuRef are sibling types composed by the caller.
 */
 typedef struct Angle
 {
     int32_t Angle;  /* Shifted 16 position/accumulator. GetAngle16 projects via >> ANGLE32_SHIFT */
-    int32_t Delta;  /* Shifted 16 DegPerPoll */
+    int32_t Delta;  /* Shifted 16 angle_dt */
     int32_t LimitUpper;
     int32_t LimitLower;
 }
@@ -98,7 +98,7 @@ static inline void Angle_SetDelta(Angle_T * p_angle, angle16_t delta) { p_angle-
 static inline angle16_t Angle_Integrate(Angle_T * p_angle, angle16_t delta)
 {
     p_angle->Delta = (int32_t)delta << ANGLE32_SHIFT;
-    p_angle->Angle += p_angle->Delta;
+    p_angle->Angle += (uint32_t)p_angle->Delta;
     return Angle_Value(p_angle);
 }
 
@@ -108,7 +108,7 @@ static inline angle16_t Angle_Integrate(Angle_T * p_angle, angle16_t delta)
 */
 static inline angle16_t Angle_IntegrateStep(Angle_T * p_angle)
 {
-    p_angle->Angle += p_angle->Delta;
+    p_angle->Angle += (uint32_t)p_angle->Delta;
     return Angle_Value(p_angle);
 }
 

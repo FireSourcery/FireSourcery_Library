@@ -107,7 +107,7 @@ static inline void AngleCounter_SetAngle(AngleCounter_T * p_counter, angle16_t a
 
 static inline void AngleCounter_ZeroAngle(AngleCounter_T * p_counter) { Angle_ZeroAngle(&p_counter->Base); }
 
-/* Optional seperate ResolveCounterDelta */
+/* Optional separate ResolveCounterDelta */
 static inline int32_t AngleCounter_CaptureDeltaD(AngleCounter_T * p_counter)
 {
     int32_t deltaD = p_counter->CounterD;

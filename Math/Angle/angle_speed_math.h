@@ -69,13 +69,14 @@ typedef angle16_t angle_dt_t;
 /*!
     @brief  Angle Freq [angle16/s] — [rad/s] · 32768 / π
         frequency storage, storage in per second base
+        consistent with [angle16 <=> radians] [Hz << 16]
 
         ω [angle16/s] = ω [rad/s] · 32768 / π  = f [Hz] · 65536
         dθ/dt [angle16/dt] = ω [angle16/s] / Fs
         [turn.angle16 / s]: [31:16] turns (Hz) | [15:0] angle16 (fraction of a turn)
 
     Common form of rpm, rad/s, and the Fs-anchored base. π enters only at the rad/s boundary.
-        e.g. 200 Hz = 1256.6 rad/s => 13,107,200 => 655 [angle16/Ts] at Fs = 20 kHz
+        e.g. 200 Hz = 1256.6 rad/s => 13,107,200 [angle16/s] => 655 [angle16/Ts] at Fs = 20 kHz
 */
 /******************************************************************************/
 typedef rot32_t angle_freq_t;
@@ -85,9 +86,9 @@ static_assert(ANGLE16_PER_REVOLUTION == (1UL << ANGLE_FREQ_TURNS_SHIFT), "angle1
 
 #define ANGLE_FREQ(Hz)           ((angle_freq_t)((float)(Hz) * (int32_t)ANGLE16_PER_REVOLUTION))
 
-
 // #define ANGLE_FREQ_MAX(Fs)       ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
 #define ANGLE_FREQ_NYQUIST(Fs)   ((angle_freq_t)((Fs) * (ANGLE16_PER_REVOLUTION / 2U)))
+
 #define ANGLE_FREQ_OF_RADS(Rads) ((angle_freq_t)((float)(Rads) * ANGLE16_PER_REVOLUTION / (2 * PI_FLOAT)))
 #define ANGLE_FREQ_OF_RPM(Rpm)   ((angle_freq_t)((int64_t)(Rpm) * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE))
 

@@ -64,9 +64,10 @@ typedef struct
 }
 FOC_FieldWeakeningTuning_T;
 
-/* same shape for SI and PU  */
-/*
 
+/*
+    Runtime ref in PU
+    alternatively, PU-tick
 */
 typedef struct
 {

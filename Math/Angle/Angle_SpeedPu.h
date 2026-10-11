@@ -72,7 +72,6 @@ Angle_SpeedPuRef_T;
 #define ANGLE_SPEED_PU_REF_FROM_FREQ(Fs, angleFreqBase) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_FREQ(Fs, angleFreqBase))
 #define ANGLE_SPEED_PU_REF_FROM_RPM(Fs, baseRpm) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_RPM(Fs, baseRpm))
 
-
 // #define _ANGLE_SPEED_PU_REF(angleDtBase) (Angle_SpeedPuRef_T) { .AngleDtBase = (angleDtBase), .InvAngleDtBase_Fract32 = INT32_MAX / (angleDtBase) }
 // #define ANGLE_SPEED_PU_REF(Fs, angleFreqBase) _ANGLE_SPEED_PU_REF(ANGLE_DT_OF_FREQ(Fs, angleFreqBase))
 // #define ANGLE_SPEED_PU_REF_FROM_RPM(Fs, baseRpm) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_RPM(Fs, baseRpm))
@@ -82,9 +81,9 @@ static inline Angle_SpeedPuRef_T Angle_SpeedPuRef_FromFreq(uint32_t fs, angle_fr
 static inline Angle_SpeedPuRef_T Angle_SpeedPuRef_FromRpm(uint32_t fs, uint32_t baseRpm) { return ANGLE_SPEED_PU_REF_FROM_RPM(fs, baseRpm); }
 
 // probably deprecate
-static void Angle_SpeedPuRef_Init(Angle_SpeedPuRef_T * p_ref, angle_dt_t angleDtBase) { *p_ref = ANGLE_SPEED_PU_REF(angleDtBase); }
-static void Angle_SpeedPuRef_Init_Freq(Angle_SpeedPuRef_T * p_ref, uint32_t fs, angle_freq_t angleFreqBase) { *p_ref = ANGLE_SPEED_PU_REF_FROM_FREQ(fs, angleFreqBase); }
-static void Angle_SpeedPuRef_Init_Rpm(Angle_SpeedPuRef_T * p_ref, uint32_t fs, uint32_t baseRpm) { *p_ref = ANGLE_SPEED_PU_REF_FROM_RPM(fs, baseRpm); }
+// static void Angle_SpeedPuRef_Init(Angle_SpeedPuRef_T * p_ref, angle_dt_t angleDtBase) { *p_ref = ANGLE_SPEED_PU_REF(angleDtBase); }
+// static void Angle_SpeedPuRef_Init_Freq(Angle_SpeedPuRef_T * p_ref, uint32_t fs, angle_freq_t angleFreqBase) { *p_ref = ANGLE_SPEED_PU_REF_FROM_FREQ(fs, angleFreqBase); }
+// static void Angle_SpeedPuRef_Init_Rpm(Angle_SpeedPuRef_T * p_ref, uint32_t fs, uint32_t baseRpm) { *p_ref = ANGLE_SPEED_PU_REF_FROM_RPM(fs, baseRpm); }
 
 /*
     Hot-path consumers — operate on precomputed unit conversions
@@ -103,6 +102,5 @@ static inline angle16_t Angle_IntegrateSpeed_Pu(Angle_T * p_angle, const Angle_S
 /* |dθ/dt| ≤ Δθ_base bounds Inv · dθ/dt to INT32_MAX: resolved speed saturates at ±1.0 pu */
 static inline fract16_t Angle_ResolveSpeed_Pu(const Angle_T * p_angle, const Angle_SpeedPuRef_T * p_ref)
 {
-    // return speed_fract16_of_angle(p_ref->InvAngleDtBase_Fract32, p_angle->Delta >> ANGLE32_SHIFT);
     return ((int32_t)p_ref->InvAngleDtBase_Fract32 * math_clamp(Angle_Delta(p_angle), -p_ref->AngleDtBase, p_ref->AngleDtBase)) >> 16U;
 }

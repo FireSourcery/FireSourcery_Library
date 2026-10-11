@@ -117,6 +117,7 @@ static inline accum32_t Phase_Power_VoltAmpsOfPu(accum32_t fract16) { return fra
 static inline accum32_t Phase_R_PuOfMilliOhms(uint16_t milliOhms)
 {
     return ((accum32_t)milliOhms * Phase_IMaxAmps() * INT16_MAX) / ((accum32_t)Phase_VMaxVolts() * 1000);
+    // return rs_pu_of_ohm(Phase_VMaxVolts(), Phase_IMaxAmps(), milliOhms , 1000000UL);
 }
 
 static inline uint16_t Phase_R_MilliOhmsOfPu(accum32_t fract16)

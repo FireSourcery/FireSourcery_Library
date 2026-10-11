@@ -105,7 +105,7 @@ static inline int32_t count_freq_of_angle_dt(uint32_t fs, uint32_t cpr, angle_dt
         e.g. Fs = 20000: cpr 6 => 35,791 (35,791.4), cpr 1024 => 209 (209.7), cpr 8192 => 26 (26.2)
 */
 static inline uint32_t angle_dt32_per_count_cpr(uint32_t fs, uint16_t cpr) { return angle32_per_count(cpr) / fs; }
-static inline uint32_t angle_dt32_per_count(uint32_t fs, uint32_t angle32_per_count) { return angle32_per_count / fs; }
+static inline uint32_t _angle_dt32_per_count(uint32_t fs, uint32_t angle32_per_count) { return angle32_per_count / fs; }
 
 /*
     Speed Pu [angle_freq / base], base [angle16/s] of the counter revolution

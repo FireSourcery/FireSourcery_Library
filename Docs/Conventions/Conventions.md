@@ -7,7 +7,7 @@
 Module_T             — Primary stateful object (has behavioral functions) OR Full descriptor context
 Module_Context_T     — mutable runtime.
      naming collision with State_T. alternatively:
-        runtime - runtime mutable, contract with config, too qualitive
+        runtime - runtime mutable, contract with config, too qualitative
         object - has invariant interface
 
 Module_State_T       — switch() to determine processing. either as StateMachine module State_T or enum id
@@ -119,7 +119,7 @@ Subtypes as the unmarked case.
     ├── [_Internal]/            # _ = private component, dependency OF this module
     ├── [Variant]/              # plain = specialization/subtype OF this module
     └── Extension/              # opt-in features, #ifdef guarded
-    ├── SomeModule_Part         # Part, dependent or independt of SomeModule core
+    ├── SomeModule_Part         # Part, dependent or independent of SomeModule core
         Dependent Part -> Include by core
         Independent Part -> Core does not need to know
 
@@ -127,7 +127,7 @@ Subtypes as the unmarked case.
     ├── SomeModule.h            # Module public API
     ├── [Component]/            # private component, dependency OF this module
     └── Extension/              # opt-in features, #ifdef guarded
-    ├── SomeModule_Part         # Part, dependent or independt of SomeModule core
+    ├── SomeModule_Part         # Part, dependent or independent of SomeModule core
 
     Subtyped use Base
     SomeModule/
@@ -167,9 +167,9 @@ Peers must be hidden from callers → Full-forwarder facade (Option B).
 ## Data Type by semantics
 
 struct defines the shape of memory
-add sematics: "types" of structs by purpose and access patterns
+add semantics: "types" of structs by purpose and access patterns
 
-static polymorism context / compile time configuration constants
+static polymorphism context / compile time configuration constants
     TimerT,
 HAL wrapper - configuration mix in to register access
     PWM_T
@@ -197,14 +197,14 @@ Data Transfer Interface - data is the interface
         meta data encoded in struct shape.
         placement offset, size, matters
 
-    struc Tag only for internal?
+    struct Tag only for internal?
 
-Data - Tranparent without invarant
+Data - Transparent without invariant
 Obj - with interface
 
 
 #
-2 pointer context API signitures at most - (p_const, p_state, value)
+2 pointer context API signatures at most - (p_const, p_state, value)
 Does the wrapper hold a changeable policy?
 Does the wrapper enforce a pairing invariant the bare form can violate?
 Does the wrapper add a cross-cutting decorator like locking/tracing?
@@ -220,8 +220,8 @@ ownership vs pointer reference determined by thread of operation
 Adding indirection without adding concept vs enforcing pair correctness
 
 #
-Parameterize vs seperate function / call path vs super function anti pattern
+Parameterize vs separate function / call path vs super function anti pattern
 
 #
-VarId ruintime virtual fields
+VarId runtime virtual fields
 ConfigId config data fields
