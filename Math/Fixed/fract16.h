@@ -44,7 +44,7 @@
 #define FRACT16_SCALE (32768) /* 2^15 */
 #define FRACT32_SCALE (2147483648)
 
-#define ACCUM32_SAT (0x3FFFFFFFUL) /* Soft max for ACCUM32_SAT * 2 without overflow */
+#define ACCUM32_SAT   (0x3FFFFFFFUL) /* Soft max for ACCUM32_SAT * 2 without overflow */
 #define ACCUM32_SCALE ((int32_t)FRACT16_SCALE * FRACT16_SCALE)
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
@@ -71,6 +71,7 @@ static const fract16_t FRACT16_SQRT3_DIV_2 = 0x6EDA;
 static const fract16_t FRACT16_SQRT3_DIV_4 = 0x376D;
 static const fract16_t FRACT16_SQRT2_DIV_2 = 0x5A82;
 static const fract16_t FRACT16_PI_DIV_4 = 0x6487;
+static const fract16_t FRACT16_1_DIV_PI = 0x28BE; /*!< 0.31830988618f */
 
 static const fract16_t FRACT16_COS_120 = -FRACT16_1_DIV_2;      /* cos(120°) = -0.5 */
 static const fract16_t FRACT16_SIN_120 = FRACT16_SQRT3_DIV_2;   /* sin(120°) = sqrt(3)/2 */
@@ -87,7 +88,7 @@ static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 
 #define FRACT16_FLOAT_MAX (0.999969482421875F)
 #define FRACT16_FLOAT_MIN (-1.0F)
-#define FRACT16_EPSILON 0.000030517578125F
+#define FRACT16_EPSILON   (0.000030517578125F)
 
 #define FRACT16(x) ((fract16_t)(((x) < FRACT16_FLOAT_MAX) ? (((x) >= FRACT16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
 
@@ -250,10 +251,10 @@ static inline ufract16_t fract16_normalize_sat(int32_t lo, int32_t hi, int32_t x
 #define ANGLE16_PER_REVOLUTION (65536UL)
 
 typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
-typedef uint16_t uangle16_t;    /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
+typedef uint16_t uangle16_t;    /*!< [0, 2pi) unsigned compare */
 
-typedef uint32_t angle32_t; /* fract32 */
-typedef int32_t rot32_t; /* n.angle16 */
+typedef int32_t angle32_t;  /* extended angle16, Q32 */
+typedef int32_t rot32_t;    /* n.angle16 */
 
 #define ROT32_TURN_BITS (16)
 #define ROT32_ANGLE_BITS (16)
@@ -273,9 +274,7 @@ static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
 /*
-    radian si scaled
-    [0:1.0f/2pi] ~0.16 of rev
-
+    Conversion factor
     Reciprocal of FRACT16_PI in Q30, both map the half turn 32768 ⇔ π:
         ANGLE16_PER_RADIAN = 32768 / π                  rad [Q15] → angle16:  rad · ANGLE16_PER_RADIAN >> 15
         FRACT16_PI         = 32768 · π                  angle16 → rad [Q15]:  angle16 · FRACT16_PI >> 15
@@ -283,12 +282,21 @@ static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
     Truncation: 10430 is −3.6e-5, 102943 is −6.9e-6, 683565275 is −8.4e-10.
     With an int64 intermediate, ANGLE32_PER_RADIAN · x / 65536 is the closest form.
 */
-static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / (2 * PI) */
-static const angle32_t ANGLE32_PER_RADIAN = 683565275UL; /* 2^32 / (2 * PI) */
+static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / 2π */
+static const angle32_t ANGLE32_PER_RADIAN = 683565275UL; /* 2^32 / 2π */
+
 
 #define ANGLE16_OF_RADIANS(radians) ((angle16_t)((radians) * ANGLE16_PER_REVOLUTION / (2.0F * PI_FLOAT)))
 #define ANGLE16_OF_TURNS(turns) ((angle16_t)((turns) * 65536.0F))
 
+/* Caller cast result */
+/* angle / FRACT16_SCALE * PI_FLOAT */
+#define ANGLE16_TO_RAD(angle) (((float)(angle) * (2.0F * PI_FLOAT / ANGLE16_PER_REVOLUTION)))
+
+/*
+    radian si scaled
+    [0:1.0f/2pi] ~0.16 of rev
+*/
 /* from scaled storage */
 static inline angle16_t angle16_of_radians(int32_t rad, int32_t scaling) { return (angle16_t)((int64_t)rad * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / scaling); }
 static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)((int64_t)rad * ANGLE32_PER_RADIAN / ((int64_t)ANGLE16_PER_REVOLUTION * FRACT16_SCALE)); }

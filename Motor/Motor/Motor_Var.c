@@ -207,6 +207,79 @@ void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_
 
 /******************************************************************************/
 /*
+
+*/
+/******************************************************************************/
+/*
+    const
+    Alternate access to board reference values
+*/
+int Motor_Var_Board_Get(Motor_Var_Board_T varId)
+{
+    int value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_BOARD_V_RATED:                 value = Phase_VRated_Pu();                 break;
+        case MOTOR_VAR_BOARD_I_RATED:                 value = Phase_IRatedPeak_Pu();             break;
+        case MOTOR_VAR_BOARD_V_MAX:                   value = Phase_VMaxVolts();                      break;
+        case MOTOR_VAR_BOARD_I_MAX:                   value = Phase_IMaxAmps();                       break;
+        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_BOARD.V_PHASE_R1;            break;
+        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_BOARD.V_PHASE_R2;            break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ANALOG_BOARD.I_PHASE_R_BASE;        break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_BOARD.I_PHASE_R_MOSFETS;     break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_SHUNT:         value = PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT;       break;
+        case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_BOARD.I_PHASE_GAIN;          break;
+        // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
+        /* Precompile Options */
+        case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;                        break;
+        // case MOTOR_VAR_BOARD_VERSION_FLAGS:           value = MOTOR_VERSION_FLAGS.Value;                        break;
+        default: break;
+    }
+    return value;
+}
+
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+//diagnostics
+int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T varId)
+{
+    int value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_SPEED_RATED_RPM:                 value = Motor_SpeedRated_Rpm(p_motor);             break;
+        case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVNominalRef_Rpm(p_motor);              break;
+        // case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVNominalRef_Angle(p_motor);             break;
+        // case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
+        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = Motor_SpeedRated_Pu(p_motor);               break;
+        default: break;
+    }
+    return value;
+}
+
+
+
+/******************************************************************************/
+/*
+    Cross module
+*/
+/******************************************************************************/
+/*
+    [Motor_Var_ConfigElectrical_T] Config, then the FOC params derived from it, at the tick base.
+    ψ also moves the speed base the sensor units share. That part applies with them on Motor_Reinit, as Kv does.
+*/
+void Motor_Var_ConfigElectrical_Set(Motor_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue)
+{
+    _Motor_Var_ConfigElectrical_Set(&p_motor->P_MOTOR->Config, varId, varValue);
+    Motor_ResolveFocParams(p_motor); /* alternatively call handle */
+}
+
+
+/******************************************************************************/
+/*
     Runtime Tuning version
 */
 /******************************************************************************/
@@ -274,127 +347,3 @@ void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, in
 //         default: break;
 //     }
 // }
-
-
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-/*
-    const
-    Alternate access to board reference values
-*/
-int Motor_Var_Board_Get(Motor_Var_Board_T varId)
-{
-    int value = 0;
-    switch (varId)
-    {
-        case MOTOR_VAR_BOARD_V_RATED:                 value = Phase_VRated_Pu();                 break;
-        case MOTOR_VAR_BOARD_I_RATED:                 value = Phase_IRatedPeak_Pu();             break;
-        case MOTOR_VAR_BOARD_V_MAX:                   value = Phase_VMaxVolts();                      break;
-        case MOTOR_VAR_BOARD_I_MAX:                   value = Phase_IMaxAmps();                       break;
-        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_BOARD.V_PHASE_R1;            break;
-        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_BOARD.V_PHASE_R2;            break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ANALOG_BOARD.I_PHASE_R_BASE;        break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_BOARD.I_PHASE_R_MOSFETS;     break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_SHUNT:         value = PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT;       break;
-        case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_BOARD.I_PHASE_GAIN;          break;
-        // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
-        /* Precompile Options */
-        case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;                        break;
-        // case MOTOR_VAR_BOARD_VERSION_FLAGS:           value = MOTOR_VERSION_FLAGS.Value;                        break;
-        default: break;
-    }
-    return value;
-}
-
-
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-//diagnostics
-int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T varId)
-{
-    int value = 0;
-    switch (varId)
-    {
-        case MOTOR_VAR_SPEED_RATED_RPM:                 value = Motor_SpeedRated_Rpm(p_motor);             break;
-        case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVNominalRef_Rpm(p_motor);              break;
-        // case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVNominalRef_Angle(p_motor);             break;
-        // case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
-        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = Motor_SpeedRated_Pu(p_motor);               break;
-        default: break;
-    }
-    return value;
-}
-
-
-
-/******************************************************************************/
-/*
-    Cross module
-*/
-/******************************************************************************/
-/*
-    [FOC_ConfigId_T] Electrical ids in control PU at the speed base, the [FOC_Electrical_T] frame.
-    Written to the FOC view, the rates in [Motor_Electrical_T] follow, one per axis.
-    ψ is set by [Motor_Electrical_T] AngleFreqPerVolt.
-*/
-// todo foc updated to use Ref, these move to Motor
-int _Motor_Var_FocConfig_Get(Motor_T * p_motor, FOC_ConfigId_T varId)
-{
-    const FOC_T * p_foc = &p_motor->P_MOTOR->Foc;
-    switch (varId)
-    {
-        case FOC_CONFIG_ELECTRICAL_LD:  return p_foc->Electrical.Ld;
-        case FOC_CONFIG_ELECTRICAL_LQ:  return p_foc->Electrical.Lq;
-        case FOC_CONFIG_ELECTRICAL_RS:  return p_foc->Electrical.Rs;
-        case FOC_CONFIG_ELECTRICAL_PSI: return p_foc->Electrical.Psi;
-        default: return FOC_Config_Get(&p_foc->Config, varId);
-    }
-}
-
-void _Motor_Var_FocConfig_Set(Motor_T * p_motor, FOC_ConfigId_T varId, int varValue)
-{
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
-    switch (varId)
-    {
-        case FOC_CONFIG_ELECTRICAL_LD:  p_context->Foc.Electrical.Ld = varValue;   break;
-        case FOC_CONFIG_ELECTRICAL_LQ:  p_context->Foc.Electrical.Lq = varValue;   break;
-        case FOC_CONFIG_ELECTRICAL_RS:  p_context->Foc.Electrical.Rs = varValue;   break;
-        case FOC_CONFIG_ELECTRICAL_PSI: return;
-        default: FOC_Config_Set(&p_context->Foc.Config, varId, varValue); return;
-    }
-    Motor_Electrical_SetFoc(&p_context->Config.Electrical, &p_context->Foc.Electrical);
-}
-
-/* SI. L [µH], Rs [mΩ], ψ [µWb] */
-static inline int Motor_FocConfig_GetSi(Motor_T * p_motor, FOC_ConfigId_T var)
-{
-    const FOC_Electrical_T * p_electrical = &p_motor->P_MOTOR->Foc.Electrical;
-    switch (var)
-    {
-        case FOC_CONFIG_ELECTRICAL_LD:  return l_h_of_pu(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_SpeedBase_AngleFreq(&Motor_Config(p_motor)->Electrical), p_electrical->Ld, 1000000UL);
-        case FOC_CONFIG_ELECTRICAL_LQ:  return l_h_of_pu(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_SpeedBase_AngleFreq(&Motor_Config(p_motor)->Electrical), p_electrical->Lq, 1000000UL);
-        case FOC_CONFIG_ELECTRICAL_RS:  return rs_mohm_of_pu(Phase_VMaxVolts(), Phase_IMaxAmps(), p_electrical->Rs);
-        case FOC_CONFIG_ELECTRICAL_PSI: return psi_wb_of_angle_freq(Motor_Config(p_motor)->Electrical.AngleFreqPerVolt, 1000000UL);
-        default: return _Motor_Var_FocConfig_Get(p_motor, var);
-    }
-}
-
-static inline void Motor_FocConfig_SetSi(Motor_T * p_motor, FOC_ConfigId_T var, int value)
-{
-    switch (var)
-    {
-        case FOC_CONFIG_ELECTRICAL_LD:
-        case FOC_CONFIG_ELECTRICAL_LQ:  _Motor_Var_FocConfig_Set(p_motor, var, l_pu_of_h(Phase_VMaxVolts(), Phase_IMaxAmps(), Motor_SpeedBase_AngleFreq(&Motor_Config(p_motor)->Electrical), value, 1000000UL));   break;
-        case FOC_CONFIG_ELECTRICAL_RS:  _Motor_Var_FocConfig_Set(p_motor, var, rs_pu_of_mohm(Phase_VMaxVolts(), Phase_IMaxAmps(), value));                                       break;
-        case FOC_CONFIG_ELECTRICAL_PSI: Motor_Config(p_motor)->Electrical.AngleFreqPerVolt = angle_freq_of_psi_wb(value, 1000000UL);                                     break;
-        default: _Motor_Var_FocConfig_Set(p_motor, var, value); break;
-    }
-}
-
-

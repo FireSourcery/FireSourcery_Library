@@ -81,20 +81,6 @@ static inline struct smo_axis smo_axis_step(fract16_t K_smo, fract16_t thr, accu
     return (struct smo_axis) { .i_est = smo_i(G_pu, Rs_pu, v, i_est, z), .z = z, };
 }
 
-/******************************************************************************/
-/*!
-    @brief  First-order discrete low-pass step.
-
-        y[k+1] = y[k] + k_lp · ( x[k] - y[k] ),       k_lp = dt / (τ + dt)
-
-    Used to extract the equivalent control of z (≈ ê) from the SMO output and
-    to smooth ê before the angle tracker. Choose τ such that the cutoff sits
-    above the maximum tracked electrical frequency yet below the SMO chatter band.
-*/
-/******************************************************************************/
-static inline fract16_t lpf_step(fract16_t k_lp, fract16_t y, fract16_t x) { return fract16_sat((accum32_t)y + fract16_mul(k_lp, x - y)); }
-
-
 
 /******************************************************************************/
 /*!

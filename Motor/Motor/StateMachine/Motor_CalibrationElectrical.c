@@ -244,7 +244,8 @@ static void ProcRampDown(ElectricalCalibration_T * p_params)
 
 static void CommitResults(ElectricalCalibration_T * p_params, Motor_Electrical_T * p_storage)
 {
-    Motor_Electrical_SetLdqTick(p_storage, p_params->Results.Ld, p_params->Results.Lq);
+    Motor_SetLd_PuTick(p_storage, p_params->Results.Ld);
+    Motor_SetLq_PuTick(p_storage, p_params->Results.Lq);
     p_storage->Rs = p_params->Results.Rs;
     SetNext(p_params, PARAMID_STEP_RAMPDOWN);
 }
@@ -326,7 +327,7 @@ static void Electrical_Proc(Motor_T * p_motor)
             break;
         case PARAMID_STEP_COMMIT:
             CommitResults(p_params, &p_context->Config.Electrical);
-            Motor_ResolveFocParams(p_context);
+            Motor_ResolveFocParams(p_motor);
             break;
         case PARAMID_STEP_RAMPDOWN:
             // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, 0);

@@ -38,16 +38,15 @@
     Phase Board and Scaling References
 */
 /******************************************************************************/
-/* Phase_Board */
 typedef const struct Phase_Board
 {
-    /* Sensor/Type/Calibration Max. Unit conversion reference. Compile time defined. Optionally allow runtime overwrite */
-    /* Type max using sensor saturation. alternatively runtime select */
+    /* Sensor/Type/Calibration Max. Unit conversion reference. Compile time defined. [extern const] allows runtime overwrite */
+    /* Type max using sensor saturation. */
     volatile uint16_t V_MAX_VOLTS;
     volatile uint16_t I_MAX_AMPS;
 
     /* Limits for config input */
-    /* Optionally include si units */
+    /* Optionally include si units, alternate base */
     volatile uint16_t V_RATED_PU;
     volatile uint16_t I_RATED_PEAK_PU;
     volatile uint16_t I_RATED_FW_PU;
@@ -73,8 +72,8 @@ static inline uint16_t Phase_VMaxVolts(void) { return PHASE_BOARD.V_MAX_VOLTS; }
 static inline uint16_t Phase_VRated_Pu(void) { return PHASE_BOARD.V_RATED_PU; }
 static inline uint16_t Phase_IRatedPeak_Pu(void) { return PHASE_BOARD.I_RATED_PEAK_PU; }
 static inline uint16_t Phase_IRatedFw_Pu(void) { return PHASE_BOARD.I_RATED_FW_PU; }
-static inline uint16_t Phase_VRated_Volts(void) { return Phase_VRated_Pu() * Phase_VMaxVolts() / 32768; }
-static inline int16_t Phase_IRatedPeak_Amps(void) { return Phase_IRatedPeak_Pu() * Phase_IMaxAmps() / 32768; }
+static inline uint16_t Phase_VRated_Volts(void) { return Phase_VRated_Pu() * Phase_VMaxVolts() + (32768 / 2) / 32768; }
+static inline int16_t Phase_IRatedPeak_Amps(void) { return Phase_IRatedPeak_Pu() * Phase_IMaxAmps() + (32768 / 2) / 32768; }
 static inline int16_t Phase_IRatedRms_Amps(void) { return Phase_IRatedPeak_Pu() * Phase_IMaxAmps() / FRACT16_SQRT2; }
 
 

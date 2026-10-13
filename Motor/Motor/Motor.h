@@ -231,6 +231,7 @@ typedef struct Motor_Config
 
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
+    Motor_FieldWeakeningTuning_T FieldWeakening;
 
     /*
         OpenLoop
@@ -373,7 +374,6 @@ typedef const struct Motor
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */
     const Motor_Config_T * P_NVM_CONFIG;
-    const FOC_Config_T * P_FOC_NVM_CONFIG; /* config for the FOC struct with a nested config field, without including a 3rd copy in Motor_Config */
     /*  */
     HeatMonitor_T HEAT_MONITOR;
     ADC_Conversion_T HEAT_MONITOR_CONVERSION;
@@ -531,12 +531,8 @@ static_assert(MOTOR_SPEED_BASE_V_PU == FRACT16_SCALE / 2, "VSpeed = Speed / 2, S
 static inline int32_t _Motor_GetVSpeed_Pu(Motor_T * p_motor) { return Motor_GetSpeedFeedback(p_motor->P_MOTOR) / 2; }
 static inline int32_t Motor_GetVSpeed_Pu(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Pu(p_motor), p_motor->P_MOTOR->Config.VSpeedAdjustment); }
 
-
 static inline uint16_t Motor_GetSpeedFreewheelLimit_Pu(Motor_T * p_motor) { return Motor_SpeedRated_Pu(p_motor); }
 static inline bool Motor_IsSpeedFreewheelLimitRange(Motor_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor->P_MOTOR)) < Motor_GetSpeedFreewheelLimit_Pu(p_motor)); }
-
-/* Rotating along the applied Direction. False at standstill or counter-rotation */
-static inline bool Motor_IsSpeedAligned(Motor_T * p_motor) { return ((Motor_GetSpeedFeedback(p_motor->P_MOTOR) * p_motor->P_MOTOR->Direction) > 0); }
 
 /*
     bus ratio IS the no-FW speed ceiling, VBus_GetSpeedDerate
@@ -595,6 +591,9 @@ static inline void Motor_MatchSpeedTorqueState(Motor_Context_T * p_motor, int16_
     Feedback sign conventions — speed, current, voltage must be consistently signed
 */
 /******************************************************************************/
+/* Rotating along the applied Direction. False at standstill or counter-rotation */
+static inline bool Motor_IsSpeedAligned(Motor_T * p_motor) { return ((Motor_GetSpeedFeedback(p_motor->P_MOTOR) * p_motor->P_MOTOR->Direction) > 0); }
+
 /*
     One direction clamp
     Ccw: [0:value]
@@ -640,7 +639,7 @@ extern void Motor_Reinit(Motor_T * p_motor);
 extern void Motor_InitUnits(Motor_Context_T * p_motor);
 extern bool Motor_IsConfigValid(Motor_T * p_motor);
 extern void Motor_ValidateConfig(Motor_T * p_motor);
-extern void Motor_ResolveFocParams(Motor_Context_T * p_motor);
+extern void Motor_ResolveFocParams(Motor_T * p_motor);
 
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_ResolveFeedbackLimits(Motor_T * p_motor);

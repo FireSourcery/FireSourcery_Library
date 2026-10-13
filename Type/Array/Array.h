@@ -42,7 +42,7 @@
     Wrapper around values array, preset functions for int types and operations
 */
 /******************************************************************************/
-// typedef struct { uint8_t * p_buffer; size_t size; } buffer_span_t;
+// typedef struct { uint8_t * p_buffer; size_t size; } byte_span_t;
 typedef struct { void * P_BUFFER; size_t LENGTH; } ArraySpan_T;
 
 // static allocation only, for inline convenience
@@ -64,7 +64,7 @@ typedef struct { void * P_BUFFER; size_t LENGTH; } ArraySpan_T;
     A contiguous run of LENGTH units of TYPE_SIZE at P_BUFFER. A view, not a descriptor:
     it is returned by value, so it is NOT const-qualified (a qualifier on a by-value return is ignored, and warns under -Wextra).
 */
-
+// typedef struct array_span { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; } array_span_t ;
 typedef struct ArraySpanT { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; } ArraySpanT_T;
 
 static inline size_t ArraySpan_Size(ArraySpanT_T span) { return span.LENGTH * span.TYPE_SIZE; }
@@ -92,7 +92,6 @@ static inline void ArraySpan_CopyFrom(ArraySpanT_T span, const void * p_src) { m
 // typedef struct { size_t type; void * p_buffer; size_t length; } const typed_span_t; // returnable record
 // typedef struct { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; } ArrayDescriptor_T; // Descriptor
 // typedef struct { size_t TYPE_SIZE; void * P_BUFFER; size_t LENGTH; void * P_AUGMENTS; } ArrayHeaded_T; // with State pointer
-
 
 
 /*

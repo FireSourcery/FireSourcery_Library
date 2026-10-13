@@ -29,8 +29,6 @@
 /******************************************************************************/
 #include "Motor_Config.h"
 
-#include "Math/FOC_Ext.h"
-
 
 /******************************************************************************/
 /*
@@ -57,7 +55,7 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
     (
         (p_config->DirectionForward != MOTOR_DIRECTION_NULL) &&
         (p_config->IabcZeroRef_Adcu.A != 0U) && (p_config->IabcZeroRef_Adcu.B != 0U) && (p_config->IabcZeroRef_Adcu.C != 0U) &&
-        (p_config->Electrical.PolePairs != 0U) && (p_config->Electrical.AngleFreqPerVolt > 0) && (p_config->VSpeedAdjustment <= INT16_MAX) &&
+        Motor_Electrical_IsValid(&p_config->Electrical) && (p_config->VSpeedAdjustment <= INT16_MAX) &&
         (p_config->ILimitMotoring_Pu <= _Motor_IRatedLimit()) &&
         (p_config->ILimitGenerating_Pu <= _Motor_IRatedLimit()) &&
         (p_config->IAlign_Pu <= p_config->ILimitMotoring_Pu) &&
@@ -112,6 +110,12 @@ void Motor_Config_ValidateSpeed(Motor_Config_T * p_config, uint16_t speedCeiling
 void Motor_Config_ValidateVAlign(Motor_Config_T * p_config)
 {
     p_config->VAlign_Pu = math_min(_Motor_VAlignRsLimit(p_config->Electrical.Rs), p_config->VAlign_Pu);
+}
+
+/* Motoring current within the rated vector left beside the field weakening current */
+void Motor_Config_ValidateFw(Motor_Config_T * p_config)
+{
+    p_config->ILimitMotoring_Pu = math_min(p_config->ILimitMotoring_Pu, Motor_FieldWeakening_IqLimit(&p_config->FieldWeakening));
 }
 
 
@@ -431,7 +435,6 @@ void _Motor_Var_ConfigPid_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T va
     }
 }
 
-
 /*
     Coefficients in 9.7
 */
@@ -461,6 +464,107 @@ void _Motor_Var_ConfigPid16_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T 
         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
         case MOTOR_VAR_PID_CURRENT_KP:            _PID_SetKp_Fixed16(&p_motor->PidI, varValue);            break;
         case MOTOR_VAR_PID_CURRENT_KI:            _PID_SetKi_Fixed16(&p_motor->PidI, varValue);            break;
+        default: break;
+    }
+}
+
+/******************************************************************************/
+/*
+    Electrical configuration interface.
+*/
+/******************************************************************************/
+/*
+    As stored. ψ, Ld, Lq as rates [angle16/s / V], [angle16/s · A/V]. Rs [V_base / I_base]. Field weakening [I_base]
+*/
+int _Motor_Var_ConfigElectrical_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId)
+{
+    int value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_ELECTRICAL_PSI:  value = p_motor->Electrical.AngleFreqPerVolt;   break;
+        case MOTOR_VAR_ELECTRICAL_LD:   value = p_motor->Electrical.AngleFreqPerOhmD;   break;
+        case MOTOR_VAR_ELECTRICAL_LQ:   value = p_motor->Electrical.AngleFreqPerOhmQ;   break;
+        case MOTOR_VAR_ELECTRICAL_RS:   value = p_motor->Electrical.Rs;                 break;
+        case MOTOR_VAR_FW_ID_LIMIT:     value = p_motor->FieldWeakening.IfwLimit;       break;
+        case MOTOR_VAR_FW_ID_GAIN:      value = p_motor->FieldWeakening.IfwGain;        break;
+        default: break;
+    }
+    return value;
+}
+
+void _Motor_Var_ConfigElectrical_Set(Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue)
+{
+    switch (varId)
+    {
+        case MOTOR_VAR_ELECTRICAL_PSI:  p_motor->Electrical.AngleFreqPerVolt = varValue;    break;
+        case MOTOR_VAR_ELECTRICAL_LD:   p_motor->Electrical.AngleFreqPerOhmD = varValue;    break;
+        case MOTOR_VAR_ELECTRICAL_LQ:   p_motor->Electrical.AngleFreqPerOhmQ = varValue;    break;
+        case MOTOR_VAR_ELECTRICAL_RS:   p_motor->Electrical.Rs = varValue;                  break;
+        case MOTOR_VAR_FW_ID_LIMIT:     p_motor->FieldWeakening.IfwLimit = varValue;        break;
+        case MOTOR_VAR_FW_ID_GAIN:      p_motor->FieldWeakening.IfwGain = varValue;         break;
+        default: break;
+    }
+}
+
+/*
+    SI. ψ [µWb], Ld, Lq [µH], Rs [mΩ]. Field weakening as stored
+*/
+int _Motor_Var_ConfigElectricalSi_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId)
+{
+    int value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_ELECTRICAL_PSI:  value = _Motor_Electrical_SiOf(p_motor->Electrical.AngleFreqPerVolt, 1000000UL);    break;
+        case MOTOR_VAR_ELECTRICAL_LD:   value = _Motor_Electrical_SiOf(p_motor->Electrical.AngleFreqPerOhmD, 1000000UL);    break;
+        case MOTOR_VAR_ELECTRICAL_LQ:   value = _Motor_Electrical_SiOf(p_motor->Electrical.AngleFreqPerOhmQ, 1000000UL);    break;
+        case MOTOR_VAR_ELECTRICAL_RS:   value = rs_mohm_of_pu(Phase_VMaxVolts(), Phase_IMaxAmps(), p_motor->Electrical.Rs); break;
+        case MOTOR_VAR_FW_ID_LIMIT:     value = p_motor->FieldWeakening.IfwLimit;        break;
+        case MOTOR_VAR_FW_ID_GAIN:      value = p_motor->FieldWeakening.IfwGain;         break;
+        default: break;
+    }
+    return value;
+}
+
+void _Motor_Var_ConfigElectricalSi_Set(Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue)
+{
+    switch (varId)
+    {
+        case MOTOR_VAR_ELECTRICAL_PSI:  p_motor->Electrical.AngleFreqPerVolt = _Motor_Electrical_RateOfSi(varValue, 1000000UL);     break;
+        case MOTOR_VAR_ELECTRICAL_LD:   p_motor->Electrical.AngleFreqPerOhmD = _Motor_Electrical_RateOfSi(varValue, 1000000UL);     break;
+        case MOTOR_VAR_ELECTRICAL_LQ:   p_motor->Electrical.AngleFreqPerOhmQ = _Motor_Electrical_RateOfSi(varValue, 1000000UL);     break;
+        case MOTOR_VAR_ELECTRICAL_RS:   p_motor->Electrical.Rs = rs_pu_of_mohm(Phase_VMaxVolts(), Phase_IMaxAmps(), varValue);      break;
+        case MOTOR_VAR_FW_ID_LIMIT:     p_motor->FieldWeakening.IfwLimit = varValue;        break;
+        case MOTOR_VAR_FW_ID_GAIN:      p_motor->FieldWeakening.IfwGain = varValue;         break;
+        default: break;
+    }
+}
+
+int _Motor_Var_ConfigElectricalPu_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId)
+{
+    int value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_ELECTRICAL_PSI:  value = Motor_Psi_PuTick(&p_motor->Electrical);    break;
+        case MOTOR_VAR_ELECTRICAL_LD:   value = Motor_Ld_PuTick(&p_motor->Electrical);     break;
+        case MOTOR_VAR_ELECTRICAL_LQ:   value = Motor_Lq_PuTick(&p_motor->Electrical);     break;
+        case MOTOR_VAR_ELECTRICAL_RS:   value = p_motor->Electrical.Rs;                                 break;
+        case MOTOR_VAR_FW_ID_LIMIT:     value = p_motor->FieldWeakening.IfwLimit;        break;
+        case MOTOR_VAR_FW_ID_GAIN:      value = p_motor->FieldWeakening.IfwGain;         break;
+        default: break;
+    }
+    return value;
+}
+
+void _Motor_Var_ConfigElectricalPu_Set(Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue)
+{
+    switch (varId)
+    {
+        case MOTOR_VAR_ELECTRICAL_PSI:  Motor_SetPsi_PuTick(&p_motor->Electrical, varValue);     break;
+        case MOTOR_VAR_ELECTRICAL_LD:   Motor_SetLd_PuTick(&p_motor->Electrical, varValue);     break;
+        case MOTOR_VAR_ELECTRICAL_LQ:   Motor_SetLq_PuTick(&p_motor->Electrical, varValue);     break;
+        case MOTOR_VAR_ELECTRICAL_RS:   p_motor->Electrical.Rs =  varValue;      break;
+        case MOTOR_VAR_FW_ID_LIMIT:     p_motor->FieldWeakening.IfwLimit = varValue;        break;
+        case MOTOR_VAR_FW_ID_GAIN:      p_motor->FieldWeakening.IfwGain = varValue;         break;
         default: break;
     }
 }

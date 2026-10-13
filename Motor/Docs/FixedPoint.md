@@ -67,13 +67,13 @@ A speed is angle per time, and ψ and L hold time in the numerator, so their bas
 
 | Form | F_base [angle_freq_t] | ω_pu | Holds |
 |---|---|---|---|
-| Tick | Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts] | identification, in samples; the observer gain |
-| Speed | AngleFreqPerVolt · V_base · `MOTOR_SPEED_BASE_V_PU` | `Speed_Pu` | speed loop, limits, FOC decoupling |
+| Tick | Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts] | identification, in samples; the observer gain; FOC decoupling |
+| Speed | AngleFreqPerVolt · V_base · `MOTOR_SPEED_BASE_V_PU` | `Speed_Pu` | speed loop, limits |
 
 - The tick form is time in ticks of Fs. Δθ_base = 2^15, so ω_pu and Δθ are one integer, Q15 of π rad per tick.
 - The speed form anchors to the motor and resolves k = Fs · 2^15 / F_base times finer.
 - ψ and L move between forms by F_to / F_from (`pu_tau_rebase`), ω_pu by F_from / F_to.
-- ψ and L are stored as rates, 1 / ψ [angle16/s / V] and 1 / L [angle16/s · A/V]. Each form is one division from the rate: x_pu = F_base / (rate · Z_base), Z_base = V_base for ψ and V_base / I_base for L (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`).
+- ψ and L are stored as rates, 1 / ψ [angle16/s / V] and 1 / L [angle16/s · A/V]. Each form is one division from the rate: x_pu = F_base / (rate · Z_base), Z_base = V_base for ψ and V_base / I_base for L (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`). ψ per volt and L per ohm are both [s/rad] (`angle_freq_of_s_per_rad`).
 
 A product's unit is the product of the bases. It is valid when that product is in the set (ω_pu · ψ_pu → v_pu), and when factors through ω_base share a form. Motor bases and the speed base in detail: [Motor/Motor/Math/_.md](../../Motor/Motor/Math/_.md).
 
@@ -100,10 +100,6 @@ A float build ([real.h](../../Math/HAL/real.h)) changes this family alone, to va
 | coefficient | (m · b) >> shift | 32-bit product at full mantissa | `fract16e_mul` |
 | divide | (a << 15) / b | a < 2.0; the caller guards b = 0 | `fract16_div` |
 | store | clamp to ±FRACT16_MAX | symmetric, so −1 · −1 and abs fit | `fract16_sat` |
-
-### Base dependence
-
-A stored pu value follows its base. Changing V_base or I_base (board), or F_base (Kv, V_base), rescales everything stored against it. A value relative by intent stays pu, as a limit is a fraction of capability. A value describing the motor is stored free of the motor-derived base: in [Motor_Electrical_T], the motor constant as `AngleFreqPerVolt` [angle16/s / V], Ld and Lq as `AngleFreqPerOhmD`, `AngleFreqPerOhmQ` [angle16/s · A/V], free of Fs and the board, and Rs, which is time-free.
 
 ## Time
 
@@ -203,7 +199,7 @@ In the tick form Fs / ω_base = 1 / π, so v_pu = L_tick · Δi_pu / π. Rotatio
 9. Wrap only in the angle family, in unsigned arithmetic or by narrowing.
 10. π only at the radian. Derivative pu terms carry Fs / ω_base.
 11. One truncation per conversion: constant divisors first, the variable divisor last. Write-back paths return the value written: a reciprocal pair inverts exactly while the stored side has the more bits (`angle_freq_of_l_pu`), a scale-down pair scales up to the midpoint. User views round to nearest (`kv_of_angle_freq`).
-12. Constants are written in SI through macros the compiler folds (`FRACT16`, `ANGLE_FREQ`, `MOTOR_L_PU_TICK`). Runtime conversions are integer.
+12. Constants are written in SI through macros the compiler folds (`ANGLE_FREQ`, `MOTOR_L_PU_TICK`). A pu macro returns the unscaled value, and the destination's literal macro applies the representation: `FRACT16`, `ACCUM32` for storage, Q15 in every build; `FRACT`, `ACCUM` at runtime. Runtime conversions are integer.
 13. 64-bit division at init or the user boundary, not in the control loop.
 
 ## Viability
@@ -241,7 +237,6 @@ The split matches the float HAL: per-unit values become `float`, while angles an
 ### Findings
 
 1. **Signed wrap, rule 9.** `Angle_Integrate` and `Angle_IntegrateStep` add `int32_t` `.Delta` into `int32_t` `.Angle`, overflowing every half turn. Undefined in C; the build is `-O3 -mcpu=cortex-m0plus` without `-fwrapv`. `AngleCounter_CaptureCount` already adds unsigned.
-2. **Speed headroom, rule 7.** `AngleCounter_GetSpeed_Pu` (Hall, encoder) holds to 2.0 pu, its int32 product overflowing past it. `Angle_ResolveSpeed_Pu` (sensorless, SinCos) saturates at 1.0. With `MOTOR_SPEED_BASE_V_PU` = 0.5 the base is where phase-peak BEMF reaches V_base / 2. SVPWM applies a phase peak up to V_bus / √3, so speed passes 1.0 pu without field weakening once V_bus > 0.87 · V_base.
 
 ### Open
 

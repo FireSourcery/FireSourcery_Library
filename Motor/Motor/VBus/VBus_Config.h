@@ -47,7 +47,7 @@
 typedef struct VBus_Config
 {
     /* Pack profile */
-    uint16_t VSupplyNominal_V;              /* Pack nominal [V]. Speed-derate divisor, startup value, config-wizard anchor. */
+    uint16_t VSupplyNominal_V;              /* Pack nominal [V]. Speed-derate divisor, startup value, config-wizard anchor. alternatively update to pu*/
     // uint16_t VFullPower_V;               /* Full I at/above this. Typically same as VSupplyNominal, but may be raised for headroom. */
 
     /* Derate floor scales — fraction of the respective limit at the ramp's saturated end */
@@ -134,7 +134,7 @@ static inline uint16_t VBus_GetVHighDerate_V(const VMonitor_Config_T * p_monitor
 /******************************************************************************/
 static inline void VBus_Config_Validate(VBus_Config_T * p_config)
 {
-    p_config->VSupplyNominal_V           = math_min(p_config->VSupplyNominal_V, Phase_VRated_Volts());
+    p_config->VSupplyNominal_V   = math_min(p_config->VSupplyNominal_V, Phase_VRated_Volts());
     p_config->IDerateUnderVFloor = math_min(p_config->IDerateUnderVFloor, INT16_MAX);
     p_config->IDerateOverVFloor  = math_min(p_config->IDerateOverVFloor,  INT16_MAX);
     p_config->SpeedDerateFloor   = math_min(p_config->SpeedDerateFloor,   INT16_MAX);
@@ -143,7 +143,7 @@ static inline void VBus_Config_Validate(VBus_Config_T * p_config)
 static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
 {
     return ((p_config->VSupplyNominal_V != 0U)
-        && (p_config->VSupplyNominal_V           <= Phase_VRated_Volts())
+        && (p_config->VSupplyNominal_V <= Phase_VRated_Volts())
         && (p_config->IDerateUnderVFloor <= INT16_MAX)
         && (p_config->IDerateOverVFloor  <= INT16_MAX)
         && (p_config->SpeedDerateFloor   <= INT16_MAX));

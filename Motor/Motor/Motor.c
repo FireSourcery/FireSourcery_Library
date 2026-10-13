@@ -41,7 +41,6 @@ void Motor_Init(Motor_T * p_dev)
 
     /* Config including selected angle sensor init */
     if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_MOTOR->Config = *p_dev->P_NVM_CONFIG; }
-    if (p_dev->P_FOC_NVM_CONFIG != NULL) { FOC_Init(&p_dev->P_MOTOR->Foc, p_dev->P_FOC_NVM_CONFIG); }
 
     /*
         HW Modules Init
@@ -69,14 +68,11 @@ void Motor_Init(Motor_T * p_dev)
     p_dev->P_MOTOR->SpeedLimit.Derate = FRACT16_MAX;
 
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
+    Motor_ResolveFocParams(p_dev);
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 
 // void Motor_InitFrom(Motor_T * p_dev, const Motor_Config_T * p_config)
-// {
-// }
-
-// void Motor_InitFocFrom(Motor_T * p_dev, const FOC_Config_T * p_foc_config)
 // {
 // }
 
@@ -89,7 +85,6 @@ void Motor_Reset(Motor_Context_T * p_motor)
 {
     // Motor_Config_Validate(&p_motor->Config); /* State Machine Enter Fault on invalid config */
     Motor_InitUnits(p_motor);
-    Motor_ResolveFocParams(p_motor);
 
     /* Output Limits Set later depending on commutation mode, feedback mode, direction */
     PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
@@ -129,16 +124,16 @@ void Motor_Reset(Motor_Context_T * p_motor)
 void Motor_Reinit(Motor_T * p_motor)
 {
     if (p_motor->P_NVM_CONFIG != NULL) { p_motor->P_MOTOR->Config = *p_motor->P_NVM_CONFIG; }
-    if (p_motor->P_FOC_NVM_CONFIG != NULL) { FOC_Init(&p_motor->P_MOTOR->Foc, p_motor->P_FOC_NVM_CONFIG); }
     Motor_Reset(p_motor->P_MOTOR);
+    Motor_ResolveFocParams(p_motor);
 }
 
-/* Validate config across modules: base Motor config + FOC field-weakening speed-limit consistency */
+/* Validate config across modules: base Motor config + field-weakening speed-limit consistency */
 bool Motor_IsConfigValid(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    uint16_t speedCeiling = FOC_Config_IsFwEnabled(&p_context->Foc.Config) ? INT16_MAX : Motor_SpeedRated_Pu(p_motor);
+    uint16_t speedCeiling = Motor_FieldWeakening_IsEnabled(&p_context->Config.FieldWeakening) ? INT16_MAX : Motor_SpeedRated_Pu(p_motor);
 #else
     uint16_t speedCeiling = Motor_SpeedRated_Pu(p_motor);
 #endif
@@ -154,13 +149,8 @@ void Motor_ValidateConfig(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_Config_ValidateVAlign(&p_context->Config);
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit = math_min(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, Phase_IRatedFw_Pu());
-    p_motor->P_MOTOR->Config.ILimitMotoring_Pu = math_min(p_motor->P_MOTOR->Config.ILimitMotoring_Pu, fract16_vector_component(p_motor->P_MOTOR->Foc.Config.FieldWeakening.IdLimit, Phase_IRatedPeak_Pu()));
+    Motor_Config_ValidateFw(&p_context->Config);
     // optionally add runtime current limit
-#endif
-#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-    /* The one observer gain derived from motor params rather than stored tuning. */
-    FOC_Sensorless_InitG(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Electrical_LsTick(&p_context->Config.Electrical));
 #endif
 }
 
@@ -180,12 +170,29 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 }
 
 /*
-    FOC params at the speed base, from [Motor_Electrical_T] at the tick base.
-    Re-resolve on a change of the model or the board base.
+    FOC params, derived. FOC and the observer hold no config: views of [Motor_Electrical_T] at the tick base, and the field weakening limit within the board FW rating.
+    Re-resolve on a change of the model, the tuning, or the board base. An invalid model keeps the prior view.
 */
-void Motor_ResolveFocParams(Motor_Context_T * p_motor)
+void Motor_ResolveFocParams(Motor_T * p_motor)
 {
-    p_motor->Foc.Electrical = Motor_Electrical_FocOf(&p_motor->Config.Electrical);
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    const Motor_Electrical_T * p_electrical = &p_context->Config.Electrical;
+
+    if (Motor_Electrical_IsValid(p_electrical))
+    {
+        p_context->Foc.Electrical = (FOC_Electrical_T)
+        {
+            .Ld     = Motor_Ld_PuTick(p_electrical),
+            .Lq     = Motor_Lq_PuTick(p_electrical),
+            .Rs     = p_electrical->Rs,
+            .Psi    = Motor_Psi_PuTick(p_electrical),
+        };
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+        FOC_Sensorless_InitElectrical(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Ls_PuTick(p_electrical), Motor_Lq_PuTick(p_electrical), math_min(p_electrical->Rs, FRACT16_MAX));
+#endif
+    }
+
+    p_context->Foc.FieldWeakening = (FOC_FieldWeakeningTuning_T) { .IdLimit = Motor_FieldWeakening_IdLimit(&p_context->Config.FieldWeakening), .IdGain = p_context->Config.FieldWeakening.IfwGain, };
 }
 
 /******************************************************************************/

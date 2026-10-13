@@ -98,10 +98,10 @@ static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
 /* Freq_Base [angle16/s] */
 #define FOC_ELECTRICAL_FROM_SI(Freq_Base, V_Base, I_Base, Ld_uH, Lq_uH, Rs_mOhm, Psi_uWb) (FOC_Electrical_T) \
 { \
-    .Ld  = MOTOR_L_PU(Freq_Base, V_Base, I_Base, (Ld_uH) * 1.0E-6F), \
-    .Lq  = MOTOR_L_PU(Freq_Base, V_Base, I_Base, (Lq_uH) * 1.0E-6F), \
-    .Rs  = MOTOR_R_PU_OF_MOHM(V_Base, I_Base, Rs_mOhm), \
-    .Psi = MOTOR_PSI_PU(Freq_Base, V_Base, (Psi_uWb) * 1.0E-6F), \
+    .Ld  = ACCUM32(MOTOR_L_PU(Freq_Base, V_Base, I_Base, (Ld_uH) * 1.0E-6F)), \
+    .Lq  = ACCUM32(MOTOR_L_PU(Freq_Base, V_Base, I_Base, (Lq_uH) * 1.0E-6F)), \
+    .Rs  = ACCUM32(MOTOR_R_PU_OF_MOHM(V_Base, I_Base, Rs_mOhm)), \
+    .Psi = ACCUM32(MOTOR_PSI_PU(Freq_Base, V_Base, (Psi_uWb) * 1.0E-6F)), \
 }
 
 

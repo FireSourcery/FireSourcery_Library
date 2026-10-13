@@ -63,7 +63,7 @@ RingT_T;
     from a single RingT_T makes it unrepresentable.
 
         RingT_PushBack(RING_T_ARGS(p_serial->TX_RING), &txChar);
-*/
+*///todo replace
 #define RING_T_ARGS(ring) (ring).TYPE, (ring).P_STATE
 
 

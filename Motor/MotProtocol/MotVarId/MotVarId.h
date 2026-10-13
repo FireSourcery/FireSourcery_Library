@@ -198,6 +198,8 @@ typedef enum Motor_VarType_Base
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
     MOTOR_VAR_TYPE_CONFIG_PID,
     MOTOR_VAR_TYPE_CONFIG_DEBUG,
+    MOTOR_VAR_TYPE_CONFIG_ELECTRICAL,
+    MOTOR_VAR_TYPE_CONFIG_ELECTRICAL_PU, /*  */
     MOTOR_VAR_TYPE_CONFIG_RESV,
     _MOTOR_VAR_TYPE_BASE_END,
 }
@@ -215,7 +217,7 @@ typedef enum Motor_VarType_SubModule
     MOTOR_VAR_TYPE_THERMISTOR_CONFIG,
     MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
     MOTOR_VAR_TYPE_FOC_OUT,
-    MOTOR_VAR_TYPE_FOC_CONFIG,
+    MOTOR_VAR_TYPE_FOC_CONFIG, /* resv */
     // opt move to sensor module
     MOTOR_VAR_TYPE_FOC_SENSORLESS,
     MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG,

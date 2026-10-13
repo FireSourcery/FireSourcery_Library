@@ -58,6 +58,8 @@ int Motor_VarType_Base_Get(Motor_T * p_motor, Motor_VarType_Base_T typeId, int v
         case MOTOR_VAR_TYPE_OPEN_LOOP_CMD:          return 0;
         case MOTOR_VAR_TYPE_CALIBRATION_CMD:        return 0;
         case MOTOR_VAR_TYPE_CONFIG_RESV:            return 0;
+        case MOTOR_VAR_TYPE_CONFIG_ELECTRICAL:      return _Motor_Var_ConfigElectrical_Get(&p_motor->P_MOTOR->Config, varId);
+        case MOTOR_VAR_TYPE_CONFIG_ELECTRICAL_PU:   return _Motor_Var_ConfigElectricalPu_Get(&p_motor->P_MOTOR->Config, varId);
         default: break;
     }
     return 0;
@@ -79,7 +81,9 @@ void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int 
         case MOTOR_VAR_TYPE_CONFIG_ACTUATION:       _Motor_Var_ConfigActuation_Set(&p_motor->P_MOTOR->Config, varId, varValue);    break;
         case MOTOR_VAR_TYPE_CONFIG_PID:             _Motor_Var_ConfigPid_Set(&p_motor->P_MOTOR->Config, varId, varValue);          break;
         case MOTOR_VAR_TYPE_CONFIG_DEBUG:           break;
-        // case MOTOR_VAR_TYPE_CONFIG_RESV:         Motor_Sensor_CalibrationCmd_Call(p_motor, (RotorSensor_Id_T)varId, varValue);           break;
+        case MOTOR_VAR_TYPE_CONFIG_ELECTRICAL:      Motor_Var_ConfigElectrical_Set(p_motor, varId, varValue);                      break;
+        case MOTOR_VAR_TYPE_CONFIG_ELECTRICAL_PU:   _Motor_Var_ConfigElectricalPu_Set(&p_motor->P_MOTOR->Config, varId, varValue);  Motor_ResolveFocParams(p_motor);  break;
+        // case MOTOR_VAR_TYPE_CONFIG_RESV:                 break;
         default: break;
     }
 }
@@ -119,9 +123,9 @@ int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typ
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              return _Motor_Var_PidTuning_Get(p_motor, varId);
-
         case MOTOR_VAR_TYPE_FOC_OUT:                    return FOC_Var_Get(&p_motor->P_MOTOR->Foc, varId);
-        case MOTOR_VAR_TYPE_FOC_CONFIG:                 return _Motor_Var_FocConfig_Get(p_motor, varId);
+        // case MOTOR_VAR_TYPE_FOC_CONFIG:                 return _Motor_Var_ConfigElectrical_Get(&p_motor->P_MOTOR->Config, varId);
+        case MOTOR_VAR_TYPE_FOC_CONFIG:                 return 0; /* reserved */
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
         /* Read the table entry, not p_ActiveSensor — observer telemetry stays visible while tuning against another selected sensor. */
         case MOTOR_VAR_TYPE_FOC_SENSORLESS:             return FOC_Sensorless_GetVar(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, varId);
@@ -140,7 +144,8 @@ void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T ty
         case MOTOR_VAR_TYPE_PHASE:                      break;
         case MOTOR_VAR_TYPE_PHASE_INPUT:                break;
         case MOTOR_VAR_TYPE_FOC_OUT:                    break;
-        case MOTOR_VAR_TYPE_FOC_CONFIG:                 _Motor_Var_FocConfig_Set(p_motor, varId, varValue);                      break;
+        // case MOTOR_VAR_TYPE_FOC_CONFIG:                 Motor_Var_ConfigElectrical_Set(p_motor, varId, varValue);                      break;
+        case MOTOR_VAR_TYPE_FOC_CONFIG:                 break;
         case MOTOR_VAR_TYPE_ROTOR_OUT:                  break;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           break;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR, varId, varValue);              break;

@@ -85,7 +85,6 @@ static inline RotorSensor_UnitRef_T RotorSensor_UnitRef(uint32_t fs, uint8_t pol
     return (RotorSensor_UnitRef_T) { .PolePairs = polePairs, .AngleFreqBase = angleFreqBase, .SpeedPuRef = Angle_SpeedPuRef_FromFreq(fs, angleFreqBase), };
 }
 
-
 /*
     [Angle_T] Wrap
 */
@@ -98,13 +97,6 @@ typedef struct RotorSensor_State
     angle16_t MechanicalAngle; /* optionally supported */
 }
 RotorSensor_State_T;
-
-// static inline angle16_t _RotorSensor_GetElectricalAngle(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Angle; }
-// static inline angle16_t _RotorSensor_GetElectricalDelta(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Delta; }
-// static inline int32_t _RotorSensor_GetSpeed_Pu(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Speed_Pu; }
-// static inline int32_t _RotorSensor_GetDirection(const RotorSensor_State_T * p_state) { return p_state->Direction; }
-// static inline angle16_t _RotorSensor_GetMechanicalAngle(const RotorSensor_State_T * p_state) { return p_state->MechanicalAngle; }
-
 
 /*
     [RotorSensor_T]
@@ -134,7 +126,7 @@ extern const RotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY;
 
 /******************************************************************************/
 /*!
-    Private
+    Private / Protected
 */
 /******************************************************************************/
 static void _RotorSensor_Reset(RotorSensor_State_T * p_state)
@@ -145,6 +137,11 @@ static void _RotorSensor_Reset(RotorSensor_State_T * p_state)
 
 /* θ_e = PolePairs · θ_m. For sensors reporting a mechanical angle */
 static inline angle16_t _RotorSensor_ElectricalAngleOf(const RotorSensor_State_T * p_state, angle16_t mechanical) { return mechanical * p_state->UnitRef.PolePairs; }
+
+/* Both views of one measurement: Δθ for the electrical model, Speed_Pu for the control loop. Rolling two-sample filter */
+static inline void _RotorSensor_CaptureDelta(RotorSensor_State_T * p_state, int32_t delta) { p_state->AngleSpeed.Delta = delta / 2 + p_state->AngleSpeed.Delta / 2; }
+/* separate for FreqD sensors */
+static inline void _RotorSensor_CaptureSpeedPu(RotorSensor_State_T * p_state, accum32_t speed_pu) { p_state->Speed_Pu = fract16_sat((speed_pu + p_state->Speed_Pu) / 2); }
 
 
 /******************************************************************************/

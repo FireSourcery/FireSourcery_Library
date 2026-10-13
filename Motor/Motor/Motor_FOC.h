@@ -80,17 +80,14 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
 
 
 /*
-    Decoupling-basis ω input for FOC_CaptureSpeed.
+    Decoupling-basis ω input for FOC_CaptureSpeed. Δθ [angle16/Ts], the tick-base ω_pu of [FOC_Electrical_T]. Free of the speed base.
 */
-static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor)
+static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor)
 {
-// #if defined(MOTOR_PU_BASIS_ANGLE16)
-//     return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
-// #else
-    return RotorSensor_GetSpeed_Pu(p_motor->p_ActiveSensor);
-// #endif
+    return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
 }
-/// static inline void Motor_FOC_CaptureVSpeed(Motor_T * p_motor)
+
+// static inline void Motor_FOC_CaptureVSpeed(Motor_T * p_motor)
 // {
 //      FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, Motor_GetDecouplingOmega(p_motor));
 // }

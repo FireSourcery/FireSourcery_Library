@@ -24,8 +24,6 @@
 /*!
     @file   Motor_Config.h
     @author FireSourcery
-
-
     @brief  Config Fields Interface. Part of User Interface.
             Modifying Config values. Derived calls keep in Motor.h/c
 */
@@ -49,7 +47,7 @@ extern void Motor_Config_Validate(Motor_Config_T * p_config);
 extern bool Motor_Config_IsValid(const Motor_Config_T * p_config);
 extern bool _Motor_Config_IsValidSpeed(const Motor_Config_T * p_config, uint16_t speedCeiling);
 extern void Motor_Config_ValidateVAlign(Motor_Config_T * p_config);
-extern void Motor_Config_ValidateFw(Motor_Config_T * p_config, bool isFwEnabled);
+extern void Motor_Config_ValidateFw(Motor_Config_T * p_config);
 
 
 /******************************************************************************/
@@ -124,6 +122,18 @@ typedef enum Motor_Var_ConfigPid
 }
 Motor_Var_ConfigPid_T;
 
+/* Same shape for AngleFreq and SI */
+typedef enum Motor_Var_ConfigElectrical
+{
+    MOTOR_VAR_ELECTRICAL_PSI,
+    MOTOR_VAR_ELECTRICAL_LD,
+    MOTOR_VAR_ELECTRICAL_LQ,
+    MOTOR_VAR_ELECTRICAL_RS,
+    MOTOR_VAR_FW_ID_LIMIT,
+    MOTOR_VAR_FW_ID_GAIN,
+}
+Motor_Var_ConfigElectrical_T;
+
 
 
 
@@ -141,8 +151,11 @@ void _Motor_Var_ConfigActuation_Set(Motor_Config_T * p_motor, Motor_Var_ConfigAc
 int _Motor_Var_ConfigPid_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId);
 void _Motor_Var_ConfigPid_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
 
-
-
-
+int _Motor_Var_ConfigElectrical_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId);
+void _Motor_Var_ConfigElectrical_Set(Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue);
+int _Motor_Var_ConfigElectricalSi_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId);
+void _Motor_Var_ConfigElectricalSi_Set(Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue);
+int _Motor_Var_ConfigElectricalPu_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId);
+void _Motor_Var_ConfigElectricalPu_Set(Motor_Config_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue);
 
 #endif

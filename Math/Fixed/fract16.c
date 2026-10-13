@@ -66,8 +66,6 @@ const fract16_t FRACT16_SINE_90_TABLE[FRACT16_SINE_90_TABLE_LENGTH] =
 static inline fract16_t sin90(angle16_t theta) { return FRACT16_SINE_90_TABLE[(uint8_t)(theta >> FRACT16_SINE_90_TABLE_LSB)]; }
 static inline fract16_t cos90(angle16_t theta) { return FRACT16_SINE_90_TABLE[(0xFFU - (uint8_t)(theta >> FRACT16_SINE_90_TABLE_LSB))]; }
 
-// static inline fract16_t sin360(angle16_t theta) { return FRACT16_SINE_TABLE[theta]; }
-// static inline fract16_t cos360(angle16_t theta) { return FRACT16_SINE_TABLE[ANGLE16_PER_REVOLUTION - theta]; }
 
 
 /*
@@ -175,7 +173,7 @@ ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit)
     uint32_t mag_squared = ((int32_t)x * x) + ((int32_t)y * y);
     int32_t scalar = FRACT16_MAX; /* Q17.15, or use FRACT16_1_OVERSAT */
 
-    if (mag_squared > (int32_t)mag_limit * mag_limit)
+    if (mag_squared > (uint32_t)mag_limit * mag_limit)
     {
         scalar = fract16_div(mag_limit, fixed_sqrt(mag_squared)); /* no saturation needed, mag_limit / magnitude < 1  */
     }

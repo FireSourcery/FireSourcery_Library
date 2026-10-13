@@ -56,20 +56,10 @@
 
 /*
     ANGLE_DT_MAX <=> 1/2 electrical cycle <=> Fs/2 electrical cps
-
-    [rpm] = [angle16_dt] * Fs / ANGLE16_PER_REVOLUTION * SECONDS_PER_MINUTE
-        => 20 kHz Fs => ~600000 erpm, 4 pole pairs:  150,001 RPM mechanical
-
-    alternatively /k, compile time const, uneven psi
-    e.g.
-        speed max = 6000 rpm /60 · 4 = 400 Hz
-        speed base = ANGLE_DT_MAX · Fs / 65536 = 2048 · 20000 / 65536 = 625 Hz
 */
-#define MOTOR_ANGLE_FREQ_MAX                      ANGLE_FREQ_MAX(MOTOR_CONTROL_FREQ)
-
-#define MOTOR_ANGLE_SPEED_MAX_RADS                ANGLE_DT_MAX_RADS(MOTOR_CONTROL_FREQ)
-#define MOTOR_ANGLE_SPEED_MAX_RPM                 ANGLE_DT_MAX_RPM(MOTOR_CONTROL_FREQ)
-#define MOTOR_ANGLE_SPEED_MAX_MECH_RPM(polePairs) (ANGLE_DT_MAX_RPM(MOTOR_CONTROL_FREQ) / (polePairs))
+#define MOTOR_ANGLE_FREQ_MAX    ANGLE_FREQ_NYQUIST(MOTOR_CONTROL_FREQ)
+#define MOTOR_ANGLE_DT_MAX_RADS ANGLE_DT_MAX_RADS(MOTOR_CONTROL_FREQ)
+#define MOTOR_ANGLE_DT_MAX_RPM  ANGLE_DT_MAX_RPM(MOTOR_CONTROL_FREQ)
 
 /*
     Motor_Config   use

@@ -49,12 +49,12 @@ typedef struct
 {
     accum32_t OmegaLd;
     accum32_t OmegaLq;
-    accum32_t OmegaPsi;
+    accum32_t OmegaPsi; /* May be bound to fract16 pending PU scaling */
 }
 FOC_ElectricalSpeed_T;
 
 /*
-    Config
+    Tuning, fixed after init. The caller resolves the limit within its current rating.
 */
 typedef struct
 {
@@ -64,10 +64,11 @@ typedef struct
 }
 FOC_FieldWeakeningTuning_T;
 
-
 /*
-    Runtime ref in PU
-    alternatively, PU-tick
+    [FOC_Electrical_T] Per-unit view of the machine model at the tick base. Derived, not stored.
+    FOC holds no unit bases. The caller owns V_base, I_base and Fs, derives this view from its model, and sets it whole.
+        ω_base = π · Fs, so ω_pu ≡ Δθ [angle16/Ts]
+        Rs [V_base / I_base], ψ [V_base / ω_base], Ld, Lq [V_base / (ω_base · I_base)]
 */
 typedef struct
 {
@@ -77,19 +78,6 @@ typedef struct
     uint32_t Psi;
 }
 FOC_Electrical_T;
-
-/*
-    Nvm Storage. caller owns Config nvm mapping
-    optionally move up to motor layer
-*/
-typedef struct
-{
-    // PID_Config_T PidIqConfig;
-    // PID_Config_T PidIdConfig;
-    FOC_FieldWeakeningTuning_T FieldWeakening;
-    // ufract16_t Modulation;
-}
-FOC_Config_T;
 
 typedef struct FOC
 {
@@ -120,15 +108,16 @@ typedef struct FOC
     /*
         Runtime V parameters directly visible in the FOC object, rather than passed per call.
     */
-    // ufract16_t Modulation; M*VBus/Sqrt3
     interval_t VLimit; /* asymmetric limits */
-    fract16_t VWindow; /* pluggin window approach */
+    fract16_t VWindow; /* plugging window approach */
+    // ufract16_t Modulation; M*VBus/Sqrt3
 
-    FOC_Electrical_T Electrical;            /* Control PU. Owner derives, FOC_InitElectrical */
+    FOC_Electrical_T Electrical;            /* Derived by the caller */
     FOC_ElectricalSpeed_T ElectricalSpeed; /*  Cache on speed loop for feedforward and decoupling */
-    fract16_t IdFw;   /* field weakening d-axis integrator state */
 
-    FOC_Config_T Config;
+    /* Field weakening */
+    FOC_FieldWeakeningTuning_T FieldWeakening;  /* Resolved by the caller */
+    fract16_t IdFw;                             /* d-axis integrator state */
 }
 FOC_T;
 
@@ -320,13 +309,14 @@ static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, i
 */
 /******************************************************************************/
 /*
+    delta [angle16/Ts], the tick-base ω_pu. ω·L, ω·ψ are base-invariant [V_base / I_base], [V_base].
     accept the 1ms wide multiply by default
 */
-static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
+static void FOC_CaptureSpeed(FOC_T * p_foc, angle16_t delta)
 {
-    p_foc->ElectricalSpeed.OmegaLd = accum32_mul(p_foc->Electrical.Ld, speed);
-    p_foc->ElectricalSpeed.OmegaLq = accum32_mul(p_foc->Electrical.Lq, speed);
-    p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Electrical.Psi, speed);
+    p_foc->ElectricalSpeed.OmegaLd = accum32_mul(p_foc->Electrical.Ld, delta);
+    p_foc->ElectricalSpeed.OmegaLq = accum32_mul(p_foc->Electrical.Lq, delta);
+    p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Electrical.Psi, delta);
 }
 
 /*
@@ -406,7 +396,7 @@ static inline void FOC_MatchIVState(FOC_T * p_foc)
 static inline void FOC_MatchIVSpeed(FOC_T * p_foc)
 {
     p_foc->Vd = 0;
-    p_foc->Vq = fract16_sat(p_foc->ElectricalSpeed.OmegaPsi);   /* Caller handle FOC_CaptureSpeed. OmegaPsi is accum32, exceeds fract16 above base speed */
+    p_foc->Vq = fract16_sat(p_foc->ElectricalSpeed.OmegaPsi);   /* Caller handle FOC_CaptureSpeed. OmegaPsi is accum32, exceeds fract16 where BEMF > V_base */
     FOC_MatchIVState(p_foc);
 }
 
@@ -580,7 +570,7 @@ static inline ufract16_t _FOC_VFieldWeakening(ufract16_t vBus) { return fract16_
 static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, ufract16_t vBus)
 {
     int32_t error = _FOC_VFieldWeakening(vBus) - FOC_GetVMagnitude(p_foc);
-    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->Config.FieldWeakening.IdGain), -(int32_t)p_foc->Config.FieldWeakening.IdLimit, 0);
+    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->FieldWeakening.IdGain), -(int32_t)p_foc->FieldWeakening.IdLimit, 0);
     return p_foc->IdFw;
 }
 
@@ -599,7 +589,7 @@ static inline void FOC_MatchIdFieldWeakening(FOC_T * p_foc, ufract16_t vBus)
 {
     accum32_t excess = FOC_GetVMagnitude(p_foc) - _FOC_VFieldWeakening(vBus);
     uint32_t omegaLd = math_abs(p_foc->ElectricalSpeed.OmegaLd); /* Id is demagnetizing either direction */
-    p_foc->IdFw = (omegaLd == 0U) ? 0 : math_clamp(-fract16_div(excess, omegaLd), -(int32_t)p_foc->Config.FieldWeakening.IdLimit, 0);
+    p_foc->IdFw = (omegaLd == 0U) ? 0 : math_clamp(-fract16_div(excess, omegaLd), -(int32_t)p_foc->FieldWeakening.IdLimit, 0);
 }
 
 // static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)
@@ -627,13 +617,7 @@ static void FOC_InitElectrical(FOC_T * p_foc, const FOC_Electrical_T * p_electri
 
 static void FOC_InitFieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning_T * p_fwTuning)
 {
-    p_foc->Config.FieldWeakening = *p_fwTuning;
-}
-
-/*  */
-static void FOC_Init(FOC_T * p_foc, const FOC_Config_T * p_config)
-{
-    p_foc->Config = *p_config;
+    p_foc->FieldWeakening = *p_fwTuning;
 }
 
 static void FOC_InitPid(FOC_T * p_foc, const PID_Config_T * p_configI)
@@ -651,21 +635,6 @@ static inline void FOC_Reset(FOC_T * p_foc)
 {
 
 }
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-static inline bool FOC_Config_IsFwEnabled(const FOC_Config_T * p_config) { return (p_config->FieldWeakening.IdLimit > 0U); }
-
-// static inline int FOC_Config_IsValid(const FOC_Config_T * p_config)
-// {
-
-// }
-
-
-
 
 /******************************************************************************/
 /*!
@@ -712,42 +681,17 @@ static int FOC_Var_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
     return value;
 }
 
-/* optionally move all config up a layer. foc stays pure math layer like angle */
-/*
-    Call holds struct
-*/
-typedef enum FOC_ConfigId
-{
-    FOC_CONFIG_FW_ID_LIMIT,
-    FOC_CONFIG_FW_ID_GAIN,
-    FOC_CONFIG_ELECTRICAL_LD,   /* Electrical ids map to the owner's source of [FOC_Electrical_T] */
-    FOC_CONFIG_ELECTRICAL_LQ,
-    FOC_CONFIG_ELECTRICAL_RS,
-    FOC_CONFIG_ELECTRICAL_PSI,
-}
-FOC_ConfigId_T;
-
-
-static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigId_T var)
-{
-    switch (var)
-    {
-        case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
-        case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
-        default: return 0;
-    }
-}
-
-static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int value)
-{
-    switch (var)
-    {
-        case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;   break;
-        case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;    break;
-        default: break;
-    }
-}
-
+/* optionally */
+// typedef enum FOC_Var_RefState
+// {
+//     FOC_VAR_FW_ID_LIMIT,
+//     FOC_VAR_FW_ID_GAIN,
+//     FOC_VAR_ELECTRICAL_LD,
+//     FOC_VAR_ELECTRICAL_LQ,
+//     FOC_VAR_ELECTRICAL_RS,
+//     FOC_VAR_ELECTRICAL_PSI,
+// }
+// FOC_Var_RefState_T;
 
 /*
     Dynamic limits

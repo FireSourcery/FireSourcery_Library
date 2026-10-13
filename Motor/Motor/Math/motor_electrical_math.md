@@ -6,27 +6,27 @@
 
     x_pu = x · ω_base / Z_base,    ω_base = F_base · π / 2^15 [rad/s]
 
-    ψ_pu = ψ · F_base · π / V_base              MOTOR_PSI_PU, psi_pu_of_wb
-    L_pu = L · I_base · F_base · π / V_base     MOTOR_L_PU,   l_pu_of_h
+    ψ_pu = ψ · F_base · π / V_base              psi_pu_of_wb
+    L_pu = L · I_base · F_base · π / V_base     l_pu_of_h
 
-Units cancel: ψ [V·s/rad] · F [angle16/s] · π [rad per 2^15 angle16] / V_base [V] is dimensionless. The remaining 2^15 is the Q15 scale. `FRACT16_PI` (π · 2^15) carries both, which is why it appears in every integer form.
+Units cancel: ψ [V·s/rad] · F [angle16/s] · π [rad per 2^15 angle16] / V_base [V] is dimensionless. The remaining 2^15 is the Q15 scale. `FRACT16_PI` (π · 2^15) carries both, which is why it appears in every integer form. The macros (`MOTOR_PSI_PU`, `MOTOR_L_PU`) keep the unscaled x · ω_base / Z_base, ω_base from `RADS_OF_ANGLE_FREQ`, and the destination applies the Q15 scale (`ACCUM32`).
 
 ## Two complementary bases
 
 | Base | F_base | ω_pu | Holds |
 |---|---|---|---|
-| Tick | `angle_freq_nyquist(Fs)` = Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts], 32768 = π rad/Ts | Identification and the observer gain. Measurements are in samples, and Nyquist is the largest usable base, so every other base is a scale-down |
-| Speed base | `Motor_SpeedBase_AngleFreq` = AngleFreqPerVolt · V_base · `MOTOR_SPEED_BASE_V_PU` | `Speed_Pu` | Speed loop, limits, UI, FOC decoupling. ψ_pu = `MOTOR_SPEED_BASE_V_PU` by definition |
+| Tick | `angle_freq_nyquist(Fs)` = Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts], 32768 = π rad/Ts | Identification, the observer gain, FOC decoupling. Measurements are in samples, and Nyquist is the largest usable base, so every other base is a scale-down |
+| Speed base | `Motor_SpeedBase_AngleFreq` = AngleFreqPerVolt · V_base · `MOTOR_SPEED_BASE_V_PU` | `Speed_Pu` | Speed loop, limits, UI. ψ_pu = `MOTOR_SPEED_BASE_V_PU` by definition |
 
 ```mermaid
 flowchart LR
     Entry["Kv · ψ · V at Hz"] --> Rate["Motor_Electrical_T: PolePairs, AngleFreqPerVolt"]
     SI["L · datasheet"] --> RateL["Motor_Electrical_T: AngleFreqPerOhmD, AngleFreqPerOhmQ"]
     ID["Identification in samples"] -->|"tick → rate"| RateL
+    Rate -->|"F_nyq / (rate · V_base)"| Tick["FOC_Electrical_T at tick base"]
+    RateL -->|"F_nyq / (rate · V_base / I_base)"| Tick
+    Tick -->|"· Δθ"| FOC["FOC decoupling"]
     Rate -->|"· V_base · V_PU"| AFB["AngleFreqBase [angle16/s]"]
-    RateL -->|"F_base / (rate · V_base / I_base)"| Base["FOC_Electrical_T at speed base"]
-    AFB --> Base
-    Base --> FOC["FOC decoupling"]
     AFB -->|"/ Fs"| ADB["AngleDtBase [angle16/Ts]"]
     ADB --> Ref["Angle_SpeedPuRef_T: ω_pu ↔ Δθ"]
 ```
@@ -55,7 +55,7 @@ Every conversion truncates, so a value that goes up and back down loses 1 LSB:
 - Speed base → tick → speed base through `pu_tau_rebase` (and the commented `l_pu_tick_of_pu*` / `l_pu_of_pu_tick` wrappers) returns x − 1 unless the base ratio is whole. 200 Hz at Fs 20 kHz is exactly 50 and round-trips; across five other bases only 396 of 1,880 values came back unchanged. Scaling up to the midpoint of the interval x stands for, `(2x + 1) · to / (2 · from)`, returned all 1,880.
 - SI → pu → SI reads 80 µH back as 79, at tick and at rpm bases, for the same reason.
 
-L is stored as a rate (Inductance as a rate, below), so the var write path (FOC view → rate → FOC view) is a reciprocal pair, `angle_freq_of_l_pu` then `l_pu_of_angle_freq`, one truncation each. It returns every value x written while K ≥ x · (x + 1), K = F_base · 2^15 · I_base / V_base, that is while the rate has more bits than L_pu: below 2.85 mH on the 94 V, 625 A board at Kv 150. Above it, the rate has fewer bits than L_pu and a write moves by a few LSB of a value over 21 bits. A base change re-derives from the rate, so a Kv change and back does not drift L.
+L is stored as a rate (Inductance as a rate, below), and the var interface carries it as stored, so a write there is lossless. A write through a pu view, such as the calibration commit, is a reciprocal pair, `angle_freq_of_l_pu` then `l_pu_of_angle_freq`, one truncation each. It returns every value x written while K ≥ x · (x + 1), K = F_base · 2^15 · I_base / V_base, that is while the rate has more bits than L_pu: at the speed base, below 2.85 mH on the 94 V, 625 A board at Kv 150. Above it, the rate has fewer bits than L_pu and a write moves by a few LSB of a value over 21 bits. A base change re-derives from the rate, so a Kv change and back does not drift L.
 
 ## Speed base
 
@@ -70,7 +70,7 @@ Kv and rpm are views at the user boundary (`Motor_Config_GetKv` / `SetKv`, the r
 | Entry | Compile time | Runtime | View |
 |---|---|---|---|
 | Kv, M = 2 | `MOTOR_ANGLE_FREQ_OF_KV(Kv, P)` | `angle_freq_of_kv(Kv, P)` | `kv_of_angle_freq(rate, P)`, rounds |
-| ψ | | `angle_freq_of_psi_wb(ψ, scale)` | `psi_wb_of_angle_freq(rate, scale)` |
+| ψ | `MOTOR_ANGLE_FREQ_OF_PSI(ψ)` | `angle_freq_of_s_per_rad(ψ, scale)` | `s_per_rad_of_angle_freq(rate, scale)` |
 
 Example: Kv 150 with 4 pole pairs is 20 Hz/V = 1,310,720 angle16/s / V, so 940 Hz electrical, 14100 rpm at V_base 94 V. The compile-time Kv macro computes in double and equals the runtime adapter for every integer Kv (30,000 of 30,000, Kv 1–1000, P 1–30), and keeps a fractional Kv: 8.4 at 23 pp gives 422,051 (exact 422,051.8).
 
@@ -91,29 +91,50 @@ L takes the shape of ψ. The rate is the speed at which the reactance X = ω · 
     x_pu   = F_base / (rate · Z_base)               [angle16/s] / ([angle16/s · A/V] · [V/A]) = [1]
     x_tick = Fs · 2^30 / (rate · Z_base)            F_base = angle_freq_nyquist(Fs), π-free
 
+ψ per volt and L per ohm are both [s/rad], the reciprocal of [rad/s], so one pair converts either from SI.
+
 | Entry | Compile time | Runtime | View |
 |---|---|---|---|
-| L [H] | `MOTOR_ANGLE_FREQ_OF_L(L)` | `angle_freq_of_l_h(L, scale)` | `l_h_of_angle_freq(rate, scale)` |
+| L [H] | `MOTOR_ANGLE_FREQ_OF_L(L)` | `angle_freq_of_s_per_rad(L, scale)` | `s_per_rad_of_angle_freq(rate, scale)` |
 | L_pu at a base | | `angle_freq_of_l_pu(F_base, V_base, I_base, L_pu)` | `l_pu_of_angle_freq(F_base, V_base, I_base, rate)` |
 | ψ_pu at a base | | | `psi_pu_of_angle_freq(F_base, V_base, rate)` |
 
 - int32 holds L ≥ 4.86 µH: 31 bits at 5 µH, 27 at 80 µH, 16.7 at 100 mH. µH reads back exactly (80 → 130,379,729 → 80).
-- Identification stays in samples, at the tick base. `Motor_Electrical_SetLdqTick` converts on commit. The observer reads `Motor_Electrical_LsTick`, (Ld + Lq) / 2.
+- Identification stays in samples, at the tick base. `Motor_SetLd_PuTick` and `Motor_SetLq_PuTick` convert on commit. The observer reads `Motor_Electrical_LsTick`, (Ld + Lq) / 2.
 - The ratio of the two rates is a current: AngleFreqPerOhmD / AngleFreqPerVolt = ψ / Ld [A], the short-circuit current. 122,710,328 / 1,310,720 = 93.6 A on the debug motor (Kv 150, 4 pole pairs, Ld 85 µH).
 - Ldelta = Lq − Ld has no rate form, since its reciprocal diverges at Ld = Lq. Each axis is stored on its own.
 
+### Base dependence
+
+A stored pu value follows its base. Changing V_base or I_base (board), or F_base (Kv, V_base), rescales everything stored against it. A value relative by intent stays pu, as a limit is a fraction of capability. A value describing the motor is stored free of the motor-derived base: in [Motor_Electrical_T], the motor constant as `AngleFreqPerVolt` [angle16/s / V], Ld and Lq as `AngleFreqPerOhmD`, `AngleFreqPerOhmQ` [angle16/s · A/V], free of Fs and the board, and Rs, which is time-free.
+
 ## Storage and the FOC view
+
+FOC and the sensorless observer hold no unit bases and no model config. Motor_Electrical owns the speed base, derived from its AngleFreqPerVolt, and mediates the board base, V_base and I_base [Phase_Board_T], and Fs, the tick base. It returns per-unit values in its own terms (`Motor_Ld_PuTick`, `Motor_Psi_PuTick`, `Motor_Ls_PuTick`) and names no algorithm type. `Motor_ResolveFocParams`, which holds both sides, assembles each algorithm's view, and each algorithm derives its own coefficients: the observer gain G = π / Ls_tick in `FOC_Sensorless_InitElectrical`.
+
+```mermaid
+flowchart LR
+    Board["Phase_Board_T: V_base, I_base, FW rating"] --> ME["Motor_Electrical: per-unit values"]
+    Fs["MOTOR_CONTROL_FREQ: Fs"] --> ME
+    Model["Motor_Config_T.Electrical"] --> ME
+    Tuning["Motor_Config_T.FieldWeakening"] --> Resolve
+    ME --> Resolve["Motor_ResolveFocParams"]
+    Resolve --> View["FOC_T: Electrical, FieldWeakening"]
+    Resolve -->|"FOC_Sensorless_InitElectrical"| Obs["FOC_Sensorless_T: Electrical"]
+```
 
 | Struct | Holds | Base | Persisted |
 |---|---|---|---|
 | `Motor_Config_T.Electrical` [Motor_Electrical_T] | PolePairs, AngleFreqPerVolt, AngleFreqPerOhmD, AngleFreqPerOhmQ | none | yes |
 | | Rs | V_base / I_base | |
-| `FOC_T.Electrical` [FOC_Electrical_T] | Ld, Lq, Rs, ψ | speed | no, derived |
-| `FOC_Config_T` | field weakening | | yes |
+| `Motor_Config_T.FieldWeakening` [Motor_FieldWeakeningTuning_T] | IfwLimit, IfwGain | I_base | yes |
+| `FOC_T.Electrical` [FOC_Electrical_T] | Ld, Lq, Rs, ψ | tick | no, derived |
+| `FOC_T.FieldWeakening` [FOC_FieldWeakeningTuning_T] | IdLimit, IdGain | I_base | no, derived: IfwLimit within the board FW rating |
+| `FOC_Sensorless_T.Electrical` [FOC_SensorlessElectrical_T] | G, Lq, Rs | tick | no, derived: G = π / Ls_tick for the SMO, Lq for the dq voltage model |
 
-`Motor_ResolveFocParams` derives the FOC view (`Motor_Electrical_FocOf`) on `Motor_Reset` and after the calibration commit. ψ is not stored: at the speed base it is `MOTOR_SPEED_BASE_V_PU`, and AngleFreqPerVolt is the one copy of the motor constant.
+`Motor_ResolveFocParams` derives them on `Motor_Init` and `Motor_Reinit`, after the calibration commit, and after every electrical var write. An invalid model keeps the prior view. The FOC view is at the tick base, so the decoupling input is Δθ (`Motor_GetDecouplingOmega`), and the products ω·L, ω·ψ are base-invariant. ψ_tick derives from AngleFreqPerVolt, the one copy of the motor constant. The FW limit stays as written; `Motor_Config_ValidateFw` bounds ILimitMotoring_Pu to the rated vector left beside it.
 
-The `FOC_CONFIG_ELECTRICAL_*` var ids stay on the wire at the speed base, as the app decodes them. A write goes to the FOC view and the rates follow (`Motor_Electrical_SetFoc`, which keeps PolePairs and AngleFreqPerVolt), one per axis, so axes written one at a time do not interact. ψ is read-only there, set by AngleFreqPerVolt.
+`MOTOR_VAR_TYPE_FOC_CONFIG` carries [Motor_Var_ConfigElectrical_T], the fields as stored: the rates, Rs, and the field weakening tuning. Motor_Config owns the accessors, `_Motor_Var_ConfigElectrical_Get/Set`, and the SI form, `_Motor_Var_ConfigElectricalSi_Get/Set`: ψ [µWb], Ld, Lq [µH], Rs [mΩ]. The Motor_Var layer wraps the set to re-resolve the FOC params, `Motor_Var_ConfigElectrical_Set`. A ψ write re-resolves the FOC view at once. The speed base it also moves applies with the sensor units on `Motor_Reinit`, as Kv does.
 
 The motor builds [RotorSensor_UnitRef_T] once: PolePairs, the exact `AngleFreqBase`, and [Angle_SpeedPuRef_T] at the control Fs. The sensor base holds it in [RotorSensor_State_T], and open loop integrates through the same `SpeedPuRef`. Pulse counters scale against `AngleFreqBase` in their own revolution, not against `AngleDtBase`, which truncates. The Hall and encoder counters are mechanical: AngleFreqBase / PolePairs. Sensors reporting a mechanical angle map it with `_RotorSensor_ElectricalAngleOf`, θ_e = PolePairs · θ_m.
 
@@ -254,7 +275,7 @@ A power-of-two k is a shift, so ψ and L could be stored as (factor, shift): x_p
 | Encoding | Base | Value |
 |---|---|---|
 | Direct, no Q15 | tick | L_int = 32, 32.084 truncated |
-| Q15, stored | tick | L_tick = 1,051,339 = 32.084 · 2^15, `MOTOR_L_PU_TICK` |
+| Q15, stored | tick | L_tick = 1,051,339 = 32.084 · 2^15, `ACCUM32(MOTOR_L_PU_TICK)` |
 | Q15 | speed base | L_pu = 35,045 = 1.0695 · 2^15, `l_pu_of_h`. `pu_tau_rebase(L_tick)` gives 35,044 |
 
 ## Product across speed
@@ -275,9 +296,4 @@ Exact = ω_e · L · I_base / V_base · 2^15. Speeds rounded to nearest, product
 - Direct multiply needs no Q15 shift and no 64-bit intermediate. Only the composite V terms, ω_pu · L_pu · i_pu, store above 1.0 pu. L_int drops the fraction, −0.26% on its own, and Δθ adds its quantization.
 - Tick Q15 removes the L truncation. Δθ quantization remains, up to 0.6% at 100 rpm.
 - At the speed base ω_pu resolves 30× finer than Δθ and stays within 0.13% across the range. This is the runtime form.
-
-## Representation
-
-    ω_pu, θ             fract16, Q15 / Q16, identity scale to the angle wrap
-    ψ_pu, L_pu, Rs_pu   accum32
 

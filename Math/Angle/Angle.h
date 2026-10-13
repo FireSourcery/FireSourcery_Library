@@ -58,8 +58,8 @@
 */
 typedef struct Angle
 {
-    int32_t Angle;  /* Shifted 16 position/accumulator. GetAngle16 projects via >> ANGLE32_SHIFT */
-    int32_t Delta;  /* Shifted 16 angle_dt */
+    int32_t Angle;  /* Q32. Shifted 16 [angle16_t] position/accumulator. unsigned for accumulation, signed for delta comparison */
+    int32_t Delta;  /* Q32. Shifted 16 [angle_dt] */
     int32_t LimitUpper;
     int32_t LimitLower;
 }

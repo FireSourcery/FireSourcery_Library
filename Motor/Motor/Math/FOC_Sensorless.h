@@ -28,21 +28,21 @@
     @author FireSourcery
     @brief  Stateful sensorless rotor-position observer.
 
-    Composes foc_sensorless_math primitives into a per-control-tick step:
-        i_αβ_prev → Δi → ê_αβ (voltage-model OR SMO) → LPF → PLL → θ̂, ω̂
+    Composes foc_sensorless_math primitives into a per-control-tick step. Two EMF front ends, one tail:
+        Step         SMO, stationary frame          i_αβ, v_αβ → ê_αβ → LPF → PLL → θ̂, ω̂
+        StepVModel   voltage model, estimated dq    i_dq, v_dq → ê_dq → LPF → PLL → θ̂, ω̂
 
     Caller owns the FOC chain. Each control tick the integration layer must:
         1. Sample i_abc → foc_clarke → i_αβ.
-        2. FOC_Sensorless_Step(p, i_α, i_β) — observer reads v_αβ stored last cycle.
+        2. FOC_Sensorless_Step or FOC_Sensorless_StepVModel(p, i_α, i_β) — observer reads v_αβ stored last cycle.
         3. Read θ̂ via FOC_Sensorless_GetAngle(), compute sin/cos, run Park / PID / inv-Park as usual.
         4. After SVPWM, FOC_Sensorless_CaptureVoltage(p, v_α, v_β) — stores v applied this cycle for next cycle's observer.
 
-    All gains are in the per-unit basis defined by motor_params_math.h
-        v_pu   = V / V_max
-        i_pu   = I / I_max
-        Rs_pu  = Rs · I_max / V_max
-        ψ_pu = ψ · ω_base / V_base
-        L_pu = L · I_base / ψ_base = L · ω_base · I_base / V_base
+    Per-unit at the tick base, ω_base = π · Fs
+        v_pu   = V / V_base
+        i_pu   = I / I_base
+        Rs_pu  = Rs · I_base / V_base
+        L_tick = L · ω_base · I_base / V_base
 */
 /******************************************************************************/
 #include "foc_sensorless_math.h"
@@ -50,33 +50,21 @@
 #include "Math/Fixed/fract16.h"
 #include "Math/Angle/Angle.h"
 #include "Math/PID/PID.h"
-#include "FOC.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 
-// typedef enum FOC_Sensorless_Mode
-// {
-//     FOC_SENSORLESS_MODE_VOLTAGE_MODEL,  /* e = v - Rs·i - Ls·di/dt */
-//     FOC_SENSORLESS_MODE_SMO,            /* sliding-mode current observer */
-// }
-// FOC_Sensorless_Mode_T;
-
 /*
-    Calibrated motor params + observer tuning. Holds no live state.
-    Compute the *_pu fields with motor_params_math.h.
+    Observer tuning. Holds no live state, and nothing derived from the motor model.
 */
 typedef struct FOC_SensorlessConfig
 {
-    // FOC_Sensorless_Mode_T Mode;
-    int32_t G_pu;          /* 1 / (L_pu · Fs/ω_base) — precompute for hot path */
-
-    /* SMO tuning (unused in voltage-model mode). */
+    /* SMO tuning, Step only. */
     fract16_t K_smo;        /* sliding gain — > peak EMF in pu */
     fract16_t SmoSat;       /* boundary-layer width for foc_smo_sat */
 
-    /* ê smoothing — used in both modes (extracts equivalent control of z in SMO, and reduces measurement noise in voltage-model). */
+    /* ê smoothing — both front ends: the equivalent control of z (Step), measurement noise on the dq residual (StepVModel). */
     fract16_t LpfCoef;      /* dt / (τ + dt) */
 
     /* Lock detector. */
@@ -115,18 +103,31 @@ FOC_SensorlessConfig_T;
 // .StaLambda     = (fract16_t)FRACT16(.50F),                      /* STA √|σ| gain — re-tune per motor */
 // .StaAlphaDt    = (fract16_t)FRACT16(.01F),                      /* STA integrator gain × dt */
 
+/*
+    [FOC_SensorlessElectrical_T] View of the machine model at the tick base. Derived from the caller's model, FOC_Sensorless_InitElectrical.
+        G = π / Ls_tick = Ts · V_base / (Ls · I_base),  Ls = (Ld + Lq) / 2     SMO, Step
+        Lq_tick                                                             voltage model, StepVModel
+*/
+typedef struct FOC_SensorlessElectrical
+{
+    accum32_t G;
+    uint32_t Lq;        /* [V_base / I_base · Ts / π] */
+    fract16_t Rs;       /* [V_base / I_base] */
+}
+FOC_SensorlessElectrical_T;
+
 typedef struct FOC_Sensorless
 {
-    /* Inputs from previous cycle. */
-    // fract16_t IAlphaPrev, IBetaPrev;
+    /* Input from previous cycle. */
     fract16_t VAlpha, VBeta;            /* voltage applied last cycle */
 
-    /* SMO internal state (mode == SMO). */
+    /* SMO internal state, Step. */
     fract16_t SmoIAlpha, SmoIBeta;      /* current-estimator state î */
     fract16_t SmoZAlpha, SmoZBeta;      /* raw switching variable z */
 
-    /* Smoothed back-EMF estimate (αβ) — observer output. */
+    /* Smoothed back-EMF estimate — observer output. αβ from Step, dq in the estimated frame from StepVModel. */
     fract16_t EmfAlpha, EmfBeta;
+    fract16_t EmfD, EmfQ;
     ufract16_t EmfMag;
 
     /* Angle tracker (PLL). AngleSpeed.Angle is θ̂; AngleSpeed.Delta is ω̂ (angle16/dt). */
@@ -139,7 +140,7 @@ typedef struct FOC_Sensorless
     /* Lock detector. */
     uint16_t LockCount;
 
-    // accum32_t G_pu;      /* 1 / (L_pu · Fs/ω_base) */
+    FOC_SensorlessElectrical_T Electrical;  /* Derived from the caller's model */
     FOC_SensorlessConfig_T Config;
 }
 FOC_Sensorless_T;
@@ -148,27 +149,32 @@ FOC_Sensorless_T;
 /******************************************************************************/
 /*!
     Per-tick step.
+    i_αβ sampled this tick, v_αβ from the last CaptureVoltage.
 */
 /******************************************************************************/
 /*
-    Voltage-model EMF — branch shared with SMO via the LPF stage below.
-    Returns raw (pre-LPF) ê for the axis.
+    PLL and lock detector, shared by the front ends. The caller sets PllErr and EmfMag.
 */
-/*
-    SMO — also updates î and z state in-place. Returns z (raw EMF candidate).
-*/
-// const FOC_Electrical_T * p_foc, fract16_t i_alpha, fract16_t i_beta
-static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
+static void _FOC_Sensorless_ProcPll(FOC_Sensorless_T * p_obs)
 {
-    /* 1. Raw ê (or SMO z) from previous v_αβ and current i_αβ + Δi. */
-    // struct foc_alphabeta e_raw = (p_obs->Config.Mode == FOC_SENSORLESS_MODE_SMO) ? emf_smo(p, p_obs->Config, i_alpha, i_beta) : emf_voltage_model(p, p_obs->Config, i_alpha, i_beta);
-    p_obs->SmoZAlpha = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIAlpha, p_foc->Ialpha);
-    p_obs->SmoZBeta = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIBeta, p_foc->Ibeta);
-    // p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Valpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
-    // p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Vbeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
-    /* p_foc->Electrical.Rs < FRACT16_MAX */
-    p_obs->SmoIAlpha = smo_i(p_obs->Config.G_pu, p_foc->Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
-    p_obs->SmoIBeta = smo_i(p_obs->Config.G_pu, p_foc->Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
+    /* PID loop filter → ω̂ in angle16/dt. PID error = 0 − PllErr = sin(θ − θ̂): θ̂ lags → +ω̂. Integrate ω̂ → θ̂ (free-wrap). */
+    Angle_Integrate(&p_obs->AngleSpeed, PID_ProcPI(&p_obs->PllPid, p_obs->PllErr, 0));
+
+    /* Lock detector — strong EMF AND tight PLL error, sustained. */
+    bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);
+    p_obs->LockCount = stable ? (uint16_t)math_min(p_obs->LockCount + 1, p_obs->Config.LockHoldCount) : 0;
+}
+
+/*
+    SMO, stationary frame. Updates î and z in place; z is the raw EMF.
+*/
+static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
+{
+    /* 1. SMO z and î from v_αβ applied last cycle and i_αβ sampled now. */
+    p_obs->SmoZAlpha = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIAlpha, i_alpha);
+    p_obs->SmoZBeta = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIBeta, i_beta);
+    p_obs->SmoIAlpha = smo_i(p_obs->Electrical.G, p_obs->Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
+    p_obs->SmoIBeta = smo_i(p_obs->Electrical.G, p_obs->Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
 
     /* 2. LPF to extract equivalent control / smooth measurement noise. */
     p_obs->EmfAlpha = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfAlpha, p_obs->SmoZAlpha);
@@ -178,21 +184,31 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     /* 3. PLL phase detector — speed-normalized so loop gain is |e|-invariant. */
     struct fract16_xy vec = Angle_UnitVector(&p_obs->AngleSpeed);  /* {x=cos, y=sin} */
     p_obs->PllErr = foc_pll_error_normalized(p_obs->Config.LockEmfMin, p_obs->EmfAlpha, p_obs->EmfBeta, vec.y, vec.x);
-    int16_t omega = PID_ProcPI(&p_obs->PllPid, p_obs->PllErr, 0);
+    _FOC_Sensorless_ProcPll(p_obs);
+}
 
-    /* 4. PID loop filter → ω̂ in angle16/dt. setpoint=err, feedback=0: PID error = err, output = Kp·err + Ki·∫err. Positive err (θ̂ lags) → +ω̂. */
-    // int16_t omega = PID_ProcPI(&p_obs->PllPid, 0, p_obs->PllErr);
+/* Rotation direction of θ̂. ω̂ = 0 reads forward, so the phase detector never stalls at zero */
+static inline sign_t _FOC_Sensorless_Direction(const FOC_Sensorless_T * p_obs) { return (Angle_Delta(&p_obs->AngleSpeed) < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE; }
 
-    /* 5. Integrate ω̂ → θ̂ (free-wrap). */
-    Angle_Integrate(&p_obs->AngleSpeed, (angle16_t)omega);
+/*
+    Voltage model, estimated dq frame θ̂. Steady state: i_dq is DC at lock, so no di/dt and no LPF phase lag.
+    i_αβ is the sample at θ̂. v_αβ was held over the last period, its dq image at the midpoint θ̂ − Δθ̂/2.
+*/
+static void FOC_Sensorless_StepVModel(FOC_Sensorless_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
+{
+    struct fract16_xy unit_i = Angle_UnitVector(&p_obs->AngleSpeed);
+    struct fract16_xy unit_v = fract16_vector(Angle_Value(&p_obs->AngleSpeed) - Angle_Delta(&p_obs->AngleSpeed) / 2);
+    struct foc_dq i = foc_park_vector(i_alpha, i_beta, unit_i.y, unit_i.x);
+    struct foc_dq v = foc_park_vector(p_obs->VAlpha, p_obs->VBeta, unit_v.y, unit_v.x);
+    accum32_t omega_Lq = accum32_mul(p_obs->Electrical.Lq, Angle_Delta(&p_obs->AngleSpeed));
 
-    /* 6. Lock detector — strong EMF AND tight PLL error, sustained. */
-    bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);
-    p_obs->LockCount = stable ? (uint16_t)math_min(p_obs->LockCount + 1, p_obs->Config.LockHoldCount) : 0;
+    p_obs->EmfD = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfD, fract16_sat(foc_dq_emf_d(p_obs->Electrical.Rs, omega_Lq, v.d, i.d, i.q)));
+    p_obs->EmfQ = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfQ, fract16_sat(foc_dq_emf_q(p_obs->Electrical.Rs, omega_Lq, v.q, i.d, i.q)));
+    p_obs->EmfMag = fract16_vector_magnitude(p_obs->EmfD, p_obs->EmfQ);
 
-    /* 7. Save i_αβ for next-cycle Δi. */
-    // p_obs->IAlphaPrev = i_alpha;
-    // p_obs->IBetaPrev = i_beta;
+    /* Already in the estimated frame: ê_d is the phase detector, no rotation */
+    p_obs->PllErr = foc_eemf_dq_error_normalized(_FOC_Sensorless_Direction(p_obs), p_obs->Config.LockEmfMin, p_obs->EmfD, p_obs->EmfQ);
+    _FOC_Sensorless_ProcPll(p_obs);
 }
 
 /******************************************************************************/
@@ -229,11 +245,11 @@ static void FOC_Sensorless_SeedAngle(FOC_Sensorless_T * p_obs, angle16_t theta, 
 /* Reset all per-cycle state. Calibration in CONFIG is untouched. */
 static void FOC_Sensorless_ResetState(FOC_Sensorless_T * p_obs)
 {
-    // p_obs->IAlphaPrev = 0;  p_obs->IBetaPrev = 0;
     p_obs->VAlpha = 0;  p_obs->VBeta = 0;
     p_obs->SmoIAlpha = 0;  p_obs->SmoIBeta = 0;
     p_obs->SmoZAlpha = 0;  p_obs->SmoZBeta = 0;
     p_obs->EmfAlpha = 0;  p_obs->EmfBeta = 0;
+    p_obs->EmfD = 0;  p_obs->EmfQ = 0;
     p_obs->EmfMag = 0;
     p_obs->PllErr = 0;
     p_obs->LockCount = 0;
@@ -250,14 +266,15 @@ static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, const FOC_SensorlessCo
 }
 
 /*
-    G_pu = Ts·V_max / (L·I_max) = 1 / (L_pu · Fs / ω_base)
-    The speed base cancels. L at the tick base, (Ld + Lq) / 2
-*/
-static void FOC_Sensorless_InitG(FOC_Sensorless_T * p_obs, uint32_t lAvg_pu_tick)
-{
-    p_obs->Config.G_pu = foc_g_pu_of_l_tick(lAvg_pu_tick);
-}
+    The plant from the caller's model, tick base. Ls = (Ld + Lq) / 2.
+    G = Ts · V_base / (Ls · I_base) is the SMO discretization, derived here. Ls = 0 leaves the SMO inert, G = 0.
 
+    Validate checks (ls_tick != 0U)
+*/
+static void FOC_Sensorless_InitElectrical(FOC_Sensorless_T * p_obs, uint32_t ls_tick, uint32_t lq_tick, fract16_t rs)
+{
+    p_obs->Electrical = (FOC_SensorlessElectrical_T) { .G = foc_g_pu_of_l_tick(ls_tick), .Lq = lq_tick, .Rs = rs, };
+}
 
 
 /******************************************************************************/

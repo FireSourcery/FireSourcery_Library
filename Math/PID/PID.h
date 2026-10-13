@@ -42,7 +42,7 @@ typedef enum PID_Mode
 }
 PID_Mode_T;
 
-/* Tuning Coeffcients */
+/* Tuning Coefficients */
 typedef struct PID_Config
 {
     PID_Mode_T Mode;
