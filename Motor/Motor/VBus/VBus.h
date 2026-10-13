@@ -196,9 +196,7 @@ static inline uint16_t VBus_VNominal_Pu(const VBus_T * p_vbus) { return p_vbus->
 */
 static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
 {
-    uint16_t vNominal = VBus_VNominal_Pu(p_vbus);
-    if (p_vbus->VBus_Pu >= vNominal) { return FRACT16_MAX; }
-    return math_clamp(fract16_div(p_vbus->VBus_Pu, vNominal), p_vbus->Config.SpeedDerateFloor, FRACT16_MAX);
+    return math_clamp(fract16_div(p_vbus->VBus_Pu, VBus_VNominal_Pu(p_vbus)), p_vbus->Config.SpeedDerateFloor, FRACT16_MAX);
     // return math_clamp(fract16_mul(p_vbus->VBus_Pu, p_vbus->PerVNominal_Fract32), p_vbus->Config.SpeedDerateFloor, FRACT16_MAX);
 }
 

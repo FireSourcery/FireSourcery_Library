@@ -67,7 +67,7 @@ static inline void Motor_CaptureSensor(Motor_T * p_motor)
     if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
     {
         RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
-        _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_SPEED);
+        _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_SPEED); /* No critical section. Same thread as ISR */
     }
 }
 

@@ -45,7 +45,7 @@ void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_
 #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)  /* update angle only for voutput, until divider from adc is set */
     if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
 #else
-    _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I);
+    _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
 #endif
     FOC_ProcInvClarkePark(&p_motor->Foc);

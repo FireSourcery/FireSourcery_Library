@@ -303,11 +303,11 @@ typedef struct Motor_Context
     /*
         Active Limit inputs. Unsigned user frame. Ramp.Limits holds the materialized [Cw:Ccw] output.
         Value:  per-motor physical cap in PU, single user channel (user/OptDin/protocol overwrite). FRACT16_MAX => no cap.
-        Derate: system derate as pushed by the upper layer arbitration. FRACT16_MAX => none.
+        Derate: system derate as pushed by the upper layer arbitration, I per quadrant. FRACT16_MAX => none.
             Held because Direction/FeedbackMode/Value changes re-resolve without the upper layer,
             and Ramp.Limits cannot be read back — [0:0] on Direction NULL, V limits on TorqueRamp in voltage mode.
     */
-    struct { uint16_t Motoring; uint16_t Generating; ufract16_t Derate; } ILimit;
+    struct { uint16_t Motoring; uint16_t Generating; ufract16_t DerateMotoring; ufract16_t DerateGenerating; } ILimit;
     struct { uint16_t Forward; uint16_t Reverse; ufract16_t Derate; } SpeedLimit;
 
     /* OpenLoop Preset, StartUp. No boundary checking */
@@ -443,16 +443,17 @@ static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return i
 */
 /* Effective derate — pushed system derate, local sources */
 // return math_min(HeatMonitor_GetDerate(&p_motor->HEAT_MONITOR), Motor_GetILimitStall(p_motor->P_MOTOR));
-static inline ufract16_t Motor_GetIDerate(const Motor_Context_T * p_motor) { return  (p_motor->ILimit.Derate); }
-static inline ufract16_t Motor_GetSpeedDerate(const Motor_Context_T * p_motor) { return  (p_motor->SpeedLimit.Derate); }
+static inline ufract16_t Motor_GetIDerateMotoring(const Motor_Context_T * p_motor) { return (p_motor->ILimit.DerateMotoring); }
+static inline ufract16_t Motor_GetIDerateGenerating(const Motor_Context_T * p_motor) { return (p_motor->ILimit.DerateGenerating); }
+static inline ufract16_t Motor_GetSpeedDerate(const Motor_Context_T * p_motor) { return (p_motor->SpeedLimit.Derate); }
 
 /*
     The comparison. Unsigned user frame, direction independent.
         limit = min(Value, Derate * Config)
     Derate scales the Config ceiling, Value caps absolutely. Neither is converted into the other.
 */
-static inline ufract16_t Motor_ILimitMotoring(const Motor_Context_T * p_motor) { return math_min(p_motor->ILimit.Motoring, fract16_mul(Motor_GetIDerate(p_motor), p_motor->Config.ILimitMotoring_Pu)); }
-static inline ufract16_t Motor_ILimitGenerating(const Motor_Context_T * p_motor) { return math_min(p_motor->ILimit.Generating, fract16_mul(Motor_GetIDerate(p_motor), p_motor->Config.ILimitGenerating_Pu)); }
+static inline ufract16_t Motor_ILimitMotoring(const Motor_Context_T * p_motor) { return math_min(p_motor->ILimit.Motoring, fract16_mul(Motor_GetIDerateMotoring(p_motor), p_motor->Config.ILimitMotoring_Pu)); }
+static inline ufract16_t Motor_ILimitGenerating(const Motor_Context_T * p_motor) { return math_min(p_motor->ILimit.Generating, fract16_mul(Motor_GetIDerateGenerating(p_motor), p_motor->Config.ILimitGenerating_Pu)); }
 static inline ufract16_t Motor_SpeedLimitForward(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Forward, fract16_mul(Motor_GetSpeedDerate(p_motor), p_motor->Config.SpeedLimitForward_Pu)); }
 static inline ufract16_t Motor_SpeedLimitReverse(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Reverse, fract16_mul(Motor_GetSpeedDerate(p_motor), p_motor->Config.SpeedLimitReverse_Pu)); }
 
@@ -656,13 +657,13 @@ extern void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value);
 
 /*
     Active Limits — push interface. Unsigned magnitudes in, direction-resolved Ramp limits out.
-    Set*Limit*: value channel, physical PU. Set*LimitDerate: system derate, ratio of Config.
+    Set*Limit*: value channel, physical PU. Set*LimitDerate*: system derate, ratio of Config.
 */
 extern void Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu);
 extern void Motor_SetILimitMotoring(Motor_Context_T * p_motor, uint16_t motoring_pu);
 extern void Motor_SetILimitGenerating(Motor_Context_T * p_motor, uint16_t generating_pu);
 extern void Motor_SetILimit(Motor_Context_T * p_motor, uint16_t i_pu);
-extern void Motor_SetILimitDerate(Motor_Context_T * p_motor, uint16_t scalar);
+extern void Motor_SetILimitDerates(Motor_Context_T * p_motor, uint16_t motoring, uint16_t generating);
 extern void Motor_ResetILimit(Motor_Context_T * p_motor);
 
 extern void Motor_SetSpeedLimits(Motor_Context_T * p_motor, uint16_t forward_pu, uint16_t reverse_pu);

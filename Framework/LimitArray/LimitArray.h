@@ -98,7 +98,7 @@ static void _LimitArray_ClearAll(LimitArray_Augments_T * p_state, limit_t * p_va
 }
 
 /*
-    calculated on remove
+    calculated on remove or loosen
     get is O(1)
 */
 static inline limit_t _LimitArray_Upper(const LimitArray_Augments_T * p_state) { return p_state->Min; }
@@ -107,27 +107,8 @@ static inline bool _LimitArray_IsUpperActive(const LimitArray_Augments_T * p_sta
 static inline bool _LimitArray_IsLowerActive(const LimitArray_Augments_T * p_state) { return (_LimitArray_Lower(p_state) != LIMIT_ARRAY_MIN); }
 static inline bool _LimitArray_IsActive(const LimitArray_Augments_T * p_state) { return (_LimitArray_IsUpperActive(p_state) || _LimitArray_IsLowerActive(p_state)); }
 
-static inline bool _LimitArray_TestSetUpper(LimitArray_Augments_T * p_state, limit_t * p_values, limit_id_t id, limit_t value)
-{
-    p_values[id] = value;
-    if (value < p_state->Min) { p_state->Min = value; p_state->MinId = id; return true; }
-    return false;
-}
-
-static inline bool _LimitArray_TestSetLower(LimitArray_Augments_T * p_state, limit_t * p_values, limit_id_t id, limit_t value)
-{
-    p_values[id] = value;
-    if (value > p_state->Max) { p_state->Max = value; p_state->MaxId = id; return true; }
-    return false;
-}
-
-static inline bool _LimitArray_TestSetEntry(LimitArray_Augments_T * p_state, limit_t * p_values, limit_id_t id, limit_t value)
-{
-    return _LimitArray_TestSetUpper(p_state, p_values, id, value) || _LimitArray_TestSetLower(p_state, p_values, id, value);
-}
-
 /*
-    Compare on remove O(n)
+    Compare on remove or loosen O(n)
 */
 static void _LimitArray_ProcCompare(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length)
 {
@@ -149,7 +130,8 @@ static void _LimitArray_ProcCompare(LimitArray_Augments_T * p_state, limit_t * p
     p_state->Max = bufferMax;
 }
 
-static void _LimitArray_ProcUpdate(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length)
+/* Out of line, the slow path shared by every set and clear site */
+__attribute__((noinline)) static void _LimitArray_ProcUpdate(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length)
 {
     limit_t bufferMin = LIMIT_ARRAY_MAX;
     limit_t bufferMax = LIMIT_ARRAY_MIN;
@@ -171,6 +153,34 @@ static void _LimitArray_ProcUpdate(LimitArray_Augments_T * p_state, limit_t * p_
     p_state->Max = bufferMax;
     p_state->MinId = bufferMinId;
     p_state->MaxId = bufferMaxId;
+}
+
+/* Slot update. Tightening is O(1). Loosening the active slot recomputes O(n). */
+static inline bool _LimitArray_TestSetUpper(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length, limit_id_t id, limit_t value)
+{
+    limit_t upper = p_state->Min;
+    p_values[id] = value;
+    if (value < upper) { p_state->Min = value; p_state->MinId = id; }
+    else if ((value > upper) && (id == p_state->MinId)) { _LimitArray_ProcUpdate(p_state, p_values, length); }
+    return (p_state->Min != upper);
+}
+
+static inline bool _LimitArray_TestSetLower(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length, limit_id_t id, limit_t value)
+{
+    limit_t lower = p_state->Max;
+    p_values[id] = value;
+    if (value > lower) { p_state->Max = value; p_state->MaxId = id; }
+    else if ((value < lower) && (id == p_state->MaxId)) { _LimitArray_ProcUpdate(p_state, p_values, length); }
+    return (p_state->Max != lower);
+}
+
+/* Both bounds. Either side's recompute refreshes both, compare against the prior state */
+static inline bool _LimitArray_TestSetEntry(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length, limit_id_t id, limit_t value)
+{
+    LimitArray_Augments_T prev = *p_state;
+    _LimitArray_TestSetUpper(p_state, p_values, length, id, value);
+    _LimitArray_TestSetLower(p_state, p_values, length, id, value);
+    return (p_state->Min != prev.Min) || (p_state->Max != prev.Max);
 }
 
 /* Id-based check. clearing the non-active one does NOT trigger recompute. */
@@ -245,10 +255,10 @@ static void LimitArray_ClearAll(LimitArray_T * p_limit) { _LimitArray_ClearAll(_
 static bool LimitArray_TestSetEntry(LimitArray_T * p_limit, limit_id_t id, limit_t value)
 {
     assert(id < p_limit->LENGTH); // Ensure id is within bounds. Compile-time constant
-    return _LimitArray_TestSetEntry(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), id, value);
+    return _LimitArray_TestSetEntry(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH, id, value);
 }
 
-static bool LimitArray_TestSetUpper(LimitArray_T * p_limit, limit_id_t id, limit_t value) { return _LimitArray_TestSetUpper(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), id, value); }
+static bool LimitArray_TestSetUpper(LimitArray_T * p_limit, limit_id_t id, limit_t value) { return _LimitArray_TestSetUpper(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH, id, value); }
 
 
 // static void LimitArray_ProcCompare(LimitArray_T * p_limit) { _LimitArray_ProcCompare(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH); }

@@ -204,7 +204,7 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 /******************************************************************************/
 static inline angle16_t Angle_Abs_Interpolate(Angle_T * p_angle)
 {
-    assert(p_angle->Angle < ANGLE16_PER_REVOLUTION / 2);
+    assert((uint32_t)p_angle->Angle < ((ANGLE16_PER_REVOLUTION / 2U) << ANGLE32_SHIFT));
     p_angle->Angle = math_min(p_angle->Angle + p_angle->Delta, p_angle->LimitUpper);
     return Angle_Value(p_angle);
 }

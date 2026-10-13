@@ -132,7 +132,7 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 /* select proc composite  */
 static inline void _Motor_StateMachine(StateMachine_Active_T * p_active, void * p_dev)
 {
-    if (_StateMachine_AcquireAsyncIsr(p_active) == true)
+    if (_StateMachine_AcquireAsyncIsr(p_active) == true) /* Compile time disabled. Runs in ISR*/
     {
         _StateMachine_Branch_ProcSyncOutput(p_active, p_dev);
         _StateMachine_ReleaseAsyncIsr(p_active);

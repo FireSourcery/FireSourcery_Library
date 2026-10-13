@@ -212,7 +212,7 @@ void Traction_ProcRelease(const Traction_T * p_vehicle, Motor_Table_T * p_motors
 /******************************************************************************/
 static void Drive_Entry(MotorController_T * p_mc)
 {
-    assert(TractionAdapter(p_mc)->Input.Direction != MOTOR_DIRECTION_NULL); /* Direction should have been checked on transition.*/
+    assert(TractionAdapter(p_mc)->Input.Direction != SIGN_ZERO); /* Direction should have been checked on transition.*/
     /* sync DriveCmd to current input: a throttle held at entry yields no start-edge, so StartThrottleMode never fires and the motor stays passive until released then re-pressed */
     Traction_Input_PollCmd(&TractionAdapter(p_mc)->Input);
     Motor_Table_ApplyUserDirection(&p_mc->MOTORS, (Motor_Direction_T)TractionAdapter(p_mc)->Input.Direction); /* Buffered direction cmd from user input, independent of motor state */

@@ -163,8 +163,8 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
     {
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:    _MotorController_VBus_EnterFault(p_dev);    break;
-        case VMONITOR_STATUS_WARNING_LOW:           _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_BUS, VBus_GetIDerateUnderV(p_dev->P_VBUS));  break;
-        case VMONITOR_STATUS_WARNING_HIGH:          _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_BUS, VBus_GetIDerateOverV(p_dev->P_VBUS));   break;
+        case VMONITOR_STATUS_WARNING_LOW:           _MotorController_SetILimitMotoringAll(p_dev, MOT_I_LIMIT_V_BUS, VBus_GetIDerateUnderV(p_dev->P_VBUS));      break;
+        case VMONITOR_STATUS_WARNING_HIGH:          _MotorController_SetILimitGeneratingAll(p_dev, MOT_I_LIMIT_V_BUS, VBus_GetIDerateOverV(p_dev->P_VBUS));     break;
         case VMONITOR_STATUS_NORMAL:
             if (VBus_IsClearingEdge(p_dev->P_VBUS) == true) { _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_V_BUS); } break; /*  */
         default: break;
