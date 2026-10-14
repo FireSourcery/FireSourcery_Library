@@ -26,25 +26,21 @@
 /*!
     @file   HAL_Types.h
     @author FireSourcery
-    @brief  Common include type before function signitures.
+    @brief  Common include type before function signatures.
 */
 /******************************************************************************/
 #include "KE0x.h"
 
-#include <stdint.h>
-#include <stdbool.h>
-
 /*
 
 */
-
 typedef UART_Type HAL_UART_T;
 typedef FTM_Type HAL_ClockTimer_T;
 typedef ADC_Type HAL_ADC_T;
 typedef MSCAN_Type HAL_CAN_T;
 
-#if     defined(KE06Z4_SERIES)
+#if defined(KE06Z4_SERIES)
 typedef FTMRE_Type HAL_Flash_T;
-#elif   defined(KE02Z4_SERIES)
+#elif defined(KE02Z4_SERIES)
 typedef FTMRH_Type HAL_Flash_T;
 #endif

@@ -259,41 +259,41 @@ static inline bool foc_is_regen(fract16_t vq, accum32_t e_q, ufract16_t window) 
     Dynamic limits
     dynamic overlay to intersect with base
 */
-/* he controller to pick up the requested direction through zero */
-// static inline sign_t _FOC_VMotionSignOf(accum32_t omega_psi, int32_t iqReq)
+/* the controller to pick up the requested direction through zero */
+// static inline sign_t _foc_vmotionsignof(accum32_t omega_psi, int32_t iqReq)
 // {
 //     sign_t motionSign = math_sign(omega_psi);
 //     return (motionSign != SIGN_ZERO) ? motionSign : math_sign(iqReq);
 // }
 
-// static inline interval_t _FOC_VBrakeOverlay(accum32_t omega_psi, int32_t iqReq, int32_t vqLimit)
+// static inline interval_t _foc_vbrakeoverlay(accum32_t omega_psi, int32_t iqReq, int32_t vqLimit)
 // {
-//     sign_t motionSign = _FOC_VMotionSignOf(omega_psi, iqReq);
+//     sign_t motionSign = _foc_vmotionsignof(omega_psi, iqReq);
 //     /* Only narrow the band when the request is braking/generating. */
 //     if (motionSign * iqReq < 0) { return interval_half_plane(motionSign, vqLimit); }
 //     return interval_symmetric(0, vqLimit);
 // }
 
 // /* symmetric by default. dynamic half-plane anti-plugging derived per cycle */
-// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vqLimit)
+// static inline interval_t _foc_vregenonly(int32_t omega_psi, int32_t iqReq, int32_t vqLimit)
 // {
 //     if (omega_psi * iqReq <= 0) { return interval_half_plane(omega_psi * iqReq, vqLimit); }
 //     return interval_symmetric(0, vqLimit);
 // }
 
 // static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane(_FOC_VMotionSignOf(omega_psi, iqReq), vq); }
-/* Applied Vq is forced opposite to EEMF for explicit plugging behavior. */
-// static inline interval_t _FOC_VPluggingOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane((sign_t)(0 - _FOC_VMotionSignOf(omega_psi, iqReq)), vq); }
+// /* Applied Vq is forced opposite to EEMF for explicit plugging behavior. */
+// static inline interval_t _foc_vpluggingonly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane((sign_t)(0 - _foc_vmotionsignof(omega_psi, iqReq)), vq); }
 
-// static inline interval_t _FOC_VDynamicBand(const FOC_T * p_foc, accum32_t omega_psi, int32_t iqReq, ufract16_t vqCircleLimit)
+// static inline interval_t _foc_vdynamicband(const FOC_T * p_foc, accum32_t omega_psi, int32_t iqReq, ufract16_t vqCircleLimit)
 // {
 //     interval_t band = interval_symmetric(0, vqCircleLimit);
 
-//     band = interval_intersect(band, _FOC_VRegenOnly(omega_psi, iqReq, vqCircleLimit));
+//     band = interval_intersect(band, _foc_vregenonly(omega_psi, iqReq, vqCircleLimit));
 
 //     if (p_foc->VWindow > 0)
 //     {
-//         band = interval_intersect(band, _FOC_VBemfWindow(vqCircleLimit, omega_psi, p_foc->VWindow));
+//         band = interval_intersect(band, _foc_vbemfwindow(vqCircleLimit, omega_psi, p_foc->VWindow));
 //     }
 
 //     return band;
@@ -307,7 +307,7 @@ static inline bool foc_is_regen(fract16_t vq, accum32_t e_q, ufract16_t window) 
 //     feasible slice = [-50, 50]
 //     intersection = [70, 50], invalid
 // */
-// static inline interval_t _FOC_VqBandOf(ufract16_t vqCircleLimit, accum32_t omega_psi, int32_t window)
+// static inline interval_t _foc_vqbandof(ufract16_t vqCircleLimit, accum32_t omega_psi, int32_t window)
 // {
 //     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), interval_symmetric(omega_psi, window));
 
@@ -322,7 +322,7 @@ static inline bool foc_is_regen(fract16_t vq, accum32_t e_q, ufract16_t window) 
 
 //     // center = clamp(omega_psi, -VqCircleLimit, +VqCircleLimit)
 //     // band = intersect([-VqCircleLimit, +VqCircleLimit], [center - window, center + window])
-//
+// }
 
 /******************************************************************************/
 /* Secondary Section */
@@ -573,3 +573,34 @@ static inline struct foc_sincos6 foc_abc_dq_angle(angle16_t theta)
 }
 
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+/* The supply window as q-axis power, holding 0. Shared by both inversions. */
+// static inline interval_t foc_power_q_window(interval_t i_dc, ufract16_t v_dc, accum32_t power_d)
+//     { return interval_hull(interval_offset(fract16_interval_scale(i_dc, foc_power_per_i_dc(v_dc)), -power_d), (interval_t){ 0 }); }
+
+// /* R·i², the power a current spends in the winding */
+// static inline accum32_t foc_power_r(accum32_t r, fract16_t i) { return fract16_mul(fract16_mul(r, i), i); }
+
+// /* h + √(h² + R·p) */
+// static inline accum32_t _foc_emf_root(accum32_t h, accum32_t r, accum32_t p) { return h + fixed_sqrt((uint32_t)(h * h + r * p)); }
+
+// /*
+//     R·i_q² + E·i_q ∈ [low : high], E held at the operating point. h = |E|/2.
+//         along E, draws:                          high / (h + √(h² + R·high))
+//         against E, returns below |E|/R:          |low| / (h + √(h² − R·|low|))   while h² > R·|low|, else none
+//         against E, draws beyond (plug braking):  (h + √(h² + R·high)) / R
+//     R = 0 is [foc_iq_limits] with v_q = E. E = 0 gives √(high / R) on both sides.
+// */
+// static inline interval_t foc_iq_limits_emf(interval_t power, accum32_t e, accum32_t r)
+// {
+//     accum32_t h = math_abs(e) / 2;
+//     accum32_t root = _foc_emf_root(h, r, power.high);
+//     ufract16_t along = fract16_sat(fract16_div(power.high, math_max(root, 1)));
+//     ufract16_t plug = fract16_sat(fract16_div(root, math_max(r, 1)));
+//     ufract16_t regen = (h * h > r * -power.low) ? fract16_sat(fract16_div(-power.low, _foc_emf_root(h, r, power.low))) : FRACT16_MAX;
+//     return interval_of_sign_pair((e < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE, along, math_min(regen, plug));
+// }

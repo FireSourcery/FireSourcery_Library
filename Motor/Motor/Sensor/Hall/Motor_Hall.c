@@ -125,6 +125,7 @@ static void Calibration_Proc(Motor_T * p_motor)
     Phase_Id_T id = CAL_STEP[p_buffer->Step];
 
     Calibration_Align_I(p_motor, id);
+    Motor_FOC_WriteDuty(p_motor);
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {

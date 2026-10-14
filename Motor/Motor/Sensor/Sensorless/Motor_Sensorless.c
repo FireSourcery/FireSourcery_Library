@@ -131,6 +131,7 @@ static void Align_Entry(Motor_T * p_motor)
 static void Align_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcStartUpAlign(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
     ProcObserver(p_motor);
 }
 
@@ -168,6 +169,7 @@ static void StartUp_Entry(Motor_T * p_motor)
 static void StartUp_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcOpenLoop(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
     ProcObserver(p_motor);
 }
 // FOC_Sensorless_ResetState(&p_motor->P_MOTOR->FocSensorless);

@@ -99,7 +99,8 @@ static inline void _ADC_Activate(ADC_T * p_adc)
     Write critical section buffer. In the ISR, or in a single thread while the ADC is inactive.
     Marker writes from an ISR preempting this function are lost.
 */
-static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, adc_mask_t sourceMarkers)
+
+static inline adc_mask_t _ADC_SetStateFrom_Ctz(ADC_State_T * p_state, adc_mask_t sourceMarkers)
 {
     adc_mask_t markers = sourceMarkers;
     uint8_t count = 0U;
@@ -114,4 +115,35 @@ static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, adc_mask_t sou
     p_state->ActiveChannelCount = count;
 
     return markers ^ sourceMarkers; /* return processed markers */
+}
+
+/* Ends at the highest marked channel. Frequent channels on the low indices keep the scan short. */
+static inline adc_mask_t _ADC_SetStateFrom_Branch(ADC_State_T * p_state, adc_mask_t sourceMarkers)
+{
+    adc_mask_t markers = sourceMarkers;
+    uint8_t count = 0U;
+
+    for (adc_channel_t channel = 0U; (markers != 0UL) && (count < ADC_FIFO_LENGTH_MAX); channel++)
+    {
+        if ((markers & ADC_MaskOf(channel)) != 0UL)
+        {
+            p_state->ActiveChannels[count] = channel;
+            markers &= ~ADC_MaskOf(channel);
+            count++;
+        }
+    }
+
+    p_state->ActiveChannelCount = count;
+
+    return markers ^ sourceMarkers; /* return processed markers */
+}
+
+/* Armv6-M has no CLZ. __builtin_ctz is a libgcc call there, ~25 cycles per channel */
+static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, adc_mask_t sourceMarkers)
+{
+#if defined(__ARM_FEATURE_CLZ)
+    return _ADC_SetStateFrom_Ctz(p_state, sourceMarkers);
+#else
+    return _ADC_SetStateFrom_Branch(p_state, sourceMarkers);
+#endif
 }

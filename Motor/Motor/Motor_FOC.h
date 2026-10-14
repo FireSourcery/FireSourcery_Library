@@ -85,11 +85,6 @@ static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 
 
 
-static inline void Motor_FOC_WriteDuty(Motor_T * p_motor)
-{
-    Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
-}
-
 // static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
 // {
 //     if (!Phase_IsFloat(&p_motor->PHASE))
@@ -104,6 +99,8 @@ static inline void Motor_FOC_WriteDuty(Motor_T * p_motor)
     Extern
 */
 /******************************************************************************/
+extern void Motor_FOC_WriteDuty(Motor_T * p_motor);
+
 extern void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
 // extern void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq);
 extern void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idReq);

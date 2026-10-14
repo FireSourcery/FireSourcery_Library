@@ -60,6 +60,8 @@ static inline int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
     return ramp_next(p_ramp->Accumulator.Coefficient, p_ramp->Accumulator.Accumulator, target32);
 }
 
+static inline int32_t InputOf(const Ramp_T * p_ramp, int32_t target32) { return math_clamp(target32, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper); }
+
 /*
     caller hold input limits.
     limits are not applied
@@ -73,14 +75,14 @@ int32_t _Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 /* Alternate target, using the same stored slope. */
 int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 {
-    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp((int32_t)target << ACCUMULATOR_SHIFT, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper));
+    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, InputOf(p_ramp, (int32_t)target << ACCUMULATOR_SHIFT));
     return Ramp_GetOutput(p_ramp);
 }
 
-/* Internal target clamped on SetTarget */
+/* Stored target, limited per step as [Ramp_ProcNextOf] */
 int32_t Ramp_ProcNext(Ramp_T * p_ramp)
 {
-    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, p_ramp->Target); /* already shifted internal target */
+    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, InputOf(p_ramp, p_ramp->Target));
     return Ramp_GetOutput(p_ramp);
 }
 

@@ -483,6 +483,7 @@ static inline interval_t Motor_GetSpeedLimits(const Motor_Context_T * p_motor) {
     Materialize — the single write point into the hot path. Ccw/Cw signed interval is what Ramp/PID consume.
     TorqueRamp carries V limits in voltage mode; Motor_SetFeedbackMode resolves I on entry to current mode.
 */
+/* Torque commands sent over serial/CAN clamped until next send */
 static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
 {
     if (p_motor->FeedbackMode.Current == 1)

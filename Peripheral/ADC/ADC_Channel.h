@@ -93,10 +93,32 @@ static inline void ADC_Channel_Capture(ADC_Channel_T * p_channel)
     if (p_channel->CAPTURE != NULL) { p_channel->CAPTURE(p_channel->P_CONTEXT, ADC_Channel_Result(p_channel)); }
 }
 
-/* [Channel] table. Pushes each channel of [landed] to its handler, in channel order */
-static inline void ADC_Channel_CaptureEach(ADC_Channel_T * p_channels, adc_mask_t landed)
+static inline void _ADC_Channel_CaptureEach_Ctz(ADC_Channel_T * p_channels, adc_mask_t landed)
 {
     for (; landed != 0UL; landed &= (landed - 1UL)) { ADC_Channel_Capture(&p_channels[__builtin_ctz(landed)]); }
+}
+
+/* Ends at the highest landed channel */
+static inline void _ADC_Channel_CaptureEach_Branch(ADC_Channel_T * p_channels, adc_mask_t landed)
+{
+    for (adc_channel_t channel = 0U; landed != 0UL; channel++)
+    {
+        if ((landed & ADC_MaskOf(channel)) != 0UL)
+        {
+            ADC_Channel_Capture(&p_channels[channel]);
+            landed &= ~ADC_MaskOf(channel);
+        }
+    }
+}
+
+/* [Channel] table. Pushes each channel of [landed] to its handler, in channel order. Selection as _ADC_SetStateFrom */
+static inline void ADC_Channel_CaptureEach(ADC_Channel_T * p_channels, adc_mask_t landed)
+{
+#if defined(__ARM_FEATURE_CLZ)
+    _ADC_Channel_CaptureEach_Ctz(p_channels, landed);
+#else
+    _ADC_Channel_CaptureEach_Branch(p_channels, landed);
+#endif
 }
 
 /*!

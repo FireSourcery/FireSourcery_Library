@@ -308,21 +308,25 @@ static void Electrical_Proc(Motor_T * p_motor)
         case PARAMID_STEP_ALIGN:
             // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, p_params->IdBias);
             Motor_FOC_ProcAngleAlign(p_motor, 0, p_params->IdBias);
+            Motor_FOC_WriteDuty(p_motor);
             ProcAlign(p_params);
             break;
         case PARAMID_STEP_RS_MEASURE:
             // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, p_params->IdBias);
             Motor_FOC_ProcAngleAlign(p_motor, 0, p_params->IdBias);
+            Motor_FOC_WriteDuty(p_motor);
             ProcRs(p_params, FOC_Vd(&p_context->Foc), FOC_Id(&p_context->Foc));
             break;
         case PARAMID_STEP_LD_INJECT:
             fract16_t vd = p_params->VdBias + p_params->VdStep;
             Motor_FOC_ProcAngleFeedforwardV(p_context, 0, vd, 0);
+            Motor_FOC_WriteDuty(p_motor);
             ProcLd(p_params, FOC_Id(&p_context->Foc));
             break;
         case PARAMID_STEP_LQ_HFI:
             fract16_t vq = fract16_mul(p_params->Vhfi, fract16_sin(p_params->HfiPhase));
             Motor_FOC_ProcAngleFeedforwardV(p_context, 0, p_params->VdBias, vq);
+            Motor_FOC_WriteDuty(p_motor);
             ProcLq(p_params, FOC_Iq(&p_context->Foc));
             break;
         case PARAMID_STEP_COMMIT:
@@ -332,6 +336,7 @@ static void Electrical_Proc(Motor_T * p_motor)
         case PARAMID_STEP_RAMPDOWN:
             // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, 0);
             Motor_FOC_ProcAngleAlign(p_motor, 0, 0);
+            Motor_FOC_WriteDuty(p_motor);
             ProcRampDown(p_params);
             break;
         case PARAMID_STEP_DONE:

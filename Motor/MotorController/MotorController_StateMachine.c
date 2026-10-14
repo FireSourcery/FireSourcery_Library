@@ -627,12 +627,25 @@ const State_T MC_STATE_LOCK =
     @brief Fault State
 */
 /******************************************************************************/
-static void Fault_Entry(MotorController_T * p_dev)
+static void Fault_RequestV0(MotorController_T * p_dev)
 {
     for (size_t i = 0; i < p_dev->MOTORS.LENGTH; i++) { Motor_StateMachine_SetFault(&p_dev->MOTORS.P_DEVS[i], MOTOR_FAULT_REQUEST_V0); }
-    // Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
-    // Motor_Table_ForEach(&p_dev->MOTORS, Motor_ReleaseVZ);  /* Motor may apply V0 */
-    Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit); /* exit on fault and exit lock. or implement input id */
+}
+
+
+static void Fault_Entry(MotorController_T * p_dev)
+{
+    if (VBus_Status(p_dev->P_VBUS) == VMONITOR_STATUS_FAULT_OVERVOLTAGE)
+    {
+        // assert(p_dev->P_MC->FaultFlags.VBusLimit);
+        Fault_RequestV0(p_dev);
+    }
+    else
+    {
+        Motor_Table_ForEach(&p_dev->MOTORS, Motor_ReleaseVZ);  /* Motor may apply V0 */
+        Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit); /* exit on fault and exit lock. or implement input id */
+        // Motor_ApplySafeStop
+    }
 
 // #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
 //     memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
@@ -643,12 +656,7 @@ static void Fault_Entry(MotorController_T * p_dev)
 static void Fault_Proc(MotorController_T * p_dev)
 {
     MotorController_Context_T * p_mc = p_dev->P_MC;
-
     // Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
-
-    // if (p_mc->FaultFlags.RxLost = MotorController_PollRxLost(p_dev))
-    //     /* Protocol Rx Lost use auto recover, without user input */
-
     if (p_mc->FaultFlags.Value == 0U) { Blinky_Stop(&p_dev->BUZZER); }
 }
 
@@ -661,16 +669,21 @@ static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t fault
     if (cmd.FaultClear != 0U)
     {
         p_mc->FaultFlags.Value &= ~cmd.FaultClear;
-        if (Phase_Board_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; } /* clear on reset only */
-        MotorController_PollFaultFlags(p_dev); /* Re-verify conditions resolved before allowing exit */
-        p_mc->FaultFlags.Motors = !Motor_Table_ForEvery(&p_dev->MOTORS, Motor_StateMachine_TryClearFaultAll); /* if any remain, stay in fault */
+        if (p_mc->FaultFlags.Value == 0U)
+        {
+            if (Phase_Board_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; } /* clear on reset only */
+            MotorController_PollFaultFlags(p_dev); /* Re-verify conditions resolved before allowing exit */
+        }
         Blinky_Stop(&p_dev->BUZZER);
     }
     if (cmd.FaultSet != 0U)
     {
         p_mc->FaultFlags.Value |= cmd.FaultSet;
+        // if (VBus_Status(p_dev->P_VBUS) == VMONITOR_STATUS_FAULT_OVERVOLTAGE) { Fault_RequestV0(p_dev); }
     }
 
+    /* if any remain, stay in fault */
+    if (p_mc->FaultFlags.Value == 0U) { p_mc->FaultFlags.Motors = !Motor_Table_ForEvery(&p_dev->MOTORS, Motor_StateMachine_TryClearFaultAll); }
     return (p_mc->FaultFlags.Value == 0U) ? &MC_STATE_STANDBY : NULL; /* Fault clear always re-lands in the safe stationary state, never live Main */
 }
 

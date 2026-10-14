@@ -107,15 +107,21 @@ static inline accumulator_io_t Ramp_GetLimitLower(const Ramp_T * p_ramp){ return
 static inline accumulator_io_t Ramp_GetLimitUpper(const Ramp_T * p_ramp){ return Accumulator_LimitUpper(&p_ramp->Accumulator); }
 
 /*
-    Limits applied on input
-    re-clamps the stored target alongside the accumulator.
-    Ramp_ProcNext gradually moves output to target, with saturation on every step.
+    Limits applied on input, every step. The stored target is held: a target beyond the limits resumes when they recover.
+    Output is not clamped, an out of bounds output ramps back in.
 */
 static inline void Ramp_SetLimits(Ramp_T * p_ramp, accumulator_io_t lower, accumulator_io_t upper)
 {
     Accumulator_SetLimits(&p_ramp->Accumulator, lower, upper);
     p_ramp->Target = math_clamp(p_ramp->Target, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
 }
+
+/* Also clamps the stored target, a target beyond the limits does not resume */
+// static inline void Ramp_SetInputLimits(Ramp_T * p_ramp, accumulator_io_t lower, accumulator_io_t upper)
+// {
+//     Accumulator_SetLimits(&p_ramp->Accumulator, lower, upper);
+//     p_ramp->Target = math_clamp(p_ramp->Target, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
+// }
 
 /* Clamp Output immediately */
 static inline void Ramp_SetOutputLimits(Ramp_T * p_ramp, accumulator_io_t lower, accumulator_io_t upper)

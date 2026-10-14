@@ -98,6 +98,7 @@ static void AngleAlign_Entry(Motor_T * p_motor)
 static void AngleAlign_Loop(Motor_T * p_motor)
 {
     Motor_FOC_ProcAlignCmd(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
 }
 
 /*
@@ -146,6 +147,7 @@ static void Run_Entry(Motor_T * p_motor)
 static void Run_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcOpenLoop(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
 }
 
 /*
@@ -176,6 +178,7 @@ static void StartUp_Entry(Motor_T * p_motor)
 static void StartUp_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcStartUpAlign(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
 }
 
 State_T * StartUpAlign_Next(Motor_T * p_motor)

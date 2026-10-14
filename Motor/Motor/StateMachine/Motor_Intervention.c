@@ -73,6 +73,7 @@ static void TorqueZero_Proc(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     /* Filter the (Entry-seeded or user-updated) Target: pass generating-side magnitude only */
     Motor_FOC_ProcTorqueReq(p_motor, _Motor_GeneratingOnly(p_context, Ramp_GetTarget(&p_context->TorqueRamp)));
+    Motor_FOC_WriteDuty(p_motor);
 }
 
 
@@ -118,6 +119,7 @@ static void RampDown_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_ProcTorqueReq(p_motor, PID_GetOutput(&p_context->PidSpeed));
+    Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * RampDown_Next(Motor_T * p_motor)
