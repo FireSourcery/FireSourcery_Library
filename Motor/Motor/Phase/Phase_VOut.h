@@ -45,7 +45,7 @@
 */
 typedef enum Phase_VOutMode
 {
-    PHASE_VOUT_Z,  /* Disabled. 0 as High-Z, it is the result of Pin Low/0 */
+    PHASE_VOUT_Z,     /* Disabled. 0 as High-Z, it is the result of Pin Low/0 */
     PHASE_VOUT_0,     /* VPwm 0, Pin 1 */
     PHASE_VOUT_PWM,   /* VPwm 1, Pin 1 */
 }

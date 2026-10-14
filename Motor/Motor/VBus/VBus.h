@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "VBus_Config.h"
-#include "../Phase_Input/Phase_Board.h" /* optionally seperate */
+#include "../Phase_Input/Phase_Board.h" /* Phase_VMaxVolts */
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 
 #include "Math/Fixed/fract16.h"
@@ -68,9 +68,8 @@
 /******************************************************************************/
 typedef struct VBus
 {
-    uint16_t VBus_Pu;          /* Filtered live ratio — canonical FOC input */
-    uint32_t VBusInv_Pu;          /* 1 / VBus, accum32-shifted — cached for Vout normalization */
-    /* 1/VBus_pu -> accum32, 1/VBus_V -> fract32 */
+    uint16_t VBus_Pu;           /* Filtered live ratio — canonical FOC input */
+    uint32_t VBusInv_Pu;        /* 1 / VBus, accum32-shifted — cached for Vout normalization */
 
     /* Precomputed derate slopes */
     int32_t IDerateUnderVSlope;     /* ((FRACT16_MAX - floor) << 15) / (WarnLow - FaultUnder), positive, rising  */
@@ -78,12 +77,10 @@ typedef struct VBus
 
     /* Specialized composition of VMonitor */
     VMonitor_State_T MonitorState;  /* Holds the monitor partition, MonitorState.Config */
-    VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
     /* Caller holds Nvm Address */
+    VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
 }
 VBus_T;
-
-
 
 /******************************************************************************/
 /*!
@@ -91,6 +88,7 @@ VBus_T;
 */
 /******************************************************************************/
 /* Phase scaling without filter */
+/* 1/VBus_pu -> accum32, 1/VBus_V -> fract32 */
 static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 {
     p_vbus->VBus_Pu = fract16;
@@ -120,6 +118,8 @@ static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBu
 /******************************************************************************/
 static inline ufract16_t VBus_Pu(const VBus_T * p_vbus) { return p_vbus->VBus_Pu; }
 static inline uint32_t VBus_Inv_Pu(const VBus_T * p_vbus) { return p_vbus->VBusInv_Pu; }
+
+/* Phase_VMaxVolts common base */
 static inline uint16_t VBus_Volts(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Pu, Phase_VMaxVolts()); }
 
 /* Runtime phase peak references — VBus/2 (sine) and VBus/√3 (SVPWM) */
@@ -129,13 +129,20 @@ static inline ufract16_t VBus_GetVPhaseRefSvpwm(const VBus_T * p_vbus) { return 
 /* Normalize a phase voltage to fraction-of-VBus (duty cycle) */
 static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->VBusInv_Pu / FRACT16_SCALE; }
 
+/* Derived from Config.VSupplyNominal_V by VBus_Reinit */
+static inline uint16_t VBus_VNominal_Pu(const VBus_T * p_vbus) { return p_vbus->MonitorState.Config.Nominal; }
+
+static inline void VBus_SetVNominal_V(VBus_T * p_vbus, uint16_t vNominal_V)
+{
+    VBus_SetVSupplyNominal_V(&p_vbus->Config, vNominal_V);
+    VBus_Monitor_SetVNominal_V(&p_vbus->MonitorState.Config, vNominal_V);
+}
 
 
 /******************************************************************************/
 /*!
     Derating — battery droop (UV ramp) and regen chopping (OV ramp).
-    as fraction of 1.0 independent of physical I/Speed units
-    MotorController owns the arbitration array
+    The ramps are ratios of 1.0, applied to the supply limits below. [VBus_FOC.h] maps those onto the q axis.
 
     Battery VBus spans a wide range: peak (freshly charged, no load),
     nominal (VSupplyRef), through sag under load, down to undervoltage cutoff.
@@ -183,8 +190,12 @@ static inline ufract16_t VBus_GetIDerateUnderV(const VBus_T * p_vbus) { return _
 /* OV falling: FRACT16_MAX - (slope * (vBus - vWarnHigh) >> 15) */
 static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return _VBus_IDerateOverVOf(p_vbus, &p_vbus->MonitorState.Config); }
 
-/* Derived from Config.VSupplyNominal_V by VBus_Reinit */
-static inline uint16_t VBus_VNominal_Pu(const VBus_T * p_vbus) { return p_vbus->MonitorState.Config.Nominal; }
+/*
+    Supply limits — the ramps on the configured DC limits. DC current PU of the I base.
+*/
+static inline uint16_t VBus_IDischargeLimit_Pu(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateUnderV(p_vbus), p_vbus->Config.IDischargeLimit_Pu); }
+static inline uint16_t VBus_IChargeLimit_Pu(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateOverV(p_vbus), p_vbus->Config.IChargeLimit_Pu); }
+
 
 /*
     Speed-limit derate — back-EMF constraint.
@@ -199,6 +210,7 @@ static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
     return math_clamp(fract16_div(p_vbus->VBus_Pu, VBus_VNominal_Pu(p_vbus)), p_vbus->Config.SpeedDerateFloor, FRACT16_MAX);
     // return math_clamp(fract16_mul(p_vbus->VBus_Pu, p_vbus->PerVNominal_Fract32), p_vbus->Config.SpeedDerateFloor, FRACT16_MAX);
 }
+
 
 
 
@@ -263,15 +275,7 @@ static inline void VBus_InitBase(VBus_T * p_vbus, const VBus_Config_T * p_config
     VBus_Reinit(p_vbus);
 }
 
-/*
-    The invariant across both partitions: thresholds anchored to nominal.
-    VSupplyNominal re-anchors the monitor partition with it. Caller re-derives with VBus_Reinit
-*/
-static inline void VBus_Config_Set(VBus_T * p_vbus, VBus_ConfigId_T id, int value)
-{
-    VBus_ConfigId_Set(&p_vbus->Config, id, value);
-    if (id == VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V) { p_vbus->MonitorState.Config = VBus_MonitorConfig_LiIon(p_vbus->Config.VSupplyNominal_V); }
-}
+
 
 /******************************************************************************/
 /*!
@@ -297,4 +301,12 @@ static inline uint32_t VBus_VarId_Get(const VBus_T * p_vbus, VBus_VarId_T var_id
     }
 }
 
-
+/*
+    The invariant across both partitions: thresholds anchored to nominal.
+    VSupplyNominal re-anchors the monitor partition with it. Caller re-derives with VBus_Reinit
+*/
+static inline void VBus_Config_Set(VBus_T * p_vbus, VBus_ConfigId_T id, int value)
+{
+    VBus_ConfigId_Set(&p_vbus->Config, id, value);
+    if (id == VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V) { p_vbus->MonitorState.Config = VBus_MonitorConfig_LiIon(p_vbus->Config.VSupplyNominal_V); }
+}

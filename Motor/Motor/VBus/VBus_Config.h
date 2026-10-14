@@ -47,8 +47,10 @@
 typedef struct VBus_Config
 {
     /* Pack profile */
-    uint16_t VSupplyNominal_V;              /* Pack nominal [V]. Speed-derate divisor, startup value, config-wizard anchor. alternatively update to pu*/
-    // uint16_t VFullPower_V;               /* Full I at/above this. Typically same as VSupplyNominal, but may be raised for headroom. */
+    uint16_t VSupplyNominal_V;     /* Pack nominal [V]. Speed-derate divisor, startup value, config-wizard anchor. alternatively update to pu*/
+    // uint16_t VFullPower_V;      /* Full I at/above this. Typically same as VSupplyNominal, but may be raised for headroom. */
+    uint16_t IDischargeLimit_Pu;   /* Supply DC current out of the pack, PU of the I base */
+    uint16_t IChargeLimit_Pu;      /* Supply DC current into the pack (regen), PU of the I base */
 
     /* Derate floor scales — fraction of the respective limit at the ramp's saturated end */
     uint16_t IDerateUnderVFloor;   /* I-limit scale at VLowDerate  (e.g. 0.30). Floor for VBus_IDerate_UnderV ramp */
@@ -85,16 +87,21 @@ VBus_Config_T;
     .IsEnabled              = true,                                                                             \
 }
 
-#define VBUS_CONFIG_LIION(VNominal) (VBus_Config_T) \
+/* i_dc = √3/2·|i_dq|, the supply current of a phase peak at full modulation and unity power factor */
+#define VBUS_I_DC_OF_I_PHASE(IPhase) ((IPhase) * FRACT16(0.86602540F) / FRACT16_SCALE)
+
+#define VBUS_CONFIG_LIION(VNominal, IRatedPeak) (VBus_Config_T) \
 {                                                                                                  \
     .VSupplyNominal_V           = (VNominal),                                                    \
+    .IDischargeLimit_Pu = VBUS_I_DC_OF_I_PHASE(IRatedPeak),  /* the board's rating until set to the pack's */ \
+    .IChargeLimit_Pu    = VBUS_I_DC_OF_I_PHASE(IRatedPeak),                              \
     .IDerateUnderVFloor = FRACT16(0.30F),  /* 30% I-max at ramp bottom */                \
     .IDerateOverVFloor  = FRACT16(0.10F),  /* 10% regen at ramp top */                   \
     .SpeedDerateFloor   = FRACT16(0.70F),  /* speed clamp never below 70% */             \
 }
 
 
-static inline VBus_Config_T VBus_Config_LiIon(uint16_t vNominal_V) { return VBUS_CONFIG_LIION(math_min(vNominal_V, Phase_VRated_Volts())); }
+static inline VBus_Config_T VBus_Config_LiIon(uint16_t vNominal_V) { return VBUS_CONFIG_LIION(math_min(vNominal_V, Phase_VRated_Volts()), Phase_IRatedPeak_Pu()); }
 static inline VMonitor_Config_T VBus_MonitorConfig_LiIon(uint16_t vNominal_V) { return VBUS_MONITOR_CONFIG_LIION(math_min(vNominal_V, Phase_VRated_Volts()), Phase_VMaxVolts()); }
 
 static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_V)
@@ -127,14 +134,22 @@ static inline uint16_t VBus_VFullPower_V(const VBus_Config_T * p_vbus) { return 
 static inline uint16_t VBus_GetVLowDerate_V(const VMonitor_Config_T * p_monitorConfig) { return Phase_V_VoltsOfPu(p_monitorConfig->Warning.LimitLow); }
 static inline uint16_t VBus_GetVHighDerate_V(const VMonitor_Config_T * p_monitorConfig) { return Phase_V_VoltsOfPu(p_monitorConfig->Warning.LimitHigh); }
 
+
 /******************************************************************************/
 /*!
     Validate / IsValid
 */
 /******************************************************************************/
+/* Preliminary lim */
+static inline uint16_t _VBus_IBusLimit() { return fract16_mul(Phase_IRatedPeak_Pu(), FRACT16_2_DIV_SQRT3); }
+
 static inline void VBus_Config_Validate(VBus_Config_T * p_config)
 {
     p_config->VSupplyNominal_V   = math_min(p_config->VSupplyNominal_V, Phase_VRated_Volts());
+    // p_config->IDischargeLimit_Pu = math_min(p_config->IDischargeLimit_Pu, INT16_MAX);
+    // p_config->IChargeLimit_Pu    = math_min(p_config->IChargeLimit_Pu,    INT16_MAX);
+    p_config->IDischargeLimit_Pu = math_min(p_config->IDischargeLimit_Pu, _VBus_IBusLimit());
+    p_config->IChargeLimit_Pu    = math_min(p_config->IChargeLimit_Pu,    _VBus_IBusLimit());
     p_config->IDerateUnderVFloor = math_min(p_config->IDerateUnderVFloor, INT16_MAX);
     p_config->IDerateOverVFloor  = math_min(p_config->IDerateOverVFloor,  INT16_MAX);
     p_config->SpeedDerateFloor   = math_min(p_config->SpeedDerateFloor,   INT16_MAX);
@@ -144,6 +159,10 @@ static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
 {
     return ((p_config->VSupplyNominal_V != 0U)
         && (p_config->VSupplyNominal_V <= Phase_VRated_Volts())
+        // && (p_config->IDischargeLimit_Pu <= INT16_MAX)
+        // && (p_config->IChargeLimit_Pu    <= INT16_MAX)
+        && (p_config->IDischargeLimit_Pu <= _VBus_IBusLimit())
+        && (p_config->IChargeLimit_Pu    <= _VBus_IBusLimit())
         && (p_config->IDerateUnderVFloor <= INT16_MAX)
         && (p_config->IDerateOverVFloor  <= INT16_MAX)
         && (p_config->SpeedDerateFloor   <= INT16_MAX));
@@ -171,6 +190,8 @@ typedef enum VBus_ConfigId
     VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR,
     VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR,
     VBUS_CONFIG_ID_SPEED_DERATE_FLOOR,
+    VBUS_CONFIG_ID_I_DISCHARGE_LIMIT,
+    VBUS_CONFIG_ID_I_CHARGE_LIMIT,
 }
 VBus_ConfigId_T;
 
@@ -183,6 +204,8 @@ static int VBus_ConfigId_Get(const VBus_Config_T * p_config, VBus_ConfigId_T id)
         case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    value = p_config->IDerateUnderVFloor; break;
         case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     value = p_config->IDerateOverVFloor; break;
         case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       value = p_config->SpeedDerateFloor; break;
+        case VBUS_CONFIG_ID_I_DISCHARGE_LIMIT:        value = p_config->IDischargeLimit_Pu; break;
+        case VBUS_CONFIG_ID_I_CHARGE_LIMIT:           value = p_config->IChargeLimit_Pu; break;
         default: break;
     }
     return value;
@@ -194,10 +217,13 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
     switch (id)
     {
         // case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        p_config->VSupplyNominal_V = value; break;
+        /* alternatively move to a command id */
         case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        VBus_Config_Init_LiIon(p_config, value); break; /* re-init whole partition, profile anchored to nominal */
         case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    p_config->IDerateUnderVFloor = value; break;
         case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor = value; break;
         case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor = value; break;
+        case VBUS_CONFIG_ID_I_DISCHARGE_LIMIT:        p_config->IDischargeLimit_Pu = value; break;
+        case VBUS_CONFIG_ID_I_CHARGE_LIMIT:           p_config->IChargeLimit_Pu = value; break;
         default: break;
     }
 }

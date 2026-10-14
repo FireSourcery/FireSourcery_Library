@@ -34,18 +34,7 @@
 #include "Motor/Motor/Analog/Motor_Analog.h"
 #include "Type/Array/void_array.h"
 
-// handle per instance extensions not required by core logic
-// typedef const struct Motor_Entity
-// {
-//     struct
-//     {
-//          Motor_T DEV;
-//          HeatMonitor_T HEAT_MONITOR;
-//          ADC_Conversion_T HEAT_MONITOR_CONVERSION;
-//          uint8_t * const P_ADAPTER_BUFFER;
-//     } ;
-// }
-// Motor_Entity_T;
+
 
 /* Shorthand Wrappers */
 /* Define with motor runtime state allocated in continuous array */
@@ -162,16 +151,6 @@ static inline bool Motor_Table_IsAnyState(Motor_Table_T * p_table, State_T * p_s
     for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { if (Motor_IsState(&p_table->P_DEVS[iMotor], p_state) == true) { isAny = true; break; } }
     return isAny;
 }
-
-/*
-    Limit broadcast. Derate: shared system arbitration result. Value: common physical cap written to each motor's channel.
-*/
-static inline void Motor_Table_SetSpeedLimitDerate(Motor_Table_T * p_table, uint16_t scalar) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimitDerate(p_table->P_DEVS[iMotor].P_MOTOR, scalar); } }
-static inline void Motor_Table_SetILimitDerates(Motor_Table_T * p_table, uint16_t motoring, uint16_t generating) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimitDerates(p_table->P_DEVS[iMotor].P_MOTOR, motoring, generating); } }
-static inline void Motor_Table_SetSpeedLimit(Motor_Table_T * p_table, uint16_t speed_pu) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimit(p_table->P_DEVS[iMotor].P_MOTOR, speed_pu); } }
-static inline void Motor_Table_SetILimit(Motor_Table_T * p_table, uint16_t i_pu) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimit(p_table->P_DEVS[iMotor].P_MOTOR, i_pu); } }
-static inline void Motor_Table_ResetSpeedLimit(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ResetSpeedLimit(p_table->P_DEVS[iMotor].P_MOTOR); } }
-static inline void Motor_Table_ResetILimit(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ResetILimit(p_table->P_DEVS[iMotor].P_MOTOR); } }
 
 // static inline void Motor_Table_InputStateMachine(Motor_Table_T * p_table, Motor_State_Input_T input, state_value_t value)  { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_table->P_MONITORS[iMotor], input, value); } }
 

@@ -29,6 +29,7 @@
 /******************************************************************************/
 /******************************************************************************/
 #include "Motor_StateMachine.h"
+#include "Motor/Motor/VBus/VBus_Monitor.h"
 #include "Motor_Intervention.h"
 #include "../Motor_Config.h"
 
@@ -248,6 +249,7 @@ static void Passive_Entry(Motor_T * p_motor)
 {
     /* check on transition. duplicate */
     if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
+    // if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_ActivateT0(&p_motor->PHASE); }
     else { Phase_ActivateV0(&p_motor->PHASE); }
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */
@@ -344,12 +346,11 @@ static State_T * Passive_InputOpenLoop(Motor_T * p_motor, state_value_t statePtr
 
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) != 0U) { return NULL; }
     if ((p_state != NULL) && (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP)) { return p_state; }
+    // if (p_state == NULL) { return &MOTOR_STATE_OPEN_LOOP; }
+    // if (p_state == &MOTOR_STATE_OPEN_LOOP) { return &MOTOR_STATE_OPEN_LOOP; }
+    // if (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP) { return p_state; }
     return &MOTOR_STATE_OPEN_LOOP;
 }
-// State_T * p_state = (State_T *)statePtr;
-// if (p_state == NULL) { return &MOTOR_STATE_OPEN_LOOP; }
-// if (p_state == &MOTOR_STATE_OPEN_LOOP) { return &MOTOR_STATE_OPEN_LOOP; }
-// if (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP) { return p_state; }
 
 static const State_Input_T PASSIVE_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
@@ -410,6 +411,8 @@ static void Run_Proc(Motor_T * p_motor)
     // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     //     Motor_ExternControl(p_motor);
     // #endif
+
+    Motor_FOC_WriteDuty(p_motor);
 }
 
 /*
@@ -441,7 +444,7 @@ static State_T * Run_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:      return Run_InputRelease(p_motor);
-        case PHASE_VOUT_0:      return Run_InputRelease(p_motor);
+        case PHASE_VOUT_0:      return Run_InputRelease(p_motor);  /* return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE_V0 : &INTERVENTION_STATE_RAMP_DOWN; */
         case PHASE_VOUT_PWM:    return NULL;
         default:                return NULL;
     }
@@ -725,8 +728,18 @@ const State_T MOTOR_STATE_CALIBRATION =
 static void Fault_Entry(Motor_T * p_motor)
 {
     // Phase_Deactivate(&p_motor->PHASE);
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
-    else { Phase_ActivateV0(&p_motor->PHASE); }
+    // if (VBus_Status(p_motor->P_VBUS) == VMONITOR_STATUS_FAULT_OVERVOLTAGE)
+    // {
+    // }
+    if (p_motor->P_MOTOR->FaultFlags.RequestV0 != 0U)
+    {
+        Phase_ActivateV0(&p_motor->PHASE);
+    }
+    else
+    {
+        if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
+        else { Phase_ActivateV0(&p_motor->PHASE); }
+    }
 }
 
 static void Fault_Proc(Motor_T * p_motor)
@@ -751,12 +764,11 @@ static State_T * Fault_InputCalibration(Motor_T * p_motor, state_value_t state)
 {
     (void)state;
     State_T * p_nextState = NULL;
-
-    // if (p_motor->P_MOTOR->FaultFlags.Value & ~POSITIONSENSOR)
-    if (p_motor->P_MOTOR->FaultFlags.Overheat == 0U)
-    {
+//   Motor_PollFaultFlags(p_motor);
+//     if (p_motor->P_MOTOR->FaultFlags.Value == 0U)
+    // {
         p_nextState = &MOTOR_STATE_CALIBRATION;
-    }
+    // }
 
     return p_nextState;
 }

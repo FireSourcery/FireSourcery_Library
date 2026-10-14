@@ -92,8 +92,8 @@ void MotorController_Init(MotorController_T * p_dev)
     ADC_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
     ADC_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
 
-    MotLimits_ClearIDerate(&p_dev->P_MC->Limits);
-    MotLimits_ClearSpeedDerate(&p_dev->P_MC->Limits);
+    // MotLimits_ClearIDerate(&p_dev->P_MC->Limits);
+    // MotLimits_ClearSpeedDerate(&p_dev->P_MC->Limits);
 
     p_mc->StandbyExitMode = MotorController_ResolveStandbyExitMode(p_dev);
 
@@ -129,64 +129,89 @@ MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorCo
 /******************************************************************************/
 /*
     Collective Setting Limit
+    System sources composed by hand, pushed to every motor in PU.
+    [MotorController_IDerate] converts against each motor's Config, the supply limits apply at each motor's operating point.
 */
 /******************************************************************************/
+void MotorController_ApplyILimits(MotorController_T * p_dev)
+{
+    ufract16_t derate = MotorController_IDerate(p_dev);
+    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
+    {
+        Motor_T * p_motor = &p_dev->MOTORS.P_DEVS[iMotor];
+        interval_t supply = Motor_VBusILimits(p_motor);
+        Motor_SetILimits(p_motor->P_MOTOR,
+            math_min(Motor_ILimitMotoringOf(p_motor->P_MOTOR, derate), Motor_ILimitMotoringIn(p_motor->P_MOTOR, supply)),
+            math_min(Motor_ILimitGeneratingOf(p_motor->P_MOTOR, derate), Motor_ILimitGeneratingIn(p_motor->P_MOTOR, supply)));
+    }
+}
+
+void MotorController_ApplySpeedLimits(MotorController_T * p_dev)
+{
+    ufract16_t derate = MotorController_SpeedDerate(p_dev);
+    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
+    {
+        Motor_Context_T * p_motor = p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR;
+        Motor_SetSpeedLimits(p_motor, Motor_SpeedLimitForwardOf(p_motor, derate), Motor_SpeedLimitReverseOf(p_motor, derate));
+    }
+}
+
 /*
     System-side derate setters
     Use _LimitArray parameters form (augments + values + length explicit) since there's no LimitArray_T descriptor to wrap them.
     On arbitration change, push the active derate to every motor. Motor compares against its physical value channel.
 */
-bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t derate)
-{
-    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    if (_LimitArray_TestSetUpper(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id, derate) == true) { Motor_Table_SetSpeedLimitDerate(&p_dev->MOTORS, MotLimits_SpeedDerate(p_lim)); return true; }
-    return false;
-}
+// bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t derate)
+// {
+//     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+//     if (_LimitArray_TestSetUpper(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id, derate) == true) { Motor_Table_SetSpeedLimitDerate(&p_dev->MOTORS, MotLimits_SpeedDerate(p_lim)); return true; }
+//     return false;
+// }
 
-bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id)
-{
-    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    if (_LimitArray_TestClearEntry(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id) == true) { Motor_Table_SetSpeedLimitDerate(&p_dev->MOTORS, MotLimits_SpeedDerate(p_lim)); return true; }
-    return false;
-}
+// bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id)
+// {
+//     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+//     if (_LimitArray_TestClearEntry(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id) == true) { Motor_Table_SetSpeedLimitDerate(&p_dev->MOTORS, MotLimits_SpeedDerate(p_lim)); return true; }
+//     return false;
+// }
 
-static void _MotorController_PushIDerates(MotorController_T * p_dev)
-{
-    Motor_Table_SetILimitDerates(&p_dev->MOTORS, MotLimits_IDerateMotoring(&p_dev->P_MC->Limits), MotLimits_IDerateGenerating(&p_dev->P_MC->Limits));
-}
+// static void _MotorController_PushIDerates(MotorController_T * p_dev)
+// {
+//     Motor_Table_SetILimitDerates(&p_dev->MOTORS, MotLimits_IDerateMotoring(&p_dev->P_MC->Limits), MotLimits_IDerateGenerating(&p_dev->P_MC->Limits));
+// }
 
-bool _MotorController_SetILimitMotoringAll(MotorController_T * p_dev, MotILimitId_T id, limit_t derate)
-{
-    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    if (_LimitArray_TestSetUpper(&p_lim->ILimitMotoringState, p_lim->ILimitMotoringValues, MOT_I_LIMIT_COUNT, id, derate) == true) { _MotorController_PushIDerates(p_dev); return true; }
-    return false;
-}
+// bool _MotorController_SetILimitMotoringAll(MotorController_T * p_dev, MotILimitId_T id, limit_t derate)
+// {
+//     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+//     if (_LimitArray_TestSetUpper(&p_lim->ILimitMotoringState, p_lim->ILimitMotoringValues, MOT_I_LIMIT_COUNT, id, derate) == true) { _MotorController_PushIDerates(p_dev); return true; }
+//     return false;
+// }
 
-bool _MotorController_SetILimitGeneratingAll(MotorController_T * p_dev, MotILimitId_T id, limit_t derate)
-{
-    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    if (_LimitArray_TestSetUpper(&p_lim->ILimitGeneratingState, p_lim->ILimitGeneratingValues, MOT_I_LIMIT_COUNT, id, derate) == true) { _MotorController_PushIDerates(p_dev); return true; }
-    return false;
-}
+// bool _MotorController_SetILimitGeneratingAll(MotorController_T * p_dev, MotILimitId_T id, limit_t derate)
+// {
+//     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+//     if (_LimitArray_TestSetUpper(&p_lim->ILimitGeneratingState, p_lim->ILimitGeneratingValues, MOT_I_LIMIT_COUNT, id, derate) == true) { _MotorController_PushIDerates(p_dev); return true; }
+//     return false;
+// }
 
-/* Both quadrants. Each side is tested before the single push */
-bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t derate)
-{
-    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    bool isMotoringChanged = _LimitArray_TestSetUpper(&p_lim->ILimitMotoringState, p_lim->ILimitMotoringValues, MOT_I_LIMIT_COUNT, id, derate);
-    bool isGeneratingChanged = _LimitArray_TestSetUpper(&p_lim->ILimitGeneratingState, p_lim->ILimitGeneratingValues, MOT_I_LIMIT_COUNT, id, derate);
-    if ((isMotoringChanged == true) || (isGeneratingChanged == true)) { _MotorController_PushIDerates(p_dev); return true; }
-    return false;
-}
+// /* Both quadrants. Each side is tested before the single push */
+// bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t derate)
+// {
+//     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+//     bool isMotoringChanged = _LimitArray_TestSetUpper(&p_lim->ILimitMotoringState, p_lim->ILimitMotoringValues, MOT_I_LIMIT_COUNT, id, derate);
+//     bool isGeneratingChanged = _LimitArray_TestSetUpper(&p_lim->ILimitGeneratingState, p_lim->ILimitGeneratingValues, MOT_I_LIMIT_COUNT, id, derate);
+//     if ((isMotoringChanged == true) || (isGeneratingChanged == true)) { _MotorController_PushIDerates(p_dev); return true; }
+//     return false;
+// }
 
-/* Both quadrants. A source set on one side only clears as a no-op on the other */
-bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id)
-{
-    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
-    bool isMotoringChanged = _LimitArray_TestClearEntry(&p_lim->ILimitMotoringState, p_lim->ILimitMotoringValues, MOT_I_LIMIT_COUNT, id);
-    bool isGeneratingChanged = _LimitArray_TestClearEntry(&p_lim->ILimitGeneratingState, p_lim->ILimitGeneratingValues, MOT_I_LIMIT_COUNT, id);
-    if ((isMotoringChanged == true) || (isGeneratingChanged == true)) { _MotorController_PushIDerates(p_dev); return true; }
-    return false;
-}
+// /* Both quadrants. A source set on one side only clears as a no-op on the other */
+// bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id)
+// {
+//     MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+//     bool isMotoringChanged = _LimitArray_TestClearEntry(&p_lim->ILimitMotoringState, p_lim->ILimitMotoringValues, MOT_I_LIMIT_COUNT, id);
+//     bool isGeneratingChanged = _LimitArray_TestClearEntry(&p_lim->ILimitGeneratingState, p_lim->ILimitGeneratingValues, MOT_I_LIMIT_COUNT, id);
+//     if ((isMotoringChanged == true) || (isGeneratingChanged == true)) { _MotorController_PushIDerates(p_dev); return true; }
+//     return false;
+// }
 
 

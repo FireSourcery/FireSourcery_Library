@@ -62,11 +62,8 @@ void Motor_Init(Motor_T * p_dev)
     /* Limit inputs are upper layer owned. Init once, retained across Motor_Reset/Motor_Reinit */
     p_dev->P_MOTOR->ILimit.Motoring = FRACT16_MAX;
     p_dev->P_MOTOR->ILimit.Generating = FRACT16_MAX;
-    p_dev->P_MOTOR->ILimit.DerateMotoring = FRACT16_MAX;
-    p_dev->P_MOTOR->ILimit.DerateGenerating = FRACT16_MAX;
     p_dev->P_MOTOR->SpeedLimit.Forward = FRACT16_MAX;
     p_dev->P_MOTOR->SpeedLimit.Reverse = FRACT16_MAX;
-    p_dev->P_MOTOR->SpeedLimit.Derate = FRACT16_MAX;
 
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     Motor_ResolveFocParams(p_dev);
@@ -263,12 +260,10 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 /*!
     Active Limits — push interface
 
-    The upper layer pushes two independent inputs; Motor owns the comparison and the direction resolve.
-        Value:  physical cap in PU, per motor, single user channel.       Motor_Set*Limit*()
-        Derate: system arbitration result, ratio of Config, shared.       Motor_Set*LimitDerate*()
-        limit = min(Value, Derate * Config)  => Motor_Resolve*Limits => Ramp/PID
+    The upper layer pushes its composed limit in PU; Motor owns the Config comparison and the direction resolve.
+        limit = min(Pushed, Config)  => Motor_Resolve*Limits => Ramp/PID
 
-    Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. Config is the ceiling via Derate * Config.
+    Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. FRACT16_MAX => no cap.
 */
 /******************************************************************************/
 /*
@@ -287,16 +282,8 @@ void Motor_SetILimitGenerating(Motor_Context_T * p_motor, uint16_t generating_pu
 /* Both sides to a common magnitude */
 void Motor_SetILimit(Motor_Context_T * p_motor, uint16_t i_pu) { Motor_SetILimits(p_motor, i_pu, i_pu); }
 
-/* Clear the value channel. Derate remains. */
+/* No cap. Config is the ceiling. */
 void Motor_ResetILimit(Motor_Context_T * p_motor) { Motor_SetILimits(p_motor, FRACT16_MAX, FRACT16_MAX); }
-
-/* System derate per quadrant. Ratio of Config, compared against the value channel. */
-void Motor_SetILimitDerates(Motor_Context_T * p_motor, uint16_t motoring, uint16_t generating)
-{
-    p_motor->ILimit.DerateMotoring = motoring;
-    p_motor->ILimit.DerateGenerating = generating;
-    Motor_ResolveILimits(p_motor);
-}
 
 /*
     Speed Limits. Forward aligns with Config.DirectionForward, Reverse opposes.
@@ -315,12 +302,6 @@ void Motor_SetSpeedLimitReverse(Motor_Context_T * p_motor, uint16_t reverse_pu) 
 void Motor_SetSpeedLimit(Motor_Context_T * p_motor, uint16_t speed_pu) { Motor_SetSpeedLimits(p_motor, speed_pu, speed_pu); }
 
 void Motor_ResetSpeedLimit(Motor_Context_T * p_motor) { Motor_SetSpeedLimits(p_motor, FRACT16_MAX, FRACT16_MAX); }
-
-void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, uint16_t scalar)
-{
-    p_motor->SpeedLimit.Derate = scalar;
-    Motor_ResolveSpeedLimits(p_motor);
-}
 
 
 /******************************************************************************/

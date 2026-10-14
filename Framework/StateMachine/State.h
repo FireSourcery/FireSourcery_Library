@@ -73,8 +73,10 @@ typedef const struct State State_T;
 
     [State_Input_T] action and new State mapped to [state_input_t] id
 
-    Forms the Transition Function - defined by user via P_TRANSITION_TABLE/TRANSITION_MAPPER
+    Forms the Transition Function - defined by user via [P_TRANSITION_TABLE]/[TRANSITION_MAPPER]
+    A NULL handler indicates not accepted input. HSM continues traversal to parent state if available.
 
+    Input handler:
     @return pointer to the next state, if it exists.
         [Internal Transition] - A "transition" internal of [P_CONTEXT]. Mutation of P_CONTEXT
         [State Transition] - Transition to a new State_T determined by [P_CONTEXT] state.

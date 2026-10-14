@@ -148,7 +148,7 @@ static inline angle_freq_t _Motor_Electrical_RateOfSi(int32_t si, uint32_t scale
 /******************************************************************************/
 /*
     ω_base
-    PID and Speed IO
+    PID and Speed input
 */
 /******************************************************************************/
 /*
@@ -197,8 +197,10 @@ static inline angle_freq_t _Motor_Electrical_RateOfSi(int32_t si, uint32_t scale
 
 /*
     One base, three encodings: AngleFreq [angle16/s], AngleDt = AngleFreq / Fs [angle16/Ts], Rpm [mechanical]
+    Phase_VMaxVolts is configurable VBus Max.
+
+    Speed bases scaled to V_pu, bounds PID input.  optionally User interface use angle dt.
 */
-/* speed pu base for PID. optionally ui use angle for invariant. or scale to VBus, used for pid io only. */
 /*
     ψ_pu fixed to 0.5
     OmegaPsi = 0.5, when ω_pu = 1.0 pu

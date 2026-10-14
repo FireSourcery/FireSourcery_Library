@@ -250,6 +250,8 @@ Phase_Data_T;
 
 static_assert(sizeof(Phase_Data_T) == 8, "Phase_Data_T size must be 8 bytes");
 
+static inline Phase_Data_T Phase_Data(int16_t a, int16_t b, int16_t c, Phase_Id_T mask) { return (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits = mask }; }
+
 // static inline void _Phase_ApplyAveraging(volatile int16_t * p_value, int16_t value) { *p_value = ((int32_t)*p_value + value) / 2; }
 
 static inline void _Phase_Capture(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, int16_t value)
@@ -269,4 +271,4 @@ static inline void Phase_CaptureB(volatile Phase_Data_T * p_data, int16_t value)
 static inline void Phase_CaptureC(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_C, value); }
 
 // batch returns entire shape
-static inline Phase_Data_T Phase_Data(int16_t a, int16_t b, int16_t c) { return (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits = PHASE_ID_ABC }; }
+// static inline Phase_Data_T Phase_Data(int16_t a, int16_t b, int16_t c) { return (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits = PHASE_ID_ABC }; }

@@ -178,7 +178,7 @@ static inline bool _FOC_ProcVCircle(FOC_T * p_foc, ufract16_t vCircle, int32_t v
 
 static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vCircle)
 {
-    return foc_vq_circle_limit(vCircle, p_foc->Vd);
+    return foc_q_circle_limit(vCircle, p_foc->Vd);
 }
 
 static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
@@ -278,7 +278,7 @@ static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus, int16_
     PID_CaptureOutputLimits(&p_foc->PidId, -(int32_t)vCircle, vCircle);  /* Vd inside the circle it is measured against, else no vq budget remains */
     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
 
-    ufract16_t vqCircleLimit = foc_vq_circle_limit(vCircle, p_foc->Vd);
+    ufract16_t vqCircleLimit = foc_q_circle_limit(vCircle, p_foc->Vd);
     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);
     PID_CaptureOutputLimits(&p_foc->PidIq, vqBand.low, vqBand.high);
     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
@@ -343,7 +343,7 @@ static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, in
     PID_CaptureOutputLimits(&p_foc->PidId, fract16_sat(-vPhaseLimit - vd_ff), fract16_sat(vPhaseLimit - vd_ff)); /* vPhaseLimit < (INT16_MAX / 2) */
     p_foc->Vd = math_clamp(PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq) + vd_ff, -vPhaseLimit, vPhaseLimit);
 
-    ufract16_t vqCircleLimit = foc_vq_circle_limit(vPhaseLimit, p_foc->Vd);  /* VqCircleLimit < vPhaseLimit < (INT16_MAX / 2) */
+    ufract16_t vqCircleLimit = foc_q_circle_limit(vPhaseLimit, p_foc->Vd);  /* VqCircleLimit < vPhaseLimit < (INT16_MAX / 2) */
     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);  /* policy band */
     // interval_t vqLimit = interval_intersect(vqBand, FOC_VBemfWindow(p_foc, p_foc->ElectricalSpeed.OmegaPsi));
     PID_CaptureOutputLimits(&p_foc->PidIq, fract16_sat(vqBand.low - vq_ff), fract16_sat(vqBand.high - vq_ff));
@@ -488,12 +488,14 @@ static inline fract16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagn
     Unit calculations
     Optionally handle by host
 */
-static inline accum32_t FOC_GetTorquePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Iq, p_foc->Vq) * 3 / 2; }
-static inline accum32_t FOC_GetMagnetizingPower(const FOC_T * p_foc) { return fract16_mul(p_foc->Id, p_foc->Vd) * 3 / 2; }
+static inline accum32_t _FOC_GetTorquePower(const FOC_T * p_foc) { return foc_power_q(p_foc->Vq, p_foc->Iq); }
+static inline accum32_t _FOC_GetMagnetizingPower(const FOC_T * p_foc) { return foc_power_d(p_foc->Vd, p_foc->Id); }
+static inline accum32_t FOC_GetTorquePower(const FOC_T * p_foc) { return _FOC_GetTorquePower(p_foc) * 3 / 2; }
+static inline accum32_t FOC_GetMagnetizingPower(const FOC_T * p_foc) { return _FOC_GetMagnetizingPower(p_foc) * 3 / 2; }
 
 /* [0:32767] */
-static inline accum32_t _FOC_GetActivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Vd, p_foc->Id) + fract16_mul(p_foc->Vq, p_foc->Iq); }
-static inline accum32_t _FOC_GetReactivePower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Vq, p_foc->Id) - fract16_mul(p_foc->Vd, p_foc->Iq)); }
+static inline accum32_t _FOC_GetActivePower(const FOC_T * p_foc) { return foc_active_power(p_foc->Vd, p_foc->Id, p_foc->Vq, p_foc->Iq); }
+static inline accum32_t _FOC_GetReactivePower(const FOC_T * p_foc) { return foc_reactive_power(p_foc->Vd, p_foc->Id, p_foc->Vq, p_foc->Iq); }
 /* keep sign within fract16 */
 static inline accum32_t _FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_pu) { return fract16_div(_FOC_GetActivePower(p_foc), vBus_pu); }
 
@@ -693,71 +695,3 @@ static int FOC_Var_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
 // }
 // FOC_Var_RefState_T;
 
-/*
-    Dynamic limits
-    dynamic overlay to intersect with base
-*/
-/* he controller to pick up the requested direction through zero */
-// static inline sign_t _FOC_VMotionSignOf(accum32_t omega_psi, int32_t iqReq)
-// {
-//     sign_t motionSign = math_sign(omega_psi);
-//     return (motionSign != SIGN_ZERO) ? motionSign : math_sign(iqReq);
-// }
-
-// static inline interval_t _FOC_VBrakeOverlay(accum32_t omega_psi, int32_t iqReq, int32_t vqLimit)
-// {
-//     sign_t motionSign = _FOC_VMotionSignOf(omega_psi, iqReq);
-//     /* Only narrow the band when the request is braking/generating. */
-//     if (motionSign * iqReq < 0) { return interval_half_plane(motionSign, vqLimit); }
-//     return interval_symmetric(0, vqLimit);
-// }
-
-// /* symmetric by default. dynamic half-plane anti-plugging derived per cycle */
-// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vqLimit)
-// {
-//     if (omega_psi * iqReq <= 0) { return interval_half_plane(omega_psi * iqReq, vqLimit); }
-//     return interval_symmetric(0, vqLimit);
-// }
-
-// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane(_FOC_VMotionSignOf(omega_psi, iqReq), vq); }
-/* Applied Vq is forced opposite to EEMF for explicit plugging behavior. */
-// static inline interval_t _FOC_VPluggingOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane((sign_t)(0 - _FOC_VMotionSignOf(omega_psi, iqReq)), vq); }
-
-// static inline interval_t _FOC_VDynamicBand(const FOC_T * p_foc, accum32_t omega_psi, int32_t iqReq, ufract16_t vqCircleLimit)
-// {
-//     interval_t band = interval_symmetric(0, vqCircleLimit);
-
-//     band = interval_intersect(band, _FOC_VRegenOnly(omega_psi, iqReq, vqCircleLimit));
-
-//     if (p_foc->VWindow > 0)
-//     {
-//         band = interval_intersect(band, _FOC_VBemfWindow(vqCircleLimit, omega_psi, p_foc->VWindow));
-//     }
-
-//     return band;
-// }
-
-// /*
-//     VqCircleLimit = 50
-//     omega_psi = 80
-//     window = 10
-//     desired window = [70, 90]
-//     feasible slice = [-50, 50]
-//     intersection = [70, 50], invalid
-// */
-// static inline interval_t _FOC_VqBandOf(ufract16_t vqCircleLimit, accum32_t omega_psi, int32_t window)
-// {
-//     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), interval_symmetric(omega_psi, window));
-
-//     if (vqBand.high < vqBand.low)
-//     {
-//         int32_t vqEdge = math_clamp(omega_psi, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
-//         return (interval_t) { .low = vqEdge, .high = vqEdge };
-//     }
-//     return vqBand;
-//     // low = math_clamp(omega_psi - window, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
-//     // high = math_clamp(omega_psi + window, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
-
-//     // center = clamp(omega_psi, -VqCircleLimit, +VqCircleLimit)
-//     // band = intersect([-VqCircleLimit, +VqCircleLimit], [center - window, center + window])
-//

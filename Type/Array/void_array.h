@@ -98,7 +98,7 @@ static inline void void_array_foreach(size_t type, void * p_buffer, size_t lengt
     for (size_t index = 0U; index < length; index++) { unit_op(void_array_at(type, p_buffer, index)); }
 }
 
-// #define ARRAY_FOREACH(p_buffer, length, op) void_array_foreach(sizeof(*(p_buffer)), (void *)p_buffer, length, (proc_t)op)
+#define array_foreach(p_buffer, length, op) void_array_foreach(sizeof(*(p_buffer)), (void *)p_buffer, length, (proc_t)op)
 
 /*!
     applies to every element
@@ -175,7 +175,9 @@ static inline bool void_array_is_any_value(size_t type, const void * p_buffer, s
     return is_any;
 }
 
-#define ARRAY_FOREACH_CALL(p_buffer, length, function, ...) \
+
+
+#define array_foreach_call(p_buffer, length, function, ...) \
     _Generic((function), \
         proc_t:   void_array_foreach,        \
         set_t:    void_array_foreach_set,    \

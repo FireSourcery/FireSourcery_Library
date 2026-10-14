@@ -1,0 +1,88 @@
+#pragma once
+
+/******************************************************************************/
+/*!
+    @section LICENSE
+
+    Copyright (C) 2026 FireSourcery
+
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   VBus_FOC.h
+    @author FireSourcery
+    @brief  DC bus and dq frame. Power balance between the supply and the FOC vectors.
+*/
+/******************************************************************************/
+#include "VBus.h"
+#include "../Math/foc_math.h"
+
+/*
+    Supply limit enforcement
+        VBUS_I_LIMIT_POWER_BALANCE  q-axis limit at the operating point (v_d, i_d, v_q), exact
+        VBUS_I_LIMIT_PHASE_BOUND    phase-current bound keyed by the motion, conservative below full modulation
+    The two take different inputs. The caller selects at the operating point it holds.
+*/
+#if !defined(VBUS_I_LIMIT_POWER_BALANCE) && !defined(VBUS_I_LIMIT_PHASE_BOUND)
+#define VBUS_I_LIMIT_POWER_BALANCE
+#endif
+
+/******************************************************************************/
+/*!
+    Supply side of the power balance, [foc_i_dc] with the live V_bus.
+    power in v·i units, [foc_active_power].
+*/
+/******************************************************************************/
+static inline accum32_t _VBus_FOC_IBusOf(const VBus_T * p_vbus, accum32_t power) { return _foc_i_dc(power, VBus_Inv_Pu(p_vbus)); }
+static inline accum32_t VBus_FOC_IBusOf(const VBus_T * p_vbus, accum32_t power) { return foc_i_dc(power, VBus_Inv_Pu(p_vbus)); }
+
+
+/******************************************************************************/
+/*!
+    Supply limits as q-axis limits. i_q along v_q draws from the supply, i_q against v_q returns to it.
+*/
+/******************************************************************************/
+// /* Power balance at the operating point (powerD = v_d·i_d, vq) */
+// static inline uint16_t VBus_IqDischargeLimit_Pu(const VBus_T * p_vbus, accum32_t powerD, fract16_t vq) { return foc_iq_discharge_limit(VBus_IDischargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), powerD, vq); }
+// static inline uint16_t VBus_IqChargeLimit_Pu(const VBus_T * p_vbus, accum32_t powerD, fract16_t vq) { return foc_iq_charge_limit(VBus_IChargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), powerD, vq); }
+// static inline uint16_t VBus_FOC_IqDischargeLimit_Pu(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_discharge_limit(VBus_IDischargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
+// static inline uint16_t VBus_FOC_IqChargeLimit_Pu(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_charge_limit(VBus_IChargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
+
+// /* Phase-current bound on |i_dq| */
+// static inline uint16_t VBus_IPhaseDischargeLimit_Pu(const VBus_T * p_vbus) { return foc_i_phase_of_i_dc(VBus_IDischargeLimit_Pu(p_vbus)); }
+// static inline uint16_t VBus_IPhaseChargeLimit_Pu(const VBus_T * p_vbus) { return foc_i_phase_of_i_dc(VBus_IChargeLimit_Pu(p_vbus)); }
+
+
+/******************************************************************************/
+/*!
+    Supply limits as q-axis limits, [Cw:Ccw]
+*/
+/******************************************************************************/
+/* The supply window on i_dc, drawing positive */
+/* v_q·i_q ∈ P_q = 2/3·V_dc·[−I_chg, I_dis] − v_d·i_d  ⟹  i_q ∈ P_q / v_q */
+static inline interval_t _VBus_ILimits(const VBus_T * p_vbus) { return (interval_t){ .low = -VBus_IChargeLimit_Pu(p_vbus), .high = VBus_IDischargeLimit_Pu(p_vbus) }; }
+
+/* [foc_iq_limits] with the live V_bus */
+static inline interval_t VBus_FOC_IqLimits(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_limits(_VBus_ILimits(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
+
+/* [foc_iq_phase_limits], motion as the sign of the rotor speed */
+static inline interval_t VBus_FOC_IqPhaseLimits(const VBus_T * p_vbus, sign_t motion, fract16_t id) { return foc_iq_phase_limits(_VBus_ILimits(p_vbus), motion, id); }
+
+
+
+

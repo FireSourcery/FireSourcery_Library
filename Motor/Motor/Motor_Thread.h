@@ -29,14 +29,11 @@
     @brief  Motor module functions to be placed into corresponding user app threads
 */
 /******************************************************************************/
-#include "Motor_Debug.h"
+// #include "Motor_Debug.h"
 
 #include "Analog/Motor_Analog.h"
-
 #include "StateMachine/Motor_StateMachine.h"
 #include "Motor.h"
-
-#include "Transducer/Encoder/Encoder_ISR.h"
 
 #include "Framework/StateMachine/StateMachine_Thread.h"
 
@@ -85,6 +82,10 @@ static inline void Motor_CaptureSensor(Motor_T * p_motor)
     ~50us
     Calling function clears interrupt flag
 */
+/*
+    Caller's compilation unit sees Motor_T as static const. further optimizes loads from [Motor_T].
+    HAL calls inside StateMachine still optimizes register accesses.
+*/
 static inline void Motor_PWM_Thread(Motor_T * p_dev)
 {
     Motor_Context_T * p_fields = p_dev->P_MOTOR;
@@ -96,7 +97,17 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
 
     /* Directly read register state */
     /* state machine handles write gate state */
-    Motor_FOC_WriteDuty_Thread(p_dev);
+    // switch (Phase_ReadVOut(&p_dev->PHASE))
+    // {
+    //     case PHASE_VOUT_Z: break;
+    //     case PHASE_VOUT_0: break;
+    //     case PHASE_VOUT_PWM:
+    //         Phase_WriteSvpwm(&p_dev->PHASE, VBus_Inv_Pu(p_dev->P_VBUS), FOC_Va(&p_dev->P_MOTOR->Foc), FOC_Vb(&p_dev->P_MOTOR->Foc), FOC_Vc(&p_dev->P_MOTOR->Foc));
+    //         break;
+    //     default: break;
+    // }
+
+    // Motor_FOC_WriteDuty_Thread(p_dev);
 
     p_fields->ControlTimerBase++;
 }

@@ -112,17 +112,14 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
 
     /* Poll MOSFET Temperature Monitors Group Collective */
     /*
-        Apply thermal current limiting based on hottest MOSFETs
-        Does not check for edge trigger
+        Thermal current limiting based on hottest MOSFETs, pulled by [MotorController_IDerate].
         Thermistor Adcu is roughly linear in Warning region
-        Increasing Limit only, reset on warning clear.
     */
     switch (HeatMonitor_Group_PollCollective(&p_dev->HEAT_MOSFETS))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:    MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT);            break;
-        case HEAT_MONITOR_STATUS_WARNING_HIGH:      _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetDerate(&p_dev->HEAT_MOSFETS));            break;
-        case HEAT_MONITOR_STATUS_NORMAL:
-            if (Monitor_IsWarningClearing(p_dev->HEAT_MOSFETS.P_STATE)) { _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC); } break;
+        case HEAT_MONITOR_STATUS_WARNING_HIGH: break;
+        case HEAT_MONITOR_STATUS_NORMAL: break;
         default: break;
     }
 
@@ -152,7 +149,6 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
 */
 static void _MotorController_VBus_EnterFault(MotorController_T * p_dev)
 {
-    Motor_Table_ForceDisableControl(&p_dev->MOTORS);
     MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VBUS_LIMIT);
 }
 
@@ -163,10 +159,6 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
     {
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:    _MotorController_VBus_EnterFault(p_dev);    break;
-        case VMONITOR_STATUS_WARNING_LOW:           _MotorController_SetILimitMotoringAll(p_dev, MOT_I_LIMIT_V_BUS, VBus_GetIDerateUnderV(p_dev->P_VBUS));      break;
-        case VMONITOR_STATUS_WARNING_HIGH:          _MotorController_SetILimitGeneratingAll(p_dev, MOT_I_LIMIT_V_BUS, VBus_GetIDerateOverV(p_dev->P_VBUS));     break;
-        case VMONITOR_STATUS_NORMAL:
-            if (VBus_IsClearingEdge(p_dev->P_VBUS) == true) { _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_V_BUS); } break; /*  */
         default: break;
     }
 
@@ -246,6 +238,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
         {
+            /* The supply limits follow the bus and each motor's operating point */
+            /* PWM ISR can preempt Motor_SetILimits.  */
+            MotorController_ApplyILimits(p_dev);
+
             Blinky_Proc(&p_dev->BUZZER);
             Blinky_Proc(&p_dev->METER);
         }
@@ -265,7 +261,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
             _MotorController_HeatMonitor_Thread(p_dev);
 
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
-            _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, VBus_GetSpeedDerate(p_dev->P_VBUS));
+            MotorController_ApplySpeedLimits(p_dev);
             // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true)
 
             /* Can use low priority check, as motor is already in fault state. */

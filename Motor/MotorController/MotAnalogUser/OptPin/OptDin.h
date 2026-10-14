@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "Transducer/UserIn/UserDIn_Cmd.h"
+#include "Math/Fixed/fract16.h"
 
 
 //todo refactor.
@@ -50,8 +51,8 @@ MotorController_OptDinMode_T;
 typedef struct OptDin_Config
 {
     uint16_t       SpeedPreset_Pu; // unimplemented
-    uint16_t       SpeedLimit_Pu;  /* Physical PU of SpeedTypeMax. Writes the motor user value channel */
-    uint16_t       TorqueLimit_Pu; /* Physical PU of I_TYPE_MAX. Writes the motor user value channel */
+    uint16_t       SpeedLimit;     /* Ratio of each motor's Config while the pin is on */
+    uint16_t       TorqueLimit;    /* Ratio of each motor's Config while the pin is on */
     uint16_t       SwitchBrakeFloor_Percent16;
 }
 OptDin_Config_T;
@@ -59,6 +60,8 @@ OptDin_Config_T;
 typedef struct OptDin_State
 {
     UserDIn_T * p_SwitchBrake;
+    UserDIn_T * p_SpeedLimit;
+    UserDIn_T * p_ILimit;
     // UserDIn_T * p_Forward;
     // UserDIn_T * p_Reverse;
     // OptDin_Config_T Config;
@@ -76,6 +79,9 @@ static inline uint16_t OptDin_FuseSwitchBrake(UserDIn_T * p_din, uint16_t switch
     if (p_din == NULL) { return brake_Percent16; }
     return (uint16_t)math_max(brake_Percent16, UserDIn_ApplyGate(p_din, switchBrakeFloor));
 }
+
+/* Limit ratio while the pin is on, 1.0 when off or unbound */
+static inline ufract16_t OptDin_LimitOf(UserDIn_T * p_din, ufract16_t limit) { return ((p_din != NULL) && UserDIn_GetState(p_din)) ? limit : FRACT16_MAX; }
 
 #if defined(OPT_DIN_SWITCH_BRAKE_ID)
 static inline UserDIn_T * OptDin_SwitchBrake(UserDIn_T * p_pins, OptDin_State_T * p_state) { (void)p_state; return &p_pins[OPT_DIN_SWITCH_BRAKE_ID]; }
@@ -99,6 +105,8 @@ static inline void OptDin_ResolveBindings(OptDin_State_T * p_state, UserDIn_T * 
         switch (p_dins[i].P_STATE->Config.CmdId)
         {
             case MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE: target = &p_state->p_SwitchBrake; break;
+            case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:  target = &p_state->p_SpeedLimit;  break;
+            case MOTOR_CONTROLLER_OPT_DIN_I_LIMIT:      target = &p_state->p_ILimit;      break;
             // case MOTOR_CONTROLLER_OPT_DIN_FORWARD:      target = &p_state->p_Forward;     break;
             // case MOTOR_CONTROLLER_OPT_DIN_REVERSE:      target = &p_state->p_Reverse;     break;
             default: break;
@@ -139,8 +147,8 @@ static inline int OptDin_ConfigId_Get(const OptDin_Config_T * p_config, OptDin_C
     switch (id)
     {
         case OPT_DIN_CONFIG_ID_SPEED_PRESET_FRACT16:    value = p_config->SpeedPreset_Pu; break;
-        case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     value = p_config->SpeedLimit_Pu;  break;
-        case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    value = p_config->TorqueLimit_Pu; break;
+        case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     value = p_config->SpeedLimit;  break;
+        case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    value = p_config->TorqueLimit; break;
         case OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR:     value = p_config->SwitchBrakeFloor_Percent16;   break;
         // case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       value = p_config->AutoParkOnStop;      break;
         default: break;
@@ -153,8 +161,8 @@ static inline void OptDin_ConfigId_Set(OptDin_Config_T * p_config, OptDin_Config
     switch (id)
     {
         case OPT_DIN_CONFIG_ID_SPEED_PRESET_FRACT16:    p_config->SpeedPreset_Pu = value; break;
-        case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     p_config->SpeedLimit_Pu  = value; break;
-        case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    p_config->TorqueLimit_Pu = value; break;
+        case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     p_config->SpeedLimit  = value; break;
+        case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    p_config->TorqueLimit = value; break;
         case OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR:     p_config->SwitchBrakeFloor_Percent16   = value; break;
         // case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       p_config->AutoParkOnStop      = value; break;
         default: break;

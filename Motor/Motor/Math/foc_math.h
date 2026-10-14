@@ -100,9 +100,11 @@ static inline accum32_t foc_vq_ff(accum32_t omega_Ld, accum32_t omega_psi, fract
 static inline accum32_t foc_vd_ff_wide(accum32_t omega_Lq, fract16_t iq) { return -accum32_mul(omega_Lq, iq); }
 static inline accum32_t foc_vq_ff_wide(accum32_t omega_Ld, accum32_t omega_psi, fract16_t id) { return accum32_mul(omega_Ld, id) + omega_psi; }
 
+// static inline accum32_t foc_vd_ff_frexp(fract16e_t omega_Lq, fract16_t iq)
+// // static inline accum32_t foc_vq_ff_frexp(fract16e_t omega_Ld, fract16e_t omega_psi, fract16_t id)
+
 // static inline accum32_t _foc_vd_ff_direct(accum32_t L_pu, fract16_t omega, fract16_t iq) { return -((int64_t)omega * L_pu * iq) / ((int64_t)FRACT16_SCALE * FRACT16_SCALE); }
 // static inline accum32_t _foc_vq_ff_direct(accum32_t Ld_pu, accum32_t psi_pu, fract16_t omega, fract16_t id) { return ((int64_t)omega * Ld_pu * id) / ((int64_t)FRACT16_SCALE * FRACT16_SCALE) + ((int64_t)omega * psi_pu) / FRACT16_SCALE; }
-
 
 /******************************************************************************/
 /*!
@@ -146,13 +148,185 @@ static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t
     Saturates to 0 rather than underflowing the unsigned subtraction when d has already
     consumed the whole radius — the d-axis limit is not guaranteed to match this radius.
 */
-static inline ufract16_t foc_vq_circle_limit(ufract16_t magnitude_limit, fract16_t d)
+static inline ufract16_t foc_q_circle_limit(ufract16_t magnitude_limit, fract16_t d)
 {
     uint32_t limit_squared = (uint32_t)magnitude_limit * magnitude_limit;
     uint32_t d_squared = (uint32_t)((int32_t)d * d);
     return (d_squared < limit_squared) ? fixed_sqrt(limit_squared - d_squared) : 0U;
 }
 
+
+/******************************************************************************/
+/*!
+    Power Balance
+    Amplitude-invariant dq, ideal inverter:
+        V_dc·i_dc = 3/2·(v_d·i_d + v_q·i_q)
+    Powers are in v·i units, the dq products without the 3/2.
+*/
+/******************************************************************************/
+/*
+    i_dc = 3/2·(v_d·i_d + v_q·i_q) / V_dc, by the reciprocal 1 / V_dc.
+    |v_dq| < 2·V_dc keeps power·v_dc_inv within 32 bits. The _ form omits the 3/2, keeping the sign within fract16 range.
+*/
+static inline accum32_t _foc_i_dc(accum32_t power, accum32_t v_dc_inv) { return fract16_mul(power, v_dc_inv); }
+static inline accum32_t foc_i_dc(accum32_t power, accum32_t v_dc_inv) { return _foc_i_dc(power, v_dc_inv) * 3 / 2; }
+
+/* 2/3·V_dc, the power per unit i_dc */
+static inline accum32_t foc_power_per_i_dc(ufract16_t v_dc) { return fract16_mul(v_dc, FRACT16_2_DIV_3); }
+/* 2/3·V_dc·i_dc, the power that carries i_dc */
+static inline accum32_t foc_power_of_i_dc(ufract16_t i_dc, ufract16_t v_dc) { return fract16_mul(i_dc, foc_power_per_i_dc(v_dc)); }
+
+/*
+    The phase current that bounds i_dc at every operating point, linear SVPWM |v_dq| <= V_dc/√3:
+        i_dc = 3/2·(v_d·i_d + v_q·i_q) / V_dc <= √3/2·|i_dq|   =>   |i_dq| <= 2/√3·i_dc
+    Exact at full modulation and unity power factor, conservative below.
+*/
+static inline ufract16_t foc_i_phase_of_i_dc(ufract16_t i_dc) { return math_min(fract16_mul(i_dc, FRACT16_2_DIV_SQRT3), FRACT16_MAX); }
+
+/*
+
+*/
+static inline accum32_t foc_power_d(fract16_t vd, fract16_t id) { return fract16_mul(vd, id); }
+static inline accum32_t foc_power_q(fract16_t vq, fract16_t iq) { return fract16_mul(vq, iq); }
+static inline accum32_t foc_active_power(fract16_t vd, fract16_t id, fract16_t vq, fract16_t iq) { return foc_power_d(vd, id) + foc_power_q(vq, iq); }
+static inline accum32_t foc_reactive_power(fract16_t vd, fract16_t id, fract16_t vq, fract16_t iq) { return fract16_mul(vq, id) - fract16_mul(vd, iq); }
+
+
+/* |i_q| = power / |v_q|. None once the power is spent, open toward v_q = 0 */
+static inline ufract16_t foc_iq_of_power(accum32_t power, fract16_t vq) { return math_min(fract16_div(math_max(power, 0), math_max(math_abs(vq), 1)), FRACT16_MAX); }
+
+// /* |i_q| = power / |v_q|. None once the power is spent. v_q = 0 carries no q-axis power, any i_q holds */
+// static inline ufract16_t foc_iq_of_power(accum32_t power, fract16_t vq) { return (vq == 0) ? FRACT16_MAX : math_min(fract16_div(math_max(power, 0), math_abs(vq)), FRACT16_MAX); }
+
+
+
+/*
+    Inverse at the operating point, i_d held. The |i_q| at which the inverter
+        draws i_dis from the supply,    i_q along v_q:    ((2/3)·V_dc·i_dis − v_d·i_d) / |v_q|
+        returns i_chg to the supply,    i_q against v_q:  ((2/3)·V_dc·i_chg + v_d·i_d) / |v_q|
+
+    i_q ≤ i_dc_lim · V_dc / ((3/2)·v_q)
+*/
+static inline ufract16_t foc_iq_discharge_limit(ufract16_t i_dis, ufract16_t v_dc, accum32_t power_d, fract16_t vq) { return foc_iq_of_power(foc_power_of_i_dc(i_dis, v_dc) - power_d, vq); }
+static inline ufract16_t foc_iq_charge_limit(ufract16_t i_chg, ufract16_t v_dc, accum32_t power_d, fract16_t vq) { return foc_iq_of_power(foc_power_of_i_dc(i_chg, v_dc) + power_d, vq); }
+
+/*
+    Supply window i_dc = [−I_chg : I_dis], drawing positive, as limits on i_q. [Cw:Ccw]
+*/
+/*
+    Power balance at the operating point, i_d held.
+        v_q·i_q ∈ P_q = 2/3·V_dc·i_dc − v_d·i_d   ⟹   i_q ∈ P_q / v_q
+    i_q along v_q draws from the supply, against v_q returns to it. v_q = 0 moves no q-axis power, both sides open.
+    P_q holds 0: a d-axis that spends a side's budget leaves that side no i_q, rather than a reversed one.
+*/
+static inline interval_t foc_iq_limits(interval_t i_dc, ufract16_t v_dc, accum32_t power_d, fract16_t vq)
+{
+    interval_t power_q = interval_offset(fract16_interval_scale(i_dc, foc_power_per_i_dc(v_dc)), -power_d);
+    return fract16_interval_div(interval_hull(power_q, (interval_t){ .low = 0, .high = 0 }), vq);
+}
+
+// static inline interval_t foc_iq_limits(interval_t i_dc, ufract16_t v_dc, accum32_t power_d, fract16_t vq)
+// {
+//     return fract16_interval_div(interval_shift(fract16_interval_scale(i_dc, foc_power_of_i_dc(...)), -power_d), vq);
+// }
+
+/*
+    Phase-current bound, keyed by the motion (the back-EMF sign) rather than v_q. [foc_i_phase_of_i_dc] bounds |i_dc| both ways.
+        i_q along the motion only draws:            I_dis
+        i_q against the motion returns below |ω·ψ|/R and draws beyond it (plug braking):  min(I_dis, I_chg)
+        At standstill no side returns, both draw:   I_dis
+    The share of the circle left to i_q after i_d.
+*/
+static inline interval_t foc_iq_phase_limits(interval_t i_dc, sign_t motion, fract16_t id)
+{
+    ufract16_t along = foc_q_circle_limit(foc_i_phase_of_i_dc(i_dc.high), id);
+    ufract16_t against = foc_q_circle_limit(foc_i_phase_of_i_dc(math_min(i_dc.high, -i_dc.low)), id);
+    return (motion != SIGN_ZERO) ? interval_of_sign_pair(motion, along, against) : interval_symmetric(0, along);
+}
+
+/******************************************************************************/
+/*!
+    State helpers
+*/
+/******************************************************************************/
+/*
+    Regeneration: the back-EMF e_q drives i_q against v_q. Needs v_q along e_q, beyond the window around standstill
+    where the resistive drop sets v_q and every current draws. Inside it, return power is at most window²/(4·R).
+*/
+static inline bool foc_is_regen(fract16_t vq, accum32_t e_q, ufract16_t window) { return (math_abs(e_q) > window) && (math_sign(vq) == math_sign(e_q)); }
+
+/*
+    Dynamic limits
+    dynamic overlay to intersect with base
+*/
+/* he controller to pick up the requested direction through zero */
+// static inline sign_t _FOC_VMotionSignOf(accum32_t omega_psi, int32_t iqReq)
+// {
+//     sign_t motionSign = math_sign(omega_psi);
+//     return (motionSign != SIGN_ZERO) ? motionSign : math_sign(iqReq);
+// }
+
+// static inline interval_t _FOC_VBrakeOverlay(accum32_t omega_psi, int32_t iqReq, int32_t vqLimit)
+// {
+//     sign_t motionSign = _FOC_VMotionSignOf(omega_psi, iqReq);
+//     /* Only narrow the band when the request is braking/generating. */
+//     if (motionSign * iqReq < 0) { return interval_half_plane(motionSign, vqLimit); }
+//     return interval_symmetric(0, vqLimit);
+// }
+
+// /* symmetric by default. dynamic half-plane anti-plugging derived per cycle */
+// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vqLimit)
+// {
+//     if (omega_psi * iqReq <= 0) { return interval_half_plane(omega_psi * iqReq, vqLimit); }
+//     return interval_symmetric(0, vqLimit);
+// }
+
+// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane(_FOC_VMotionSignOf(omega_psi, iqReq), vq); }
+/* Applied Vq is forced opposite to EEMF for explicit plugging behavior. */
+// static inline interval_t _FOC_VPluggingOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_half_plane((sign_t)(0 - _FOC_VMotionSignOf(omega_psi, iqReq)), vq); }
+
+// static inline interval_t _FOC_VDynamicBand(const FOC_T * p_foc, accum32_t omega_psi, int32_t iqReq, ufract16_t vqCircleLimit)
+// {
+//     interval_t band = interval_symmetric(0, vqCircleLimit);
+
+//     band = interval_intersect(band, _FOC_VRegenOnly(omega_psi, iqReq, vqCircleLimit));
+
+//     if (p_foc->VWindow > 0)
+//     {
+//         band = interval_intersect(band, _FOC_VBemfWindow(vqCircleLimit, omega_psi, p_foc->VWindow));
+//     }
+
+//     return band;
+// }
+
+// /*
+//     VqCircleLimit = 50
+//     omega_psi = 80
+//     window = 10
+//     desired window = [70, 90]
+//     feasible slice = [-50, 50]
+//     intersection = [70, 50], invalid
+// */
+// static inline interval_t _FOC_VqBandOf(ufract16_t vqCircleLimit, accum32_t omega_psi, int32_t window)
+// {
+//     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), interval_symmetric(omega_psi, window));
+
+//     if (vqBand.high < vqBand.low)
+//     {
+//         int32_t vqEdge = math_clamp(omega_psi, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
+//         return (interval_t) { .low = vqEdge, .high = vqEdge };
+//     }
+//     return vqBand;
+//     // low = math_clamp(omega_psi - window, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
+//     // high = math_clamp(omega_psi + window, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
+
+//     // center = clamp(omega_psi, -VqCircleLimit, +VqCircleLimit)
+//     // band = intersect([-VqCircleLimit, +VqCircleLimit], [center - window, center + window])
+//
+
+/******************************************************************************/
+/* Secondary Section */
+/******************************************************************************/
 /******************************************************************************/
 /*!
     @brief  Clarke
@@ -259,6 +433,10 @@ static inline struct foc_alphabeta foc_inv_park_vector(fract16_t d, fract16_t q,
     return (struct foc_alphabeta) { .alpha = fract16_sat(alpha), .beta = fract16_sat(beta) };
 }
 
+
+/******************************************************************************/
+/* Experimental */
+/******************************************************************************/
 /******************************************************************************/
 /*!
     @brief

@@ -48,7 +48,7 @@
 // #define MATH_TYPE_T int32_t
 // #endif
 
-// typedef MATH_TYPE_T num_t;
+// typedef MATH_TYPE_T num_t; /* expressions that can overload operators */
 
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 
@@ -76,6 +76,7 @@ static inline int32_t math_limit_upper(int32_t value, int32_t upper) { return ma
 static inline int32_t math_limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
 
 
+
 /*
     non domain specific
 */
@@ -93,11 +94,10 @@ static inline bool math_sign_bit(sign_t value) { return (value < 0); } /* reduce
 static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /* 0xFFFFFFFF for negative, 0x00000000 for positive */
 
 
-static inline int32_t math_div_round(int32_t n, int32_t d) { return (n + (d / 2)) / d; }
-
 /******************************************************************************/
 /*
     interval
+    typedef around 2 register return
 */
 /******************************************************************************/
 /* signed aligned interval, defined as [low:high] */
@@ -105,8 +105,11 @@ typedef struct { int32_t low; int32_t high; } interval_t;
 
 /* [0:value] or [value:0] keyed by value sign */
 static inline interval_t interval_of(int32_t value) { return (interval_t) { .low = math_min(0, value), .high = math_max(0, value) }; }
+
 static inline interval_t interval_symmetric(int32_t center, uint32_t magnitude) { return (interval_t) { .low = center - magnitude, .high = center + magnitude }; }
-static inline interval_t interval_offset(int32_t center, uint32_t magnitude) { return (interval_t) { .low = center - magnitude, .high = center - magnitude }; }
+
+/* two bounds in either order */
+static inline interval_t interval_of_bounds(int32_t a, int32_t b) { return (interval_t) { .low = math_min(a, b), .high = math_max(a, b) }; }
 
 
 /* sign-keyed half-plane: magnitude on the matching side, zero on the other */
@@ -133,6 +136,13 @@ static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, 
 
 
 
+
+/*
+    convenience wrappers around multi parameter interval operations
+*/
+static inline int32_t interval_clamp(interval_t b, int32_t v) { return math_clamp(v, b.low, b.high); }
+static inline bool interval_contains(interval_t b, int32_t v) { return math_is_in_range(v, b.low, b.high); }
+
 /*
     Inverse of interval_of_sign_pair — recover the unsigned magnitudes from a resolved interval.
     interval_of_sign_pair(sign, interval_aligned(i, sign), interval_opposed(i, sign)) == i
@@ -140,19 +150,13 @@ static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, 
 static inline int32_t interval_aligned(interval_t interval, sign_t sign) { return (sign == SIGN_NEGATIVE) ? -interval.low : interval.high; }
 static inline int32_t interval_opposed(interval_t interval, sign_t sign) { return (sign == SIGN_NEGATIVE) ? interval.high : -interval.low; }
 
-
-static inline int32_t interval_clamp(interval_t b, int32_t v) { return math_clamp(v, b.low, b.high); }
-static inline bool interval_contains(interval_t b, int32_t v) { return ((v >= b.low) && (v <= b.high)); }
+/*  */
 static inline interval_t interval_intersect(interval_t a, interval_t b) { return (interval_t) { .low = math_max(a.low, b.low), .high = math_min(a.high, b.high) }; }
-// static inline interval_t interval_scale(interval_t b, fract16_t k) { return (interval_t) { .low = fract16_mul(b.low, k), .high = fract16_mul(b.high, k) }; }
 
+/* smallest interval holding both */
+static inline interval_t interval_hull(interval_t a, interval_t b) { return (interval_t) { .low = math_min(a.low, b.low), .high = math_max(a.high, b.high) }; }
 
-
-/*
-    define around 2 register return
-*/
-// typedef struct { int32_t a; int32_t b; } pair_t;
-
+static inline interval_t interval_offset(interval_t i, int32_t k) { return (interval_t) { .low = i.low + k, .high = i.high + k }; }
 
 /*
 
@@ -178,3 +182,6 @@ static inline int32_t math_add_sat(int32_t a, int32_t b)
     return result;
 #endif
 }
+
+
+static inline int32_t math_div_round(int32_t n, int32_t d) { return (n + (d / 2)) / d; }

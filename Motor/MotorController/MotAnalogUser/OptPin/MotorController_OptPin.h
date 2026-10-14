@@ -35,33 +35,13 @@
 #include "MotorController_SwitchBrake.h"
 #include "Transducer/UserIn/UserDIn_Cmd.h"
 
-static inline void MotorController_CallSpeedLimitPin(MotorController_T * p_dev, UserDIn_Edge_T edge)
-{
-    switch (edge)
-    {
-        case USER_DIN_EDGE_RISING:  MotorController_SetUserSpeedLimitAll(p_dev, p_dev->P_MC->Config.OptDinConfig.SpeedLimit_Pu); break;
-        case USER_DIN_EDGE_FALLING: MotorController_ClearUserSpeedLimitAll(p_dev); break;
-        default: break;
-    };
-}
-
-static inline void MotorController_CallILimitPin(MotorController_T * p_dev, UserDIn_Edge_T edge)
-{
-    switch (edge)
-    {
-        case USER_DIN_EDGE_RISING:  MotorController_SetUserILimitAll(p_dev, p_dev->P_MC->Config.OptDinConfig.TorqueLimit_Pu); break;
-        case USER_DIN_EDGE_FALLING: MotorController_ClearUserILimitAll(p_dev); break;
-        default: break;
-    };
-}
-
 static inline UserDIn_Fn_T _MotorController_OptDinFn(MotorController_OptDinMode_T mode)
 {
     static const UserDIn_Fn_T OPT_PIN_TABLE[] =
     {
         [MOTOR_CONTROLLER_OPT_DIN_DISABLE]      = (UserDIn_Fn_T)UserDIn_CmdNull,
-        [MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT]  = (UserDIn_Fn_T)MotorController_CallSpeedLimitPin,
-        [MOTOR_CONTROLLER_OPT_DIN_I_LIMIT]      = (UserDIn_Fn_T)MotorController_CallILimitPin,
+        [MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT]  = (UserDIn_Fn_T)UserDIn_CmdNull, /* Polled by MotorController_SpeedDerate */
+        [MOTOR_CONTROLLER_OPT_DIN_I_LIMIT]      = (UserDIn_Fn_T)UserDIn_CmdNull, /* Polled by MotorController_IDerate */
         [MOTOR_CONTROLLER_OPT_DIN_PARK]         = (UserDIn_Fn_T)MotorController_CallParkPin,
         [MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE] = (UserDIn_Fn_T)UserDIn_CmdNull,
         // [MOTOR_CONTROLLER_OPT_DIN_FORWARD]      = (UserDIn_Fn_T)UserDIn_CmdNull,

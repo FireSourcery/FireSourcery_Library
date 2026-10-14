@@ -50,8 +50,7 @@
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2), √2 vector magnitude. */
 
-typedef int32_t accum32_t;      /*!< Q17.15 [-65536.0, 65535.0] extended integer bits. */
-                                /*!< Q2.30 [-2, 2) scaled fract16_t, [-1, 1) for fast saturated add. */
+typedef int32_t accum32_t;      /*!< Q17.15 [-65536.0, 65535.0] extended integer bits. */ /*!< Q2.30 [-2, 2) scaled fract16_t, [-1, 1) for fast saturated add. */
 typedef uint32_t uaccum32_t;    /*!< Q2.30 [0, 4) extended unsigned fraction bits. Typemarker for hal. */
 
 typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) extended fraction bits. */
@@ -238,6 +237,24 @@ static inline ufract16_t fract16_normalize_sat(int32_t lo, int32_t hi, int32_t x
     if (x >= hi) { return FRACT16_MAX; }
     if (x <= lo) { return 0; }
     return fract16_normalize(lo, hi, x);
+}
+
+/******************************************************************************/
+/*!
+    Interval arithmetic by a scalar. A negative scalar swaps the bounds.
+*/
+/******************************************************************************/
+/* [low:high]·k */
+static inline interval_t fract16_interval_scale(interval_t i, accum32_t k) { return interval_of_bounds(fract16_mul(i.low, k), fract16_mul(i.high, k)); }
+
+/*
+    [low:high] / d, the x where d·x ∈ [low:high]. The bounds open toward d = 0, saturating at ±FRACT16_MAX.
+    Bounds within [fract16_div] range.
+*/
+static inline interval_t fract16_interval_div(interval_t i, fract16_t d)
+{
+    accum32_t divisor = (d != 0) ? d : 1;
+    return interval_of_bounds(fract16_sat(fract16_div(i.low, divisor)), fract16_sat(fract16_div(i.high, divisor)));
 }
 
 

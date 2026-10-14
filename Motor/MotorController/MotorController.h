@@ -33,7 +33,7 @@
 #include "MotAnalogUser/Shifter/Shifter.h"
 #include "MotAnalogUser/OptPin/OptDin.h"
 #include "MotNvm/MotNvm.h"
-#include "MotLimits/MotLimits.h"
+// #include "MotLimits/MotLimits.h"
 #include "MotBuzzer/MotBuzzer.h"
 
 #include "Motor/Motor/Motor_Table.h"
@@ -190,7 +190,7 @@ typedef struct MotorController_Context
     MotorController_StandbyExitMode_T StandbyExitMode; /* Runtime policy — resolved at init from config, overridable at runtime, not persisted */
     uint32_t ControlCounter; /* PWM */
 
-    MotLimits_T Limits;     /* Q15 unitless derate ratios — contiguous augments + values for I and Speed system arbitration. */
+    // MotLimits_T Limits;     /* Q15 unitless derate ratios — contiguous augments + values for I and Speed system arbitration. */
 
     // Motor_Input_T CmdInput; /* Buffered Input for StateMachine. Unused for now */
     // MotorController_InputMode_T ActiveInput;
@@ -334,6 +334,14 @@ static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { 
 
 /******************************************************************************/
 /*
+    System limit sources, composed by hand. Ratio of each motor's Config.
+*/
+/******************************************************************************/
+static inline ufract16_t MotorController_IDerate(MotorController_T * p_dev) { return math_min(HeatMonitor_Group_GetDerate(&p_dev->HEAT_MOSFETS), OptDin_LimitOf(p_dev->P_MC->OptDinState.p_ILimit, p_dev->P_MC->Config.OptDinConfig.TorqueLimit)); }
+static inline ufract16_t MotorController_SpeedDerate(MotorController_T * p_dev) { return math_min(VBus_GetSpeedDerate(p_dev->P_VBUS), OptDin_LimitOf(p_dev->P_MC->OptDinState.p_SpeedLimit, p_dev->P_MC->Config.OptDinConfig.SpeedLimit)); }
+
+/******************************************************************************/
+/*
     Extern
 */
 /******************************************************************************/
@@ -343,9 +351,12 @@ extern void MotorController_ResetBootDefault(MotorController_Context_T * p_mc);
 
 extern MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorController_T * p_dev);
 
-extern bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit);
-extern bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id);
-extern bool _MotorController_SetILimitMotoringAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit);
-extern bool _MotorController_SetILimitGeneratingAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit);
-extern bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit);
-extern bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id);
+// extern bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit);
+// extern bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id);
+// extern bool _MotorController_SetILimitMotoringAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit);
+// extern bool _MotorController_SetILimitGeneratingAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit);
+// extern bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit);
+// extern bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id);
+
+extern void MotorController_ApplyILimits(MotorController_T * p_dev);
+extern void MotorController_ApplySpeedLimits(MotorController_T * p_dev);

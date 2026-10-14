@@ -129,6 +129,12 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 */
 #define MOTOR_STATE_MACHINE_INIT(p_MotorDev, MotorRuntime) STATE_MACHINE_INIT((p_MotorDev), &MSM_MACHINE, &((MotorRuntime).StateMachine))
 
+/*
+    Moving state machine context to mutable state makes the state machine testable without HAL
+    static inline   Motor_ (const Motor_Context_T * p_motor)
+*/
+
+
 /* select proc composite  */
 static inline void _Motor_StateMachine(StateMachine_Active_T * p_active, void * p_dev)
 {
@@ -259,6 +265,11 @@ static void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T fa
 {
     StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T) { .FaultSet = faultFlags.Value }.Value);
 }
+
+// static void Motor_StateMachine_EnterFault(Motor_T * p_motor)
+// {
+//     StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultSet = UINT16_MAX }.Value);
+// }
 
 static void Motor_StateMachine_ClearFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {

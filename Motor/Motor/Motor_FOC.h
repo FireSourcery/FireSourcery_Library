@@ -67,30 +67,37 @@ static inline bool Motor_FOC_IsPlugging(const Motor_Context_T * p_motor) { retur
 /* Generating  AND Vq aligns with speed - true regeneration */
 static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (Motor_FOC_IsGenerating(p_motor) && !Motor_FOC_IsPlugging(p_motor)); }
 
-
-/*  */
-static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
-{
-    if (!Phase_IsFloat(&p_motor->PHASE))
-    {
-        Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
-    }
-}
+/* Supply current limits at this motor's operating point, [Cw:Ccw] */
+#if defined(VBUS_I_LIMIT_POWER_BALANCE)
+static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqLimits(p_motor->P_VBUS, FOC_Vd(&p_motor->P_MOTOR->Foc), FOC_Id(&p_motor->P_MOTOR->Foc), FOC_Vq(&p_motor->P_MOTOR->Foc)); }
+#elif defined(VBUS_I_LIMIT_PHASE_BOUND)
+static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqPhaseLimits(p_motor->P_VBUS, math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR)), FOC_Id(&p_motor->P_MOTOR->Foc)); }
+#endif
 
 
 
 /*
     Decoupling-basis ω input for FOC_CaptureSpeed. Δθ [angle16/Ts], the tick-base ω_pu of [FOC_Electrical_T]. Free of the speed base.
 */
-static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor)
+static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor); }
+
+// static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, Motor_GetDecouplingOmega(p_motor)); }
+
+
+
+static inline void Motor_FOC_WriteDuty(Motor_T * p_motor)
 {
-    return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
+    Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
 }
 
-// static inline void Motor_FOC_CaptureVSpeed(Motor_T * p_motor)
+// static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
 // {
-//      FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, Motor_GetDecouplingOmega(p_motor));
+//     if (!Phase_IsFloat(&p_motor->PHASE))
+//     {
+//         Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
+//     }
 // }
+
 
 /******************************************************************************/
 /*!

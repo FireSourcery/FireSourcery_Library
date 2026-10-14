@@ -629,7 +629,9 @@ const State_T MC_STATE_LOCK =
 /******************************************************************************/
 static void Fault_Entry(MotorController_T * p_dev)
 {
-    Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
+    for (size_t i = 0; i < p_dev->MOTORS.LENGTH; i++) { Motor_StateMachine_SetFault(&p_dev->MOTORS.P_DEVS[i], MOTOR_FAULT_REQUEST_V0); }
+    // Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
+    // Motor_Table_ForEach(&p_dev->MOTORS, Motor_ReleaseVZ);  /* Motor may apply V0 */
     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit); /* exit on fault and exit lock. or implement input id */
 
 // #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
@@ -642,7 +644,7 @@ static void Fault_Proc(MotorController_T * p_dev)
 {
     MotorController_Context_T * p_mc = p_dev->P_MC;
 
-    Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
+    // Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
 
     // if (p_mc->FaultFlags.RxLost = MotorController_PollRxLost(p_dev))
     //     /* Protocol Rx Lost use auto recover, without user input */

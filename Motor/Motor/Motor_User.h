@@ -79,10 +79,10 @@ static inline fract16_t Motor_GetVPhase_Pu(const Motor_Context_T * p_motor) { re
 */
 /* [1:1.5] */
 static inline ufract16_t Motor_GetElectricalPower_Pu(const Motor_Context_T * p_motor) { return FOC_GetActivePower(&p_motor->Foc); }
-static inline ufract16_t Motor_GetIBus_Pu(Motor_T * p_motor) { return FOC_GetIBus(&p_motor->P_MOTOR->Foc, VBus_Pu(p_motor->P_VBUS)); }
+static inline ufract16_t Motor_GetIBus_Pu(Motor_T * p_motor) { return VBus_FOC_IBusOf(p_motor->P_VBUS, _FOC_GetActivePower(&p_motor->P_MOTOR->Foc)); }
 
 static inline fract16_t _Motor_GetElectricalPower_Pu(const Motor_Context_T * p_motor) { return _FOC_GetActivePower(&p_motor->Foc); }
-static inline fract16_t _Motor_GetIBus_Pu(Motor_T * p_motor) { return _FOC_GetIBus(&p_motor->P_MOTOR->Foc, VBus_Pu(p_motor->P_VBUS)); }
+static inline fract16_t _Motor_GetIBus_Pu(Motor_T * p_motor) { return _VBus_FOC_IBusOf(p_motor->P_VBUS, _FOC_GetActivePower(&p_motor->P_MOTOR->Foc)); }
 
 /*  */
 static inline uint16_t Motor_GetHeat_Adcu(const Motor_Context_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
