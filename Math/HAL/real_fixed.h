@@ -26,7 +26,7 @@
 /*!
     @file   real_fixed.h
     @author FireSourcery
-    @brief  [real.h] fixed-point implementation. Binds the HAL vocabulary to [fract16.h].
+    @brief  [real.h] fixed-point implementation. Binds the HAL vocabulary to [fract16.h] and [fract16e.h].
 */
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
@@ -80,10 +80,11 @@ typedef accum32_t coeff_t;
 #define coeff_mul accum32_mul
 static inline coeff_t coeff_of_accum(accum32_t k) { return k; }
 #else
+#include "Math/Fixed/fract16e.h"
 typedef fract16e_t coeff_t;
 // typedef fract16e_t factor_t;
 #define coeff_mul fract16e_mul
-#define coeff_of_accum fract16e
+#define coeff_of_accum fract16e_of_accum32
 #endif
 
 /******************************************************************************/

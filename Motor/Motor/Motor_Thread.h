@@ -95,17 +95,6 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
     // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
 
-    /* Directly read register state */
-    /* state machine handles write gate state */
-    // switch (Phase_ReadVOut(&p_dev->PHASE))
-    // {
-    //     case PHASE_VOUT_Z: break;
-    //     case PHASE_VOUT_0: break;
-    //     case PHASE_VOUT_PWM:
-    //         Phase_WriteSvpwm(&p_dev->PHASE, VBus_Inv_Pu(p_dev->P_VBUS), FOC_Va(&p_dev->P_MOTOR->Foc), FOC_Vb(&p_dev->P_MOTOR->Foc), FOC_Vc(&p_dev->P_MOTOR->Foc));
-    //         break;
-    //     default: break;
-    // }
 
     // Motor_FOC_WriteDuty_Thread(p_dev);
 

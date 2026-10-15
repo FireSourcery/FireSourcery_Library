@@ -30,6 +30,7 @@
 #ifndef MOTOR_FOC_H
 #define MOTOR_FOC_H
 
+#include "Math/FOC.h"
 #include "Motor.h"
 #include "Math/FOC_Ext.h"
 #include "Phase/Phase_Svpwm.h"
@@ -69,9 +70,20 @@ static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (
 
 /* Supply current limits at this motor's operating point, [Cw:Ccw] */
 #if defined(VBUS_I_LIMIT_POWER_BALANCE)
+
+// static inline interval_t _Motor_VBusILimits(const VBus_T * p_vbus, const FOC_T * p_foc)
+// {
+//     return foc_iq_limits(_VBus_ILimits(p_vbus), VBus_Pu(p_vbus), foc_power_d(FOC_Vd(p_foc), FOC_Id(p_foc)), FOC_Vq(p_foc));
+// }
+
 static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqLimits(p_motor->P_VBUS, FOC_Vd(&p_motor->P_MOTOR->Foc), FOC_Id(&p_motor->P_MOTOR->Foc), FOC_Vq(&p_motor->P_MOTOR->Foc)); }
 #elif defined(VBUS_I_LIMIT_PHASE_BOUND)
 static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqPhaseLimits(p_motor->P_VBUS, math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR)), FOC_Id(&p_motor->P_MOTOR->Foc)); }
+#endif
+
+/* Held for the re-resolves on Direction, FeedbackMode and state entry. Takes effect on the next resolve. */
+#if !defined(VBUS_I_LIMIT_V_DERATE)
+static inline void Motor_CaptureISupplyLimits(Motor_T * p_motor) { p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits(p_motor); }
 #endif
 
 
@@ -85,12 +97,20 @@ static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 
 
 
+/* Directly read register state */
+/* state machine handles write gate state */
+/*  */
 // static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
 // {
-//     if (!Phase_IsFloat(&p_motor->PHASE))
-//     {
-//         Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
-//     }
+    // switch (Phase_ReadVOut(&p_dev->PHASE))
+    // {
+    //     case PHASE_VOUT_Z: break;
+    //     case PHASE_VOUT_0: break;
+    //     case PHASE_VOUT_PWM:
+    //         Phase_WriteSvpwm(&p_dev->PHASE, VBus_Inv_Pu(p_dev->P_VBUS), FOC_Va(&p_dev->P_MOTOR->Foc), FOC_Vb(&p_dev->P_MOTOR->Foc), FOC_Vc(&p_dev->P_MOTOR->Foc));
+    //         break;
+    //     default: break;
+    // }
 // }
 
 

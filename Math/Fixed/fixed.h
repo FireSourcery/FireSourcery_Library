@@ -33,7 +33,8 @@
 
 #include <stdint.h>
 
-extern uint16_t fixed_sqrt(uint32_t x);
+
+/* bits */
 extern uint8_t fixed_log2(uint32_t x);
 extern uint8_t fixed_log2_ceiling(uint32_t x);
 extern uint8_t fixed_log2_round(uint32_t x);
@@ -45,6 +46,10 @@ extern uint8_t fixed_bit_width_signed(int32_t x);
 extern uint8_t fixed_lshift_max_unsigned(uint32_t x);
 extern uint8_t fixed_lshift_max_signed(int32_t x);
 
+/*  */
+extern uint16_t fixed_sqrt(uint32_t x);
+int32_t fixed_add_sat(int32_t a, int32_t b);
+int32_t fixed_div_round(int32_t n, int32_t d);
 
 
 #endif

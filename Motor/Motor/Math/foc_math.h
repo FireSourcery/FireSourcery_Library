@@ -260,7 +260,7 @@ static inline bool foc_is_regen(fract16_t vq, accum32_t e_q, ufract16_t window) 
     dynamic overlay to intersect with base
 */
 /* the controller to pick up the requested direction through zero */
-// static inline sign_t _foc_vmotionsignof(accum32_t omega_psi, int32_t iqReq)
+// static inline sign_t _foc_vmotion_sign_of(accum32_t omega_psi, int32_t iqReq)
 // {
 //     sign_t motionSign = math_sign(omega_psi);
 //     return (motionSign != SIGN_ZERO) ? motionSign : math_sign(iqReq);
@@ -344,8 +344,9 @@ static inline struct foc_alphabeta foc_clarke(fract16_t a, fract16_t b, fract16_
     int32_t alpha = fract16_mul((int32_t)a * 2 - b - c, FRACT16_1_DIV_3);
     int32_t beta = fract16_mul((int32_t)b - c, FRACT16_1_DIV_SQRT3);
 
-    return (struct foc_alphabeta) { .alpha = fract16_sat(alpha), .beta = fract16_sat(beta) };
+    return (struct foc_alphabeta){ .alpha = fract16_sat(alpha), .beta = fract16_sat(beta) };
 }
+
 
 /*
     Ialpha = Ia

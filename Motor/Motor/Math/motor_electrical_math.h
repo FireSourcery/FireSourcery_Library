@@ -293,6 +293,36 @@ static inline uint32_t l_pu_of_h(uint16_t v_base_V, uint16_t i_base_A, angle_fre
 static inline uint32_t l_h_of_pu(uint16_t v_base_V, uint16_t i_base_A, angle_freq_t base, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / FRACT16_PI * FRACT16_SCALE / ((uint64_t)i_base_A * base); }
 
 
+/*
+    alternatively without absorbing PI. fract16_mul(ω_pu, L_pu) * PI at boundary PI absorbs shift {.value = π/k, .shift} INT32_MAX / (PI* L_tick)
+    Q15, stored	tick	L_tick ~= 348,595 = 10.63 · 2^15, ACCUM32(MOTOR_L_PU_TICK)	[L_HFsI_base/V_base], pu_ts case
+
+    fract16_mul(Δθ , L_ts) → ω_e·L < FRACT16_MAX
+    _fract16e_pi.mantissa < FRACT16_MAX
+    i_pu < FRACT16_MAX
+
+    fract16_mul(Δθ , L_ts) * i_pu * _fract16e_pi.mantissa → ω_e·L·i_pu < FRACT16_MAX
+
+    fract16_mul(L_ts, _fract16e_pi) < FRACT16_MAX
+    fract16_mul(Δθ, fract16_mul(L_ts, _fract16e_pi)) < FRACT16_MAX
+
+    L_ts	334,651 = 10.21	Δθ ≤ 6,417	~29,400
+
+    G = 1/L_ts, L_ts = Rs_pu·τ_cycles, L_ts = (v/Δi)·n
+*/
+#define MOTOR_L_PU_TS(Fs, V_Base, I_Base, L_Henries) ((float)(L_Henries) * (I_Base) * (Fs) / (V_Base))
+static inline uint32_t l_pu_ts_of_h(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_base_A * fs_hz * FRACT16_SCALE / ((uint64_t)v_base_V * scale); }
+static inline uint32_t l_h_of_pu_ts(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / ((uint64_t)FRACT16_SCALE * fs_hz * i_base_A); }
+
+/*
+    L_ts = (v/Δi)·n             [step]
+    L_ts = Rs_pu · τ_cycles     [RL τ]
+    L_ts = (v/i)·Fs/(2π·f)      [HFI]
+*/
+static inline uint32_t l_pu_ts_of_step(fract16_t v_pu, fract16_t di_pu, uint32_t dt_cycles) { return (uint64_t)fract16_div(v_pu, di_pu) * dt_cycles; }
+static inline uint32_t l_pu_ts_of_rs_tau_cycles(fract16_t rs_pu, uint32_t tau_cycles) { return (uint32_t)rs_pu * tau_cycles; }
+static inline uint32_t l_pu_ts_of_hfi(uint32_t fs_hz, uint32_t hfi_hz, ufract16_t v_pk_pu, ufract16_t i_pk_pu) { return (uint64_t)fract16_div(v_pk_pu, i_pk_pu) * fs_hz * FRACT16_SCALE / (2UL * FRACT16_PI * hfi_hz); }
+
 /*!
     @brief  Reactance speed per ohm [angle16/s · A/V] — the inductance as a rate, free of a speed base, Fs, and the board base.
 

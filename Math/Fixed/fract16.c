@@ -133,20 +133,14 @@ angle16_t fract16_atan2(fract16_t y, fract16_t x)
     vector_init
     let compiler optimize into single switch
 */
-struct fract16_xy fract16_vector(angle16_t theta)
-{
-    return (struct fract16_xy) { .x = fract16_cos(theta), .y = fract16_sin(theta) };
-}
+struct fract16_xy fract16_vector(angle16_t theta) { return (struct fract16_xy){ .x = fract16_cos(theta), .y = fract16_sin(theta) }; }
 
 
 /*
     vector in components
 */
 
-ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
-{
-    return fixed_sqrt((int32_t)x * x + (int32_t)y * y);
-}
+ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y) { return fixed_sqrt((int32_t)x * x + (int32_t)y * y); }
 
 /*
     Pythagorean Complement
@@ -185,14 +179,12 @@ ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit)
     Vector Circle Limit
     @return max/|Vxy|
 */
-// struct fract16_xy
-// void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit)
+// struct fract16_xy fract16_vector_limit(fract16_t  x, fract16_t  y, ufract16_t mag_limit)
 // {
 //     fract16_vector_scale(p_x, p_y, fract16_vector_norm(*p_x, *p_y, mag_limit));
 // }
 
-// // struct fract16_xy
-// void fract16_vector_normalize(fract16_t * p_x, fract16_t * p_y)
+// struct fract16_xy fract16_vector_normalize(fract16_t  x, fract16_t  y)
 // {
 //     fract16_vector_limit(p_x, p_y, FRACT16_MAX);
 // }

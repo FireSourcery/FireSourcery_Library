@@ -132,11 +132,47 @@ MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorCo
     System sources composed by hand, pushed to every motor as a ratio of its Config.
 */
 /******************************************************************************/
+/*
+    System limit sources, composed by hand. Ratio of each motor's Config.
+    poll every source. simplifies array sync. but couples the thread timing constraint.
+*/
+static inline ufract16_t MotorController_IDerate(MotorController_T * p_dev) { return math_min(HeatMonitor_Group_GetDerate(&p_dev->HEAT_MOSFETS), OptDin_LimitOf(p_dev->P_MC->OptDinState.p_ILimit, p_dev->P_MC->Config.OptDinConfig.TorqueLimit)); }
+
+static inline ufract16_t MotorController_SpeedDerate(MotorController_T * p_dev) { return math_min(VBus_GetSpeedDerate(p_dev->P_VBUS), OptDin_LimitOf(p_dev->P_MC->OptDinState.p_SpeedLimit, p_dev->P_MC->Config.OptDinConfig.SpeedLimit)); }
+
+// static inline ufract16_t MotorController_IDerateNew(MotorController_T * p_dev)
+// {
+//     ufract16_t vbus = VBus_IDerateActive(p_dev->P_VBUS);
+//     ufract16_t heat = HeatMonitor_Group_GetDerate(&p_dev->HEAT_MOSFETS);
+//     ufract16_t optdin = OptDin_LimitOf(p_dev->P_MC->OptDinState.p_ILimit, p_dev->P_MC->Config.OptDinConfig.TorqueLimit);
+//     return math_min(math_min(heat, optdin), vbus);
+// }
+
+/*
+    VBUS_I_LIMIT_V_DERATE: the VBus ramps join the ratio per side.
+        Motoring draws from the bus and Generating returns to it while the V limits are anti-plugging.
+    Otherwise each motor captures its supply window at its own operating point, resolved with the derate.
+*/
+#if defined(VBUS_I_LIMIT_V_DERATE)
 void MotorController_ApplyILimits(MotorController_T * p_dev)
 {
     ufract16_t derate = MotorController_IDerate(p_dev);
-    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_SetILimitDerate(&p_dev->MOTORS.P_DEVS[iMotor], derate); }
+    ufract16_t motoring = math_min(derate, VBus_GetIDerateUnderV(p_dev->P_VBUS));
+    ufract16_t generating = math_min(derate, VBus_GetIDerateOverV(p_dev->P_VBUS));
+    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, motoring, generating); }
 }
+#else
+void MotorController_ApplyILimits(MotorController_T * p_dev)
+{
+//   interval_t supply = VBus_ILimitInterval(p_dev->P_VBUS);
+    ufract16_t derate = MotorController_IDerate(p_dev);
+    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
+    {
+        Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]);
+        Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, derate, derate);
+    }
+}
+#endif
 
 void MotorController_ApplySpeedLimits(MotorController_T * p_dev)
 {

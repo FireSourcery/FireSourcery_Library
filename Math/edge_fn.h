@@ -88,10 +88,3 @@ static inline bool is_falling_schmitt_trigger(int32_t threshold_off, bool prev_s
 
 
 
-// typedef struct Edge
-// {
-//     uint32_t LastValue;
-// } Edge_T;
-
-// void Edge_Update(Edge_T * p_detector, uint32_t value);
-// bool Edge_GetEdge(const Edge_T * p_detector);

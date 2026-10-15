@@ -315,6 +315,15 @@ static inline State_T * MotorController_App_EnterMain(MotorController_T * p_mc) 
 static inline void MotorController_App_ProcAnalogUser(MotorController_T * p_mc) { p_mc->P_APP->PROC_ANALOG_USER(p_mc); }
 static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc->P_APP->INIT != NULL) { p_mc->P_APP->INIT(p_mc); } }
 
+/*
+
+*/
+static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { return &p_dev->BUZZER; } /* or type at def */
+// static inline VBus_T * MotorController_VBus(MotorController_T * p_dev) { return p_dev->P_VBUS; }
+// static inline VMonitor_T * MotorController_VMonitorAcces (MotorController_T * p_dev) { return &p_dev->V_ACCESSORIES; }
+/* Common Buffered Input */
+// static inline Motor_Input_T * MotorController_GetMotorInput(MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
+
 /*  */
 static inline Socket_T * MotorController_GetMainSocket(MotorController_T * p_dev) { assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT); return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
 
@@ -325,20 +334,7 @@ static inline bool MotorController_PollRxLost(MotorController_T * p_dev)
     return p_dev->P_MC->FaultFlags.RxLost;
 }
 
-static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { return &p_dev->BUZZER; }
-// static inline VBus_T * MotorController_VBus(MotorController_T * p_dev) { return p_dev->P_VBUS; }
-// static inline VMonitor_T * MotorController_VMonitorAcces (MotorController_T * p_dev) { return &p_dev->V_ACCESSORIES; }
 
-/* Common Buffered Input */
-// static inline Motor_Input_T * MotorController_GetMotorInput(MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
-
-/******************************************************************************/
-/*
-    System limit sources, composed by hand. Ratio of each motor's Config.
-*/
-/******************************************************************************/
-static inline ufract16_t MotorController_IDerate(MotorController_T * p_dev) { return math_min(HeatMonitor_Group_GetDerate(&p_dev->HEAT_MOSFETS), OptDin_LimitOf(p_dev->P_MC->OptDinState.p_ILimit, p_dev->P_MC->Config.OptDinConfig.TorqueLimit)); }
-static inline ufract16_t MotorController_SpeedDerate(MotorController_T * p_dev) { return math_min(VBus_GetSpeedDerate(p_dev->P_VBUS), OptDin_LimitOf(p_dev->P_MC->OptDinState.p_SpeedLimit, p_dev->P_MC->Config.OptDinConfig.SpeedLimit)); }
 
 /******************************************************************************/
 /*

@@ -36,9 +36,10 @@
     Supply limit enforcement
         VBUS_I_LIMIT_POWER_BALANCE  q-axis limit at the operating point (v_d, i_d, v_q), exact
         VBUS_I_LIMIT_PHASE_BOUND    phase-current bound keyed by the motion, conservative below full modulation
-    The two take different inputs. The caller selects at the operating point it holds.
+        VBUS_I_LIMIT_V_DERATE       voltage ramps as ratios of each motor's I limits, no DC limit. Composed by the upper layer.
+    The first two take different inputs. The caller selects at the operating point it holds.
 */
-#if !defined(VBUS_I_LIMIT_POWER_BALANCE) && !defined(VBUS_I_LIMIT_PHASE_BOUND)
+#if !defined(VBUS_I_LIMIT_POWER_BALANCE) && !defined(VBUS_I_LIMIT_PHASE_BOUND) && !defined(VBUS_I_LIMIT_V_DERATE)
 #define VBUS_I_LIMIT_POWER_BALANCE
 #endif
 
@@ -73,15 +74,12 @@ static inline accum32_t VBus_FOC_IBusOf(const VBus_T * p_vbus, accum32_t power) 
     Supply limits as q-axis limits, [Cw:Ccw]
 */
 /******************************************************************************/
-/* The supply window on i_dc, drawing positive */
-/* v_q·i_q ∈ P_q = 2/3·V_dc·[−I_chg, I_dis] − v_d·i_d  ⟹  i_q ∈ P_q / v_q */
-static inline interval_t _VBus_ILimits(const VBus_T * p_vbus) { return (interval_t){ .low = -VBus_IChargeLimit_Pu(p_vbus), .high = VBus_IDischargeLimit_Pu(p_vbus) }; }
-
 /* [foc_iq_limits] with the live V_bus */
-static inline interval_t VBus_FOC_IqLimits(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_limits(_VBus_ILimits(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
+/* v_q·i_q ∈ P_q = 2/3·V_dc·[−I_chg, I_dis] − v_d·i_d  ⟹  i_q ∈ P_q / v_q */
+static inline interval_t VBus_FOC_IqLimits(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_limits(VBus_ILimitInterval(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
 
 /* [foc_iq_phase_limits], motion as the sign of the rotor speed */
-static inline interval_t VBus_FOC_IqPhaseLimits(const VBus_T * p_vbus, sign_t motion, fract16_t id) { return foc_iq_phase_limits(_VBus_ILimits(p_vbus), motion, id); }
+static inline interval_t VBus_FOC_IqPhaseLimits(const VBus_T * p_vbus, sign_t motion, fract16_t id) { return foc_iq_phase_limits(VBus_ILimitInterval(p_vbus), motion, id); }
 
 
 

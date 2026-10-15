@@ -28,7 +28,6 @@
 */
 /******************************************************************************/
 #include "Motor.h"
-#include "Motor_FOC.h"
 #include "Motor_Config.h"
 #include <string.h>
 
@@ -61,10 +60,9 @@ void Motor_Init(Motor_T * p_dev)
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);
 
     /* Limit inputs are upper layer owned. Init once, retained across Motor_Reset/Motor_Reinit */
-    p_dev->P_MOTOR->ILimit.Motoring = FRACT16_MAX;
-    p_dev->P_MOTOR->ILimit.Generating = FRACT16_MAX;
-    p_dev->P_MOTOR->SpeedLimit.Forward = FRACT16_MAX;
-    p_dev->P_MOTOR->SpeedLimit.Reverse = FRACT16_MAX;
+    Motor_ResetILimit(p_dev->P_MOTOR);
+    Motor_ResetSpeedLimit(p_dev->P_MOTOR);
+    p_dev->P_MOTOR->ISupplyLimits = interval_symmetric(0, FRACT16_MAX);
 
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     Motor_ResolveFocParams(p_dev);
@@ -266,27 +264,43 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
         limit = min(Pushed, Config)  => Motor_Resolve*Limits => Ramp/PID
 
     Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. FRACT16_MAX => no cap.
+    I resolves within ISupplyLimits, signed already, captured at the operating point by [Motor_CaptureISupplyLimits].
 */
 /******************************************************************************/
 /*
     I Limits. Motoring aligns with Direction, Generating opposes.
 */
-void Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu)
+void _Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu)
 {
     p_motor->ILimit.Motoring = motoring_pu;
     p_motor->ILimit.Generating = generating_pu;
     Motor_ResolveILimits(p_motor);
 }
 
+void Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu)
+{
+    _Motor_SetILimits(p_motor, math_min(motoring_pu, p_motor->Config.ILimitMotoring_Pu), math_min(generating_pu, p_motor->Config.ILimitGenerating_Pu));
+}
+
+void Motor_SetILimitDerates(Motor_Context_T * p_motor, ufract16_t motoring, ufract16_t generating)
+{
+    _Motor_SetILimits(p_motor, fract16_mul(motoring, p_motor->Config.ILimitMotoring_Pu), fract16_mul(generating, p_motor->Config.ILimitGenerating_Pu));
+}
+
 void Motor_SetILimitMotoring(Motor_Context_T * p_motor, uint16_t motoring_pu) { Motor_SetILimits(p_motor, motoring_pu, p_motor->ILimit.Generating); }
 void Motor_SetILimitGenerating(Motor_Context_T * p_motor, uint16_t generating_pu) { Motor_SetILimits(p_motor, p_motor->ILimit.Motoring, generating_pu); }
 
 /* Both sides to a common magnitude */
-void Motor_SetILimit(Motor_Context_T * p_motor, uint16_t i_pu) { Motor_SetILimits(p_motor, i_pu, i_pu); }
+// void Motor_SetILimit(Motor_Context_T * p_motor, uint16_t i_pu) { Motor_SetILimits(p_motor, i_pu, i_pu); }
 
 /* No cap. Config is the ceiling. */
-void Motor_ResetILimit(Motor_Context_T * p_motor) { Motor_SetILimits(p_motor, FRACT16_MAX, FRACT16_MAX); }
+void Motor_ResetILimit(Motor_Context_T * p_motor) { _Motor_SetILimits(p_motor, p_motor->Config.ILimitMotoring_Pu, p_motor->Config.ILimitGenerating_Pu); }
 
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 /*
     Speed Limits. Forward aligns with Config.DirectionForward, Reverse opposes.
     Keyed by user direction — no resync on Direction change.
@@ -303,22 +317,10 @@ void Motor_SetSpeedLimitReverse(Motor_Context_T * p_motor, uint16_t reverse_pu) 
 
 void Motor_SetSpeedLimit(Motor_Context_T * p_motor, uint16_t speed_pu) { Motor_SetSpeedLimits(p_motor, speed_pu, speed_pu); }
 
-void Motor_ResetSpeedLimit(Motor_Context_T * p_motor) { Motor_SetSpeedLimits(p_motor, FRACT16_MAX, FRACT16_MAX); }
+void Motor_ResetSpeedLimit(Motor_Context_T * p_motor) { Motor_SetSpeedLimits(p_motor, p_motor->Config.SpeedLimitForward_Pu, p_motor->Config.SpeedLimitReverse_Pu); }
 
-/*
-    Derate interface. Ratio of Config.
-        Pushed = min(ratio · Config, Supply)
-    Supply is sampled at the operating point of the call, re-pushed by the caller as it moves.
-*/
-void Motor_SetILimitDerate(Motor_T * p_dev, ufract16_t ratio)
-{
-    interval_t supply = Motor_VBusILimits(p_dev);
-    Motor_SetILimits(p_dev->P_MOTOR,
-        math_min(Motor_ILimitMotoringOf(p_dev->P_MOTOR, ratio), Motor_ILimitMotoringIn(p_dev->P_MOTOR, supply)),
-        math_min(Motor_ILimitGeneratingOf(p_dev->P_MOTOR, ratio), Motor_ILimitGeneratingIn(p_dev->P_MOTOR, supply)));
-}
+void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, ufract16_t ratio) { Motor_SetSpeedLimits(p_motor, fract16_mul(ratio, p_motor->Config.SpeedLimitForward_Pu), fract16_mul(ratio, p_motor->Config.SpeedLimitReverse_Pu)); }
 
-void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, ufract16_t ratio) { Motor_SetSpeedLimits(p_motor, Motor_SpeedLimitForwardOf(p_motor, ratio), Motor_SpeedLimitReverseOf(p_motor, ratio)); }
 
 /******************************************************************************/
 /*

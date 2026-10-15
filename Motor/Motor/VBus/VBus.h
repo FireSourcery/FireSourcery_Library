@@ -196,6 +196,24 @@ static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return _V
 static inline uint16_t VBus_IDischargeLimit_Pu(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateUnderV(p_vbus), p_vbus->Config.IDischargeLimit_Pu); }
 static inline uint16_t VBus_IChargeLimit_Pu(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateOverV(p_vbus), p_vbus->Config.IChargeLimit_Pu); }
 
+/* The supply window on i_dc, drawing positive */
+static inline interval_t VBus_ILimitInterval(const VBus_T * p_vbus) { return (interval_t){ .low = 0 - VBus_IChargeLimit_Pu(p_vbus), .high = VBus_IDischargeLimit_Pu(p_vbus) }; }
+
+
+static inline ufract16_t VBus_IDerateActive(const VBus_T * p_vbus)
+{
+    switch (p_vbus->MonitorState.Status)
+    {
+        case VMONITOR_STATUS_WARNING_LOW: return VBus_GetIDerateUnderV(p_vbus);
+        case VMONITOR_STATUS_WARNING_HIGH: return VBus_GetIDerateOverV(p_vbus);
+        case VMONITOR_STATUS_FAULT_OVERVOLTAGE: return 0;
+        case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: return 0;
+        case VMONITOR_STATUS_NORMAL: return FRACT16_MAX;
+        default: return FRACT16_MAX;
+    }
+}
+/* derate generating, motoring  */
+// static inline interval_t VBus_IDeratePair(const VBus_T * p_vbus) { return (interval_t){ .low = VBus_GetIDerateOverV(p_vbus), .high = VBus_GetIDerateUnderV(p_vbus) }; }
 
 /*
     Speed-limit derate — back-EMF constraint.

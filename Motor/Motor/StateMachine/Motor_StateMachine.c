@@ -499,6 +499,7 @@ static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     interval_t iLimits = Motor_GetILimits(p_context); /* Current control regardless of FeedbackMode. SpeedPid output is I. */
+    p_motor->P_MOTOR->FeedbackMode.Current = 1U; /* flag for ILimits update */
     Ramp_SetLimits(&p_context->TorqueRamp, iLimits.low, iLimits.high);
     PID_SetOutputLimits(&p_context->PidSpeed, iLimits.low, iLimits.high);
     Motor_FOC_MatchTorqueIState(p_context);

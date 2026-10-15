@@ -622,6 +622,20 @@ static void FOC_InitFieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning
     p_foc->FieldWeakening = *p_fwTuning;
 }
 
+// static void FOC_InitElectrical(FOC_T * p_foc, const FOC_Electrical_T * p_electrical)
+// {
+//     p_foc->Electrical = *p_electrical;
+//     p_foc->LdTick = fract16e_pi(p_electrical->Ld);
+//     p_foc->LqTick = fract16e_pi(p_electrical->Lq);
+// }
+
+// static void FOC_CaptureSpeed(FOC_T * p_foc, angle16_t delta)
+// {
+//     p_foc->ElectricalSpeed.OmegaLd = fract16e_scale(p_foc->LdTick, delta);
+//     p_foc->ElectricalSpeed.OmegaLq = fract16e_scale(p_foc->LqTick, delta);
+//     p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Electrical.Psi, delta);
+// }
+
 static void FOC_InitPid(FOC_T * p_foc, const PID_Config_T * p_configI)
 {
     PID_InitFrom(&p_foc->PidIq, p_configI);

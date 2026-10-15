@@ -52,8 +52,8 @@ uint8_t _leading_sign_bits(int32_t x)
 {
 #if defined(__GNUC__)
     return __builtin_clrsb(x);
-#elif(__STDC_VERSION__ >= 202311L)
-    return stdc_leading_sign_bits(x);
+// #elif(__STDC_VERSION__ >= 202311L)
+//     return stdc_leading_sign_bits(x);
 #endif
 }
 
@@ -84,6 +84,7 @@ uint8_t fixed_bit_width(uint32_t x)
     0x80000000 -> 31
     0x00000000 -> 0
 */
+/*  stdc_bit_width((uint32_t)(x ^ (x >> 31))) */
 uint8_t fixed_bit_width_signed(int32_t x) { return (31U - _leading_sign_bits(x)); }
 
 /*
@@ -96,7 +97,6 @@ uint8_t fixed_lshift_max_unsigned(uint32_t x) { return _leading_zeros(x); }
 
 /* leading redundant sign bits */
 /* x != 0 */
-/* fixed32_norm_shift */
 uint8_t fixed_lshift_max_signed(int32_t x) { return _leading_sign_bits(x); }
 
 

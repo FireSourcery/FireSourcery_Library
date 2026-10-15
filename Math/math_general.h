@@ -104,24 +104,25 @@ static inline interval_t interval_half_plane(sign_t sign, int32_t alignedMag)
 {
     switch (sign)
     {
-        case SIGN_POSITIVE: return (interval_t) { .low = 0, .high = +alignedMag };
-        case SIGN_NEGATIVE: return (interval_t) { .low = -alignedMag, .high = 0 };
-        default:            return (interval_t) { .low = 0, .high = 0 };
+        case SIGN_POSITIVE: return (interval_t){ .low = 0, .high = +alignedMag };
+        case SIGN_NEGATIVE: return (interval_t){ .low = -alignedMag, .high = 0 };
+        default:
+        case SIGN_ZERO: return (interval_t){ .low = 0, .high = 0 };
     }
 }
 
 /* sign-keyed asymmetric pair: aligned magnitude goes with the sign, opposed goes against */
+/* asymmetric magnitudes */
 static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, int32_t opposedMag)
 {
     switch (sign)
     {
-        case SIGN_POSITIVE: return (interval_t) { .low = -opposedMag, .high = +alignedMag };
-        case SIGN_NEGATIVE: return (interval_t) { .low = -alignedMag, .high = +opposedMag };
-        default:            return (interval_t) { .low = 0, .high = 0 };
+        case SIGN_POSITIVE: return (interval_t){ .low = -opposedMag, .high = +alignedMag };
+        case SIGN_NEGATIVE: return (interval_t){ .low = -alignedMag, .high = +opposedMag };
+        default:
+        case SIGN_ZERO: return (interval_t){ .low = 0, .high = 0 };
     }
 }
-
-
 
 
 /*
@@ -145,12 +146,13 @@ static inline interval_t interval_hull(interval_t a, interval_t b) { return (int
 
 static inline interval_t interval_offset(interval_t i, int32_t k) { return (interval_t) { .low = i.low + k, .high = i.high + k }; }
 
-/*
-    Export
-*/
-// #include "Fixed/fixed_general.h"
-// #include "Fixed/interval_fixed.h"
 
+/*
+    interval
+    struct models carry interval semantics. not entirely generic.
+*/
+/* signed aligned interval, defined as [low:high] */
+// typedef struct interval interval_t;
 
 /* if one one type is needed these functions can leverage overloaded operators.  */
 /* or _Generic if both types called concurrently.  */
@@ -171,3 +173,8 @@ static inline interval_t interval_offset(interval_t i, int32_t k) { return (inte
 // #endif
 
 // typedef MATH_TYPE_T num_t; /* expressions that can overload operators */
+/*
+    Export
+*/
+// #include "Fixed/fixed_general.h"
+// #include "Fixed/interval_fixed.h"
