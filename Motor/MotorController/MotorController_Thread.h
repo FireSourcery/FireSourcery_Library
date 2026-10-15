@@ -199,7 +199,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 {
     MotorController_Context_T * p_mc = p_dev->P_MC;
 
-    /* High Freq, Low Priority */
     if (TimerT_Counter_Poll(&p_dev->MILLIS_TIMER) == true)
     {
         /*
@@ -211,7 +210,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
-        // VBus_Capture(p_dev->P_VBUS, Phase_Analog_VPuOf(ADC_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
+        // VBus_Capture(p_dev->P_VBUS, Phase_Analog_VPuOf(ADC_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternative in isr */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
@@ -267,12 +266,15 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
             /* Can use low priority check, as motor is already in fault state. */
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, &MOTOR_STATE_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
             /* Fault_Entry force disables - defer while any motor is in controlled stop */
-            if ((p_mc->FaultFlags.Value != 0U) && (Motor_Table_IsAnyState(&p_dev->MOTORS, &MOTOR_STATE_INTERVENTION) == false)) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
+            // if ((p_mc->FaultFlags.Value != 0U) && (Motor_Table_IsAnyState(&p_dev->MOTORS, &MOTOR_STATE_INTERVENTION) == false)) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
+            if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, p_mc->FaultFlags); }
 
             /* In case of UART Rx Overflow Timeout */
             for (uint8_t iUart = 0U; iUart < p_dev->UART_COUNT; iUart++) { UART_PollRestartRxIsr(&p_dev->P_UARTS[iUart]); }
         }
     }
+
+    /* High Freq, Low Priority */
 }
 
 /*

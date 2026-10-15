@@ -25,45 +25,20 @@
     @file   Q.c
     @author FireSourcery
     @brief
-
 */
 /******************************************************************************/
 #include "fixed.h"
 #include "Math/math_general.h"
+
 // #if (__STDC_VERSION__ >= 202311L)
 // #include <stdbit.h>
 // #endif
 
+/******************************************************************************/
 /*!
-    @brief Calculate the square root of a fixed-point number
-    @param x Fixed-point number
-    @return Square root of x
+    Pow2
 */
-uint16_t fixed_sqrt(uint32_t x)
-{
-    uint32_t result = 0U;
-    uint32_t bit = 1UL << 30U; // The second-to-top bit is set
-
-    // "bit" starts at the highest power of four <= the argument.
-    while (bit > x) { bit >>= 2; }
-
-    while (bit != 0)
-    {
-        if (x >= result + bit)
-        {
-            x -= result + bit;
-            result = (result >> 1) + bit;
-        }
-        else
-        {
-            result >>= 1;
-        }
-        bit >>= 2;
-    }
-
-    return result;
-}
-
+/******************************************************************************/
 uint8_t _leading_zeros(uint32_t x)
 {
 #if defined(__GNUC__)
@@ -174,40 +149,104 @@ uint32_t fixed_pow2_round(uint32_t x)
     return (pow2Upper - x) < (x - pow2Lower) ? pow2Upper : pow2Lower;
 }
 
-// /*!
-//     @brief Calculates square root
 
-//     Babylonian method
-//     y[n] = ( y[n-1] + (x / y[n-1]) ) / 2
+/******************************************************************************/
+/*!
+    math_general HAL switched
+    may move later
+*/
+/******************************************************************************/
+/*!
+    @brief Calculate the square root of a fixed-point number
+    @param x Fixed-point number
+    @return Square root of x
+*/
+uint16_t fixed_sqrt(uint32_t x)
+{
+    uint32_t result = 0U;
+    uint32_t bit = 1UL << 30U; // The second-to-top bit is set
 
-//     <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
-// */
-// uint16_t fixed_sqrt(uint32_t x)
-// {
-//     uint32_t yPrev;
-//     uint32_t y;
+    // "bit" starts at the highest power of four <= the argument.
+    while (bit > x) { bit >>= 2; }
 
-//     if(x > 0)
-//     {
-//         /*
-//             Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
+    while (bit != 0)
+    {
+        if (x >= result + bit)
+        {
+            x -= result + bit;
+            result = (result >> 1) + bit;
+        }
+        else
+        {
+            result >>= 1;
+        }
+        bit >>= 2;
+    }
 
-//             8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
-//             128*128 == (1 << 14), solve < 1048576
-//             1048576U == (1 << 20)
-//         */
-//         yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
-//         for(uint8_t iteration = 0U; iteration < 6U; iteration++)
-//         {
-//             y = (yPrev + (x / yPrev)) / 2U;
-//             if(y == yPrev) { break; }
-//             yPrev = y;
-//         }
-//     }
-//     else
-//     {
-//         y = 0U;
-//     }
+    return result;
+}
 
-//     return (uint16_t)y;
-// }
+
+/* GCC builtin for overflow detection */
+/* https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html */
+/* https://godbolt.org/z/3f8c6f9bM */
+/* https://godbolt.org/z/4a7jvPz9d */
+int32_t fixed_add_sat(int32_t a, int32_t b)
+{
+#if defined(__GNUC__)
+    int32_t result;
+    if (__builtin_add_overflow(a, b, &result) == true)
+    {
+        if      (a > 0 && b > 0) { result = INT32_MAX; }
+        else if (a < 0 && b < 0) { result = (0 - INT32_MAX); }
+    }
+    return result;
+#else
+    int32_t result = a + b;
+    if      ((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; }
+    else if ((a < 0) && (b < 0) && (result > 0)) { result = (0 - INT32_MAX); }
+    return result;
+#endif
+}
+
+
+int32_t fixed_div_round(int32_t n, int32_t d) { return (n + (d / 2)) / d; }
+
+
+/*!
+    @brief Calculates square root
+
+    Babylonian method
+    y[n] = ( y[n-1] + (x / y[n-1]) ) / 2
+
+    <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
+*/
+uint16_t fixed_sqrt_iterative(uint32_t x)
+{
+    uint32_t yPrev;
+    uint32_t y;
+
+    if(x > 0)
+    {
+        /*
+            Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
+
+            8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
+            128*128 == (1 << 14), solve < 1048576
+            1048576U == (1 << 20)
+        */
+        yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
+        for(uint8_t iteration = 0U; iteration < 6U; iteration++)
+        {
+            y = (yPrev + (x / yPrev)) / 2U;
+            if(y == yPrev) { break; }
+            yPrev = y;
+        }
+    }
+    else
+    {
+        y = 0U;
+    }
+
+    return (uint16_t)y;
+}

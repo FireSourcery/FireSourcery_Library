@@ -28,6 +28,7 @@
 */
 /******************************************************************************/
 #include "Motor.h"
+#include "Motor_FOC.h"
 #include "Motor_Config.h"
 #include <string.h>
 
@@ -260,7 +261,8 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 /*!
     Active Limits — push interface
 
-    The upper layer pushes its composed limit in PU; Motor owns the Config comparison and the direction resolve.
+    The upper layer pushes its composed limit in PU, or a derate as a ratio of Config.
+    Motor owns the Config comparison and the direction resolve.
         limit = min(Pushed, Config)  => Motor_Resolve*Limits => Ramp/PID
 
     Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. FRACT16_MAX => no cap.
@@ -303,6 +305,20 @@ void Motor_SetSpeedLimit(Motor_Context_T * p_motor, uint16_t speed_pu) { Motor_S
 
 void Motor_ResetSpeedLimit(Motor_Context_T * p_motor) { Motor_SetSpeedLimits(p_motor, FRACT16_MAX, FRACT16_MAX); }
 
+/*
+    Derate interface. Ratio of Config.
+        Pushed = min(ratio · Config, Supply)
+    Supply is sampled at the operating point of the call, re-pushed by the caller as it moves.
+*/
+void Motor_SetILimitDerate(Motor_T * p_dev, ufract16_t ratio)
+{
+    interval_t supply = Motor_VBusILimits(p_dev);
+    Motor_SetILimits(p_dev->P_MOTOR,
+        math_min(Motor_ILimitMotoringOf(p_dev->P_MOTOR, ratio), Motor_ILimitMotoringIn(p_dev->P_MOTOR, supply)),
+        math_min(Motor_ILimitGeneratingOf(p_dev->P_MOTOR, ratio), Motor_ILimitGeneratingIn(p_dev->P_MOTOR, supply)));
+}
+
+void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, ufract16_t ratio) { Motor_SetSpeedLimits(p_motor, Motor_SpeedLimitForwardOf(p_motor, ratio), Motor_SpeedLimitReverseOf(p_motor, ratio)); }
 
 /******************************************************************************/
 /*

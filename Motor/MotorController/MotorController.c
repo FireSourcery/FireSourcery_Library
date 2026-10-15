@@ -129,31 +129,19 @@ MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorCo
 /******************************************************************************/
 /*
     Collective Setting Limit
-    System sources composed by hand, pushed to every motor in PU.
-    [MotorController_IDerate] converts against each motor's Config, the supply limits apply at each motor's operating point.
+    System sources composed by hand, pushed to every motor as a ratio of its Config.
 */
 /******************************************************************************/
 void MotorController_ApplyILimits(MotorController_T * p_dev)
 {
     ufract16_t derate = MotorController_IDerate(p_dev);
-    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
-    {
-        Motor_T * p_motor = &p_dev->MOTORS.P_DEVS[iMotor];
-        interval_t supply = Motor_VBusILimits(p_motor);
-        Motor_SetILimits(p_motor->P_MOTOR,
-            math_min(Motor_ILimitMotoringOf(p_motor->P_MOTOR, derate), Motor_ILimitMotoringIn(p_motor->P_MOTOR, supply)),
-            math_min(Motor_ILimitGeneratingOf(p_motor->P_MOTOR, derate), Motor_ILimitGeneratingIn(p_motor->P_MOTOR, supply)));
-    }
+    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_SetILimitDerate(&p_dev->MOTORS.P_DEVS[iMotor], derate); }
 }
 
 void MotorController_ApplySpeedLimits(MotorController_T * p_dev)
 {
     ufract16_t derate = MotorController_SpeedDerate(p_dev);
-    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
-    {
-        Motor_Context_T * p_motor = p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR;
-        Motor_SetSpeedLimits(p_motor, Motor_SpeedLimitForwardOf(p_motor, derate), Motor_SpeedLimitReverseOf(p_motor, derate));
-    }
+    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_SetSpeedLimitDerate(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, derate); }
 }
 
 /*

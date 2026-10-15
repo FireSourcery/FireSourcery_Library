@@ -38,6 +38,10 @@
 // #include <stdfix.h>
 #include <assert.h>
 
+/*
+    Convention by stdfix.h
+*/
+
 #define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Resolution 1/(2^15) == .000030517578125 */
 #define FRACT16_M_BITS (1)
 
@@ -161,53 +165,7 @@ static inline fract16_t fract16_sqrt(fract16_t x) { return fixed_sqrt((int32_t)x
 static inline accum32_t accum32_mul(accum32_t a, accum32_t b) { return ((int64_t)a * b) >> FRACT16_N_BITS; }
 
 
-/*
-    alternative to accum32_t, accum32_t multiply without 64-bit intermediate
-*/
-/* value = mantissa × 2^exp */
-// typedef struct { int16_t mantissa; int8_t exp; } fract16e_t;
-// static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b) { return ((int32_t)a.mantissa * b >> (FRACT16_N_BITS - a.exp)); }
 
-/* value = mantissa × 2^-shift */
-/* frexp16_t  */
-typedef struct { int16_t mantissa; uint8_t shift; } fract16e_t;
-static inline int8_t fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a.shift; }
-
-/* value × 2^-shift */
-static inline fract16e_t _fract16e(int32_t value, uint8_t shift)
-{
-    uint8_t m = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0); /* within int16 keep as is */
-    assert(m <= shift);
-    return (fract16e_t) { .mantissa = (int16_t)(value >> m), .shift = shift - m };
-}
-
-/* accum in [-2^30, 2^30) */
-static inline fract16e_t fract16e(accum32_t accum) { return _fract16e(accum, FRACT16_N_BITS); }
-// static inline fract16e_t fract16e(accum32_t accum)
-// {
-//     uint8_t m = math_max(fixed_bit_width_signed(accum) - FRACT16_N_BITS, 0); /* accum < 1.0 keep as is */
-//     assert(m <= FRACT16_N_BITS); /* accum in [-2^30, 2^30) */
-//     return (fract16e_t) { .mantissa = (int16_t)(accum >> m), .shift = FRACT16_N_BITS - m };
-// }
-
-/*
-    num / den, |num / den| < 2^15
-    s places |(num << s) / den| in [2^14, 2^16] before dividing: full mantissa at any magnitude
-*/
-static inline fract16e_t fract16e_of_ratio(int32_t num, uint16_t den)
-{
-    int8_t s = FRACT16_N_BITS + fixed_bit_width(den) - fixed_bit_width_signed(num);
-    assert(den != 0U);
-    assert(s >= 0);
-    return _fract16e((num << s) / den, s);
-}
-
-
-static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b)
-{
-    assert(math_abs(b) < FRACT16_SCALE * 2); /* |mantissa * b| < 2^31 */
-    return ((int32_t)a.mantissa * b >> a.shift);
-}
 
 
 

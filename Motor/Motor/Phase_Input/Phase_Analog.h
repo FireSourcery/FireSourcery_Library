@@ -140,7 +140,7 @@ static void Phase_Analog_Mark(const Phase_Analog_T * p_analog, Phase_Bitmask_T s
 
 /*
     Analog Part for Input
-    Capture on [Phase_Input]
+    Capture on [Phase_Input_T]
 */
 
 static inline void Phase_Analog_CaptureV(volatile Phase_Input_T * p_phase, Phase_Index_T channel, adc_result_t adcu)

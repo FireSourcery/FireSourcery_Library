@@ -272,11 +272,15 @@ A power-of-two k is a shift, so ψ and L could be stored as (factor, shift): x_p
 
 ## L at each encoding
 
-| Encoding | Base | Value |
-|---|---|---|
-| Direct, no Q15 | tick | L_int = 32, 32.084 truncated |
+| Encoding | Base | Value | Note |
+|---|---|---|---|
+| Direct, no Q15 | tick | L_int = 32, 32.084 truncated | [L_H*Fs*π*I_base/V_base], L_int padded by Fs |
+| Direct, no Q15 | tick | L_int = ~66  | [L_H*Fs*2π*I_base/V_base], /2 at boundary |
 | Q15, stored | tick | L_tick = 1,051,339 = 32.084 · 2^15, `ACCUM32(MOTOR_L_PU_TICK)` |
 | Q15 | speed base | L_pu = 35,045 = 1.0695 · 2^15, `l_pu_of_h`. `pu_tau_rebase(L_tick)` gives 35,044 |
+alternatively without absorbing PI. fract16_mul(ω_pu, L_pu) * PI at boundary PI absorbs shift {.value = π/k, .shift} INT32_MAX / (PI* L_tick)
+| Q15 | speed base | L_pu = 5,804  | [L_H*F_base*I_base/V_base], pu_tau case, ω [0:32768] |
+| Q15, stored | tick | L_tick ~= 348,595 = 10.63 · 2^15, `ACCUM32(MOTOR_L_PU_TICK)` | [L_H*Fs*I_base/V_base], pu_ts case    |
 
 ## Product across speed
 

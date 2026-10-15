@@ -5,7 +5,7 @@
 
 
 Module_T             — Primary stateful object (has behavioral functions) OR Full descriptor context
-Module_Context_T     — mutable runtime.
+Module_State_T or Module_Context_T     — mutable runtime.
      naming collision with State_T. alternatively:
         runtime - runtime mutable, contract with config, too qualitative
         object - has invariant interface
@@ -26,15 +26,23 @@ Module_Output_T      — Data written by module, read by external
 Module_Packet_T      — Wire/serialization format
 
 Suffix	Meaning	Lifetime	Who writes
-_Calib	User-facing units	Persistent (NVM)	User/host tool
 _Ref	Derived/precomputed	Computed at init	Init function
-_Data or _Payload suffix = no behavioral invariants, any field writeable.
+_Data suffix = no behavioral invariants, any field writeable.
 // "_Data" suffix — signals "this is a passive data container, not a stateful object"
 // "_Input" suffix — this module reads from it, another module writes to it
 // "_Output" suffix — this module writes to it, another module reads from it
+<!-- _Calib	User-facing units	Persistent (NVM)	User/host tool -->
 
-Composite modules.
-Containers indicate storage RAM / NVM / static descriptor optimizable
+Function Prefixes by API `set`, group use case independent from other group.
+StateMachine_Branch_ProcInput() rather than StateMachine_ProcInput_Branch
+Function Suffixes by overload, concurrent use.
+GetSpeed_Rpm
+
+
+# Descriptor Pattern
+Containers are aggregate roots indicate storage RAM / NVM / static descriptor optimizable
+specialized domain model logic / operations use nested structs
+
 _Config	Storage in NVM
 _State Runtime mutable
 _T descriptor
@@ -153,6 +161,8 @@ Leading-underscore for "inner" (current pattern at line 129): _Motor_DegOfRpm
     exempt for main structs (Config, State, etc.)
 
 A public function's scope prefix is determined by the widest struct its effects reach, not the struct it takes as a parameter.
+
+
 
 ##
 

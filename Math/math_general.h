@@ -36,19 +36,6 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-/* handle availability in either float or int, unlike the hal fract */
-/* require user config, that would otherwise not be explicit with int */
-// #ifndef MATH_INT_T
-// #define MATH_INT_T int
-// #endif
-// typedef MATH_INT_T int_t;
-// #ifdef MATH_FLOAT
-// #define MATH_TYPE_T float
-// #else
-// #define MATH_TYPE_T int32_t
-// #endif
-
-// typedef MATH_TYPE_T num_t; /* expressions that can overload operators */
 
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 
@@ -159,29 +146,28 @@ static inline interval_t interval_hull(interval_t a, interval_t b) { return (int
 static inline interval_t interval_offset(interval_t i, int32_t k) { return (interval_t) { .low = i.low + k, .high = i.high + k }; }
 
 /*
-
+    Export
 */
-/* GCC builtin for overflow detection */
-/* https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html */
-/* https://godbolt.org/z/3f8c6f9bM */
-/* https://godbolt.org/z/4a7jvPz9d */
-static inline int32_t math_add_sat(int32_t a, int32_t b)
-{
-#if defined(__GNUC__)
-    int32_t result;
-    if (__builtin_add_overflow(a, b, &result) == true)
-    {
-        if      (a > 0 && b > 0) { result = INT32_MAX; }
-        else if (a < 0 && b < 0) { result = (0 - INT32_MAX); }
-    }
-    return result;
-#else
-    int32_t result = a + b;
-    if      ((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; }
-    else if ((a < 0) && (b < 0) && (result > 0)) { result = (0 - INT32_MAX); }
-    return result;
-#endif
-}
+// #include "Fixed/fixed_general.h"
+// #include "Fixed/interval_fixed.h"
 
 
-static inline int32_t math_div_round(int32_t n, int32_t d) { return (n + (d / 2)) / d; }
+/* if one one type is needed these functions can leverage overloaded operators.  */
+/* or _Generic if both types called concurrently.  */
+/* either way this file becomes interface and include header */
+
+/* handle availability in either float or int, unlike the hal fract */
+/* require user config, that would otherwise not be explicit with int */
+
+
+// #ifndef MATH_INT_T
+// #define MATH_INT_T int
+// #endif
+// typedef MATH_INT_T int_t;
+// #ifdef MATH_FLOAT
+// #define MATH_TYPE_T float
+// #else
+// #define MATH_TYPE_T int32_t
+// #endif
+
+// typedef MATH_TYPE_T num_t; /* expressions that can overload operators */

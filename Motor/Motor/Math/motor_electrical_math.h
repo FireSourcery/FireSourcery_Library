@@ -156,12 +156,16 @@ static inline uint32_t pu_tau_rebase(uint32_t x_pu, angle_freq_t base_from, angl
 #define MOTOR_PSI_PU_TICK(Fs, V_Base, Psi_Webers)   ((float)(Psi_Webers) * PI_FLOAT * (Fs) / (V_Base))
 
 
+
+
 /*
     1 angle16/Ts = 2π·Fs/65536 rad/s = π·Fs / 2^15: π·Fs folds into ψ_pu, 2^15 is the fract16_mul shift.
     Fs · FRACT16_PI = Fs · π · 2^15 = Fs · 2^30 / ANGLE16_PER_RADIAN
 */
 static inline uint32_t psi_pu_tick_of_wb(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)psi_Wb * FRACT16_PI * fs_hz / ((uint64_t)v_base_V * scale); }
 static inline uint32_t psi_wb_of_pu_tick(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_base_V * scale / ((uint64_t)FRACT16_PI * fs_hz); }
+
+
 
 /* Q15 constant divides first, the variable divisor last: one truncation in effect */
 /* angle_freq_t applies integer radians, alternatively truncate in Hz */
@@ -287,6 +291,7 @@ static inline uint32_t l_h_of_pu_tick(uint32_t fs_hz, uint16_t v_base_V, uint16_
 /* caller compose with angle_freq_of_ */
 static inline uint32_t l_pu_of_h(uint16_t v_base_V, uint16_t i_base_A, angle_freq_t base, uint32_t l_H, uint32_t scale) { return (uint64_t)l_H * i_base_A * base / FRACT16_SCALE * FRACT16_PI / ((uint64_t)v_base_V * scale); }
 static inline uint32_t l_h_of_pu(uint16_t v_base_V, uint16_t i_base_A, angle_freq_t base, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / FRACT16_PI * FRACT16_SCALE / ((uint64_t)i_base_A * base); }
+
 
 /*!
     @brief  Reactance speed per ohm [angle16/s · A/V] — the inductance as a rate, free of a speed base, Fs, and the board base.

@@ -295,7 +295,7 @@ typedef struct Motor_Context
     // PID_T PidPosition;
 
     volatile Phase_Input_T PhaseInput;
-    volatile Phase_Data_T VOut; /* output buffer */
+    // Phase_Data_T VOut; /* output buffer */
 
     /*
         FOC
@@ -637,11 +637,9 @@ static inline bool Motor_IsDirectionStopped(const Motor_Context_T * p_motor) { r
     runtime accessor
     decouple config implementation
     config applies policy on set
-    minimal or no runtime processing
 */
 /******************************************************************************/
 static inline uint16_t _Motor_GetIAlign(const Motor_Context_T * p_motor) { return p_motor->Config.IAlign_Pu; }
-
 static inline uint16_t _Motor_GetVAlign(const Motor_Context_T * p_motor) { return p_motor->Config.VAlign_Pu; }
 
 /******************************************************************************/
@@ -686,3 +684,7 @@ extern void Motor_SetSpeedLimitForward(Motor_Context_T * p_motor, uint16_t forwa
 extern void Motor_SetSpeedLimitReverse(Motor_Context_T * p_motor, uint16_t reverse_pu);
 extern void Motor_SetSpeedLimit(Motor_Context_T * p_motor, uint16_t speed_pu);
 extern void Motor_ResetSpeedLimit(Motor_Context_T * p_motor);
+
+/* Derate interface. Ratio of Config */
+extern void Motor_SetILimitDerate(Motor_T * p_motor, ufract16_t ratio);
+extern void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, ufract16_t ratio);
