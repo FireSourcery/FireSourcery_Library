@@ -36,10 +36,10 @@
 // #include "MotLimits/MotLimits.h"
 #include "MotBuzzer/MotBuzzer.h"
 
-#include "Motor/Motor/Motor_Table.h"
+#include "Motor/Motor/Extension/Motor_Table.h"
 #include "Motor/Motor/Motor_Config.h"
 #include "Motor/Motor/Motor_User.h"
-#include "Motor/Motor/StateMachine/Motor_StateMachine.h"
+#include "Motor/Motor/Motor_StateMachine.h"
 #include "Motor/Motor/VBus/VBus.h"
 #include "Motor/Motor/VBus/VBus_Monitor.h"
 // #include "Motor/Motor/Motor_Include.h"
@@ -67,7 +67,7 @@
 #include "Framework/Protocol/Protocol.h"
 #include "Framework/Protocol/Socket.h"
 #include "System/BootRef/BootRef.h"
-#include "Type/Word/Version.h"
+#include "Framework/Type/Word/Version.h"
 
 #include "Math/Linear/Linear.h"
 #include "Math/Filter/MovAvg.h"

@@ -28,7 +28,7 @@
 */
 /******************************************************************************/
 #include "Motor_Analog.h"
-#include "../StateMachine/Motor_StateMachine.h"
+#include "../Motor_StateMachine.h"
 #include "Math/Filter/MovAvg.h"
 
 typedef struct CalibrationBuffer

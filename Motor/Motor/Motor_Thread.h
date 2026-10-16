@@ -32,7 +32,7 @@
 // #include "Motor_Debug.h"
 
 #include "Analog/Motor_Analog.h"
-#include "StateMachine/Motor_StateMachine.h"
+#include "Motor_StateMachine.h"
 #include "Motor.h"
 
 #include "Framework/StateMachine/StateMachine_Thread.h"

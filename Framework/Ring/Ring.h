@@ -30,7 +30,7 @@
 // #ifndef RING_UTILITY_H
 // #define RING_UTILITY_H
 
-// #include "Type/Array/void_array.h"
+// #include "Framework/Type/Array/void_array.h"
 
 // #if defined(RING_LOCAL_CRITICAL_ENABLE)
 // #include "System/Critical/Critical.h"

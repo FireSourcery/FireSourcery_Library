@@ -30,8 +30,8 @@
 */
 /******************************************************************************/
 // #include "../Motor_Commutation.h"
-#include "../Motor_FOC.h"
-#include "../Motor.h"
+#include "Motor_FOC.h"
+#include "Motor.h"
 
 #include "Framework/StateMachine/StateMachine.h"
 #include "Framework/StateMachine/_StateMachine.h" /* Include the private header to allocate within Motor_Context_T */

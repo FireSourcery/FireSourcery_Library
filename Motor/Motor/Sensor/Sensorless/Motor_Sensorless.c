@@ -44,7 +44,7 @@
 #include "Sensorless_Sensor.h"
 
 #include "../RotorSensor.h"
-#include "../../StateMachine/Motor_StateMachine.h"
+#include "../../Motor_StateMachine.h"
 #include "../../StateMachine/Motor_OpenLoop.h"
 #include "../../Motor_FOC.h"
 

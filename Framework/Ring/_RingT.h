@@ -29,8 +29,8 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Type/Array/void_array.h"
-#include "Type/Array/Array.h"
+#include "Framework/Type/Array/void_array.h"
+#include "Framework/Type/Array/Array.h"
 
 #if defined(RING_LOCAL_CRITICAL_ENABLE)
 #include "System/Critical/Critical.h"

@@ -14,7 +14,10 @@ Each quantity belongs to one family, by what fixes its unit:
 | Time | tick of a clock | the loop or timer, in Hz | durations, rates | one operation with F_clk |
 | Angle | turn / 2^16 | constant | θ, ω, Δθ | constant |
 
-Per-unit is the default for physical magnitudes. Time and angle are the exceptions. Angle has a universal unit. Time counts ticks of the loop or timer that runs it, and the clock's frequency in Hz reaches SI in one operation.
+- Per-unit is the default for physical magnitudes.
+- Time and angle are the exceptions.
+- Angle has a universal unit.
+- Time counts ticks of the loop or timer that runs it, and the clock's frequency in Hz reaches SI in one operation.
 
 ```mermaid
 flowchart LR

@@ -30,8 +30,8 @@
 /******************************************************************************/
 #include "Motor_StateMachine.h"
 #include "Motor/Motor/VBus/VBus_Monitor.h"
-#include "Motor_Intervention.h"
-#include "../Motor_Config.h"
+#include "StateMachine/Motor_Intervention.h"
+#include "Motor_Config.h"
 
 
 /******************************************************************************/

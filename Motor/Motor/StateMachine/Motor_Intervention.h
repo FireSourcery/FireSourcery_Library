@@ -39,7 +39,7 @@
       SAFE_STOP    (SS1) - RAMP_DOWN child. User resume rejected, watchdog to Fault.
 */
 /******************************************************************************/
-#include "Motor_StateMachine.h"
+#include "../Motor_StateMachine.h"
 
 
 /******************************************************************************/

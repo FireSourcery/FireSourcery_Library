@@ -30,7 +30,7 @@
 #include "Motor_MotVar.h"
 
 #include "Motor/Motor/Motor_Var.h"
-#include "Motor/Motor/StateMachine/Motor_StateMachine.h"
+#include "Motor/Motor/Motor_StateMachine.h"
 
 /******************************************************************************/
 /*

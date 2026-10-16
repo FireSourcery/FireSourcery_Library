@@ -28,7 +28,7 @@
 */
 /******************************************************************************/
 #include "Motor_Sensor.h"
-#include "../StateMachine/Motor_StateMachine.h"
+#include "../Motor_StateMachine.h"
 
 /*
     requires [Motor] StateMachine outside of Sensor Interface

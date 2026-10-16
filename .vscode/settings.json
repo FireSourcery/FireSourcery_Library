@@ -63,6 +63,7 @@
         160,
         200,
     ],
+
     "files.trimTrailingWhitespace": true,
 
     "cSpell.words": [

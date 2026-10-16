@@ -30,7 +30,7 @@
             Input/Output/Cmd functions, includes error checking.
 */
 /******************************************************************************/
-#include "StateMachine/Motor_StateMachine.h"
+#include "Motor_StateMachine.h"
 #include "StateMachine/Motor_Calibration.h"
 #include "StateMachine/Motor_OpenLoop.h"
 

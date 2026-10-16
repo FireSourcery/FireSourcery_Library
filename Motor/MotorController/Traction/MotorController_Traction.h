@@ -38,28 +38,7 @@
 /******************************************************************************/
 /*
     State Machine
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
-    MotorController (System Level)
-        │
-        ├─ PARK State ────────────► Motors: STOP, Direction: NULL
-        │                            Output: V0 or Float
-        │                            Use: Parking brake, standby
-        │
-        └─ MAIN State
-            │
-            └─ TRACTION (Specialized Level)
-                │
-                ├─ NEUTRAL ───────► Motors: PASSIVE, Direction: CW/CCW (retained)
-                │                   Output: Float (or brake if commanded)
-                │                   Use: Clutch disengaged, ready to engage
-                │
-                └─ DRIVE ─────────► Motors: RUN, Direction: CW or CCW
-                    │               Output: PWM (active control)
-                    ├─ Forward Mode  Direction: Calibrated CCW/CW
-                    └─ Reverse Mode  Direction: Calibrated CCW/CW
+    Sub-states of [MC_STATE_MAIN]. Diagram: Motor/Docs/MotorController_StateMachine.md
 */
 /******************************************************************************/
 typedef enum Traction_StateInput

@@ -199,7 +199,9 @@ static inline uint16_t VBus_IChargeLimit_Pu(const VBus_T * p_vbus) { return frac
 /* The supply window on i_dc, drawing positive */
 static inline interval_t VBus_ILimitInterval(const VBus_T * p_vbus) { return (interval_t){ .low = 0 - VBus_IChargeLimit_Pu(p_vbus), .high = VBus_IDischargeLimit_Pu(p_vbus) }; }
 
-
+/*
+    Derate expressed as mutually exclusive active condition.
+*/
 static inline ufract16_t VBus_IDerateActive(const VBus_T * p_vbus)
 {
     switch (p_vbus->MonitorState.Status)

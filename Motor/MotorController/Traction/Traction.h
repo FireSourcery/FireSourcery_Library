@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Motor/Motor/Motor_Table.h"
+#include "Motor/Motor/Extension/Motor_Table.h"
 #include "Motor/Motor/Motor_Include.h"
 
 #include "Transducer/Blinky/Blinky.h"

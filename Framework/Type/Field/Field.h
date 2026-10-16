@@ -29,8 +29,8 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Type/accessor.h"
-#include "Type/void_pointer.h"
+#include "Framework/Type/accessor.h"
+#include "Framework/Type/void_pointer.h"
 
 /*
     Field Accessor

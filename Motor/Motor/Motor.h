@@ -365,7 +365,7 @@ Motor_Context_T;
 
 
 /*!
-    @brief Motor Compile-time const configuration instance.
+    @brief [Motor] Compile-time const configuration instance.
     program, meta, unrelated to end user config.
     Full Context for Thread and StateMachine.
 */
@@ -430,9 +430,7 @@ static inline angle_freq_t Motor_SpeedBase(Motor_T * p_motor) { return Motor_Spe
 static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 
-// /* Supply current limits at this motor's operating point */
-// static inline uint16_t Motor_VBusILimitMotoring(Motor_T * p_motor) { return VBus_ILimitMotoring_Pu(p_motor->P_VBUS, FOC_Vq(&p_motor->P_MOTOR->Foc)); }
-// static inline uint16_t Motor_VBusILimitGenerating(Motor_T * p_motor) { return VBus_ILimitGenerating_Pu(p_motor->P_VBUS, FOC_Vq(&p_motor->P_MOTOR->Foc)); }
+
 
 /******************************************************************************/
 /*

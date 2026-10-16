@@ -36,44 +36,7 @@
 
 /******************************************************************************/
 /*!
-    @brief
-
-    Architecture decoupling requirements:
-    Main State Machine does not know about App specific states/inputs
-
-    - A new state is justified by a different safety envelope, not a different purpose
-    - One-shot automated procedures get a state; interactive parameter adjustment does not
-    - Orthogonal concerns get orthogonal mechanisms
-        e.g. what control structure is running vs. what input source is connected
-    - Lock is for things the operator must commit to and acknowledge as risky
-        (out of normal operation to do something special)
-    - The operator use case should not conflate with the system's state
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
-
-*/
-/*
-    ┌────────────────────────────────────────────────────────────┐
-    │                   SYSTEM (Top Level)                       │
-    │  ┌───────────┐  ┌──────────────────────────────────────┐   │
-    │  │   INIT    │──│         OPERATIONAL                  │   │
-    │  └───────────┘  │  ┌────────────────────────────────┐  │   │
-    │                 │  │        PARK/STANDBY            │  │   │
-    │                 │  └────────────────────────────────┘  │   │
-    │                 │  ┌────────────────────────────────┐  │   │
-    │                 │  │         SUB-TREE (APP)         │  │   │
-    │                 │  │                                │  │   │
-    │                 │  └────────────────────────────────┘  │   │
-    │                 └──────────────────────────────────────┘   │
-    │  ┌───────────┐                                             │
-    │  │   FAULT   │◄────────────────────────────────────────────│
-    │  └───────────┘                                             │
-    └────────────────────────────────────────────────────────────┘
-*/
-/*
-    Top layer handles Standby State
+    @brief State diagram and design rules: Motor/Docs/MotorController_StateMachine.md
 */
 /******************************************************************************/
 

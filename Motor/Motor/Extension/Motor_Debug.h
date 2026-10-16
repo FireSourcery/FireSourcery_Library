@@ -33,7 +33,7 @@
 #define MOTOR_DEBUG_H
 
 #include "System/SysTime/SysTime.h"
-#include "Motor.h"
+#include "../Motor.h"
 
 
 // static inline void Motor_Debug_CaptureRefTime(Motor_Context_T * p_motor)

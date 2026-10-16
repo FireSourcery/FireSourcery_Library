@@ -135,7 +135,7 @@ flowchart TD
     N -->|other| T["exit up to common ancestor<br/>enter down to other"]
 ```
 
-Returning `this` is how [MOTOR_STATE_RUN](../../Motor/Motor/StateMachine/Motor_StateMachine.c) re-enters itself when feedback mode changes, so `Run_Entry` re-matches the control loops. Returning `NULL` after mutating context is an internal transition: direction and feedback writes in `DEACTIVATED` do this.
+Returning `this` is how [MOTOR_STATE_RUN](../../Motor/Motor/Motor_StateMachine.c) re-enters itself when feedback mode changes, so `Run_Entry` re-matches the control loops. Returning `NULL` after mutating context is an internal transition: direction and feedback writes in `DEACTIVATED` do this.
 
 Input acceptance and transition are separate. The walk stops at the first state that *maps* the id, even when that handler returns `NULL`. A child that maps an id and refuses it shadows the parent. A child that leaves the slot `NULL` does not.
 
