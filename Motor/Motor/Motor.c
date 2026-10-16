@@ -225,6 +225,7 @@ void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
 void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
 {
     p_dev->P_MOTOR->FeedbackMode.Value = mode.Value;
+    // Motor_ResolveFeedbackLimits(p_dev);
 }
 
 

@@ -44,6 +44,12 @@
 #define MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG (200000U) /* 10 seconds at 20kHz */
 #endif
 
+/* Current control regardless of FeedbackMode, shared by the Intervention leaves */
+static void Intervention_OnILimits(Motor_T * p_motor)
+{
+    Motor_ResolveILimits(p_motor->P_MOTOR);
+}
+
 /******************************************************************************/
 /*
     Ramp Target is owned by user setters
@@ -76,6 +82,18 @@ static void TorqueZero_Proc(Motor_T * p_motor)
     Motor_FOC_WriteDuty(p_motor);
 }
 
+static void TorqueZero_CaptureSpeed(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
+}
+
+static const State_Action_T TORQUE_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
+{
+    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)TorqueZero_CaptureSpeed,
+    [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
+    [MOTOR_STATE_INPUT_ON_I_LIMITS] = (State_Action_T)Intervention_OnILimits,
+};
 
 static State_T * TorqueZero_Next(Motor_T * p_motor)
 {
@@ -95,6 +113,7 @@ const State_T INTERVENTION_STATE_TORQUE_ZERO =
     .ENTRY      = (State_Action_T)TorqueZero_Entry,
     .LOOP       = (State_Action_T)TorqueZero_Proc,
     .NEXT       = (State_Input0_T)TorqueZero_Next,
+    .P_ACTION_TABLE = &TORQUE_ZERO_ACTION_TABLE[0U],
 };
 
 
@@ -141,6 +160,7 @@ static const State_Action_T RAMP_DOWN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENG
 {
     [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)RampDown_CaptureSpeed,
     [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
+    [MOTOR_STATE_INPUT_ON_I_LIMITS] = (State_Action_T)Intervention_OnILimits,
 };
 
 static const State_Input_T RAMP_DOWN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =

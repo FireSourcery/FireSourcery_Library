@@ -84,9 +84,18 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
     int32_t proportional = fract16e_mul(p_pid->Kp, error); /* Includes 15 shift */
 
-    /* Dynamic Clamp */
-    int32_t integralMin = p_pid->OutputMin - proportional;
-    int32_t integralMax = p_pid->OutputMax - proportional;
+    /*
+        Dynamic Clamp, anchored at the accumulator.
+        [OutputMin - proportional, OutputMax - proportional] stops integration into saturation, never pushes the integral.
+        Within the output band ahead of the shift.
+    */
+    int32_t integralMin = math_min(p_pid->IntegralAccum, math_clamp(p_pid->OutputMin - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15);
+    int32_t integralMax = math_max(p_pid->IntegralAccum, math_clamp(p_pid->OutputMax - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15);
+
+    // int32_t integralMin = math_clamp(p_pid->OutputMin - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15;
+    // int32_t integralMax = math_clamp(p_pid->OutputMax - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15;
+    // int32_t integralMin = math_min(p_pid->OutputMin - proportional, p_pid->OutputMax) << 15;
+    // int32_t integralMax = math_max(p_pid->OutputMax - proportional, p_pid->OutputMin) << 15;
 
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
@@ -94,7 +103,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
         Forward rectangular approximation.
     */
     int32_t integralAccum = p_pid->IntegralAccum + fract16e_mul(p_pid->KiPerTick, error); /* Excludes 15 shift */
-    p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
+    p_pid->IntegralAccum = math_clamp(integralAccum, integralMin, integralMax);
     int32_t integral = p_pid->IntegralAccum >> 15;
 
     p_pid->ErrorPrev = error;
@@ -163,6 +172,7 @@ void PID_SetOutputState(PID_T * p_pid, int16_t output)
     _PID_SetOutputState(p_pid, (int16_t)math_clamp(output, p_pid->OutputMin, p_pid->OutputMax));
 }
 
+/* Persistent limits, the integral moves into range. PID_CaptureOutputLimits leaves it to the dynamic clamp */
 void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 {
     if (max >= min) /* allow 0 width band */

@@ -36,7 +36,7 @@
     Supply limit enforcement
         VBUS_I_LIMIT_POWER_BALANCE  q-axis limit at the operating point (v_d, i_d, v_q), exact
         VBUS_I_LIMIT_PHASE_BOUND    phase-current bound keyed by the motion, conservative below full modulation
-        VBUS_I_LIMIT_V_DERATE       voltage ramps as ratios of each motor's I limits, no DC limit. Composed by the upper layer.
+        VBUS_I_LIMIT_V_DERATE       voltage ramps as ratios of each motor's I limits, no DC limit. Composed into the derate pair by the upper layer.
     The first two take different inputs. The caller selects at the operating point it holds.
 */
 #if !defined(VBUS_I_LIMIT_POWER_BALANCE) && !defined(VBUS_I_LIMIT_PHASE_BOUND) && !defined(VBUS_I_LIMIT_V_DERATE)

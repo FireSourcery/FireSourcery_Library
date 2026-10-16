@@ -485,15 +485,6 @@ static inline interval_t Motor_GetSpeedLimits(const Motor_Context_T * p_motor) {
     TorqueRamp carries V limits in voltage mode; Run_Entry resolves them through [Motor_ResolveFeedbackLimits].
 */
 /* Torque commands sent over serial/CAN clamped until next send */
-// static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
-// {
-//     if (p_motor->FeedbackMode.Current == 1)
-//     {
-//         Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
-//         if (p_motor->FeedbackMode.Speed == 1) { PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high); } /* SpeedPid Output is I */
-//     }
-// }
-
 /* unconditional */
 static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
 {
@@ -662,6 +653,10 @@ static inline bool Motor_IsDirectionStopped(const Motor_Context_T * p_motor) { r
 /******************************************************************************/
 static inline uint16_t _Motor_GetIAlign(const Motor_Context_T * p_motor) { return p_motor->Config.IAlign_Pu; }
 static inline uint16_t _Motor_GetVAlign(const Motor_Context_T * p_motor) { return p_motor->Config.VAlign_Pu; }
+
+/* d-axis align within [0:IAlign], independent of Direction and the pushed limits */
+static inline void Motor_FOC_SetAlignILimits(Motor_Context_T * p_motor) { Ramp_SetLimits(&p_motor->TorqueRamp, 0, _Motor_GetIAlign(p_motor)); }
+
 
 /******************************************************************************/
 /*!

@@ -38,3 +38,25 @@ flowchart LR
     M -- "member[Base]" --> B
     M -- "index" --> W
 ````
+
+```mermaid
+flowchart LR
+    CAP["ω capture, 1 ms"] --> FF["vd_ff = −ω·Lq·iq<br/>vq_ff = ω·Ld·id + ω·ψ"]
+    BUS["vPhaseLimit = vBus / 2"] --> BD["PidId band<br/>±vPhaseLimit − vd_ff"]
+    FF --> BD
+    BD --> PD["PidId: P + I, anchored"] --> VD["Vd = PI + vd_ff"]
+    VD --> CIRC["Vq budget<br/>√(vPhaseLimit² − Vd²)"]
+    CIRC --> BAND["vqBand = ±budget ∩ VLimit"]
+    POL["VLimit policy"] --> BAND
+    BAND --> BQ["PidIq band<br/>vqBand − vq_ff"]
+    FF --> BQ
+    BQ --> PQ["PidIq: P + I, anchored"] --> VQ["Vq = PI + vq_ff"]
+```
+```mermaid
+stateDiagram-v2
+    direction LR
+    Inside: P + I inside the PI band, integrates
+    Edge: P + I beyond an edge, I holds, output clamped to the edge
+    Inside --> Edge: band moves in, or P grows
+    Edge --> Inside: band moves out, P shrinks, or the error reverses
+```

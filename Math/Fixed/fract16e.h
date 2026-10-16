@@ -51,9 +51,7 @@
 typedef struct { int16_t mantissa; uint8_t shift; } fract16e_t;
 
 static inline int8_t fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a.shift; }
-// static inline fract16e_t fract16e_ (fract16_t mantissa, int8_t m) { return (fract16e_t) { .mantissa = mantissa, .shift = FRACT16_N_BITS - m }; }
 
-static inline fract16e_t fract16e_k(accum32_t value, int8_t m) { return (fract16e_t){ .mantissa = (int16_t)(value >> m), .shift = FRACT16_N_BITS - m }; }
 
 /******************************************************************************/
 /*!
@@ -68,6 +66,11 @@ static inline fract16e_t _fract16e(int32_t value, int8_t shift)
     assert(math_is_in_range(shift - excess, 0, 31));
     return (fract16e_t) { .mantissa = (int16_t)(value >> excess), .shift = shift - excess };
 }
+
+/*
+    Known integer bit width of the value.
+*/
+static inline fract16e_t fract16e_k(accum32_t value, int8_t m) { return (fract16e_t){ .mantissa = (int16_t)(value >> m), .shift = FRACT16_N_BITS - m }; }
 
 
 /*
@@ -102,10 +105,7 @@ static inline fract16e_t fract16e_of_ratio(int32_t num, uint16_t den)
     return fract16e((num << (FRACT16_N_BITS - exp)) / den, exp);
 }
 
-static inline fract16e_t fract16e_of_factors(int32_t num, int32_t factor)
-{
-    return fract16e_of((int64_t)num * factor >> FRACT16_N_BITS);
-}
+
 
 static inline fract16e_t fract16e_merge(fract16e_t a, fract16e_t b)
 {

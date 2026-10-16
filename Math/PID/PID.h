@@ -57,14 +57,14 @@ typedef struct PID
 {
     /*  */
     int32_t IntegralAccum; /* Shifted 15 */
-    int16_t ErrorPrev;
+    int32_t ErrorPrev;     /* setpoint - feedback, [-65535:65535] */
     int16_t OutputMin; /* -32768 Min */
     int16_t OutputMax; /* 32767 Max */
     int16_t Output;
 
     /*
-        Run-time coefficients. Store as Fixed32.
-        Reapeating derived getter/setter may result in loss of precision
+        Run-time gains, derived from Config.
+        Config holds the Q17.15 source, a readback through the derived form may lose precision
     */
     fract16e_t Kp;
     fract16e_t KiPerTick;       /* Ki / SampleFreq, into IntegralAccum */

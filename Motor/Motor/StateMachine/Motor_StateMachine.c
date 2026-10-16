@@ -425,10 +425,16 @@ static void Run_OnSpeed(Motor_T * p_motor)
     if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
 }
 
+static void Run_OnILimits(Motor_T * p_motor)
+{
+    if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor->P_MOTOR); }
+}
+
 static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)Run_OnSpeed,
     [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
+    [MOTOR_STATE_INPUT_ON_I_LIMITS] = (State_Action_T)Run_OnILimits,
     // [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Motor_FOC_ProcAngleControl,
 };
 

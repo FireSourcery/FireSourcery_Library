@@ -84,22 +84,18 @@ static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (
 static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqLimits(p_motor->P_VBUS, FOC_Vd(&p_motor->P_MOTOR->Foc), FOC_Id(&p_motor->P_MOTOR->Foc), FOC_Vq(&p_motor->P_MOTOR->Foc)); }
 #elif defined(VBUS_I_LIMIT_PHASE_BOUND)
 static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqPhaseLimits(p_motor->P_VBUS, math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR)), FOC_Id(&p_motor->P_MOTOR->Foc)); }
+#elif defined(VBUS_I_LIMIT_V_DERATE)
+/* The bus ramps ride the derate pair */
+static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { (void)p_motor; return interval_symmetric(0, FRACT16_MAX); }
 #endif
 
-/* Held for the re-resolves on Direction, FeedbackMode and state entry. Takes effect on the next resolve. */
+/* Store only. [Motor_ApplyILimits] pushes it to the active state. */
 static inline void Motor_CaptureISupplyLimits(Motor_T * p_motor) { p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits(p_motor); }
-
 static inline void Motor_ResolveISupplyLimits(Motor_T * p_motor)
 {
     Motor_CaptureISupplyLimits(p_motor);
     Motor_ResolveILimits(p_motor->P_MOTOR);
-    // interval_t iLimits = p_motor->P_MOTOR->ISupplyLimits;
-    // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, iLimits.low, iLimits.high);
-    // PID_SetOutputLimits(&p_motor->P_MOTOR->PidSpeed, iLimits.low, iLimits.high);
 }
-
-/* d-axis align within [0:IAlign], independent of Direction and the pushed limits */
-static inline void Motor_FOC_SetAlignILimits(Motor_Context_T * p_motor) { Ramp_SetLimits(&p_motor->TorqueRamp, 0, _Motor_GetIAlign(p_motor)); }
 
 
 /*

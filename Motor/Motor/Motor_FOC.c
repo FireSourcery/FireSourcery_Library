@@ -92,8 +92,8 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t angle, fract16_t idReq)
 {
     // Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, Motor_ILimitMotoring(p_motor))), 0);
-    Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))), 0);
-    // optionally split to non deboupled.
+    // Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))), 0);
+    Motor_FOC_AngleControl(p_motor, vBus, angle, _Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))), 0);
 }
 
 void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idReq)

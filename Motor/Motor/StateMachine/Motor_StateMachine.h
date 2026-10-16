@@ -107,6 +107,7 @@ typedef enum Motor_StateAction
 {
     MOTOR_STATE_INPUT_ON_SPEED, /* Speed feedback */
     MOTOR_STATE_INPUT_ON_PHASE, /* Phase I/V */
+    MOTOR_STATE_INPUT_ON_I_LIMITS, /* I limit inputs changed, [Motor_ApplyILimits] */
     MOTOR_STATE_ACTION_TABLE_LENGTH,
 }
 Motor_StateAction_T;
@@ -245,6 +246,22 @@ static void Motor_Enable(Motor_T * p_motor)
 // }
 
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+/*
+    Push the held I limit inputs to the active state, after [Motor_SetILimit*] or [Motor_CaptureISupplyLimits].
+    The state running the current loop resolves. Same lock as the async inputs.
+*/
+// void Motor_OnILimits(Motor_T * p_motor)
+// {
+//     if (_StateMachine_AcquireAsyncInput(p_motor->STATE_MACHINE.P_ACTIVE) == true)
+//     {
+//         _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_I_LIMITS);
+//         _StateMachine_ReleaseAsyncInput(p_motor->STATE_MACHINE.P_ACTIVE);
+//     }
+// }
 
 /******************************************************************************/
 /*

@@ -110,6 +110,7 @@ inline void Motor_ApplyFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode
     if (mode.Value != p_motor->P_MOTOR->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 
+
 /******************************************************************************/
 /*!
     Direction/Stop

@@ -321,7 +321,6 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, angle16_t delta)
     p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Electrical.Psi, delta);
 }
 
-
 /*
     Minimal change. eliminates __aeabi_lmul on M0
 */

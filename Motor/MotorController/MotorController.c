@@ -149,30 +149,29 @@ static inline ufract16_t MotorController_SpeedDerate(MotorController_T * p_dev) 
 // }
 
 /*
-    VBUS_I_LIMIT_V_DERATE: the VBus ramps join the ratio per side.
+    Recomposed from every source on each push, no record of which source binds.
+    VBUS_I_LIMIT_V_DERATE: the bus ramps join the ratio per side.
         Motoring draws from the bus and Generating returns to it while the V limits are anti-plugging.
-    Otherwise each motor captures its supply window at its own operating point, resolved with the derate.
+    Otherwise each motor captures its supply window at its own operating point.
+    Pushed to each motor's active state.
 */
-#if defined(VBUS_I_LIMIT_V_DERATE)
 void MotorController_ApplyILimits(MotorController_T * p_dev)
 {
     ufract16_t derate = MotorController_IDerate(p_dev);
+#if defined(VBUS_I_LIMIT_V_DERATE)
     ufract16_t motoring = math_min(derate, VBus_GetIDerateUnderV(p_dev->P_VBUS));
     ufract16_t generating = math_min(derate, VBus_GetIDerateOverV(p_dev->P_VBUS));
-    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, motoring, generating); }
-}
 #else
-void MotorController_ApplyILimits(MotorController_T * p_dev)
-{
-//   interval_t supply = VBus_ILimitInterval(p_dev->P_VBUS);
-    ufract16_t derate = MotorController_IDerate(p_dev);
+    ufract16_t motoring = derate;
+    ufract16_t generating = derate;
+#endif
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
     {
-        // Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]);
-        Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, derate, derate);
+        Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, motoring, generating);
+        // Motor_ApplyILimits(&p_dev->MOTORS.P_DEVS[iMotor]);
+        // Motor_ResolveILimits(p_motor);
     }
 }
-#endif
 
 void MotorController_ApplySpeedLimits(MotorController_T * p_dev)
 {
