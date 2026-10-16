@@ -260,11 +260,11 @@ static inline bool foc_is_regen(fract16_t vq, accum32_t e_q, ufract16_t window) 
     dynamic overlay to intersect with base
 */
 /* the controller to pick up the requested direction through zero */
-// static inline sign_t _foc_vmotion_sign_of(accum32_t omega_psi, int32_t iqReq)
-// {
-//     sign_t motionSign = math_sign(omega_psi);
-//     return (motionSign != SIGN_ZERO) ? motionSign : math_sign(iqReq);
-// }
+static inline sign_t _foc_vmotion_sign(accum32_t omega_psi, int32_t iqReq)
+{
+    sign_t motionSign = math_sign(omega_psi);
+    return (motionSign != SIGN_ZERO) ? motionSign : math_sign(iqReq);
+}
 
 // static inline interval_t _foc_vbrakeoverlay(accum32_t omega_psi, int32_t iqReq, int32_t vqLimit)
 // {

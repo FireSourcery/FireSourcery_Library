@@ -150,7 +150,7 @@ static inline int32_t MotAnalogUser_ConfigId_Get(MotorController_T * p_mc, MotAn
         case MOT_ANALOG_USER_BRAKE_MAX_ADCU:               return UserAIn_Config_Get(&p_mc->AINS[MOT_AIN_BRAKE].PIN, USER_AIN_MAX_ADCU);
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:     return UserAIn_Config_Get(&p_mc->AINS[MOT_AIN_BRAKE].PIN, USER_AIN_EDGE_PIN_IS_ENABLE);
         case MOT_ANALOG_USER_SWITCH_BRAKE_VALUE:           return p_mc->P_MC->Config.OptDinConfig.SwitchBrakeFloor_Percent16;
-        case MOT_ANALOG_USER_DIRECTION_PINS:               return p_mc->P_MC->Config.ShifterConfig.PinMode.Value;
+        case MOT_ANALOG_USER_DIRECTION_PINS:               return p_mc->P_MC->Config.ShifterConfig.PinMode;
         default: return 0;
     }
 }
@@ -167,7 +167,7 @@ static inline void MotAnalogUser_ConfigId_Set(MotorController_T * p_mc, MotAnalo
         case MOT_ANALOG_USER_BRAKE_MAX_ADCU:               UserAIn_Config_Set(&p_mc->AINS[MOT_AIN_BRAKE].PIN, USER_AIN_MAX_ADCU, value);                  break;
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:     UserAIn_Config_Set(&p_mc->AINS[MOT_AIN_BRAKE].PIN, USER_AIN_EDGE_PIN_IS_ENABLE, value);        break;
         case MOT_ANALOG_USER_SWITCH_BRAKE_VALUE:           p_mc->P_MC->Config.OptDinConfig.SwitchBrakeFloor_Percent16 = (uint16_t)value;                  break;
-        case MOT_ANALOG_USER_DIRECTION_PINS:               p_mc->P_MC->Config.ShifterConfig.PinMode.Value = (uint8_t)value;                               break;
+        case MOT_ANALOG_USER_DIRECTION_PINS:               p_mc->P_MC->Config.ShifterConfig.PinMode = (Shifter_PinMode_T)value;                           break;
         default: break;
     }
 }

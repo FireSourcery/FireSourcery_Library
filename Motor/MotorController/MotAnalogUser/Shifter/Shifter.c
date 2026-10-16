@@ -37,12 +37,19 @@ const Shifter_Direction_T DECODE_TABLE_R_ONLY[8] = { _F, _R, _F, _R, _F, _R, _F,
 
 /******************************************************************************/
 /*
-    Apply — the Config.PinMode mask is the SKU. It gates Init (only wired
+    Apply — Config.PinMode is the SKU. Its wired-pin mask gates Init (only wired
     pins are touched, and only when their HAL is non-NULL) and selects the
     decode table. The Forward bit is the discriminator: R-only (no Forward
     pin) defaults to Forward; FNR/FR share a table.
 */
 /******************************************************************************/
+static const Shifter_Pins_T WIRED_PINS[] =
+{
+    [SHIFTER_PIN_MODE_FR]  = { .Forward = 1, .Reverse = 1 },
+    [SHIFTER_PIN_MODE_R]   = { .Reverse = 1 },
+    // [SHIFTER_PIN_MODE_FNR] = { .Neutral = 1, .Forward = 1, .Reverse = 1 },
+};
+
 static inline const Shifter_Direction_T * SelectDecodeTable(Shifter_Pins_T pins)
 {
     return pins.Forward ? DECODE_TABLE_FNR : DECODE_TABLE_R_ONLY;
@@ -56,7 +63,7 @@ static inline const Shifter_Direction_T * SelectDecodeTable(Shifter_Pins_T pins)
 void Shifter_InitFrom(const Shifter_T * p_shifter, const Shifter_Config_T * p_config)
 {
     if (p_config != NULL) { p_shifter->P_STATE->Config = *p_config; }
-    Shifter_SetPinMode(p_shifter, p_shifter->P_STATE->Config.PinMode.Value);
+    Shifter_SetPinMode(p_shifter, p_shifter->P_STATE->Config.PinMode);
     p_shifter->P_STATE->LastDirection = SHIFTER_DIRECTION_NEUTRAL;
 }
 
@@ -67,8 +74,8 @@ void Shifter_InitFrom(const Shifter_T * p_shifter, const Shifter_Config_T * p_co
 
 void Shifter_SetPinMode(const Shifter_T * p_shifter, Shifter_PinMode_T mode)
 {
-    Shifter_Pins_T pins = { .Value = (uint8_t)mode };
-    p_shifter->P_STATE->Config.PinMode = pins;
+    Shifter_Pins_T pins = WIRED_PINS[mode];
+    p_shifter->P_STATE->Config.PinMode = mode;
 #if defined(SHIFTER_PINS_FR_OPTION)
     p_shifter->P_STATE->p_DecodeTable = SelectDecodeTable(pins);
 #endif
@@ -103,16 +110,6 @@ int32_t Shifter_ConfigId_Get(const Shifter_T * p_shifter, Shifter_ConfigId_T id)
     switch (id)
     {
         case SHIFTER_CONFIG_PIN_MODE: value = p_shifter->P_STATE->Config.PinMode.Value; break;
-        default: break;
     }
     return value;
-}
-
-void Shifter_ConfigId_Set(const Shifter_T * p_shifter, Shifter_ConfigId_T id, int32_t value)
-{
-    switch (id)
-    {
-        case SHIFTER_CONFIG_PIN_MODE: Shifter_SetPinMode(p_shifter, (Shifter_PinMode_T)value); break;
-        default: break;
-    }
 }

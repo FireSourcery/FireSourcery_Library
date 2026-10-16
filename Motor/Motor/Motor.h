@@ -277,7 +277,7 @@ typedef struct Motor_Context
     uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, state counter. Overflow 20Khz: 59 hours */
 
     /* Effectively Substates StateMachine Controlled */
-    Motor_Direction_T Direction;            /* Direction of applied/cmd V. now shadows FOC.VLimit */
+    Motor_Direction_T Direction;            /* Direction of applied/cmd V. now shadows FOC.VLimit  VLimit [0, +] or [-, 0], VLimit[vq-window, vq+window] */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
 
@@ -308,6 +308,7 @@ typedef struct Motor_Context
     /*
         Operating envelope. FOC layer owns voltage limits.
         Active Limit inputs. Unsigned user frame, PU. Ramp.Limits holds the materialized [Cw:Ccw] output.
+        Set by system constrains independent of torque direction.
         Held because Direction/FeedbackMode changes re-resolve without the upper layer,
             and Ramp.Limits cannot be read back — [0:0] on Direction NULL.
         Pushed by the upper layer. FRACT16_MAX => no cap, Config is the ceiling.
@@ -468,6 +469,8 @@ static inline ufract16_t Motor_ILimitGenerating(const Motor_Context_T * p_motor)
 static inline ufract16_t Motor_SpeedLimitForward(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Forward, p_motor->Config.SpeedLimitForward_Pu); }
 static inline ufract16_t Motor_SpeedLimitReverse(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Reverse, p_motor->Config.SpeedLimitReverse_Pu); }
 
+static inline interval_t Motor_ILimitInterval(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)) ; }
+
 
 /*
     Direction resolve. I: Motoring aligns with Direction, NULL collapses to [0:0], within the supply window. Speed: Forward aligns with Config.DirectionForward.
@@ -490,7 +493,6 @@ static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLi
         if (p_motor->FeedbackMode.Speed == 1) { PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high); } /* SpeedPid Output is I */
     }
 }
-
 
 /* unconditional */
 // static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)

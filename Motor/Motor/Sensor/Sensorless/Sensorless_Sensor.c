@@ -43,14 +43,14 @@ static void Sensorless_Sensor_Init(const Sensorless_Sensor_T * p_sensor)
     FOC_Sensorless_Init(p_sensor->P_OBSERVER, p_sensor->P_NVM_CONFIG);
 }
 
-/* Idempotent publish — Step already mirrors observer state into the FOC_Sensorless
-   AngleSpeed; here we forward it to the RotorSensor common interface state. */
+/* Idempotent publish — Step already advances θ̂, ω̂ in the observer's [AnglePll_T];
+   here we forward it to the RotorSensor common interface state. */
 static void Sensorless_Sensor_CaptureAngle(const Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
-    p_rotor->AngleSpeed.Angle = p_sensor->P_OBSERVER->AngleSpeed.Angle;
-    // p_rotor->AngleSpeed.Delta = p_sensor->P_OBSERVER->AngleSpeed.Delta;
-    _RotorSensor_CaptureDelta(p_rotor, p_sensor->P_OBSERVER->AngleSpeed.Delta);
+    p_rotor->AngleSpeed.Angle = p_sensor->P_OBSERVER->Pll.Base.Angle;
+    // p_rotor->AngleSpeed.Delta = p_sensor->P_OBSERVER->Pll.Base.Delta;
+    _RotorSensor_CaptureDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
 }
 
 /* Project observer ω̂ → fract16 speed via the configured SpeedPuRef.

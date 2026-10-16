@@ -35,6 +35,7 @@
 
 #include "Peripheral/ADC/ADC_Thread.h"
 #include "MotAnalogUser/OptPin/MotorController_OptPin.h"
+#include "Transducer/Monitor/Voltage/VMonitor.h"
 
 /******************************************************************************/
 /*
@@ -159,6 +160,8 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
     {
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:    _MotorController_VBus_EnterFault(p_dev);    break;
+        case VMONITOR_STATUS_WARNING_HIGH:
+        case VMONITOR_STATUS_WARNING_LOW: break;
         default: break;
     }
 
@@ -239,7 +242,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         {
             /* The supply limits follow the bus and each motor's operating point */
             /* PWM ISR can preempt Motor_SetILimits.  */
-            MotorController_ApplyILimits(p_dev);
+            // MotorController_ApplyILimits(p_dev);
+            for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_ResolveISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]); }
 
             Blinky_Proc(&p_dev->BUZZER);
             Blinky_Proc(&p_dev->METER);
@@ -258,6 +262,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
+
+            MotorController_ApplyILimits(p_dev);
 
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
             MotorController_ApplySpeedLimits(p_dev);

@@ -172,10 +172,11 @@ static inline void AngleCounter_InitLimits(AngleCounter_T * p_counter, angle16_t
 */
 /******************************************************************************/
 static inline angle16_t AngleCounter_GetAngleDelta(AngleCounter_T * p_counter) { return Angle_Delta(&p_counter->Base); }
-static inline int32_t AngleCounter_GetSpeed_Pu(AngleCounter_T * p_counter) { return (p_counter->FreqD * (int32_t)p_counter->UnitRef.SpeedPuPerCount >> 15); }
 
 /* FreqD-based, of the counter revolution, using stored CountsPerRevolution */
 static inline angle_freq_t AngleCounter_GetAngleFreq(const AngleCounter_T * p_counter) { return angle_freq_of_count_freq(p_counter->UnitRef.CountsPerRevolution, p_counter->FreqD); }
+static inline int32_t AngleCounter_GetSpeed_Pu(AngleCounter_T * p_counter) { return (p_counter->FreqD * (int32_t)p_counter->UnitRef.SpeedPuPerCount >> 15); }
+
 static inline int32_t AngleCounter_GetRpm(const AngleCounter_T * p_counter) { return rpm_of_count_freq(p_counter->UnitRef.CountsPerRevolution, p_counter->FreqD); }
 static inline int32_t AngleCounter_GetCps(const AngleCounter_T * p_counter) { return cps_of_count_freq(p_counter->UnitRef.CountsPerRevolution, p_counter->FreqD); }
 
@@ -188,8 +189,6 @@ static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { 
     Init / Reset
 */
 /******************************************************************************/
-
-
 /******************************************************************************/
 /*
     Counter Ref Init - Compute runtime units from calibration

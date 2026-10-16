@@ -106,7 +106,7 @@ typedef struct FOC
     PID_T PidId;
 
     /*
-        Runtime V parameters directly visible in the FOC object, rather than passed per call.
+        Owns the V policy. Set by caller.
     */
     interval_t VLimit; /* asymmetric limits */
     fract16_t VWindow; /* plugging window approach */
@@ -445,6 +445,13 @@ static inline void FOC_SetVSymmetric(FOC_T * p_foc, uint16_t vq) { p_foc->VLimit
 
 /* Half-plane anti-plugging */
 static inline void FOC_SetVAntiPlugging(FOC_T * p_foc, sign_t sign, uint16_t vq) { p_foc->VLimit = interval_half_plane(sign, vq); }
+
+// static inline void FOC_SetVAntiPlugging(FOC_T * p_foc, sign_t sign, uint16_t vq)
+// {
+//     p_foc->VLimit = interval_of(sign * vq);
+//     PID_SetOutputLimits(&p_foc->PidIq, p_foc->VLimit.low, p_foc->VLimit.high);  /* overwritten on loop */
+//     PID_SetOutputLimits(&p_foc->PidId, 0 - vq, vq);
+// }
 
 static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPhaseLimit)
 {

@@ -68,6 +68,11 @@ static inline bool Motor_FOC_IsPlugging(const Motor_Context_T * p_motor) { retur
 /* Generating  AND Vq aligns with speed - true regeneration */
 static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (Motor_FOC_IsGenerating(p_motor) && !Motor_FOC_IsPlugging(p_motor)); }
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 /* Supply current limits at this motor's operating point, [Cw:Ccw] */
 #if defined(VBUS_I_LIMIT_POWER_BALANCE)
 
@@ -82,10 +87,16 @@ static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_
 #endif
 
 /* Held for the re-resolves on Direction, FeedbackMode and state entry. Takes effect on the next resolve. */
-#if !defined(VBUS_I_LIMIT_V_DERATE)
 static inline void Motor_CaptureISupplyLimits(Motor_T * p_motor) { p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits(p_motor); }
-#endif
 
+static inline void Motor_ResolveISupplyLimits(Motor_T * p_motor)
+{
+    Motor_CaptureISupplyLimits(p_motor);
+    Motor_ResolveILimits(p_motor->P_MOTOR);
+    // interval_t iLimits = p_motor->P_MOTOR->ISupplyLimits;
+    // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, iLimits.low, iLimits.high);
+    // PID_SetOutputLimits(&p_motor->P_MOTOR->PidSpeed, iLimits.low, iLimits.high);
+}
 
 
 /*
@@ -99,19 +110,18 @@ static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 
 /* Directly read register state */
 /* state machine handles write gate state */
-/*  */
-// static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
-// {
-    // switch (Phase_ReadVOut(&p_dev->PHASE))
-    // {
-    //     case PHASE_VOUT_Z: break;
-    //     case PHASE_VOUT_0: break;
-    //     case PHASE_VOUT_PWM:
-    //         Phase_WriteSvpwm(&p_dev->PHASE, VBus_Inv_Pu(p_dev->P_VBUS), FOC_Va(&p_dev->P_MOTOR->Foc), FOC_Vb(&p_dev->P_MOTOR->Foc), FOC_Vc(&p_dev->P_MOTOR->Foc));
-    //         break;
-    //     default: break;
-    // }
-// }
+static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
+{
+    switch (Phase_ReadVOut(&p_dev->PHASE))
+    {
+        case PHASE_VOUT_Z: break;
+        case PHASE_VOUT_0: break;
+        case PHASE_VOUT_PWM:
+            Phase_WriteSvpwm(&p_dev->PHASE, VBus_Inv_Pu(p_dev->P_VBUS), FOC_Va(&p_dev->P_MOTOR->Foc), FOC_Vb(&p_dev->P_MOTOR->Foc), FOC_Vc(&p_dev->P_MOTOR->Foc));
+            break;
+        default: break;
+    }
+}
 
 
 /******************************************************************************/

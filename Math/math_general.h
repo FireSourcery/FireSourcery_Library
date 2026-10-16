@@ -113,6 +113,7 @@ static inline interval_t interval_half_plane(sign_t sign, int32_t alignedMag)
 
 /* sign-keyed asymmetric pair: aligned magnitude goes with the sign, opposed goes against */
 /* asymmetric magnitudes */
+// static inline interval_t interval_of_support(sign_t s, int32_t aligned, int32_t opposed) { return interval_of_bounds(-s * opposed, s * aligned); }
 static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, int32_t opposedMag)
 {
     switch (sign)
@@ -135,6 +136,7 @@ static inline bool interval_contains(interval_t b, int32_t v) { return math_is_i
     Inverse of interval_of_sign_pair — recover the unsigned magnitudes from a resolved interval.
     interval_of_sign_pair(sign, interval_aligned(i, sign), interval_opposed(i, sign)) == i
 */
+// static inline int32_t interval_support(interval_t i, sign_t s) { return math_max(s * i.low, s * i.high); }
 static inline int32_t interval_aligned(interval_t interval, sign_t sign) { return (sign == SIGN_NEGATIVE) ? -interval.low : interval.high; }
 static inline int32_t interval_opposed(interval_t interval, sign_t sign) { return (sign == SIGN_NEGATIVE) ? interval.high : -interval.low; }
 

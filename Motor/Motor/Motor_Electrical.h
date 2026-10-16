@@ -106,11 +106,10 @@ static inline angle_freq_t _Motor_Electrical_RateOfSi(int32_t si, uint32_t scale
 // #define MOTOR_ANGLE_FREQ_TS     ANGLE_FREQ_OF_RADS(MOTOR_CONTROL_FREQ)  /* 1 rad per Ts. ω_base of L_ts */
 
 /* L_ts = L / (R_base · Ts) = Fs · 2^30 · I_base / (π · AngleFreqPerOhm · V_base) */
-static inline uint32_t Motor_Ld_PuTs(const Motor_Electrical_T * p_electrical) { return l_pu_of_angle_freq(MOTOR_ANGLE_DT_MAX_RADS, Phase_VMaxVolts(), Phase_IMaxAmps(), p_electrical->AngleFreqPerOhmD); }
-static inline void Motor_SetLd_PuTs(Motor_Electrical_T * p_electrical, uint32_t ld_ts) { p_electrical->AngleFreqPerOhmD = angle_freq_of_l_pu(MOTOR_ANGLE_DT_MAX_RADS, Phase_VMaxVolts(), Phase_IMaxAmps(), ld_ts); }
+// #define MOTOR_ANGLE_FREQ_TS ANGLE_FREQ_OF_RADS(MOTOR_CONTROL_FREQ)  /* ω_base = Fs [rad/s] */
+// static inline uint32_t Motor_Ld_PuTs(const Motor_Electrical_T * p_electrical)  { return l_pu_of_angle_freq(MOTOR_ANGLE_FREQ_TS, Phase_VMaxVolts(), Phase_IMaxAmps(), p_electrical->AngleFreqPerOhmD); }
+// static inline uint32_t Motor_Psi_PuTs(const Motor_Electrical_T * p_electrical) { return psi_pu_of_angle_freq(MOTOR_ANGLE_FREQ_TS, Phase_VMaxVolts(), p_electrical->AngleFreqPerVolt); }
 
-static inline uint32_t Motor_Lq_PuTs(const Motor_Electrical_T * p_electrical) { return l_pu_of_angle_freq(MOTOR_ANGLE_DT_MAX_RADS, Phase_VMaxVolts(), Phase_IMaxAmps(), p_electrical->AngleFreqPerOhmQ); }
-static inline void Motor_SetLq_PuTs(Motor_Electrical_T * p_electrical, uint32_t lq_ts) { p_electrical->AngleFreqPerOhmQ = angle_freq_of_l_pu(MOTOR_ANGLE_DT_MAX_RADS, Phase_VMaxVolts(), Phase_IMaxAmps(), lq_ts); }
 
 /*
     Non-inverted form

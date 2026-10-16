@@ -35,13 +35,11 @@
 
 /******************************************************************************/
 /*
-    Pin index — packs the three pin levels (and the SKU's pin-presence mask)
-    into the same 3-bit shape.
+    Pin index — packs the three pin levels (and the wired-pin mask derived
+    from [Shifter_PinMode_T]) into the same 3-bit shape.
     Index = (Neutral<<2) | (Forward<<1) | (Reverse<<0).
 
-    The Config.PinMode field stores which pins are physically wired in the
-    SKU (the presence mask). At runtime the same shape is reused to index
-    the decode table. Pins absent from the mask are USER_DIN_MODE_DISABLED;
+    Pins absent from the wired mask are USER_DIN_MODE_DISABLED;
     Modal polling leaves their Debounce state at 0, so only the rows
     reachable for the SKU are visited. Unreachable rows are still filled
     defensively (Neutral, except R-only which defaults to Forward).
@@ -60,16 +58,16 @@ typedef union Shifter_Pins
 Shifter_Pins_T;
 
 /*
-    Set convenience
-    Wiring variants. (Neutral<<2 | Forward<<1 | Reverse<<0) — assignable directly to Config.PinMode.Value.
-        FNR — three pins, one per gear, mutually exclusive
+    Wiring variants. Selector only, not a pin mask — the wired mask is derived in SetPinMode.
         FR  — two pins (forward + reverse). Neutral = neither pressed
         R   — one pin (reverse). Forward = not reverse. Neutral never emitted
+        FNR — three pins, one per gear, mutually exclusive
 */
 typedef enum Shifter_PinMode
 {
     SHIFTER_PIN_MODE_FR = 0,
     SHIFTER_PIN_MODE_R = 1, /* R-only wiring variant */
+    // SHIFTER_PIN_MODE_FNR = 2,
 }
 Shifter_PinMode_T;
 

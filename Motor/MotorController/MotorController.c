@@ -168,7 +168,7 @@ void MotorController_ApplyILimits(MotorController_T * p_dev)
     ufract16_t derate = MotorController_IDerate(p_dev);
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
     {
-        Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]);
+        // Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]);
         Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, derate, derate);
     }
 }

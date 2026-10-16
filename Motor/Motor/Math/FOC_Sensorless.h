@@ -31,6 +31,7 @@
     Composes foc_sensorless_math primitives into a per-control-tick step. Two EMF front ends, one tail:
         Step         SMO, stationary frame          i_αβ, v_αβ → ê_αβ → LPF → PLL → θ̂, ω̂
         StepVModel   voltage model, estimated dq    i_dq, v_dq → ê_dq → LPF → PLL → θ̂, ω̂
+    Each front end's phase detector feeds the shared [AnglePll_T].
 
     Caller owns the FOC chain. Each control tick the integration layer must:
         1. Sample i_abc → foc_clarke → i_αβ.
@@ -49,6 +50,7 @@
 #include "smo_math.h"
 #include "Math/Fixed/fract16.h"
 #include "Math/Angle/Angle.h"
+#include "Math/Angle/AnglePll.h"
 #include "Math/PID/PID.h"
 
 #include <stdint.h>
@@ -80,7 +82,7 @@ FOC_SensorlessConfig_T;
 /*
     Conservative starting point; K_smo and PllPid will need tuning per motor.
     LpfCoef: ~100 Hz at 20 kHz (k_lp = dt/(τ+dt), τ = 1/(2π·100) = 1592 µs, dt = 50 µs).
-    PLL gains: normalized PllErr (fract16 ±1) → ω̂ (angle16/dt). Kp ≈ 0.01, Ki ≈ 0.001.
+    PLL gains: normalized phase error (fract16 ±1) → ω̂ (angle16/dt). Kp ≈ 0.01, Ki ≈ 0.001.
 */
 #define FOC_SENSORLESS_CONFIG_DEFAULT(VBus, v_max, I, i_max) (FOC_SensorlessConfig_T)     \
 {                                                                                   \
@@ -130,12 +132,8 @@ typedef struct FOC_Sensorless
     fract16_t EmfD, EmfQ;
     ufract16_t EmfMag;
 
-    /* Angle tracker (PLL). AngleSpeed.Angle is θ̂; AngleSpeed.Delta is ω̂ (angle16/dt). */
-    Angle_T AngleSpeed;
+    AnglePll_T Pll;                     /* θ̂, ω̂ */
     // Angle_SpeedPuRef_T SpeedPuRef;
-
-    PID_T PllPid;
-    fract16_t PllErr;                  /* last normalized PLL phase error */
 
     /* Lock detector. */
     uint16_t LockCount;
@@ -153,15 +151,14 @@ FOC_Sensorless_T;
 */
 /******************************************************************************/
 /*
-    PLL and lock detector, shared by the front ends. The caller sets PllErr and EmfMag.
+    PLL and lock detector, shared by the front ends. The caller sets EmfMag.
 */
-static void _FOC_Sensorless_ProcPll(FOC_Sensorless_T * p_obs)
+static void _FOC_Sensorless_ProcPll(FOC_Sensorless_T * p_obs, fract16_t pllErr)
 {
-    /* PID loop filter → ω̂ in angle16/dt. PID error = 0 − PllErr = sin(θ − θ̂): θ̂ lags → +ω̂. Integrate ω̂ → θ̂ (free-wrap). */
-    Angle_Integrate(&p_obs->AngleSpeed, PID_ProcPI(&p_obs->PllPid, p_obs->PllErr, 0));
+    AnglePll_Proc(&p_obs->Pll, pllErr);
 
     /* Lock detector — strong EMF AND tight PLL error, sustained. */
-    bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);
+    bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(pllErr) < p_obs->Config.LockErrTol);
     p_obs->LockCount = stable ? (uint16_t)math_min(p_obs->LockCount + 1, p_obs->Config.LockHoldCount) : 0;
 }
 
@@ -182,13 +179,12 @@ static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t i_alpha, fra
     p_obs->EmfMag = fract16_vector_magnitude(p_obs->EmfAlpha, p_obs->EmfBeta);
 
     /* 3. PLL phase detector — speed-normalized so loop gain is |e|-invariant. */
-    struct fract16_xy vec = Angle_UnitVector(&p_obs->AngleSpeed);  /* {x=cos, y=sin} */
-    p_obs->PllErr = foc_pll_error_normalized(p_obs->Config.LockEmfMin, p_obs->EmfAlpha, p_obs->EmfBeta, vec.y, vec.x);
-    _FOC_Sensorless_ProcPll(p_obs);
+    struct fract16_xy vec = Angle_UnitVector(&p_obs->Pll.Base);  /* {x=cos, y=sin} */
+    _FOC_Sensorless_ProcPll(p_obs, foc_pll_error_normalized(p_obs->Config.LockEmfMin, p_obs->EmfAlpha, p_obs->EmfBeta, vec.y, vec.x));
 }
 
 /* Rotation direction of θ̂. ω̂ = 0 reads forward, so the phase detector never stalls at zero */
-static inline sign_t _FOC_Sensorless_Direction(const FOC_Sensorless_T * p_obs) { return (Angle_Delta(&p_obs->AngleSpeed) < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE; }
+static inline sign_t _FOC_Sensorless_Direction(const FOC_Sensorless_T * p_obs) { return (Angle_Delta(&p_obs->Pll.Base) < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE; }
 
 /*
     Voltage model, estimated dq frame θ̂. Steady state: i_dq is DC at lock, so no di/dt and no LPF phase lag.
@@ -196,19 +192,18 @@ static inline sign_t _FOC_Sensorless_Direction(const FOC_Sensorless_T * p_obs) {
 */
 static void FOC_Sensorless_StepVModel(FOC_Sensorless_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
 {
-    struct fract16_xy unit_i = Angle_UnitVector(&p_obs->AngleSpeed);
-    struct fract16_xy unit_v = fract16_vector(Angle_Value(&p_obs->AngleSpeed) - Angle_Delta(&p_obs->AngleSpeed) / 2);
+    struct fract16_xy unit_i = Angle_UnitVector(&p_obs->Pll.Base);
+    struct fract16_xy unit_v = fract16_vector(Angle_Value(&p_obs->Pll.Base) - Angle_Delta(&p_obs->Pll.Base) / 2);
     struct foc_dq i = foc_park_vector(i_alpha, i_beta, unit_i.y, unit_i.x);
     struct foc_dq v = foc_park_vector(p_obs->VAlpha, p_obs->VBeta, unit_v.y, unit_v.x);
-    accum32_t omega_Lq = accum32_mul(p_obs->Electrical.Lq, Angle_Delta(&p_obs->AngleSpeed));
+    accum32_t omega_Lq = accum32_mul(p_obs->Electrical.Lq, Angle_Delta(&p_obs->Pll.Base));
 
     p_obs->EmfD = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfD, fract16_sat(foc_dq_emf_d(p_obs->Electrical.Rs, omega_Lq, v.d, i.d, i.q)));
     p_obs->EmfQ = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfQ, fract16_sat(foc_dq_emf_q(p_obs->Electrical.Rs, omega_Lq, v.q, i.d, i.q)));
     p_obs->EmfMag = fract16_vector_magnitude(p_obs->EmfD, p_obs->EmfQ);
 
     /* Already in the estimated frame: ê_d is the phase detector, no rotation */
-    p_obs->PllErr = foc_eemf_dq_error_normalized(_FOC_Sensorless_Direction(p_obs), p_obs->Config.LockEmfMin, p_obs->EmfD, p_obs->EmfQ);
-    _FOC_Sensorless_ProcPll(p_obs);
+    _FOC_Sensorless_ProcPll(p_obs, foc_eemf_dq_error_normalized(_FOC_Sensorless_Direction(p_obs), p_obs->Config.LockEmfMin, p_obs->EmfD, p_obs->EmfQ));
 }
 
 /******************************************************************************/
@@ -227,15 +222,8 @@ static inline void FOC_Sensorless_CaptureVoltage(FOC_Sensorless_T * p_obs, fract
     p_obs->VBeta = vbeta;
 }
 
-/* Bumpless seed: align θ̂ and ω̂ to a known reference (e.g. open-loop ramp).
-   Resets the PLL integrator so it doesn't fight the pre-seeded value. */
-static void FOC_Sensorless_SeedAngle(FOC_Sensorless_T * p_obs, angle16_t theta, angle16_t delta)
-{
-    Angle_SetAngle(&p_obs->AngleSpeed, theta);
-    Angle_SetDelta(&p_obs->AngleSpeed, delta);
-    PID_Reset(&p_obs->PllPid);
-    _PID_SetOutputState(&p_obs->PllPid, delta);
-}
+/* Bumpless seed: align θ̂ and ω̂ to a known reference (e.g. open-loop ramp). */
+static inline void FOC_Sensorless_SeedAngle(FOC_Sensorless_T * p_obs, angle16_t theta, angle16_t delta) { AnglePll_Seed(&p_obs->Pll, theta, delta); }
 
 /******************************************************************************/
 /*!
@@ -251,17 +239,15 @@ static void FOC_Sensorless_ResetState(FOC_Sensorless_T * p_obs)
     p_obs->EmfAlpha = 0;  p_obs->EmfBeta = 0;
     p_obs->EmfD = 0;  p_obs->EmfQ = 0;
     p_obs->EmfMag = 0;
-    p_obs->PllErr = 0;
     p_obs->LockCount = 0;
-    Angle_ZeroCaptureState(&p_obs->AngleSpeed);
-    PID_Reset(&p_obs->PllPid);
+    AnglePll_Reset(&p_obs->Pll);
 }
 
 
 static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, const FOC_SensorlessConfig_T * p_config)
 {
     if (p_config != NULL) { p_obs->Config = *p_config; }
-    PID_InitFrom(&p_obs->PllPid, &p_obs->Config.PllPid);
+    AnglePll_InitFrom(&p_obs->Pll, &p_obs->Config.PllPid);
     FOC_Sensorless_ResetState(p_obs);
 }
 
@@ -282,13 +268,13 @@ static void FOC_Sensorless_InitElectrical(FOC_Sensorless_T * p_obs, uint32_t ls_
     Observer outputs
 */
 /******************************************************************************/
-static inline angle16_t  FOC_Sensorless_GetAngle(const FOC_Sensorless_T * p_obs) { return Angle_Value(&p_obs->AngleSpeed); }
-static inline angle16_t  FOC_Sensorless_GetDelta(const FOC_Sensorless_T * p_obs) { return Angle_Delta(&p_obs->AngleSpeed); }
+static inline angle16_t  FOC_Sensorless_GetAngle(const FOC_Sensorless_T * p_obs) { return Angle_Value(&p_obs->Pll.Base); }
+static inline angle16_t  FOC_Sensorless_GetDelta(const FOC_Sensorless_T * p_obs) { return Angle_Delta(&p_obs->Pll.Base); }
 static inline fract16_t  FOC_Sensorless_GetEmfAlpha(const FOC_Sensorless_T * p_obs) { return p_obs->EmfAlpha; }
 static inline fract16_t  FOC_Sensorless_GetEmfBeta(const FOC_Sensorless_T * p_obs) { return p_obs->EmfBeta; }
 static inline ufract16_t FOC_Sensorless_GetEmfMag(const FOC_Sensorless_T * p_obs) { return p_obs->EmfMag; }
 static inline bool       FOC_Sensorless_IsLocked(const FOC_Sensorless_T * p_obs) { return  (p_obs->LockCount >= p_obs->Config.LockHoldCount); }
-static inline fract16_t  FOC_Sensorless_GetPllErr(const FOC_Sensorless_T * p_obs) { return p_obs->PllErr; }
+static inline fract16_t  FOC_Sensorless_GetPllErr(const FOC_Sensorless_T * p_obs) { return p_obs->Pll.PhaseError; }
 
 /******************************************************************************/
 /*!  */
