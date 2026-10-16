@@ -191,7 +191,7 @@ static inline void RotorSensor_InitUnitsFrom(RotorSensor_T * p_sensor, RotorSens
     Query Functions
 */
 /******************************************************************************/
-/* Electrical Angle State. Subsitute getters */
+/* Electrical Angle State. Substitute getters */
 static inline const Angle_T * RotorSensor_GetAngleState(RotorSensor_T * p_sensor) { return &p_sensor->P_STATE->AngleSpeed; }
 
 /* Angle Feedback. Shared E-Cycle edge detect, User output */
@@ -207,12 +207,7 @@ static inline sign_t RotorSensor_GetFeedbackDirection(RotorSensor_T * p_sensor) 
 static inline angle16_t RotorSensor_GetMechanicalAngle(RotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
 
 
-// #ifndef ROTOR_DIRECTION_SPEED_THRESHOLD_PU
-// #define ROTOR_DIRECTION_SPEED_THRESHOLD_PU (((int32_t)INT16_MAX * 2) / 64) /* ~2% */
-// #endif
-// static inline bool RotorSensor_IsSpeedReliable(RotorSensor_T * p_sensor) { return math_abs(RotorSensor_GetSpeed_Pu(p_sensor)) > ROTOR_DIRECTION_SPEED_THRESHOLD_PU; }
 
-// static inline sign_t RotorSensor_GetEffectiveFeedbackDirection(RotorSensor_T * p_sensor) { return (RotorSensor_IsSpeedReliable(p_sensor) ? RotorSensor_GetFeedbackDirection(p_sensor) : 0); }
 
 /******************************************************************************/
 /*!

@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
+#include "Math/Fixed/fract16e.h"
 
 /******************************************************************************/
 /*!
@@ -98,10 +99,8 @@ static inline accum32_t foc_vd_ff(accum32_t omega_Lq, fract16_t iq) { return -ac
 static inline accum32_t foc_vq_ff(accum32_t omega_Ld, accum32_t omega_psi, fract16_t id) { return accum32_mul(omega_Ld, id) + omega_psi; }
 
 // defined type
-#include "Math/Fixed/fract16e.h"
 // static inline accum32_t foc_vd_ff_k(fract16e_t omega_Lq, fract16_t iq) { return -fract16e_mul(omega_Lq, iq); }
 // static inline accum32_t foc_vq_ff_k(fract16e_t omega_Ld, accum32_t omega_psi, fract16_t id) { return fract16e_mul(omega_Ld, id) + omega_psi; }
-
 // generic for either type
 static inline accum32_t foc_vd_ff_k(fract16k_t omega_Lq, fract16_t iq) { return -fract16k_mul(omega_Lq, iq); }
 static inline accum32_t foc_vq_ff_k(fract16k_t omega_Ld, accum32_t omega_psi, fract16_t id) { return fract16k_mul(omega_Ld, id) + omega_psi; }

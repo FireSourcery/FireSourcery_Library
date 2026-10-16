@@ -219,7 +219,7 @@ Encoder_T;
 */
 static inline int32_t Encoder_GetCounterD(Encoder_T * p_encoder)
 {
-#if     defined(ENCODER_HW_DECODER)
+#if defined(ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
 #else
     return p_encoder->P_STATE->AngleCounter.CounterD;
@@ -229,14 +229,14 @@ static inline int32_t Encoder_GetCounterD(Encoder_T * p_encoder)
 static inline void _Encoder_SetCounterD(Encoder_T * p_encoder, int32_t counterD)
 {
     p_encoder->P_STATE->AngleCounter.CounterD = counterD;
-#if     defined(ENCODER_HW_DECODER)
+#if defined(ENCODER_HW_DECODER)
     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, counterD);
 #endif
 }
 
 static inline uint32_t _Encoder_GetAngle32(Encoder_T * p_encoder)
 {
-#if     defined(ENCODER_HW_DECODER)
+#if defined(ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->P_STATE->AngleCounter.UnitRef.Angle32PerCount;
 #else
     return p_encoder->P_STATE->AngleCounter.Base.Angle;

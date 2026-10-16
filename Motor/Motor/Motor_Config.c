@@ -411,11 +411,11 @@ int _Motor_Var_ConfigPid_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigPid
     switch (varId)
     {
         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:       value = p_motor->PidSpeed.SampleFreq;   break;
-        case MOTOR_VAR_PID_SPEED_KP:                value = p_motor->PidSpeed.Kp_Fixed32;   break;
-        case MOTOR_VAR_PID_SPEED_KI:                value = p_motor->PidSpeed.Ki_Fixed32;   break;
+        case MOTOR_VAR_PID_SPEED_KP:                value = p_motor->PidSpeed.Kp;   break;
+        case MOTOR_VAR_PID_SPEED_KI:                value = p_motor->PidSpeed.Ki;   break;
         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:     value = p_motor->PidI.SampleFreq;     break;
-        case MOTOR_VAR_PID_CURRENT_KP:              value = p_motor->PidI.Kp_Fixed32;     break;
-        case MOTOR_VAR_PID_CURRENT_KI:              value = p_motor->PidI.Ki_Fixed32;     break;
+        case MOTOR_VAR_PID_CURRENT_KP:              value = p_motor->PidI.Kp;     break;
+        case MOTOR_VAR_PID_CURRENT_KI:              value = p_motor->PidI.Ki;     break;
         default: break;
     }
     return value;
@@ -426,11 +426,11 @@ void _Motor_Var_ConfigPid_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T va
     switch (varId)
     {
         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:       break;
-        case MOTOR_VAR_PID_SPEED_KP:             p_motor->PidSpeed.Kp_Fixed32 = varValue;            break;
-        case MOTOR_VAR_PID_SPEED_KI:             p_motor->PidSpeed.Ki_Fixed32 = varValue;            break;
+        case MOTOR_VAR_PID_SPEED_KP:             p_motor->PidSpeed.Kp = varValue;            break;
+        case MOTOR_VAR_PID_SPEED_KI:             p_motor->PidSpeed.Ki = varValue;            break;
         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:     break;
-        case MOTOR_VAR_PID_CURRENT_KP:           p_motor->PidI.Kp_Fixed32 = varValue;            break;
-        case MOTOR_VAR_PID_CURRENT_KI:           p_motor->PidI.Ki_Fixed32 = varValue;            break;
+        case MOTOR_VAR_PID_CURRENT_KP:           p_motor->PidI.Kp = varValue;            break;
+        case MOTOR_VAR_PID_CURRENT_KI:           p_motor->PidI.Ki = varValue;            break;
         default: break;
     }
 }

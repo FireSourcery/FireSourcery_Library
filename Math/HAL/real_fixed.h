@@ -60,32 +60,13 @@ typedef struct fract16_xy fract_xy_t;
                 fract16_mul (32-bit)    fract16e_mul            accum32_mul (int64)
         M4      2 (mul, asrs)           2 + loading its shift   3 (smull, lsrs, orr)
         M0+     2 (muls, asrs)          2 + loading its shift   9 + a call to __aeabi_lmul (39 instructions, 6 muls)
+
+    [fract16k_t] holds the selection per target, FIXED_LONG_MULTIPLY_SOFT
 */
-#if !defined(FIXED_POINT_MUL_WIDE) && !defined(FIXED_POINT_MUL_EXP)
-// #if (__ARM_ARCH_ISA_THUMB >= 2)
-#define FIXED_POINT_MUL_WIDE       /* SMULL: M3/M4/M7 */
-// #else
-// #define FIXED_POINT_MUL_EXP      /* ARMv6-M: 32-bit product only */
-// #endif
-#endif
-
-// #if defined(FIXED_POINT_MUL_WIDE)
-// typedef accum32_t frexp_t;
-// #else
-// typedef fract16e_t frexp_t;
-// #endif
-
-#if defined(FIXED_POINT_MUL_WIDE)
-typedef accum32_t coeff_t;
-#define coeff_mul accum32_mul
-static inline coeff_t coeff_of_accum(accum32_t k) { return k; }
-#else
 #include "Math/Fixed/fract16e.h"
-typedef fract16e_t coeff_t;
-// typedef fract16e_t factor_t;
-#define coeff_mul fract16e_mul
-#define coeff_of_accum fract16e_of_accum32
-#endif
+typedef fract16k_t coeff_t;
+#define coeff_mul fract16k_mul
+#define coeff_of_accum fract16k_of
 
 /******************************************************************************/
 /*

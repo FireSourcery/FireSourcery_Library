@@ -97,7 +97,7 @@ A float build ([real.h](../../Math/HAL/real.h)) changes this family alone, to va
 | add | Q15 + Q15 | one carry bit, held in accum32 | |
 | multiply | (a · b) >> 15 | int32 product: one factor ≤ 2.0 | `fract16_mul` |
 | wide multiply | (a · b) >> 15, int64 | SMULL on M4, `__aeabi_lmul` on M0+ | `accum32_mul` |
-| shift multiply | ((a >> s) · b) >> (15 − s) on Thumb-1, else wide | \|a >> s\| < 2^16; s from the bound on a, at init | `accum32_mul_shift` |
+| per-target coefficient | wide on Thumb-2; `fract16e_mul` of `fract16e_k(a, m)` on Thumb-1 | \|a >> m\| < 2^15; m from the bound on a, at init | `fract16k_t`, `fract16k_mul` |
 | coefficient | (m · b) >> shift | 32-bit product at full mantissa | `fract16e_mul` |
 | divide | (a << 15) / b | a < 2.0; the caller guards b = 0 | `fract16_div` |
 | store | clamp to ±FRACT16_MAX | symmetric, so −1 · −1 and abs fit | `fract16_sat` |
@@ -247,14 +247,3 @@ The split matches the float HAL: per-unit values become `float`, while angles an
 - Wrap. `angle32_t` state (local), or `-fwrapv` (global, and it hides real overflow from UBSan)?
 
 
-### Notes
-Fixed Point Quantity
-
-Physical quantities in PU (.e.g Voltage, Current) with exceptions
-Time storage in Ticks and Freq [Hz = 1/second] maintains consistency, and 1 step of conversion with system clocks
-    precision with SI units in per second, and 1 step conversion
-Angle [radians * 65536/2pi] effectively integer radians, maintains overflow wrap
-Angle Freq [angle16 * Hz], divide Fs for discrete time unit, shift 16 for Freq in Hz
-    int32 bound of Q16.16 rotations.angle Hz.radian16 / s -> ~2M RPM range, covers physically realistic range.
-    2pi/65536 1e-4 precision. e.g. 3000 rad/s ~= 30k RPM => (477 Hz << 16)
-    maintains shape [radians/s] analogous to si units

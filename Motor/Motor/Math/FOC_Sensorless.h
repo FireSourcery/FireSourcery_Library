@@ -96,9 +96,9 @@ FOC_SensorlessConfig_T;
     {                                                                               \
         .Mode       = PID_MODE_PI,                                                  \
         .SampleFreq = 20000U,                                                       \
-        .Kp_Fixed32 = 3280,      /* ≈ 0.1 Q17.15 */                                 \
-        .Ki_Fixed32 = 330,       /* ≈ 0.01 Q17.15 */                                \
-        .Kd_Fixed32 = 0,                                                            \
+        .Kp         = 3280,      /* ≈ 0.1 Q17.15 */                                 \
+        .Ki         = 330,       /* ≈ 0.01 Q17.15 */                                \
+        .Kd         = 0,                                                            \
     },                                                                              \
 }
 

@@ -103,12 +103,19 @@ static inline fract16e_t fract16e_of_ratio(int32_t num, uint16_t den)
 
 static inline fract16e_t fract16e_of_factors(int32_t num, int32_t factor)
 {
-    return fract16e_of((uint64_t)num * factor >> FRACT16_N_BITS);
+    return fract16e_of((int64_t)num * factor >> FRACT16_N_BITS);
 }
 
 static inline fract16e_t fract16e_merge(fract16e_t a, fract16e_t b)
 {
     return fract16e((int32_t)a.mantissa * b.mantissa, fract16e_exponent(a) + fract16e_exponent(b) - FRACT16_N_BITS);
+}
+
+/* The same value in n fewer mantissa bits, |mantissa| < 2^(15 - n). Headroom for a sum with the product */
+static inline fract16e_t fract16e_narrow(fract16e_t a, uint8_t n)
+{
+    assert(a.shift >= n);
+    return (fract16e_t){ .mantissa = a.mantissa >> n, .shift = a.shift - n };
 }
 
 // static inline fract16e_t fract16e_of_ratio(int32_t num, uint16_t den)
@@ -133,6 +140,8 @@ static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b)
     return ((int32_t)a.mantissa * b >> a.shift);
 }
 
+static inline accum32_t accum32_of_fract16e(fract16e_t a) { return fract16e_mul(a, FRACT16_SCALE); }
+
 
 // #define fract16_mul_wide(a, b) _Generic((a), \
 //     accum32_t: accum32_mul, \
@@ -145,14 +154,18 @@ static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b)
     Define on other targets to run the 32-bit form, e.g. host tests.
 */
 #if !defined(FIXED_LONG_MULTIPLY_SOFT) && defined(__ARM_ARCH_ISA_THUMB) && (__ARM_ARCH_ISA_THUMB == 1)
+#define FIXED_LONG_MULTIPLY_SOFT
+#endif
+
+#if defined(FIXED_LONG_MULTIPLY_SOFT)
 typedef fract16e_t fract16k_t;
-// static inline fract16k_t fract16k_of(accum32_t a) { return fract16e_of(a); }
+static inline fract16k_t fract16k_of(accum32_t a) { return fract16e_of(a); }
 static inline fract16k_t fract16k(accum32_t value, uint8_t m) { return fract16e_k(value, m); }
 static inline accum32_t fract16k_mul(fract16k_t k, accum32_t b) { return fract16e_mul(k, b); }
-static inline accum32_t accum32_of_fract16k(fract16k_t k) { return fract16e_mul(k, FRACT16_SCALE); }
+static inline accum32_t accum32_of_fract16k(fract16k_t k) { return accum32_of_fract16e(k); }
 #else
 typedef accum32_t fract16k_t;
-// static inline fract16k_t fract16k_of(accum32_t a) { return a; }
+static inline fract16k_t fract16k_of(accum32_t a) { return a; }
 static inline fract16k_t fract16k(accum32_t value, uint8_t m) { (void)m; return value; }
 static inline accum32_t fract16k_mul(fract16k_t k, accum32_t b) { return accum32_mul(k, b); }
 static inline accum32_t accum32_of_fract16k(fract16k_t k) { return k; }

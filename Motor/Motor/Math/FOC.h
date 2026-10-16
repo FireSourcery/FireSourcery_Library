@@ -113,7 +113,7 @@ typedef struct FOC
     // ufract16_t Modulation; M*VBus/Sqrt3
 
     FOC_Electrical_T Electrical;            /* Derived by the caller */
-    uint8_t LShift;                         /* accum32_mul_shift of Ld, Lq. |ω·L| ≤ L at |Δθ| ≤ 2^15 */
+    uint8_t LShift;                         /* fract16e_k m of ω·Ld, ω·Lq. |ω·L| ≤ L at |Δθ| ≤ 2^15 */
 
     FOC_ElectricalSpeed_T ElectricalSpeed; /*  Cache on speed loop for feedforward and decoupling */
 
@@ -325,7 +325,7 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, angle16_t delta)
 /*
     Minimal change. eliminates __aeabi_lmul on M0
 */
-#if !defined(FIXED_LONG_MULTIPLY_SOFT) && defined(__ARM_ARCH_ISA_THUMB) && (__ARM_ARCH_ISA_THUMB == 1)
+#if defined(FIXED_LONG_MULTIPLY_SOFT)
 static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff_k(fract16e_k(p_foc->ElectricalSpeed.OmegaLq, p_foc->LShift), p_foc->Iq); }
 static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff_k(fract16e_k(p_foc->ElectricalSpeed.OmegaLd, p_foc->LShift), p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
 #else
@@ -333,10 +333,9 @@ static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_f
 static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
 #endif
 
-
 // using hal select
 // this would unify both implementations, but only M0 would improve by a few cycles
-// need additional return  fract16k
+// need additional return fract16k
 // 1 ms can also use fract16k_mul
 // static void FOC_CaptureSpeed_(FOC_T * p_foc, angle16_t delta)
 // {
