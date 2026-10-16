@@ -125,12 +125,12 @@ static inline uint16_t Phase_R_MilliOhmsOfPu(accum32_t fract16)
 }
 
 /* τ_base = 1 / ω_base */
-static inline accum32_t Phase_L_PuTauOfMicroHenries(angle_freq_t speedBase, uint16_t microHenries)
+static inline accum32_t Phase_L_PuOfMicroHenries(angle_freq_t speedBase, uint16_t microHenries)
 {
     return l_pu_of_h(Phase_VMaxVolts(), Phase_IMaxAmps(), speedBase, microHenries, 1000000UL);
 }
 
-static inline accum32_t Phase_L_PuTickOfMicroHenries(uint32_t fs, uint16_t microHenries)
+static inline accum32_t Phase_L_PuTurnOfMicroHenries(uint32_t fs, uint16_t microHenries)
 {
-    return l_pu_tick_of_h(fs, Phase_VMaxVolts(), Phase_IMaxAmps(), microHenries, 1000000UL);
+    return l_pu_turn_of_h(fs, Phase_VMaxVolts(), Phase_IMaxAmps(), microHenries, 1000000UL);
 }

@@ -162,12 +162,16 @@ void Motor_ValidateConfig(Motor_T * p_motor)
 */
 void Motor_InitUnits(Motor_Context_T * p_motor)
 {
-    RotorSensor_UnitRef_T unitRef = RotorSensor_UnitRef(MOTOR_CONTROL_FREQ, p_motor->Config.Electrical.PolePairs, Motor_SpeedBase_AngleFreq(&p_motor->Config.Electrical));
-    RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &unitRef);
+    RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, (RotorSensor_UnitRef_T)
+    {
+        .PollingFreq = MOTOR_CONTROL_FREQ,
+        .PolePairs = p_motor->Config.Electrical.PolePairs,
+        .AngleFreqBase = Motor_SpeedBase_AngleFreq(&p_motor->Config.Electrical),
+    });
 }
 
 /*
-    FOC params, derived. FOC and the observer hold no config: views of [Motor_Electrical_T] at the tick base, and the field weakening limit within the board FW rating.
+    FOC params, derived. FOC and the observer hold no config: views of [Motor_Electrical_T] at the turn base, and the field weakening limit within the board FW rating.
     Re-resolve on a change of the model, the tuning, or the board base. An invalid model keeps the prior view.
 */
 void Motor_ResolveFocParams(Motor_T * p_motor)
@@ -177,15 +181,15 @@ void Motor_ResolveFocParams(Motor_T * p_motor)
 
     if (Motor_Electrical_IsValid(p_electrical))
     {
-        p_context->Foc.Electrical = (FOC_Electrical_T)
+        FOC_InitElectrical(&p_context->Foc, &(FOC_Electrical_T)
         {
-            .Ld     = Motor_Ld_PuTick(p_electrical),
-            .Lq     = Motor_Lq_PuTick(p_electrical),
+            .Ld     = Motor_Ld_PuTurn(p_electrical),
+            .Lq     = Motor_Lq_PuTurn(p_electrical),
             .Rs     = p_electrical->Rs,
-            .Psi    = Motor_Psi_PuTick(p_electrical),
-        };
+            .Psi    = Motor_Psi_PuTurn(p_electrical),
+        });
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-        FOC_Sensorless_InitElectrical(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Ls_PuTick(p_electrical), Motor_Lq_PuTick(p_electrical), math_min(p_electrical->Rs, FRACT16_MAX));
+        FOC_Sensorless_InitElectrical(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Ls_PuTurn(p_electrical), Motor_Lq_PuTurn(p_electrical), math_min(p_electrical->Rs, FRACT16_MAX));
 #endif
     }
 

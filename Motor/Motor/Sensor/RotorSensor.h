@@ -70,20 +70,15 @@ RotorSensor_VTable_T;
 
 /*
     [RotorSensor_UnitRef_T]
-    Built by the motor, held by the sensor base
+    Filled by the motor. RotorSensor_InitUnitsFrom derives the sensor base units.
 */
 typedef struct RotorSensor_UnitRef
 {
+    uint32_t PollingFreq;           /* Control loop frequency, AngleSpeed.Delta per cycle */
     uint8_t PolePairs;              /* Mechanical to electrical */
-    angle_freq_t AngleFreqBase;     /* Speed base, electrical. Exact, for sensors deriving their own factors */
-    Angle_SpeedPuRef_T SpeedPuRef;  /* AngleDtBase at the control Fs, AngleSpeed.Delta per control cycle */
+    angle_freq_t AngleFreqBase;     /* Speed base, electrical */
 }
 RotorSensor_UnitRef_T;
-
-static inline RotorSensor_UnitRef_T RotorSensor_UnitRef(uint32_t fs, uint8_t polePairs, angle_freq_t angleFreqBase)
-{
-    return (RotorSensor_UnitRef_T) { .PolePairs = polePairs, .AngleFreqBase = angleFreqBase, .SpeedPuRef = Angle_SpeedPuRef_FromFreq(fs, angleFreqBase), };
-}
 
 /*
     [Angle_T] Wrap
@@ -91,7 +86,15 @@ static inline RotorSensor_UnitRef_T RotorSensor_UnitRef(uint32_t fs, uint8_t pol
 typedef struct RotorSensor_State
 {
     Angle_T AngleSpeed;     /* Electrical angle and speed state. */
-    RotorSensor_UnitRef_T UnitRef;
+
+    /* Derived from [RotorSensor_UnitRef_T] */
+    struct
+    {
+        uint8_t PolePairs;              /* Mechanical to electrical */
+        angle_freq_t AngleFreqBase;     /* Speed base, electrical. Exact, for sensors deriving their own factors */
+        Angle_SpeedPuRef_T SpeedPuRef;  /* AngleDtBase at the control Fs, AngleSpeed.Delta per control cycle */
+    }
+    UnitRef;
 
     accum32_t Speed_Pu;
     angle16_t MechanicalAngle; /* optionally supported */
@@ -174,9 +177,11 @@ static inline bool RotorSensor_IsFeedbackAvailable(RotorSensor_T * p_sensor) { r
 */
 static inline bool RotorSensor_VerifyCalibration(RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->VERIFY_CALIBRATION(p_sensor); }
 
-static inline void RotorSensor_InitUnitsFrom(RotorSensor_T * p_sensor, const RotorSensor_UnitRef_T * p_unitRef)
+static inline void RotorSensor_InitUnitsFrom(RotorSensor_T * p_sensor, RotorSensor_UnitRef_T unitRef)
 {
-    p_sensor->P_STATE->UnitRef = *p_unitRef;
+    p_sensor->P_STATE->UnitRef.PolePairs = unitRef.PolePairs;
+    p_sensor->P_STATE->UnitRef.AngleFreqBase = unitRef.AngleFreqBase;
+    p_sensor->P_STATE->UnitRef.SpeedPuRef = Angle_SpeedPuRef_FromFreq(unitRef.PollingFreq, unitRef.AngleFreqBase);
     p_sensor->P_VTABLE->INIT_UNITS(p_sensor);
 }
 

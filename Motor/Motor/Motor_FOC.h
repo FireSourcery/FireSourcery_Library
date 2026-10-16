@@ -100,12 +100,11 @@ static inline void Motor_ResolveISupplyLimits(Motor_T * p_motor)
 
 
 /*
-    Decoupling-basis ω input for FOC_CaptureSpeed. Δθ [angle16/Ts], the tick-base ω_pu of [FOC_Electrical_T]. Free of the speed base.
+    Decoupling-basis ω input for FOC_CaptureSpeed. Δθ [angle16/Ts], the turn-base ω_pu of [FOC_Electrical_T]. Free of the speed base.
 */
 static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor); }
 
 // static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, Motor_GetDecouplingOmega(p_motor)); }
-
 
 
 /* Directly read register state */

@@ -18,10 +18,9 @@
 /*!
     @file   Shifter.h
     @author FireSourcery
-    @brief  Forward/Neutral/Reverse direction pins.
-            Wiring variant (FNR/FR/R) is selected as a Strategy that bundles a
-            pin-state -> Direction Decoder with the per-pin UserDIn_Mode policy.
-            The Strategy pointer is cached in state at Init / SetPinMode so the
+    @brief  Forward/Reverse direction pins. Neutral pin by SHIFTER_NEUTRAL_PIN_ENABLE.
+            [Shifter_PinMode_T] selects the pin-state -> Direction decode table.
+            The table pointer is cached in state at Init / SetPinMode so the
             level queries are branchless dispatch.
 */
 /******************************************************************************/
@@ -29,20 +28,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if !defined(SHIFTER_PINS_FR_FIXED) && !defined(SHIFTER_PINS_FR_OPTION) && !defined(SHIFTER_PINS_R_FIXED)
-#define SHIFTER_PINS_FR_OPTION
-#endif
-
 /******************************************************************************/
 /*
-    Pin index — packs the three pin levels (and the wired-pin mask derived
-    from [Shifter_PinMode_T]) into the same 3-bit shape.
+    Pin levels, packed as the decode index.
     Index = (Neutral<<2) | (Forward<<1) | (Reverse<<0).
-
-    Pins absent from the wired mask are USER_DIN_MODE_DISABLED;
-    Modal polling leaves their Debounce state at 0, so only the rows
-    reachable for the SKU are visited. Unreachable rows are still filled
-    defensively (Neutral, except R-only which defaults to Forward).
+    A pin without a HAL reads 0, as does Neutral without SHIFTER_NEUTRAL_PIN_ENABLE.
 */
 /******************************************************************************/
 typedef union Shifter_Pins
@@ -58,19 +48,16 @@ typedef union Shifter_Pins
 Shifter_Pins_T;
 
 /*
-    Wiring variants. Selector only, not a pin mask — the wired mask is derived in SetPinMode.
-        FR  — two pins (forward + reverse). Neutral = neither pressed
-        R   — one pin (reverse). Forward = not reverse. Neutral never emitted
-        FNR — three pins, one per gear, mutually exclusive
+    Wiring variant. Selects the decode table only; which pins exist is the board's (HAL, SHIFTER_NEUTRAL_PIN_ENABLE).
+        FR  — forward + reverse pins. Neither = Neutral
+        R   — reverse pin only. Released = Forward. Neutral never emitted
 */
 typedef enum Shifter_PinMode
 {
     SHIFTER_PIN_MODE_FR = 0,
     SHIFTER_PIN_MODE_R = 1, /* R-only wiring variant */
-    // SHIFTER_PIN_MODE_FNR = 2,
 }
 Shifter_PinMode_T;
-
 
 /******************************************************************************/
 /*
@@ -92,7 +79,7 @@ Shifter_Direction_T;
 /******************************************************************************/
 typedef struct Shifter_Config
 {
-    Shifter_Pins_T PinMode;
+    Shifter_PinMode_T PinMode;
 }
 Shifter_Config_T;
 
@@ -105,10 +92,10 @@ typedef struct Shifter_State
 {
     UserDIn_State_T ForwardState;
     UserDIn_State_T ReverseState;
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
     UserDIn_State_T NeutralState;
-#if defined(SHIFTER_PINS_FR_OPTION)
-    const Shifter_Direction_T * p_DecodeTable; /* if runtime switch to R only is needed */
 #endif
+    const Shifter_Direction_T * p_DecodeTable; /* by Config.PinMode */
     Shifter_Direction_T LastDirection;     /* For change-edge query */
     Shifter_Config_T Config;
 }
@@ -124,7 +111,9 @@ typedef const struct Shifter
     Shifter_State_T * P_STATE;
     UserDIn_T FORWARD_DIN;
     UserDIn_T REVERSE_DIN;
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
     UserDIn_T NEUTRAL_DIN;
+#endif
     // const Shifter_Config_T * P_NVM_CONFIG;
 }
 Shifter_T;
@@ -134,6 +123,7 @@ Shifter_T;
 #define SHIFTER_DIN_INIT(PinHal, PinId, IsInvert, p_State, p_Timer)                                                                         \
     { .PIN = PIN_INIT_INVERT((PinHal), (PinId), (IsInvert)), .P_STATE = (p_State), .P_TIMER = (p_Timer), .DEBOUNCE_TIME = 10U, }
 
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
 #define SHIFTER_INIT_FROM(p_State, ForwardHal, ForwardId, ReverseHal, ReverseId, NeutralHal, NeutralId, IsInvert, p_Timer) (Shifter_T)      \
 {                                                                                                                                           \
     .P_STATE = (p_State),                                                                                                                   \
@@ -141,33 +131,30 @@ Shifter_T;
     .REVERSE_DIN = SHIFTER_DIN_INIT((ReverseHal), (ReverseId), (IsInvert), &(p_State)->ReverseState, (p_Timer)),                            \
     .NEUTRAL_DIN = SHIFTER_DIN_INIT((NeutralHal), (NeutralId), (IsInvert), &(p_State)->NeutralState, (p_Timer)),                            \
 }
+#else
+#define SHIFTER_INIT_FROM(p_State, ForwardHal, ForwardId, ReverseHal, ReverseId, IsInvert, p_Timer) (Shifter_T)                             \
+{                                                                                                                                           \
+    .P_STATE = (p_State),                                                                                                                   \
+    .FORWARD_DIN = SHIFTER_DIN_INIT((ForwardHal), (ForwardId), (IsInvert), &(p_State)->ForwardState, (p_Timer)),                            \
+    .REVERSE_DIN = SHIFTER_DIN_INIT((ReverseHal), (ReverseId), (IsInvert), &(p_State)->ReverseState, (p_Timer)),                            \
+}
+#endif
 
 /******************************************************************************/
 /*
     Capture
 */
 /******************************************************************************/
-extern const Shifter_Direction_T DECODE_TABLE_FNR[8];
-extern const Shifter_Direction_T DECODE_TABLE_R_ONLY[8];
-
 static inline Shifter_Direction_T Shifter_Decode(Shifter_T * p_shifter, Shifter_Pins_T pins)
 {
-#if defined(SHIFTER_PINS_FR_OPTION)
     return p_shifter->P_STATE->p_DecodeTable[pins.Value];
-#elif defined(SHIFTER_PINS_FR_FIXED)
-    (void)p_shifter; /* in case decode table is fully static */
-    return DECODE_TABLE_FNR[pins.Value];
-#elif defined(SHIFTER_PINS_R_FIXED)
-    (void)p_shifter; /* in case decode table is fully static */
-    return DECODE_TABLE_R_ONLY[pins.Value];
-#endif
 }
 
 static inline void Shifter_Poll(Shifter_T * p_shifter)
 {
     UserDIn_Modal_PollEdgeValue(&p_shifter->REVERSE_DIN);
-#if defined(SHIFTER_PINS_FR_OPTION) || defined(SHIFTER_PINS_FR_FIXED)
     UserDIn_Modal_PollEdgeValue(&p_shifter->FORWARD_DIN);
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
     UserDIn_Modal_PollEdgeValue(&p_shifter->NEUTRAL_DIN);
 #endif
 }
@@ -177,8 +164,8 @@ static inline Shifter_Pins_T Shifter_GetPins(Shifter_T * p_shifter)
     Shifter_Pins_T pins =
     {
         .Reverse = UserDIn_GetState(&p_shifter->REVERSE_DIN),
-#if defined(SHIFTER_PINS_FR_OPTION) || defined(SHIFTER_PINS_FR_FIXED)
         .Forward = UserDIn_GetState(&p_shifter->FORWARD_DIN),
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
         .Neutral = UserDIn_GetState(&p_shifter->NEUTRAL_DIN),
 #endif
     };
@@ -187,7 +174,7 @@ static inline Shifter_Pins_T Shifter_GetPins(Shifter_T * p_shifter)
 
 /******************************************************************************/
 /*
-    Query — level. Pack the three pin states into a 3-bit index and look up.
+    Query — level. Pack the pin states into the decode index and look up.
 */
 /******************************************************************************/
 static inline Shifter_Direction_T Shifter_ResolveDirection(Shifter_T * p_shifter)
@@ -204,7 +191,8 @@ static inline Shifter_Direction_T Shifter_PollDirection(Shifter_T * p_shifter)
 
 static inline bool Shifter_PollDirectionEdge(Shifter_T * p_shifter)
 {
-    return (p_shifter->P_STATE->LastDirection != Shifter_PollDirection(p_shifter));
+    Shifter_Direction_T prev = p_shifter->P_STATE->LastDirection;
+    return (prev != Shifter_PollDirection(p_shifter));
 }
 
 static inline Shifter_Direction_T Shifter_GetDirection(Shifter_T * p_shifter) { return p_shifter->P_STATE->LastDirection; }
@@ -241,5 +229,4 @@ Shifter_ConfigId_T;
 
 extern int32_t Shifter_VarId_Get(Shifter_T * p_shifter, Shifter_VarId_T id);
 extern int32_t Shifter_ConfigId_Get(Shifter_T * p_shifter, Shifter_ConfigId_T id);
-extern void Shifter_ConfigId_Set(Shifter_T * p_shifter, Shifter_ConfigId_T id, int32_t value);
 

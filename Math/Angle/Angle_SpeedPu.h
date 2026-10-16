@@ -65,21 +65,19 @@ typedef struct Angle_SpeedPuRef
     uint32_t InvAngleDtBase_Fract32;    /* INT32_MAX / Δθ_base — inverse for dθ/dt → ω_pu */
     // uint32_t PollingFreq; /* keep for per second conversions if needed */
 }
-Angle_SpeedPuRef_T;
+Angle_SpeedPuRef_T; /* Angle_SpeedPuBase_T;  */
 
 /* Config Options in [angle16/s] or RPM */
 #define ANGLE_SPEED_PU_REF(angleDtBase) (Angle_SpeedPuRef_T) { .AngleDtBase = (angleDtBase), .InvAngleDtBase_Fract32 = INT32_MAX / (angleDtBase) }
 #define ANGLE_SPEED_PU_REF_FROM_FREQ(Fs, angleFreqBase) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_FREQ(Fs, angleFreqBase))
 #define ANGLE_SPEED_PU_REF_FROM_RPM(Fs, baseRpm) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_RPM(Fs, baseRpm))
 
-// #define _ANGLE_SPEED_PU_REF(angleDtBase) (Angle_SpeedPuRef_T) { .AngleDtBase = (angleDtBase), .InvAngleDtBase_Fract32 = INT32_MAX / (angleDtBase) }
-// #define ANGLE_SPEED_PU_REF(Fs, angleFreqBase) _ANGLE_SPEED_PU_REF(ANGLE_DT_OF_FREQ(Fs, angleFreqBase))
-// #define ANGLE_SPEED_PU_REF_FROM_RPM(Fs, baseRpm) ANGLE_SPEED_PU_REF(ANGLE_DT_OF_RPM(Fs, baseRpm))
 
 static inline Angle_SpeedPuRef_T Angle_SpeedPuRef(angle_dt_t angleDtBase) { return (Angle_SpeedPuRef_T){ .AngleDtBase = (angleDtBase), .InvAngleDtBase_Fract32 = INT32_MAX / (angleDtBase) }; }
 static inline Angle_SpeedPuRef_T Angle_SpeedPuRef_FromFreq(uint32_t fs, angle_freq_t angleFreqBase) { return ANGLE_SPEED_PU_REF_FROM_FREQ(fs, angleFreqBase); }
 static inline Angle_SpeedPuRef_T Angle_SpeedPuRef_FromRpm(uint32_t fs, uint32_t baseRpm) { return ANGLE_SPEED_PU_REF_FROM_RPM(fs, baseRpm); }
 
+static inline void Angle_SpeedPuRef_Init(Angle_SpeedPuRef_T * p_ref, angle_dt_t base) { *p_ref = Angle_SpeedPuRef(base); }
 
 /*
     Hot-path consumers — operate on precomputed unit conversions
@@ -102,3 +100,11 @@ static inline accum32_t Angle_ResolveSpeed_Pu(const Angle_T * p_angle, const Ang
     // return ((int32_t)p_ref->InvAngleDtBase_Fract32 * Angle_Delta(p_angle)) >> 16U;
     // return ((int64_t)p_ref->InvAngleDtBase_Fract32 * p_angle->Delta) >> 32U;
 }
+
+// also carry the resolved speed along with the reference for convenience
+// typedef struct Angle_SpeedPu
+// {
+//     Angle_SpeedPuRef_T Ref;
+//     accum32_t SpeedPu; /* resolved speed in per-unit */
+// }
+// Angle_SpeedPu_T;

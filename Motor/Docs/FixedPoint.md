@@ -21,7 +21,7 @@ flowchart LR
     ADC["ADC counts"] -->|"shift"| V
     subgraph PU["Per-unit · base"]
         V["time-free: V, I, R, P"]
-        W["through ω_base: ω, ψ, L · tick or speed form"]
+        W["through ω_base: ω, ψ, L · turn or speed form"]
     end
     subgraph ANG["Angle · turn / 2^16"]
         F["ω · angle_freq_t"]
@@ -67,10 +67,10 @@ A speed is angle per time, and ψ and L hold time in the numerator, so their bas
 
 | Form | F_base [angle_freq_t] | ω_pu | Holds |
 |---|---|---|---|
-| Tick | Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts] | identification, in samples; the observer gain; FOC decoupling |
+| Turn | Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts] | identification, in samples; the observer gain; FOC decoupling |
 | Speed | AngleFreqPerVolt · V_base · `MOTOR_SPEED_BASE_V_PU` | `Speed_Pu` | speed loop, limits |
 
-- The tick form is time in ticks of Fs. Δθ_base = 2^15, so ω_pu and Δθ are one integer, Q15 of π rad per tick.
+- The turn form is time in ticks of Fs. Δθ_base = 2^15, a half turn, so ω_pu and Δθ are one integer, Q15 of π rad per tick.
 - The speed form anchors to the motor and resolves k = Fs · 2^15 / F_base times finer.
 - ψ and L move between forms by F_to / F_from (`pu_tau_rebase`), ω_pu by F_from / F_to.
 - ψ and L are stored as rates, 1 / ψ [angle16/s / V] and 1 / L [angle16/s · A/V]. Each form is one division from the rate: x_pu = F_base / (rate · Z_base), Z_base = V_base for ψ and V_base / I_base for L (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`). ψ per volt and L per ohm are both [s/rad] (`angle_freq_of_s_per_rad`).
@@ -97,6 +97,7 @@ A float build ([real.h](../../Math/HAL/real.h)) changes this family alone, to va
 | add | Q15 + Q15 | one carry bit, held in accum32 | |
 | multiply | (a · b) >> 15 | int32 product: one factor ≤ 2.0 | `fract16_mul` |
 | wide multiply | (a · b) >> 15, int64 | SMULL on M4, `__aeabi_lmul` on M0+ | `accum32_mul` |
+| shift multiply | ((a >> s) · b) >> (15 − s) on Thumb-1, else wide | \|a >> s\| < 2^16; s from the bound on a, at init | `accum32_mul_shift` |
 | coefficient | (m · b) >> shift | 32-bit product at full mantissa | `fract16e_mul` |
 | divide | (a << 15) / b | a < 2.0; the caller guards b = 0 | `fract16_div` |
 | store | clamp to ±FRACT16_MAX | symmetric, so −1 · −1 and abs fit | `fract16_sat` |
@@ -117,7 +118,7 @@ Time is a count of ticks of the loop or timer that runs it, with that clock's fr
 - ms and per second are an optional interface, in the Motor module for now (`Motor_Config_SetAlignTime_Millis`, `Motor_Config_SetSpeedRampSlope_RpmPerS`). Socket and the other modules come later.
 - Speed is an angle quantity, held per second in [angle_freq_t]. Each consumer applies its own clock, Δθ = F / Fs in the control loop.
 
-ψ and L hold time in the numerator. Stored as rates, 1 / ψ and 1 / L, the second is in the denominator at scale 1, as in [angle_freq_t]. Their tick form derives on init (Bases).
+ψ and L hold time in the numerator. Stored as rates, 1 / ψ and 1 / L, the second is in the denominator at scale 1, as in [angle_freq_t]. Their turn form derives on init (Bases).
 
 ## Angle
 
@@ -170,7 +171,7 @@ Constants appear only where families meet.
 | ticks ↔ ms, per second | F_clk | build | optional interface |
 | `angle_freq_t` ↔ `angle_dt_t` | Fs | build | init, capture |
 | `angle_freq_t` ↔ ω_pu | F_base | motor config | [Angle_SpeedPuRef_T]: Δθ_base and its inverse, 32-bit products |
-| rate ↔ tick or speed form | F_base / (rate · Z_base) | Fs, motor, board | init (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`) |
+| rate ↔ turn or speed form | F_base / (rate · Z_base) | Fs, motor, board | init (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`) |
 | angle16 ↔ rad | 2^15 / π | constant | SI boundary |
 | pu ↔ V, A, Ω, H | bases | board, motor | user boundary |
 
@@ -184,7 +185,7 @@ d/dt over a tick is Δ · Fs, while ω_base is per radian, so a pu term with d/d
 
     v_pu = L_pu · (di_pu / dt) / ω_base = L_pu · Δi_pu · Fs / ω_base       per tick
 
-In the tick form Fs / ω_base = 1 / π, so v_pu = L_tick · Δi_pu / π. Rotational terms need no factor, as ω_pu supplies ω_base: ω_pu · L_pu · i_pu, ω_pu · ψ_pu. π lands on the derivative side, off the FOC decoupling path. Identification multiplies it back (`l_pu_tick_of_step`, `l_pu_tick_of_rs_tau_cycles`).
+In the turn form Fs / ω_base = 1 / π, so v_pu = L_turn · Δi_pu / π. Rotational terms need no factor, as ω_pu supplies ω_base: ω_pu · L_pu · i_pu, ω_pu · ψ_pu. π lands on the derivative side, off the FOC decoupling path. Identification multiplies it back (`l_pu_turn_of_step`, `l_pu_turn_of_rs_tau_cycles`). The rad form, ω_base = Fs, has Fs / ω_base = 1: v_pu = L_rad · Δi_pu (`motor_v_stator`).
 
 ## Rules
 
@@ -199,7 +200,7 @@ In the tick form Fs / ω_base = 1 / π, so v_pu = L_tick · Δi_pu / π. Rotatio
 9. Wrap only in the angle family, in unsigned arithmetic or by narrowing.
 10. π only at the radian. Derivative pu terms carry Fs / ω_base.
 11. One truncation per conversion: constant divisors first, the variable divisor last. Write-back paths return the value written: a reciprocal pair inverts exactly while the stored side has the more bits (`angle_freq_of_l_pu`), a scale-down pair scales up to the midpoint. User views round to nearest (`kv_of_angle_freq`).
-12. Constants are written in SI through macros the compiler folds (`ANGLE_FREQ`, `MOTOR_L_PU_TICK`). A pu macro returns the unscaled value, and the destination's literal macro applies the representation: `FRACT16`, `ACCUM32` for storage, Q15 in every build; `FRACT`, `ACCUM` at runtime. Runtime conversions are integer.
+12. Constants are written in SI through macros the compiler folds (`ANGLE_FREQ`, `MOTOR_L_PU_TURN`). A pu macro returns the unscaled value, and the destination's literal macro applies the representation: `FRACT16`, `ACCUM32` for storage, Q15 in every build; `FRACT`, `ACCUM` at runtime. Runtime conversions are integer.
 13. 64-bit division at init or the user boundary, not in the control loop.
 
 ## Viability
@@ -232,7 +233,7 @@ The split matches the float HAL: per-unit values become `float`, while angles an
 | `AngleFreqPerVolt` | 11–27 bits over Kv 1–10,000 |
 | tick counts | uint32: 59.6 h at 20 kHz, 49.7 d at 1 kHz. uint16: 3.3 s, 65.5 s |
 | `_PerTick` slope, Q30 | ≤ 1% truncation for full-scale ramps to 8.9 min at 20 kHz, 3.0 h at 1 kHz |
-| L_tick · Δi_pu / v_L,pu | π exactly (80 µH, 94 V, 600 A, 20 kHz) |
+| L_turn · Δi_pu / v_L,pu | π exactly (80 µH, 94 V, 600 A, 20 kHz) |
 
 ### Findings
 

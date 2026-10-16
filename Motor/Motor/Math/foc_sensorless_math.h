@@ -115,7 +115,7 @@ static inline angle16_t foc_theta_of_emf(sign_t sign, fract16_t e_alpha, fract16
 
         |e| = |ω_e| · ψ_f       →       |ω̂_e| = |e| / ψ_f
 
-    With Psi_pu per psi_pu_tick, the result is the electrical
+    With Psi_pu per psi_pu_turn, the result is the electrical
     angle increment per control cycle:
 
         |Δθ̂_e| [angle16/dt] = |e_pu| / Psi_pu
@@ -128,15 +128,15 @@ static inline angle16_t foc_speed_of_emf(accum32_t Psi_pu, ufract16_t e_mag) { r
 
 
 /*
-    Tick base, ω_base = π / Ts
+    Turn base, ω_base = π / Ts
     G = Ts / L · (V_base/I_base)
 */
-static inline accum32_t foc_g_pu_of_l_tick(uint32_t l_pu_tick) { return (uint64_t)FRACT16_PI * FRACT16_SCALE / l_pu_tick; }
+static inline accum32_t foc_g_pu_of_l_turn(uint32_t l_pu_turn) { return (uint64_t)FRACT16_PI * FRACT16_SCALE / l_pu_turn; }
 
 /*
     1 / (L_pu · Fs / ω_base)
 */
-static inline accum32_t foc_g_pu_of_l_pu_tau(uint32_t angle_speed_base, uint32_t l_pu)
+static inline accum32_t foc_g_pu_of_l_pu(uint32_t angle_speed_base, uint32_t l_pu)
 {
     return (uint64_t)angle_speed_base * FRACT16_SCALE * FRACT16_SCALE * ANGLE16_PER_REVOLUTION / ((uint64_t)ANGLE32_PER_RADIAN * l_pu);
 }
@@ -157,8 +157,8 @@ static inline accum32_t foc_g_pu_of_l_pu_tau(uint32_t angle_speed_base, uint32_t
     a Lq error offsets θ̂ in proportion to the load current.
 */
 /******************************************************************************/
-static inline accum32_t foc_dq_emf_d(fract16_t Rs_pu, accum32_t omega_Lq, fract16_t vd, fract16_t id, fract16_t iq) { return (accum32_t)vd - fract16_mul(Rs_pu, id) - foc_vd_ff_wide(omega_Lq, iq); }
-static inline accum32_t foc_dq_emf_q(fract16_t Rs_pu, accum32_t omega_Lq, fract16_t vq, fract16_t id, fract16_t iq) { return (accum32_t)vq - fract16_mul(Rs_pu, iq) - foc_vq_ff_wide(omega_Lq, 0, id); }
+static inline accum32_t foc_dq_emf_d(fract16_t Rs_pu, accum32_t omega_Lq, fract16_t vd, fract16_t id, fract16_t iq) { return (accum32_t)vd - fract16_mul(Rs_pu, id) - foc_vd_ff(omega_Lq, iq); }
+static inline accum32_t foc_dq_emf_q(fract16_t Rs_pu, accum32_t omega_Lq, fract16_t vq, fract16_t id, fract16_t iq) { return (accum32_t)vq - fract16_mul(Rs_pu, iq) - foc_vq_ff(omega_Lq, 0, id); }
 
 
 /******************************************************************************/

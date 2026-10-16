@@ -485,21 +485,21 @@ static inline interval_t Motor_GetSpeedLimits(const Motor_Context_T * p_motor) {
     TorqueRamp carries V limits in voltage mode; Motor_SetFeedbackMode resolves I on entry to current mode.
 */
 /* Torque commands sent over serial/CAN clamped until next send */
-static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
-{
-    if (p_motor->FeedbackMode.Current == 1)
-    {
-        Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
-        if (p_motor->FeedbackMode.Speed == 1) { PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high); } /* SpeedPid Output is I */
-    }
-}
-
-/* unconditional */
 // static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
 // {
-//     Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
-//     PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high);
+//     if (p_motor->FeedbackMode.Current == 1)
+//     {
+//         Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
+//         if (p_motor->FeedbackMode.Speed == 1) { PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high); } /* SpeedPid Output is I */
+//     }
 // }
+
+/* unconditional */
+static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
+{
+    Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
+    PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high);
+}
 
 static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t sLimits)
 {
@@ -513,6 +513,19 @@ static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t
 static inline void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, Motor_GetILimits(p_motor)); }
 static inline void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, Motor_GetSpeedLimits(p_motor)); }
 
+// static inline void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
+// {
+//     Motor_Context_T * p_motor = p_dev->P_MOTOR;
+//     interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
+
+//     /* Current mode: resolve from inputs, TorqueRamp may hold V limits from voltage mode. */
+//     if (p_motor->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor); }
+//     else
+//     {
+//         if (p_motor->FeedbackMode.Speed == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
+//         Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
+//     }
+// }
 
 /******************************************************************************/
 /*

@@ -105,7 +105,9 @@ static inline int32_t MotAnalogUser_VarId_Get(MotorController_T * p_mc, MotAnalo
             }
         case MOT_ANALOG_USER_FORWARD_DIN:        value = UserDIn_GetState(&p_mc->SHIFTER.FORWARD_DIN);                                   break;
         case MOT_ANALOG_USER_REVERSE_DIN:        value = UserDIn_GetState(&p_mc->SHIFTER.REVERSE_DIN);                                   break;
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
         case MOT_ANALOG_USER_NEUTRAL_DIN:        value = UserDIn_GetState(&p_mc->SHIFTER.NEUTRAL_DIN);                                   break;
+#endif
         default: break;
     }
     return value;
@@ -128,7 +130,9 @@ static inline int32_t MotAnalogUser_VarId_GetAsInput(MotorController_T * p_mc, M
             }
         case MOT_ANALOG_USER_FORWARD_DIN:        value = Pin_Input_ReadPhysical(&p_mc->SHIFTER.FORWARD_DIN.PIN);                         break;
         case MOT_ANALOG_USER_REVERSE_DIN:        value = Pin_Input_ReadPhysical(&p_mc->SHIFTER.REVERSE_DIN.PIN);                         break;
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
         case MOT_ANALOG_USER_NEUTRAL_DIN:        value = Pin_Input_ReadPhysical(&p_mc->SHIFTER.NEUTRAL_DIN.PIN);                         break;
+#endif
         default: break;
     }
     return value;
@@ -167,7 +171,10 @@ static inline void MotAnalogUser_ConfigId_Set(MotorController_T * p_mc, MotAnalo
         case MOT_ANALOG_USER_BRAKE_MAX_ADCU:               UserAIn_Config_Set(&p_mc->AINS[MOT_AIN_BRAKE].PIN, USER_AIN_MAX_ADCU, value);                  break;
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:     UserAIn_Config_Set(&p_mc->AINS[MOT_AIN_BRAKE].PIN, USER_AIN_EDGE_PIN_IS_ENABLE, value);        break;
         case MOT_ANALOG_USER_SWITCH_BRAKE_VALUE:           p_mc->P_MC->Config.OptDinConfig.SwitchBrakeFloor_Percent16 = (uint16_t)value;                  break;
-        case MOT_ANALOG_USER_DIRECTION_PINS:               p_mc->P_MC->Config.ShifterConfig.PinMode = (Shifter_PinMode_T)value;                           break;
+        case MOT_ANALOG_USER_DIRECTION_PINS:
+            p_mc->P_MC->Config.ShifterConfig.PinMode = (Shifter_PinMode_T)value;
+            Shifter_SetPinMode(&p_mc->SHIFTER, p_mc->P_MC->Config.ShifterConfig.PinMode);
+            break;
         default: break;
     }
 }

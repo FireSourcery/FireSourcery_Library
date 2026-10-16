@@ -55,7 +55,7 @@ static inline fract16_t smo_sat(fract16_t thr, fract16_t x) { return fract16_sat
         z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
         î[k+1]  = î[k] + G_int · ( v[k] - Rs_pu·î[k] - z[k] )
 
-        G_int = dt · V_max / (Ls · I_max) = 1 / Ls_pu_tick
+        G_int = dt · V_max / (Ls · I_max) = 1 / Ls_pu_rad = π / Ls_pu_turn
 
     The switching variable z drives (î - i) → 0; its slow component
     (extracted by lpf_step) is the back-EMF estimate ê used by the

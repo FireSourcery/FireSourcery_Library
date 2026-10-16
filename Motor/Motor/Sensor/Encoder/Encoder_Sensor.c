@@ -88,8 +88,8 @@ static bool Encoder_RotorSensor_IsSensorAvailable(const Encoder_RotorSensor_T * 
 /* The encoder revolution is mechanical: base AngleFreqBase / PolePairs */
 static void Encoder_RotorSensor_InitUnits(const Encoder_RotorSensor_T * p_sensor)
 {
-    const RotorSensor_UnitRef_T * p_unitRef = &p_sensor->BASE.P_STATE->UnitRef;
-    p_sensor->ENCODER.P_STATE->Config.AngleFreqBase = p_unitRef->AngleFreqBase / p_unitRef->PolePairs;
+    const RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
+    p_sensor->ENCODER.P_STATE->Config.AngleFreqBase = p_state->UnitRef.AngleFreqBase / p_state->UnitRef.PolePairs;
     Encoder_MT_InitUnits(&p_sensor->ENCODER);
 }
 

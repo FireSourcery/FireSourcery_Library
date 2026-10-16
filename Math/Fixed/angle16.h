@@ -42,10 +42,10 @@
 #define PI_FLOAT (3.14159265358979323846F)
 #define ANGLE16_PER_REVOLUTION (65536UL)
 
-typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
+typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, [fract16_t] angle wraps. base as signed for int32_t cast arithmetic */
 typedef uint16_t uangle16_t;    /*!< [0, 2pi) unsigned compare */
 
-typedef int32_t angle32_t;  /* extended angle16, Q32 */
+typedef int32_t angle32_t;  /* extended angle16, [fract32_t] Q32 */
 typedef int32_t rot32_t;    /* n.angle16 */
 
 #define ROT32_TURN_BITS (16)

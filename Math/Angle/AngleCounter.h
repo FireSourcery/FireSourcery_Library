@@ -36,24 +36,6 @@
 #include "angle_counter_math.h"
 #include "Angle.h"
 
-/******************************************************************************/
-/*
-    Counter Config/Ref - Unit Conversion
-*/
-/******************************************************************************/
-/* Runtime Ref - computed from calib + freq constants */
-typedef struct AngleCounter_Ref
-{
-    /* wrapping angle */
-    // angle16_t AnglePerCount;     /* AngleD Unit */
-    uint32_t Angle32PerCount;       /* [(UINT32_MAX+1)/CountsPerRevolution] */
-    uint32_t AngleDt32PerCount;     /* angle_dt32 per count_freq, at PollingFreq */
-    uint32_t SpeedPuPerCount;       /* speed_pu per count_freq, Q30 */
-
-    /* physical units handle with /cpr */
-    uint16_t CountsPerRevolution;   /* Counter counts per mechanical revolution */
-}
-AngleCounter_Ref_T;
 
 
 /******************************************************************************/
@@ -67,7 +49,17 @@ typedef struct AngleCounter
     int32_t CounterD;       /* Signed displacement counter. Cleared for DeltaD */
     int32_t DeltaD;         /* Intermediate interface. */
     int32_t FreqD;          /* count_freq [count/s]. DeltaD over 1 second */
-    AngleCounter_Ref_T UnitRef; /* Runtime unit conversion */
+
+    /* Derived from [AngleCounter_Ref_T] */
+    struct
+    {
+        /* wrapping angle */
+        uint32_t Angle32PerCount;       /* [(UINT32_MAX+1)/CountsPerRevolution] */
+        uint32_t AngleDt32PerCount;     /* angle_dt32 per count_freq, at PollingFreq */
+        uint32_t SpeedPuPerCount;       /* speed_pu per count_freq, Q30 */
+        /* physical units handle with /cpr */
+        uint16_t CountsPerRevolution;   /* Counter counts per mechanical revolution */
+    } UnitRef;
 }
 AngleCounter_T;
 
@@ -123,6 +115,7 @@ static inline int32_t AngleCounter_CaptureDeltaD(AngleCounter_T * p_counter)
     @param[in] sampleTkFreq  timer_freq / sampleTk, from PulseTimer
 */
 /******************************************************************************/
+/* sample_freq 1: FreqD is per second, runtime (timerFreq / periodTk) */
 static inline void AngleCounter_CaptureFreq(AngleCounter_T * p_counter, uint32_t sampleTkFreq)
 {
     int32_t deltaD = AngleCounter_CaptureDeltaD(p_counter);
@@ -191,28 +184,23 @@ static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { 
 /******************************************************************************/
 /******************************************************************************/
 /*
-    Counter Ref Init - Compute runtime units from calibration
-    The caller owns the inputs and builds the complete Ref. No Config: nothing here is persisted.
+    Counter units. The caller fills [AngleCounter_Ref_T], AngleCounter_InitFrom derives the runtime units.
+    No Config: nothing here is persisted.
 */
 /******************************************************************************/
-/* sample_freq 1: FreqD is per second, runtime (timerFreq / periodTk) */
-static inline AngleCounter_Ref_T AngleCounter_Ref(uint32_t pollingFreq, uint16_t countsPerRevolution, angle_freq_t angleFreqBase)
+typedef struct
 {
-    return (AngleCounter_Ref_T)
-    {
-        .Angle32PerCount = angle32_per_count(countsPerRevolution),
-        .AngleDt32PerCount = angle_dt32_per_count_cpr(pollingFreq, countsPerRevolution),
-        .SpeedPuPerCount = (angleFreqBase != 0) ? angle_speed_pu32_per_count(1U, countsPerRevolution, angleFreqBase) : 0U, /* Base 0 is unset */
-        .CountsPerRevolution = countsPerRevolution,
-    };
+    uint32_t PollingFreq;
+    uint16_t CountsPerRevolution;
+    angle_freq_t AngleFreqBase;
 }
+AngleCounter_Ref_T; // or UnitRef, UnitBase could or too
 
-static inline void AngleCounter_InitFrom(AngleCounter_T * p_counter, AngleCounter_Ref_T unitRef)
+static inline void AngleCounter_InitFrom(AngleCounter_T * p_counter, AngleCounter_Ref_T arg)
 {
-    p_counter->UnitRef = unitRef;
+    p_counter->UnitRef.Angle32PerCount = angle32_per_count(arg.CountsPerRevolution);
+    p_counter->UnitRef.AngleDt32PerCount = angle_dt32_per_count_cpr(arg.PollingFreq, arg.CountsPerRevolution);
+    p_counter->UnitRef.SpeedPuPerCount = (arg.AngleFreqBase != 0) ? angle_speed_pu32_per_count(1U, arg.CountsPerRevolution, arg.AngleFreqBase) : 0U; /* Base 0 is unset */
+    p_counter->UnitRef.CountsPerRevolution = arg.CountsPerRevolution;
     AngleCounter_ZeroCount(p_counter);
 }
-
-
-
-

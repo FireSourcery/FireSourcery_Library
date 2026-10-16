@@ -51,7 +51,9 @@
 typedef struct { int16_t mantissa; uint8_t shift; } fract16e_t;
 
 static inline int8_t fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a.shift; }
-// static inline fract16e_t _fract16e(fract16_t mantissa, int8_t m) { return (fract16e_t) { .mantissa = mantissa, .shift = FRACT16_N_BITS - m }; }
+// static inline fract16e_t fract16e_k(fract16_t mantissa, int8_t m) { return (fract16e_t) { .mantissa = mantissa, .shift = FRACT16_N_BITS - m }; }
+
+static inline fract16e_t fract16e_k(accum32_t value, int8_t m) { return (fract16e_t){ .mantissa = (int16_t)(value >> m), .shift = FRACT16_N_BITS - m }; }
 
 /******************************************************************************/
 /*!
@@ -66,6 +68,7 @@ static inline fract16e_t _fract16e(int32_t value, int8_t shift)
     assert(math_is_in_range(shift - excess, 0, 31));
     return (fract16e_t) { .mantissa = (int16_t)(value >> excess), .shift = shift - excess };
 }
+
 
 /*
     constructor [mantissa · 2^exp],   32767e1 = 32767 · 2^1 ≈ 2.0
@@ -117,7 +120,7 @@ static inline fract16e_t fract16e_merge(fract16e_t a, fract16e_t b)
 // }
 
 
-static inline fract16e_t fract16e_pi(uint32_t factor) { return fract16e(FRACT16_PI, fixed_bit_width(factor >> FRACT16_N_BITS)); }
+// static inline fract16e_t fract16e_pi(uint32_t factor) { return fract16e(FRACT16_PI, fixed_bit_width(factor >> FRACT16_N_BITS)); }
 
 /******************************************************************************/
 /*!
@@ -129,6 +132,32 @@ static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b)
     assert(math_abs(b) < FRACT16_SCALE * 2); /* |mantissa · b| < 2^31 */
     return ((int32_t)a.mantissa * b >> a.shift);
 }
+
+
+// #define fract16_mul_wide(a, b) _Generic((a), \
+//     accum32_t: accum32_mul, \
+//     fract16e_t: fract16e_mul \
+// )(a, b)
+
+
+/*
+    Thumb-1 (ARMv6-M, ARMv8-M Baseline) has no SMULL: an int64 product is a __aeabi_lmul call.
+    Define on other targets to run the 32-bit form, e.g. host tests.
+*/
+#if !defined(FIXED_LONG_MULTIPLY_SOFT) && defined(__ARM_ARCH_ISA_THUMB) && (__ARM_ARCH_ISA_THUMB == 1)
+typedef fract16e_t fract16k_t;
+// static inline fract16k_t fract16k_of(accum32_t a) { return fract16e_of(a); }
+static inline fract16k_t fract16k(accum32_t value, uint8_t m) { return fract16e_k(value, m); }
+static inline accum32_t fract16k_mul(fract16k_t k, accum32_t b) { return fract16e_mul(k, b); }
+static inline accum32_t accum32_of_fract16k(fract16k_t k) { return fract16e_mul(k, FRACT16_SCALE); }
+#else
+typedef accum32_t fract16k_t;
+// static inline fract16k_t fract16k_of(accum32_t a) { return a; }
+static inline fract16k_t fract16k(accum32_t value, uint8_t m) { (void)m; return value; }
+static inline accum32_t fract16k_mul(fract16k_t k, accum32_t b) { return accum32_mul(k, b); }
+static inline accum32_t accum32_of_fract16k(fract16k_t k) { return k; }
+#endif
+
 
 
 /******************************************************************************/

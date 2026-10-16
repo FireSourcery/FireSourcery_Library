@@ -544,9 +544,9 @@ int _Motor_Var_ConfigElectricalPu_Get(const Motor_Config_T * p_motor, Motor_Var_
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_ELECTRICAL_PSI:  value = Motor_Psi_PuTick(&p_motor->Electrical);    break;
-        case MOTOR_VAR_ELECTRICAL_LD:   value = Motor_Ld_PuTick(&p_motor->Electrical);     break;
-        case MOTOR_VAR_ELECTRICAL_LQ:   value = Motor_Lq_PuTick(&p_motor->Electrical);     break;
+        case MOTOR_VAR_ELECTRICAL_PSI:  value = Motor_Psi_PuTurn(&p_motor->Electrical);    break;
+        case MOTOR_VAR_ELECTRICAL_LD:   value = Motor_Ld_PuTurn(&p_motor->Electrical);     break;
+        case MOTOR_VAR_ELECTRICAL_LQ:   value = Motor_Lq_PuTurn(&p_motor->Electrical);     break;
         case MOTOR_VAR_ELECTRICAL_RS:   value = p_motor->Electrical.Rs;                                 break;
         case MOTOR_VAR_FW_ID_LIMIT:     value = p_motor->FieldWeakening.IfwLimit;        break;
         case MOTOR_VAR_FW_ID_GAIN:      value = p_motor->FieldWeakening.IfwGain;         break;
@@ -559,9 +559,9 @@ void _Motor_Var_ConfigElectricalPu_Set(Motor_Config_T * p_motor, Motor_Var_Confi
 {
     switch (varId)
     {
-        case MOTOR_VAR_ELECTRICAL_PSI:  Motor_SetPsi_PuTick(&p_motor->Electrical, varValue);     break;
-        case MOTOR_VAR_ELECTRICAL_LD:   Motor_SetLd_PuTick(&p_motor->Electrical, varValue);     break;
-        case MOTOR_VAR_ELECTRICAL_LQ:   Motor_SetLq_PuTick(&p_motor->Electrical, varValue);     break;
+        case MOTOR_VAR_ELECTRICAL_PSI:  Motor_SetPsi_PuTurn(&p_motor->Electrical, varValue);     break;
+        case MOTOR_VAR_ELECTRICAL_LD:   Motor_SetLd_PuTurn(&p_motor->Electrical, varValue);     break;
+        case MOTOR_VAR_ELECTRICAL_LQ:   Motor_SetLq_PuTurn(&p_motor->Electrical, varValue);     break;
         case MOTOR_VAR_ELECTRICAL_RS:   p_motor->Electrical.Rs =  varValue;      break;
         case MOTOR_VAR_FW_ID_LIMIT:     p_motor->FieldWeakening.IfwLimit = varValue;        break;
         case MOTOR_VAR_FW_ID_GAIN:      p_motor->FieldWeakening.IfwGain = varValue;         break;

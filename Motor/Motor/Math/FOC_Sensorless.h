@@ -39,11 +39,11 @@
         3. Read θ̂ via FOC_Sensorless_GetAngle(), compute sin/cos, run Park / PID / inv-Park as usual.
         4. After SVPWM, FOC_Sensorless_CaptureVoltage(p, v_α, v_β) — stores v applied this cycle for next cycle's observer.
 
-    Per-unit at the tick base, ω_base = π · Fs
+    Per-unit at the turn base, ω_base = π · Fs
         v_pu   = V / V_base
         i_pu   = I / I_base
         Rs_pu  = Rs · I_base / V_base
-        L_tick = L · ω_base · I_base / V_base
+        L_turn = L · ω_base · I_base / V_base
 */
 /******************************************************************************/
 #include "foc_sensorless_math.h"
@@ -106,9 +106,9 @@ FOC_SensorlessConfig_T;
 // .StaAlphaDt    = (fract16_t)FRACT16(.01F),                      /* STA integrator gain × dt */
 
 /*
-    [FOC_SensorlessElectrical_T] View of the machine model at the tick base. Derived from the caller's model, FOC_Sensorless_InitElectrical.
-        G = π / Ls_tick = Ts · V_base / (Ls · I_base),  Ls = (Ld + Lq) / 2     SMO, Step
-        Lq_tick                                                             voltage model, StepVModel
+    [FOC_SensorlessElectrical_T] View of the machine model at the turn base. Derived from the caller's model, FOC_Sensorless_InitElectrical.
+        G = π / Ls_turn = Ts · V_base / (Ls · I_base),  Ls = (Ld + Lq) / 2     SMO, Step
+        Lq_turn                                                             voltage model, StepVModel
 */
 typedef struct FOC_SensorlessElectrical
 {
@@ -252,14 +252,14 @@ static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, const FOC_SensorlessCo
 }
 
 /*
-    The plant from the caller's model, tick base. Ls = (Ld + Lq) / 2.
+    The plant from the caller's model, turn base. Ls = (Ld + Lq) / 2.
     G = Ts · V_base / (Ls · I_base) is the SMO discretization, derived here. Ls = 0 leaves the SMO inert, G = 0.
 
-    Validate checks (ls_tick != 0U)
+    Validate checks (ls_turn != 0U)
 */
-static void FOC_Sensorless_InitElectrical(FOC_Sensorless_T * p_obs, uint32_t ls_tick, uint32_t lq_tick, fract16_t rs)
+static void FOC_Sensorless_InitElectrical(FOC_Sensorless_T * p_obs, uint32_t ls_turn, uint32_t lq_turn, fract16_t rs)
 {
-    p_obs->Electrical = (FOC_SensorlessElectrical_T) { .G = foc_g_pu_of_l_tick(ls_tick), .Lq = lq_tick, .Rs = rs, };
+    p_obs->Electrical = (FOC_SensorlessElectrical_T) { .G = foc_g_pu_of_l_turn(ls_turn), .Lq = lq_turn, .Rs = rs, };
 }
 
 

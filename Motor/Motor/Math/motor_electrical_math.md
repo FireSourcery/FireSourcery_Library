@@ -15,45 +15,45 @@ Units cancel: ψ [V·s/rad] · F [angle16/s] · π [rad per 2^15 angle16] / V_ba
 
 | Base | F_base | ω_pu | Holds |
 |---|---|---|---|
-| Tick | `angle_freq_nyquist(Fs)` = Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts], 32768 = π rad/Ts | Identification, the observer gain, FOC decoupling. Measurements are in samples, and Nyquist is the largest usable base, so every other base is a scale-down |
+| Turn | `angle_freq_nyquist(Fs)` = Fs · 2^15, ω_base = π · Fs | Δθ [angle16/Ts], 32768 = π rad/Ts | Identification, the observer gain, FOC decoupling. Measurements are in samples, and Nyquist is the largest usable base, so every other base is a scale-down |
 | Speed base | `Motor_SpeedBase_AngleFreq` = AngleFreqPerVolt · V_base · `MOTOR_SPEED_BASE_V_PU` | `Speed_Pu` | Speed loop, limits, UI. ψ_pu = `MOTOR_SPEED_BASE_V_PU` by definition |
 
 ```mermaid
 flowchart LR
     Entry["Kv · ψ · V at Hz"] --> Rate["Motor_Electrical_T: PolePairs, AngleFreqPerVolt"]
     SI["L · datasheet"] --> RateL["Motor_Electrical_T: AngleFreqPerOhmD, AngleFreqPerOhmQ"]
-    ID["Identification in samples"] -->|"tick → rate"| RateL
-    Rate -->|"F_nyq / (rate · V_base)"| Tick["FOC_Electrical_T at tick base"]
-    RateL -->|"F_nyq / (rate · V_base / I_base)"| Tick
-    Tick -->|"· Δθ"| FOC["FOC decoupling"]
+    ID["Identification in samples"] -->|"turn → rate"| RateL
+    Rate -->|"F_nyq / (rate · V_base)"| Turn["FOC_Electrical_T at turn base"]
+    RateL -->|"F_nyq / (rate · V_base / I_base)"| Turn
+    Turn -->|"· Δθ"| FOC["FOC decoupling"]
     Rate -->|"· V_base · V_PU"| AFB["AngleFreqBase [angle16/s]"]
     AFB -->|"/ Fs"| ADB["AngleDtBase [angle16/Ts]"]
     ADB --> Ref["Angle_SpeedPuRef_T: ω_pu ↔ Δθ"]
 ```
 
-ψ_tick is v_pu per [angle16/Ts]. The tick is in the numerator (time on top), so the name is `PU_TICK`, per-unit on the tick base, not `PER_TICK`.
+ψ_turn is v_pu per [angle16/Ts]. A named base gives the angle per Ts at ω_pu = 1.0: `_pu_turn` a half turn, the Q15 full scale of Δθ; `_pu_rad` 1 rad, where the time-derivative term needs no factor, v = L_rad · Δi (`motor_v_stator`). x_turn = π · x_rad.
 
 ## Routing
 
-Speed units enter only through `angle_freq_of_rpm`, `angle_freq_of_rads` and `ANGLE_FREQ(Hz)`. Callers compose the base and call the core; the rpm and rad/s variants are commented out. The tick forms (`*_pu_tick_of_*`) are written directly against Fs. They equal the core at `angle_freq_nyquist(Fs)`, where F / 2^15 = Fs exactly. Against the previous direct forms (V_base 24–150 V, base 16–990 Hz, ψ 0.4–120 mWb, L 5–5000 µH, values ≤ 4 pu), rpm and rad/s bases through the core are within 1 LSB in ≤ 0.2% of cases, where F_base / 2^15 is not whole.
+Speed units enter only through `angle_freq_of_rpm`, `angle_freq_of_rads` and `ANGLE_FREQ(Hz)`. Callers compose the base and call the core; the rpm and rad/s variants are commented out. The turn forms (`*_pu_turn_of_*`) are written directly against Fs. They equal the core at `angle_freq_nyquist(Fs)`, where F / 2^15 = Fs exactly. Against the previous direct forms (V_base 24–150 V, base 16–990 Hz, ψ 0.4–120 mWb, L 5–5000 µH, values ≤ 4 pu), rpm and rad/s bases through the core are within 1 LSB in ≤ 0.2% of cases, where F_base / 2^15 is not whole.
 
 The core divides by a Q15 constant first and by the variable divisor last, so one truncation is in effect:
 
-    ψ_pu = ψ · F / 2^15 · FRACT16_PI / (V_base · scale)     F / 2^15 is exact at the tick base and whole-Hz bases
+    ψ_pu = ψ · F / 2^15 · FRACT16_PI / (V_base · scale)     F / 2^15 is exact at the turn base and whole-Hz bases
     ψ    = ψ_pu · V_base · scale / FRACT16_PI · 2^15 / F
     L_pu = L · I_base · F / 2^15 · FRACT16_PI / (V_base · scale)
     L    = L_pu · V_base · scale / FRACT16_PI · 2^15 / (I_base · F)
 
-A single division overflows 64 bits for L at the tick base (L · I_base · F · `FRACT16_PI` exceeds 2^64 above ~440 µH at 625 A). Dividing by `scale` first is off by 1 LSB in 3–11% of cases. The L forms are the ψ forms with ψ = L · I_base, written out so L · I_base is a 64-bit product (as a 32-bit ψ argument it wraps above 4.29e9, e.g. 10 mH in nH at 625 A).
+A single division overflows 64 bits for L at the turn base (L · I_base · F · `FRACT16_PI` exceeds 2^64 above ~440 µH at 625 A). Dividing by `scale` first is off by 1 LSB in 3–11% of cases. The L forms are the ψ forms with ψ = L · I_base, written out so L · I_base is a 64-bit product (as a 32-bit ψ argument it wraps above 4.29e9, e.g. 10 mH in nH at 625 A).
 
-`pu_tau_rebase(x, from, to) = x · to / from` moves ψ_pu or L_pu between bases. It applies only to quantities with time on top (ψ in V·s, L · I_base in V·s); a speed in pu of the base scales inversely, and Rs, V, I do not change. Tick to speed base is a scale-down, so no bits are lost beyond the output's.
+`pu_tau_rebase(x, from, to) = x · to / from` moves ψ_pu or L_pu between bases. It applies only to quantities with time on top (ψ in V·s, L · I_base in V·s); a speed in pu of the base scales inversely, and Rs, V, I do not change. Turn to speed base is a scale-down, so no bits are lost beyond the output's.
 
 ### Open: round-trip rounding
 
 Every conversion truncates, so a value that goes up and back down loses 1 LSB:
 
-- Speed base → tick → speed base through `pu_tau_rebase` (and the commented `l_pu_tick_of_pu*` / `l_pu_of_pu_tick` wrappers) returns x − 1 unless the base ratio is whole. 200 Hz at Fs 20 kHz is exactly 50 and round-trips; across five other bases only 396 of 1,880 values came back unchanged. Scaling up to the midpoint of the interval x stands for, `(2x + 1) · to / (2 · from)`, returned all 1,880.
-- SI → pu → SI reads 80 µH back as 79, at tick and at rpm bases, for the same reason.
+- Speed base → turn → speed base through `pu_tau_rebase` (and the commented `l_pu_turn_of_pu*` / `l_pu_of_pu_turn` wrappers) returns x − 1 unless the base ratio is whole. 200 Hz at Fs 20 kHz is exactly 50 and round-trips; across five other bases only 396 of 1,880 values came back unchanged. Scaling up to the midpoint of the interval x stands for, `(2x + 1) · to / (2 · from)`, returned all 1,880.
+- SI → pu → SI reads 80 µH back as 79, at turn and at rpm bases, for the same reason.
 
 L is stored as a rate (Inductance as a rate, below), and the var interface carries it as stored, so a write there is lossless. A write through a pu view, such as the calibration commit, is a reciprocal pair, `angle_freq_of_l_pu` then `l_pu_of_angle_freq`, one truncation each. It returns every value x written while K ≥ x · (x + 1), K = F_base · 2^15 · I_base / V_base, that is while the rate has more bits than L_pu: at the speed base, below 2.85 mH on the 94 V, 625 A board at Kv 150. Above it, the rate has fewer bits than L_pu and a write moves by a few LSB of a value over 21 bits. A base change re-derives from the rate, so a Kv change and back does not drift L.
 
@@ -70,7 +70,7 @@ Kv and rpm are views at the user boundary (`Motor_Config_GetKv` / `SetKv`, the r
 | Entry | Compile time | Runtime | View |
 |---|---|---|---|
 | Kv, M = 2 | `MOTOR_ANGLE_FREQ_OF_KV(Kv, P)` | `angle_freq_of_kv(Kv, P)` | `kv_of_angle_freq(rate, P)`, rounds |
-| ψ | `MOTOR_ANGLE_FREQ_OF_PSI(ψ)` | `angle_freq_of_s_per_rad(ψ, scale)` | `s_per_rad_of_angle_freq(rate, scale)` |
+| ψ | `MOTOR_PSI_INV(ψ)` | `angle_freq_of_s_per_rad(ψ, scale)` | `s_per_rad_of_angle_freq(rate, scale)` |
 
 Example: Kv 150 with 4 pole pairs is 20 Hz/V = 1,310,720 angle16/s / V, so 940 Hz electrical, 14100 rpm at V_base 94 V. The compile-time Kv macro computes in double and equals the runtime adapter for every integer Kv (30,000 of 30,000, Kv 1–1000, P 1–30), and keeps a fractional Kv: 8.4 at 23 pp gives 422,051 (exact 422,051.8).
 
@@ -89,18 +89,18 @@ L takes the shape of ψ. The rate is the speed at which the reactance X = ω · 
 [Motor_Electrical_T] holds one per axis, `AngleFreqPerOhmD` = 1 / Ld and `AngleFreqPerOhmQ` = 1 / Lq. The rate is free of Fs, the board base, and the speed base. Every pu form is one division from it, and the forms of ψ and L are the same expression with Z_base = V_base for ψ and V_base / I_base for L:
 
     x_pu   = F_base / (rate · Z_base)               [angle16/s] / ([angle16/s · A/V] · [V/A]) = [1]
-    x_tick = Fs · 2^30 / (rate · Z_base)            F_base = angle_freq_nyquist(Fs), π-free
+    x_turn = Fs · 2^30 / (rate · Z_base)            F_base = angle_freq_nyquist(Fs), π-free
 
 ψ per volt and L per ohm are both [s/rad], the reciprocal of [rad/s], so one pair converts either from SI.
 
 | Entry | Compile time | Runtime | View |
 |---|---|---|---|
-| L [H] | `MOTOR_ANGLE_FREQ_OF_L(L)` | `angle_freq_of_s_per_rad(L, scale)` | `s_per_rad_of_angle_freq(rate, scale)` |
+| L [H] | `MOTOR_L_INV(L)` | `angle_freq_of_s_per_rad(L, scale)` | `s_per_rad_of_angle_freq(rate, scale)` |
 | L_pu at a base | | `angle_freq_of_l_pu(F_base, V_base, I_base, L_pu)` | `l_pu_of_angle_freq(F_base, V_base, I_base, rate)` |
 | ψ_pu at a base | | | `psi_pu_of_angle_freq(F_base, V_base, rate)` |
 
 - int32 holds L ≥ 4.86 µH: 31 bits at 5 µH, 27 at 80 µH, 16.7 at 100 mH. µH reads back exactly (80 → 130,379,729 → 80).
-- Identification stays in samples, at the tick base. `Motor_SetLd_PuTick` and `Motor_SetLq_PuTick` convert on commit. The observer reads `Motor_Electrical_LsTick`, (Ld + Lq) / 2.
+- Identification stays in samples, at the turn base. `Motor_SetLd_PuTurn` and `Motor_SetLq_PuTurn` convert on commit. The observer reads `Motor_Ls_PuTurn`, (Ld + Lq) / 2.
 - The ratio of the two rates is a current: AngleFreqPerOhmD / AngleFreqPerVolt = ψ / Ld [A], the short-circuit current. 122,710,328 / 1,310,720 = 93.6 A on the debug motor (Kv 150, 4 pole pairs, Ld 85 µH).
 - Ldelta = Lq − Ld has no rate form, since its reciprocal diverges at Ld = Lq. Each axis is stored on its own.
 
@@ -110,7 +110,7 @@ A stored pu value follows its base. Changing V_base or I_base (board), or F_base
 
 ## Storage and the FOC view
 
-FOC and the sensorless observer hold no unit bases and no model config. Motor_Electrical owns the speed base, derived from its AngleFreqPerVolt, and mediates the board base, V_base and I_base [Phase_Board_T], and Fs, the tick base. It returns per-unit values in its own terms (`Motor_Ld_PuTick`, `Motor_Psi_PuTick`, `Motor_Ls_PuTick`) and names no algorithm type. `Motor_ResolveFocParams`, which holds both sides, assembles each algorithm's view, and each algorithm derives its own coefficients: the observer gain G = π / Ls_tick in `FOC_Sensorless_InitElectrical`.
+FOC and the sensorless observer hold no unit bases and no model config. Motor_Electrical owns the speed base, derived from its AngleFreqPerVolt, and mediates the board base, V_base and I_base [Phase_Board_T], and Fs, the turn base. It returns per-unit values in its own terms (`Motor_Ld_PuTurn`, `Motor_Psi_PuTurn`, `Motor_Ls_PuTurn`) and names no algorithm type. `Motor_ResolveFocParams`, which holds both sides, assembles each algorithm's view, and each algorithm derives its own coefficients: the observer gain G = π / Ls_turn in `FOC_Sensorless_InitElectrical`.
 
 ```mermaid
 flowchart LR
@@ -128,11 +128,11 @@ flowchart LR
 | `Motor_Config_T.Electrical` [Motor_Electrical_T] | PolePairs, AngleFreqPerVolt, AngleFreqPerOhmD, AngleFreqPerOhmQ | none | yes |
 | | Rs | V_base / I_base | |
 | `Motor_Config_T.FieldWeakening` [Motor_FieldWeakeningTuning_T] | IfwLimit, IfwGain | I_base | yes |
-| `FOC_T.Electrical` [FOC_Electrical_T] | Ld, Lq, Rs, ψ | tick | no, derived |
+| `FOC_T.Electrical` [FOC_Electrical_T] | Ld, Lq, Rs, ψ | turn | no, derived |
 | `FOC_T.FieldWeakening` [FOC_FieldWeakeningTuning_T] | IdLimit, IdGain | I_base | no, derived: IfwLimit within the board FW rating |
-| `FOC_Sensorless_T.Electrical` [FOC_SensorlessElectrical_T] | G, Lq, Rs | tick | no, derived: G = π / Ls_tick for the SMO, Lq for the dq voltage model |
+| `FOC_Sensorless_T.Electrical` [FOC_SensorlessElectrical_T] | G, Lq, Rs | turn | no, derived: G = π / Ls_turn for the SMO, Lq for the dq voltage model |
 
-`Motor_ResolveFocParams` derives them on `Motor_Init` and `Motor_Reinit`, after the calibration commit, and after every electrical var write. An invalid model keeps the prior view. The FOC view is at the tick base, so the decoupling input is Δθ (`Motor_GetDecouplingOmega`), and the products ω·L, ω·ψ are base-invariant. ψ_tick derives from AngleFreqPerVolt, the one copy of the motor constant. The FW limit stays as written; `Motor_Config_ValidateFw` bounds ILimitMotoring_Pu to the rated vector left beside it.
+`Motor_ResolveFocParams` derives them on `Motor_Init` and `Motor_Reinit`, after the calibration commit, and after every electrical var write. An invalid model keeps the prior view. The FOC view is at the turn base, so the decoupling input is Δθ (`Motor_GetDecouplingOmega`), and the products ω·L, ω·ψ are base-invariant. ψ_turn derives from AngleFreqPerVolt, the one copy of the motor constant. The FW limit stays as written; `Motor_Config_ValidateFw` bounds ILimitMotoring_Pu to the rated vector left beside it.
 
 `MOTOR_VAR_TYPE_FOC_CONFIG` carries [Motor_Var_ConfigElectrical_T], the fields as stored: the rates, Rs, and the field weakening tuning. Motor_Config owns the accessors, `_Motor_Var_ConfigElectrical_Get/Set`, and the SI form, `_Motor_Var_ConfigElectricalSi_Get/Set`: ψ [µWb], Ld, Lq [µH], Rs [mΩ]. The Motor_Var layer wraps the set to re-resolve the FOC params, `Motor_Var_ConfigElectrical_Set`. A ψ write re-resolves the FOC view at once. The speed base it also moves applies with the sensor units on `Motor_Reinit`, as Kv does.
 
@@ -162,7 +162,7 @@ Vendor bases to internal phase peak: Kv_phase = √3 · Kv_LL_pk, Kv_pk = Kv_rms
 
 V_base, I_base, and ω_base are the anchors. A per-unit value exceeds 1.0 when the quantity exceeds its base.
 
-| Base | Definition | Tick base, ω_base = π · Fs | Relation |
+| Base | Definition | Turn base, ω_base = π · Fs | Relation |
 |---|---|---|---|
 | V_base [V] | `Phase_VMaxVolts` | | |
 | I_base [A] | `Phase_IMaxAmps` | | |
@@ -183,9 +183,9 @@ All Q15, 32768 = 1.0. ψ_pu, L_pu, and Rs_pu are accum32 and may exceed 1.0.
 | ω | ω / ω_base | | `Speed_Pu` |
 | Rs | Rs · I_base / V_base | v_pu / i_pu | `MOTOR_R_PU`, `rs_pu_of_ohm`, `rs_pu_of_vi` |
 | ψ | ψ · ω_base / V_base | v_emf_pu / ω_pu | `MOTOR_PSI_PU`, `psi_pu_of_wb`, `psi_pu_of_emf`, `psi_pu_of_angle_freq` |
-| L | L · ω_base · I_base / V_base | v_L_pu / (ω_pu · i_pu) | `MOTOR_L_PU`, `l_pu_of_h`, `l_pu_tick_of_*`, `l_pu_of_angle_freq` |
+| L | L · ω_base · I_base / V_base | v_L_pu / (ω_pu · i_pu) | `MOTOR_L_PU`, `l_pu_of_h`, `l_pu_turn_of_*`, `l_pu_of_angle_freq` |
 
-ψ_pu and L_pu scale with ω_base, Rs_pu does not. Between bases: x_b = x_a · ω_b / ω_a (`pu_tau_rebase`), e.g. x_tick = x_pu · π · Fs / ω_base.
+ψ_pu and L_pu scale with ω_base, Rs_pu does not. Between bases: x_b = x_a · ω_b / ω_a (`pu_tau_rebase`), e.g. x_turn = x_pu · π · Fs / ω_base.
 
 - ψ_pu = 1.0: the BEMF reaches V_base at ω_base. At the speed base, ψ_pu = `MOTOR_SPEED_BASE_V_PU`.
 - L_pu < 1.0: L < L_base.
@@ -219,7 +219,8 @@ Angle: angle16, 65536 per turn, 32768 = π rad. `ANGLE16_PER_RADIAN` = 2^15 / π
 | rad/s, scaled | `ANGLE_FREQ_OF_RADS`, `angle_freq_of_rads` | `rads_of_angle_freq` |
 | angle16/Ts | `angle_freq_of_angle_dt` | `ANGLE_DT_OF_FREQ`, `angle_dt_of_angle_freq` |
 | Mechanical rpm | | `mech_rpm_of_el_angle_freq`, rounds |
-| Tick base | `ANGLE_FREQ_NYQUIST`, `angle_freq_nyquist` = Fs · 2^15 | |
+| Turn base | `ANGLE_FREQ_NYQUIST`, `angle_freq_nyquist` = Fs · 2^15 | |
+| Rad base | `ANGLE_FREQ_OF_RADS(Fs)` = Fs · 2^15 / π | |
 
 ## Integrator
 
@@ -228,9 +229,9 @@ Angle: angle16, 65536 per turn, 32768 = π rad. `ANGLE16_PER_RADIAN` = 2^15 / π
 | Base | ω_pu → Δθ | Δθ → ω_pu |
 |---|---|---|
 | Speed base | Δθ = ω_pu · Δθ_base / 2^15, `Angle_CaptureSpeed_Pu` | ω_pu = (Δθ · Inv) >> 16, Inv = INT32_MAX / Δθ_base, `Angle_ResolveSpeed_Pu` |
-| Tick base | Δθ = ω_pu | ω_pu = Δθ |
+| Turn base | Δθ = ω_pu | ω_pu = Δθ |
 
-## Tick base at Fs = 20 kHz
+## Turn base at Fs = 20 kHz
 
 Fixed by Fs, independent of the motor.
 
@@ -242,8 +243,8 @@ Fixed by Fs, independent of the motor.
 | ψ_base | V_base / (π · Fs) | 1.50 mWb at 94 V |
 | L_base | V_base / (π · Fs · I_base) | 2.49 µH at 94 V, 600 A |
 
-- Δθ is int16 and wraps at ±π, so the tick base is Nyquist by construction.
-- Running speeds use ~2–25% of the range, [0:8192]. 1000 rpm at 4 pole pairs is 419 rad/s, 218 LSB. A speed base resolves k = π · Fs / ω_base times finer, so the tick base holds storage and identification, and the speed loop runs at the speed base.
+- Δθ is int16 and wraps at ±π, so the turn base is Nyquist by construction.
+- Running speeds use ~2–25% of the range, [0:8192]. 1000 rpm at 4 pole pairs is 419 rad/s, 218 LSB. A speed base resolves k = π · Fs / ω_base times finer, so the turn base holds storage and identification, and the speed loop runs at the speed base.
 - ω_base = π · Fs / k with k a power of two gains log2(k) bits and bounds Δθ to π / k per Ts.
 
 
@@ -255,49 +256,67 @@ L = 80 µH, V_base = 94 V, I_base = 600 A, Fs = 20 kHz, 4 pole pairs. Speed base
 
 ## Bases by k
 
-ω_base = π · Fs / k. The tick base is k = 1.
+ω_base = π · Fs / k. The turn base is k = 1.
 
-| k | Δθ_base | f_base [Hz] | erpm | rpm, 4 pp | rpm, 8 pp | L_base [µH] | ψ_base [mWb] |
-|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 32768 | 10000 | 600000 | 150000 | 75000 | 2.49 | 1.50 |
-| 2 | 16384 | 5000 | 300000 | 75000 | 37500 | 4.99 | 2.99 |
-| 4 | 8192 | 2500 | 150000 | 37500 | 18750 | 9.97 | 5.98 |
-| 8 | 4096 | 1250 | 75000 | 18750 | 9375 | 19.9 | 12.0 |
-| 16 | 2048 | 625 | 37500 | 9375 | 4688 | 39.9 | 23.9 |
-| 32 | 1024 | 312.5 | 18750 | 4688 | 2344 | 79.8 | 47.9 |
-| 64 | 512 | 156.3 | 9375 | 2344 | 1172 | 159.6 | 95.7 |
-| 128 | 256 | 78.1 | 4688 | 1172 | 586 | 319.2 | 191.5 |
+### Speed, Fs = 20 kHz
 
-A power-of-two k is a shift, so ψ and L could be stored as (factor, shift): x_pu = x_q15 · 2^n, n = log2(k), x_q15 = x · π · Fs / (Z_base · k) · 2^15, Z_base = V_base for ψ and V_base / I_base for L. Tick storage keeps the Q15 scale in 32 bits instead.
+| k | Δθ_base | ω_base [Hz] | erpm | rpm, 4 pp | rpm, 8 pp |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 32768 | 10000 | 600000 | 150000 | 75000 |
+| 2 | 16384 | 5000 | 300000 | 75000 | 37500 |
+| 4 | 8192 | 2500 | 150000 | 37500 | 18750 |
+| 8 | 4096 | 1250 | 75000 | 18750 | 9375 |
+| 16 | 2048 | 625 | 37500 | 9375 | 4688 |
+| 32 | 1024 | 312.5 | 18750 | 4688 | 2344 |
+| 64 | 512 | 156.3 | 9375 | 2344 | 1172 |
+| 128 | 256 | 78.1 | 4688 | 1172 | 586 |
+
+### Board, V_base = 94 V, I_base = 600 A
+
+L_base = V_base / (ω_base · I_base), ψ_base = V_base / ω_base.
+
+| k | L_base [µH] | ψ_base [mWb] |
+|---:|---:|---:|
+| 1 | 2.49 | 1.50 |
+| 2 | 4.99 | 2.99 |
+| 4 | 9.97 | 5.98 |
+| 8 | 19.9 | 12.0 |
+| 16 | 39.9 | 23.9 |
+| 32 | 79.8 | 47.9 |
+| 64 | 159.6 | 95.7 |
+| 128 | 319.2 | 191.5 |
+
+A power-of-two k is a shift, so ψ and L could be stored as (factor, shift): x_pu = x_q15 · 2^n, n = log2(k), x_q15 = x · π · Fs / (Z_base · k) · 2^15, Z_base = V_base for ψ and V_base / I_base for L. Turn storage keeps the Q15 scale in 32 bits instead.
 
 ## L at each encoding
 
-| Encoding | Base | Value | Note |
-|---|---|---|---|
-| Direct, no Q15 | tick | L_int = 32, 32.084 truncated | [L_H*Fs*π*I_base/V_base], L_int padded by Fs |
-| Direct, no Q15 | tick | L_int = ~66  | [L_H*Fs*2π*I_base/V_base], /2 at boundary |
-| Q15, stored | tick | L_tick = 1,051,339 = 32.084 · 2^15, `ACCUM32(MOTOR_L_PU_TICK)` |
-| Q15 | speed base | L_pu = 35,045 = 1.0695 · 2^15, `l_pu_of_h`. `pu_tau_rebase(L_tick)` gives 35,044 |
-alternatively without absorbing PI. fract16_mul(ω_pu, L_pu) * PI at boundary PI absorbs shift {.value = π/k, .shift} INT32_MAX / (PI* L_tick)
-| Q15 | speed base | L_pu = 5,804  | [L_H*F_base*I_base/V_base], pu_tau case, ω [0:32768] |
-| Q15, stored | tick | L_tick ~= 348,595 = 10.63 · 2^15, `ACCUM32(MOTOR_L_PU_TICK)` | [L_H*Fs*I_base/V_base], pu_ts case    |
+Every form is L / R_base · ω_base, R_base = V_base / I_base. The base sets ω_base and the angle unit the speed operand counts in.
+
+| Encoding | Base | Value | Product | Dimensional analysis |
+|---|---|---|---|---|
+| Direct | turn, ω_base = π · Fs | L_int = 32, 32.084 truncated | Δθ · L_int | L / R_base [s/rad] · π · Fs [rad/s] = [1]. Δθ counts 2^15 per half turn, so the product is Q15 with no shift |
+| Direct | turn, k = 1/2, ω_base = 2π · Fs | L_int = 64, 64.169 truncated | (Δθ · L_int) >> 1 | L / R_base [s/rad] · 2π · Fs [rad/s] = [1]. Δθ counts 2^16 per turn, Q16, so >> 1 to Q15 |
+| Q15, FOC view | turn, ω_base = π · Fs | L_turn = 1,051,340 = 32.084 · 2^15, `ACCUM32(MOTOR_L_PU_TURN)`, `Motor_Ld_PuTurn` | Δθ · L_turn >> 15 | L / R_base [s/rad] · π · Fs [rad/s] = [1] |
+| Q15 | speed base, ω_base = 2094.4 rad/s | L_pu = 35,044 = 1.0695 · 2^15, `l_pu_of_h`, `pu_tau_rebase(L_turn)` | ω_pu · L_pu >> 15 | L / R_base [s/rad] · ω_base [rad/s] = [1] |
+| Q15 | speed base in Hz, f_base = 333.3 Hz | L_pu / 2π = 5,577 = 0.1702 · 2^15 | (ω_pu · L_pu / 2π >> 15) · 2π | L / R_base [s/rad] · f_base [turn/s] = [turn/rad], so 2π [rad/turn] is left for the boundary |
+| Q15 | rad, ω_base = Fs | L_rad = 334,651 = 10.213 · 2^15, `l_pu_rad_of_h` | (Δθ · L_rad >> 15) · π | L / R_base [s/rad] · Fs [rad/s] = [1], 1 rad per Ts. Δθ counts half turns, so π [rad / half turn] at the boundary. L_rad · Δi needs no factor |
 
 ## Product across speed
 
 Exact = ω_e · L · I_base / V_base · 2^15. Speeds rounded to nearest, products truncated. ω_pu ≥ 32768 is ≥ 1.0 pu, in accum32 range.
 
-| rpm | ω_e [rad/s] | Δθ | ω_pu | Direct, Δθ · L_int | Tick, Δθ · L_tick >> 15 | Speed base, ω_pu · L_pu >> 15 | Exact |
+| rpm | ω_e [rad/s] | Δθ | ω_pu | Direct, Δθ · L_int | Turn, Δθ · L_turn >> 15 | Speed base, ω_pu · L_pu >> 15 | Exact |
 |---:|---:|---:|---:|---:|---:|---:|---:|
 | 100 | 42 | 22 | 655 | 704 (+0.44%) | 705 (+0.59%) | 700 (−0.13%) | 701 |
 | 500 | 209 | 109 | 3277 | 3488 (−0.47%) | 3497 (−0.21%) | 3504 (−0.01%) | 3504 |
 | 1000 | 419 | 218 | 6554 | 6976 (−0.47%) | 6994 (−0.21%) | 7009 (0.00%) | 7009 |
 | 2000 | 838 | 437 | 13107 | 13984 (−0.24%) | 14020 (+0.02%) | 14017 (−0.01%) | 14018 |
-| 5000 | 2094 | 1092 | 32768 | 34944 (−0.29%) | 35036 (−0.02%) | 35045 (0.00%) | 35045 |
-| 7500 | 3142 | 1638 | 49152 | 52416 (−0.29%) | 52554 (−0.02%) | 52567 (0.00%) | 52567 |
-| 10000 | 4189 | 2185 | 65536 | 69920 (−0.24%) | 70104 (+0.02%) | 70090 (0.00%) | 70089 |
+| 5000 | 2094 | 1092 | 32768 | 34944 (−0.29%) | 35036 (−0.02%) | 35044 (0.00%) | 35045 |
+| 7500 | 3142 | 1638 | 49152 | 52416 (−0.29%) | 52554 (−0.02%) | 52566 (0.00%) | 52567 |
+| 10000 | 4189 | 2185 | 65536 | 69920 (−0.24%) | 70104 (+0.02%) | 70088 (0.00%) | 70089 |
 
 
 - Direct multiply needs no Q15 shift and no 64-bit intermediate. Only the composite V terms, ω_pu · L_pu · i_pu, store above 1.0 pu. L_int drops the fraction, −0.26% on its own, and Δθ adds its quantization.
-- Tick Q15 removes the L truncation. Δθ quantization remains, up to 0.6% at 100 rpm.
+- Turn Q15 removes the L truncation. Δθ quantization remains, up to 0.6% at 100 rpm.
 - At the speed base ω_pu resolves 30× finer than Δθ and stays within 0.13% across the range. This is the runtime form.
 

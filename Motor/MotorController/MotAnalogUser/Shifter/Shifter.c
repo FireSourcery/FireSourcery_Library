@@ -11,48 +11,28 @@
 /*!
     @file   Shifter.c
     @author FireSourcery
-    @brief  Strategy table — one row per wiring SKU (FNR/FR/R), bundling the
-            pin-state -> Direction Decoder with the per-pin UserDIn_Mode.
+    @brief  Decode table per wiring variant [Shifter_PinMode_T].
 */
 /******************************************************************************/
 #include "Shifter.h"
 
 /******************************************************************************/
 /*
-    Strategy table — one row per wiring SKU. Each row is pure data:
-    an 8-entry decode truth table + the per-pin UserDIn_Mode policy.
-
-    Decode index = (Neutral<<2) | (Forward<<1) | (Reverse<<0).
-    For SKUs with disabled pins (always read 0), unreachable rows are filled
-    with the SKU's safe default. R-only defaults to FORWARD when REVERSE is
-    not asserted (its asymmetric semantic); FNR/FR default to NEUTRAL.
+    Indexed by [Shifter_Pins_T].
+    FNR: Forward or Reverse alone, otherwise Neutral.
+    R-only: the Reverse level alone. Released is Forward; Forward and Neutral pins have no effect.
 */
 /******************************************************************************/
 #define _N SHIFTER_DIRECTION_NEUTRAL
 #define _F SHIFTER_DIRECTION_FORWARD
 #define _R SHIFTER_DIRECTION_REVERSE
 
-const Shifter_Direction_T DECODE_TABLE_FNR[8]    = { _N, _R, _F, _N, _N, _N, _N, _N };
-const Shifter_Direction_T DECODE_TABLE_R_ONLY[8] = { _F, _R, _F, _R, _F, _R, _F, _R };
+static const Shifter_Direction_T DECODE_TABLE_FNR[8]    = { _N, _R, _F, _N, _N, _N, _N, _N };
+static const Shifter_Direction_T DECODE_TABLE_R_ONLY[8] = { _F, _R, _F, _R, _F, _R, _F, _R };
 
-/******************************************************************************/
-/*
-    Apply — Config.PinMode is the SKU. Its wired-pin mask gates Init (only wired
-    pins are touched, and only when their HAL is non-NULL) and selects the
-    decode table. The Forward bit is the discriminator: R-only (no Forward
-    pin) defaults to Forward; FNR/FR share a table.
-*/
-/******************************************************************************/
-static const Shifter_Pins_T WIRED_PINS[] =
+static inline const Shifter_Direction_T * SelectDecodeTable(Shifter_PinMode_T mode)
 {
-    [SHIFTER_PIN_MODE_FR]  = { .Forward = 1, .Reverse = 1 },
-    [SHIFTER_PIN_MODE_R]   = { .Reverse = 1 },
-    // [SHIFTER_PIN_MODE_FNR] = { .Neutral = 1, .Forward = 1, .Reverse = 1 },
-};
-
-static inline const Shifter_Direction_T * SelectDecodeTable(Shifter_Pins_T pins)
-{
-    return pins.Forward ? DECODE_TABLE_FNR : DECODE_TABLE_R_ONLY;
+    return (mode == SHIFTER_PIN_MODE_R) ? DECODE_TABLE_R_ONLY : DECODE_TABLE_FNR;
 }
 
 /******************************************************************************/
@@ -63,6 +43,11 @@ static inline const Shifter_Direction_T * SelectDecodeTable(Shifter_Pins_T pins)
 void Shifter_InitFrom(const Shifter_T * p_shifter, const Shifter_Config_T * p_config)
 {
     if (p_config != NULL) { p_shifter->P_STATE->Config = *p_config; }
+    UserDIn_Init(&p_shifter->FORWARD_DIN);
+    UserDIn_Init(&p_shifter->REVERSE_DIN);
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
+    UserDIn_Init(&p_shifter->NEUTRAL_DIN);
+#endif
     Shifter_SetPinMode(p_shifter, p_shifter->P_STATE->Config.PinMode);
     p_shifter->P_STATE->LastDirection = SHIFTER_DIRECTION_NEUTRAL;
 }
@@ -74,21 +59,13 @@ void Shifter_InitFrom(const Shifter_T * p_shifter, const Shifter_Config_T * p_co
 
 void Shifter_SetPinMode(const Shifter_T * p_shifter, Shifter_PinMode_T mode)
 {
-    Shifter_Pins_T pins = WIRED_PINS[mode];
     p_shifter->P_STATE->Config.PinMode = mode;
-#if defined(SHIFTER_PINS_FR_OPTION)
-    p_shifter->P_STATE->p_DecodeTable = SelectDecodeTable(pins);
-#endif
-    if (pins.Reverse) { UserDIn_Init(&p_shifter->REVERSE_DIN); } else { UserDIn_Modal_Disable(&p_shifter->REVERSE_DIN); }
-#if defined(SHIFTER_PINS_FR_FIXED) || defined(SHIFTER_PINS_FR_OPTION)
-    if (pins.Forward) { UserDIn_Init(&p_shifter->FORWARD_DIN); } else { UserDIn_Modal_Disable(&p_shifter->FORWARD_DIN); }
-    if (pins.Neutral) { UserDIn_Init(&p_shifter->NEUTRAL_DIN); } else { UserDIn_Modal_Disable(&p_shifter->NEUTRAL_DIN); }
-#endif
+    p_shifter->P_STATE->p_DecodeTable = SelectDecodeTable(mode);
 }
 
 
 /*
-    VarId/ConfigId Get/Set
+    VarId/ConfigId Get
 */
 int32_t Shifter_VarId_Get(const Shifter_T * p_shifter, Shifter_VarId_T id)
 {
@@ -98,7 +75,9 @@ int32_t Shifter_VarId_Get(const Shifter_T * p_shifter, Shifter_VarId_T id)
         case SHIFTER_VAR_DIRECTION:    value = Shifter_ResolveDirection(p_shifter);               break;
         case SHIFTER_VAR_FORWARD_PIN:  value = UserDIn_GetState(&p_shifter->FORWARD_DIN);         break;
         case SHIFTER_VAR_REVERSE_PIN:  value = UserDIn_GetState(&p_shifter->REVERSE_DIN);         break;
+#if defined(SHIFTER_NEUTRAL_PIN_ENABLE)
         case SHIFTER_VAR_NEUTRAL_PIN:  value = UserDIn_GetState(&p_shifter->NEUTRAL_DIN);         break;
+#endif
         default: break;
     }
     return value;
@@ -109,7 +88,7 @@ int32_t Shifter_ConfigId_Get(const Shifter_T * p_shifter, Shifter_ConfigId_T id)
     int32_t value = 0;
     switch (id)
     {
-        case SHIFTER_CONFIG_PIN_MODE: value = p_shifter->P_STATE->Config.PinMode.Value; break;
+        case SHIFTER_CONFIG_PIN_MODE: value = p_shifter->P_STATE->Config.PinMode; break;
     }
     return value;
 }

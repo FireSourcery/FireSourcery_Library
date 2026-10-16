@@ -268,7 +268,7 @@ int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T 
 */
 /******************************************************************************/
 /*
-    [Motor_Var_ConfigElectrical_T] Config, then the FOC params derived from it, at the tick base.
+    [Motor_Var_ConfigElectrical_T] Config, then the FOC params derived from it, at the turn base.
     ψ also moves the speed base the sensor units share. That part applies with them on Motor_Reinit, as Kv does.
 */
 void Motor_Var_ConfigElectrical_Set(Motor_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue)
