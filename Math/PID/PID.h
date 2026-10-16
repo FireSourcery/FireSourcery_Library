@@ -66,8 +66,8 @@ typedef struct PID
         Run-time coefficients. Store as Fixed32.
         Reapeating derived getter/setter may result in loss of precision
     */
-    fract16e_t PropGain;        /* Kp */
-    fract16e_t IntegralGain;    /* Ki / SampleFreq, into IntegralAccum */
+    fract16e_t Kp;
+    fract16e_t KiPerTick;       /* Ki / SampleFreq, into IntegralAccum */
 
     PID_Config_T Config; /* hold for runtime storage update */
 }
@@ -116,8 +116,8 @@ static inline uint16_t PID_GetKi_Fixed16(const PID_T * p_pid) { return PID_GetKi
 static inline uint16_t PID_GetKd_Fixed16(const PID_T * p_pid) { return PID_GetKd_Fixed32(p_pid) >> 8; }
 
 /*  */
-static inline int32_t _PID_GetKp_Runtime(const PID_T * p_pid) { return accum32_of_fract16e(p_pid->PropGain); }
-static inline int32_t _PID_GetKi_Runtime(const PID_T * p_pid) { return fract16e_mul(p_pid->IntegralGain, p_pid->Config.SampleFreq); }
+static inline int32_t _PID_GetKp_Runtime(const PID_T * p_pid) { return accum32_of_fract16e(p_pid->Kp); }
+static inline int32_t _PID_GetKi_Runtime(const PID_T * p_pid) { return fract16e_mul(p_pid->KiPerTick, p_pid->Config.SampleFreq); }
 
 static inline int16_t _PID_GetKp_Fixed16_Runtime(const PID_T * p_pid) { return _PID_GetKp_Runtime(p_pid) >> 8; }
 static inline int16_t _PID_GetKi_Fixed16_Runtime(const PID_T * p_pid) { return _PID_GetKi_Runtime(p_pid) >> 8; }

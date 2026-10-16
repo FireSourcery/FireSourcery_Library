@@ -498,10 +498,7 @@ const State_T MOTOR_STATE_RUN =
 static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    interval_t iLimits = Motor_GetILimits(p_context); /* Current control regardless of FeedbackMode. SpeedPid output is I. */
-    p_motor->P_MOTOR->FeedbackMode.Current = 1U; /* flag for ILimits update */
-    Ramp_SetLimits(&p_context->TorqueRamp, iLimits.low, iLimits.high);
-    PID_SetOutputLimits(&p_context->PidSpeed, iLimits.low, iLimits.high);
+    Motor_ResolveILimits(p_context); /* Current control regardless of FeedbackMode. SpeedPid output is I. */
     Motor_FOC_MatchTorqueIState(p_context);
     Motor_FOC_MatchVOutput(p_context);
 }
@@ -525,7 +522,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
     }
 }
 
-/* Store only - resolving would replace the I limits. Run_Entry resolves and matches on resume. */
+/* Run_Entry resolves and matches on resume */
 static State_T * Intervention_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
     p_motor->P_MOTOR->FeedbackMode = Motor_FeedbackMode_Cast(feedbackMode);
@@ -600,7 +597,7 @@ static State_T * OpenLoop_InputDirection(Motor_T * p_motor, state_value_t direct
 
 static State_T * OpenLoop_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode); /* a different flag mode will change ramp limits */
+    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
     return NULL;
 }
 

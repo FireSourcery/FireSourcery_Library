@@ -98,6 +98,9 @@ static inline void Motor_ResolveISupplyLimits(Motor_T * p_motor)
     // PID_SetOutputLimits(&p_motor->P_MOTOR->PidSpeed, iLimits.low, iLimits.high);
 }
 
+/* d-axis align within [0:IAlign], independent of Direction and the pushed limits */
+static inline void Motor_FOC_SetAlignILimits(Motor_Context_T * p_motor) { Ramp_SetLimits(&p_motor->TorqueRamp, 0, _Motor_GetIAlign(p_motor)); }
+
 
 /*
     Decoupling-basis ω input for FOC_CaptureSpeed. Δθ [angle16/Ts], the turn-base ω_pu of [FOC_Electrical_T]. Free of the speed base.

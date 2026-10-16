@@ -219,28 +219,12 @@ void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
 
 /******************************************************************************/
 /*
-    FeedbackMode may update feedback limits
+    FeedbackMode. Store only, Run_Entry resolves the feedback limits.
 */
 /******************************************************************************/
 void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
 {
     p_dev->P_MOTOR->FeedbackMode.Value = mode.Value;
-    Motor_ResolveFeedbackLimits(p_dev);
-}
-
-/* TorqueRamp and SpeedPid output units follow FeedbackMode.Current */
-void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
-{
-    Motor_Context_T * p_motor = p_dev->P_MOTOR;
-    interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
-
-    /* Current mode: resolve from inputs, TorqueRamp may hold V limits from voltage mode. */
-    if (p_motor->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor); }
-    else
-    {
-        if (p_motor->FeedbackMode.Speed == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
-        Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
-    }
 }
 
 

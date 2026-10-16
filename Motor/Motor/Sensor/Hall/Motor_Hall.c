@@ -72,9 +72,6 @@ static CalibrationBuffer_T * GetBuffer(Motor_T * p_motor) { return (CalibrationB
 
 /*
     [P_PARENT] Entry does not repeat on return from this SubState - reset the full feedback path here.
-
-    [FeedbackMode.Current] by direct write: [Motor_SetFeedbackMode] re-resolves the [TorqueRamp]
-    limits from [Direction], which collapses to [0:0] outside Run and would discard the align window.
     Align is d-axis - bounded by [IAlign], not by the direction-keyed motoring/generating pair.
 */
 static void Calibration_Entry(Motor_T * p_motor)
@@ -84,10 +81,9 @@ static void Calibration_Entry(Motor_T * p_motor)
     GetBuffer(p_motor)->Step = 0U;
 
     Phase_ActivateV0(&p_motor->PHASE);
-    p_context->FeedbackMode.Current = 1U;
     Motor_FOC_ClearFeedbackState(p_context);
     FOC_SetVLimits(&p_context->Foc, (sign_t)Motor_GetDirectionForward(p_context), VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS));
-    Ramp_SetLimits(&p_context->TorqueRamp, 0, _Motor_GetIAlign(p_context));
+    Motor_FOC_SetAlignILimits(p_context);
 
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_context->Config.AlignTime_Cycles);
     Hall_StartCalibrate(GetHall(p_motor));

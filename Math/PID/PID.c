@@ -78,11 +78,11 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
     @return control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
 
     integralAccum [-32768:32767] << 15
-    IntegralGain.mantissa * 65535 < INT32_MAX / 2: integralAccum + increment without saturation
+    (KiPerTick.mantissa * 65535) >> KiPerTick.shift < INT32_MAX / 2: integralAccum + increment without saturation
 */
 static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
-    int32_t proportional = fract16e_mul(p_pid->PropGain, error); /* Includes 15 shift */
+    int32_t proportional = fract16e_mul(p_pid->Kp, error); /* Includes 15 shift */
 
     /* Dynamic Clamp */
     int32_t integralMin = p_pid->OutputMin - proportional;
@@ -93,7 +93,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
             Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
         Forward rectangular approximation.
     */
-    int32_t integralAccum = p_pid->IntegralAccum + fract16e_mul(p_pid->IntegralGain, error); /* Excludes 15 shift */
+    int32_t integralAccum = p_pid->IntegralAccum + fract16e_mul(p_pid->KiPerTick, error); /* Excludes 15 shift */
     p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
     int32_t integral = p_pid->IntegralAccum >> 15;
 
@@ -187,44 +187,45 @@ void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
     Proportional(k) = Kp * error(k)
                     = [kp_Fixed32 >> N] * error(k)
 
-    [kp_Fixed32 >> N] = PropGain = mantissa >> shift, includes shift N
+    [kp_Fixed32 >> N] = Kp = mantissa >> shift, includes shift N
         mantissa = kp_Fixed32 >> M, M integer bits of kp_Fixed32
         shift = N - M
 
     mantissa * [Error Max] < INT32_MAX: |mantissa| < 2^15
 
     as Q17.15
-    kp_Fixed32 = 32767, 1.0F => M = 0, PropGain = (32,767, 15 - 0)
-    kp_Fixed32 = [511 << 15], 511.0F => M = 9, PropGain = (32,704, 15 - 9)
+    kp_Fixed32 = 32767, 1.0F => M = 0, Kp = (32,767, 15 - 0)
+    kp_Fixed32 = [511 << 15], 511.0F => M = 9, Kp = (32,704, 15 - 9)
 
     @param[in] kp_Fixed32 Q17.15, 32767 => 1.0F
 */
-static void SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32) { p_pid->PropGain = fract16e_of(kp_Fixed32); }
+static void SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32) { p_pid->Kp = fract16e_of(kp_Fixed32); }
 
 /*!
     Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
                 = [ki_Fixed32 >> N / SampleFreq] * error(k) + Integral(k-1)
 
-    [ki_Fixed32 / SampleFreq] = IntegralGain = mantissa >> shift, excludes shift N
+    [ki_Fixed32 / SampleFreq] = KiPerTick = mantissa >> shift, excludes shift N
         IntegralAccum holds Integral << N
 
-    mantissa * [Error Max] < [INT32_MAX / 2]: |mantissa| < 2^14
-        one bit narrower than PropGain, the increment adds to IntegralAccum without saturation
+    mantissa * [Error Max] < INT32_MAX: |mantissa| < 2^15
+    [ki_Fixed32 / SampleFreq] * [Error Max] < [INT32_MAX / 2]: the increment adds to IntegralAccum without saturation
 
     SampleFreq = 10000:
-    ki_Fixed32 = 32768 * 200 = 6,553,600 => (10,485, 4)
+    ki_Fixed32 = 32768 * 200 = 6,553,600 => (20,971, 5)
 
     SampleFreq = 20000:
-    ki_Fixed32 = 65536 * 255 = 16,711,680 => (13,369, 4)
-    ki_Fixed32 = 65536 => (13,421, 12)
-    ki_Fixed32 = 256 => (13,421, 20)
+    ki_Fixed32 = 65536 * 255 = 16,711,680 => (26,738, 5)
+    ki_Fixed32 = 65536 => (26,843, 13)
+    ki_Fixed32 = 256 => (26,843, 21)
 
     @param[in] ki_Fixed32 Q17.15, 32767 => 1.0F
 */
 static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
     assert(math_is_in_range(p_pid->Config.SampleFreq, 1, UINT16_MAX));
-    p_pid->IntegralGain = fract16e_narrow(fract16e_of_ratio(ki_Fixed32, p_pid->Config.SampleFreq), 1U);
+    p_pid->KiPerTick = fract16e_of_ratio(ki_Fixed32, p_pid->Config.SampleFreq);
+    assert(fract16e_mul(p_pid->KiPerTick, UINT16_MAX) < INT32_MAX / 2); /* [Error Max] */
 }
 
 

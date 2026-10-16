@@ -51,7 +51,7 @@
 typedef struct { int16_t mantissa; uint8_t shift; } fract16e_t;
 
 static inline int8_t fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a.shift; }
-// static inline fract16e_t fract16e_k(fract16_t mantissa, int8_t m) { return (fract16e_t) { .mantissa = mantissa, .shift = FRACT16_N_BITS - m }; }
+// static inline fract16e_t fract16e_ (fract16_t mantissa, int8_t m) { return (fract16e_t) { .mantissa = mantissa, .shift = FRACT16_N_BITS - m }; }
 
 static inline fract16e_t fract16e_k(accum32_t value, int8_t m) { return (fract16e_t){ .mantissa = (int16_t)(value >> m), .shift = FRACT16_N_BITS - m }; }
 
@@ -91,14 +91,15 @@ static inline fract16e_t fract16e_of(accum32_t accum) { return fract16e(accum, 0
 
 /*
     num / den, |num / den| < 2^15
-    s places |(num << s) / den| in [2^14, 2^16] before dividing: full mantissa at any magnitude
+    exp = bit_width(num) - bit_width(den), log2 |num / den| within one
+    (num << (15 - exp)) / den in [2^14, 2^16], the fract16 mantissa at exp: full mantissa at any magnitude
 */
 static inline fract16e_t fract16e_of_ratio(int32_t num, uint16_t den)
 {
-    int8_t shift = FRACT16_N_BITS + fixed_bit_width(den) - fixed_bit_width_signed(num);
+    int8_t exp = fixed_bit_width_signed(num) - fixed_bit_width(den);
     assert(den != 0U);
-    assert(shift >= 0);
-    return _fract16e((num << shift) / den, shift);
+    assert(exp <= FRACT16_N_BITS); /* checked before the shift below runs */
+    return fract16e((num << (FRACT16_N_BITS - exp)) / den, exp);
 }
 
 static inline fract16e_t fract16e_of_factors(int32_t num, int32_t factor)
@@ -110,21 +111,6 @@ static inline fract16e_t fract16e_merge(fract16e_t a, fract16e_t b)
 {
     return fract16e((int32_t)a.mantissa * b.mantissa, fract16e_exponent(a) + fract16e_exponent(b) - FRACT16_N_BITS);
 }
-
-/* The same value in n fewer mantissa bits, |mantissa| < 2^(15 - n). Headroom for a sum with the product */
-static inline fract16e_t fract16e_narrow(fract16e_t a, uint8_t n)
-{
-    assert(a.shift >= n);
-    return (fract16e_t){ .mantissa = a.mantissa >> n, .shift = a.shift - n };
-}
-
-// static inline fract16e_t fract16e_of_ratio(int32_t num, uint16_t den)
-// {
-//     int8_t exp = fixed_bit_width_signed(num) - fixed_bit_width(den);
-//     assert(den != 0U);
-//     assert(exp <= FRACT16_N_BITS); /* checked before the shift below runs */
-//     return fract16e((num << (FRACT16_N_BITS - exp)) / den, exp);
-// }
 
 
 // static inline fract16e_t fract16e_pi(uint32_t factor) { return fract16e(FRACT16_PI, fixed_bit_width(factor >> FRACT16_N_BITS)); }

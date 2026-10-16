@@ -249,8 +249,8 @@ void Motor_FOC_SetAlignCmdAngle(Motor_Context_T * p_motor, angle16_t angle)
 
 void Motor_FOC_StartAlignCmd(Motor_Context_T * p_motor)
 {
-    p_motor->FeedbackMode.Current = 1U;
     Motor_FOC_ClearFeedbackState(p_motor); /* reset TorqueRamp i/v to start at 0 */
+    Motor_FOC_SetAlignILimits(p_motor);
 }
 
 void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
@@ -269,8 +269,8 @@ void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
 */
 void Motor_FOC_StartStartUpAlign(Motor_Context_T * p_motor)
 {
-    p_motor->FeedbackMode.Current = 1U; /* StartUp always select current feedback */
     Motor_FOC_ClearFeedbackState(p_motor); /* Resets Ramp */
+    Motor_FOC_SetAlignILimits(p_motor);
     Angle_ZeroCaptureState(&p_motor->OpenLoopAngle); /* always align A */
 }
 
