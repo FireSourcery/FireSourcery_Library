@@ -82,5 +82,10 @@ static inline interval_t VBus_FOC_IqLimits(const VBus_T * p_vbus, fract16_t vd, 
 static inline interval_t VBus_FOC_IqPhaseLimits(const VBus_T * p_vbus, sign_t motion, fract16_t id) { return foc_iq_phase_limits(VBus_ILimitInterval(p_vbus), motion, id); }
 
 
+/* VBus is the conceptual source. FOC_T acts as collaborator */
+// static inline interval_t VBus_FOC_IqLimits(const VBus_T * p_vbus, const FOC_T * p_foc)
+// {
+//     return foc_iq_limits(VBus_ILimitInterval(p_vbus), VBus_Pu(p_vbus), foc_power_d(FOC_Vd(p_foc), FOC_Id(p_foc)), FOC_Vq(p_foc));
+// }
 
 

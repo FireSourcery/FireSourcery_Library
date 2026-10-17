@@ -113,6 +113,43 @@ static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
 
 */
 /******************************************************************************/
+/******************************************************************************/
+/*!
+    Quadrant Detection
+    Sign convention: CCW/Forward = Positive Vq, Positive Iq
+    Q1: Forward Motoring   - +Vq, +Iq (Vq*Iq > 0, Iq > 0)
+    Q2: Forward Generating - +Vq, -Iq (Vq*Iq < 0, Iq > 0)
+    Q3: Reverse Motoring   - -Vq, -Iq (Vq*Iq > 0, Iq < 0)
+    Q4: Reverse Generating - -Vq, +Iq (Vq*Iq < 0, Iq < 0)
+
+    Plugging: Voltage opposes back-EMF direction, active braking beyond regeneration
+    Forward Plugging: -Vq with -Iq (motor spinning CCW, voltage reversed)
+    Reverse Plugging: +Vq with +Iq (motor spinning CW, voltage reversed)
+
+    Inner layer assume plugging is clamped. speed sign = v sign.
+*/
+/******************************************************************************/
+// implementation depends on if OmegaPsi is non optional
+// static inline bool _FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
+// static inline bool _FOC_IsGenerating(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
+
+// // static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Iq * p_foc->ElectricalSpeed.OmegaPsi > 0); }
+// static inline bool FOC_IsMotoring(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed > 0); }
+// static inline bool FOC_IsGenerating(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed < 0); }
+
+// /*
+//     Plugging: applied Vq opposes back-EMF direction (speed sign)
+//     Speed sign gives true rotor direction regardless of Vq/Iq
+// */
+// /* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
+// static inline bool FOC_IsPlugging(const FOC_T * p_foc, int32_t speed) { return (p_foc->Vq * (int32_t)speed < 0); }
+// /*
+//     Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
+// */
+// /* Generating  AND Vq aligns with speed - true regeneration */
+// static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC_IsGenerating(p_foc, speed) && !FOC_IsPlugging(p_foc, speed)); }
+
+// static inline bool _FOC_IsGeneratingReq(int32_t speed, int16_t iqReq) { return (speed * iqReq) < 0; }
 
 // typedef enum FOC_Quadrant
 // {

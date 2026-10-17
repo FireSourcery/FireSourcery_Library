@@ -218,7 +218,7 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
         case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    p_config->IDerateUnderVFloor = value; break;
         case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor = value; break;
         case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor = value; break;
-        case VBUS_CONFIG_ID_I_DISCHARGE_LIMIT:        p_config->IDischargeLimit_Pu = value; break;
+        case VBUS_CONFIG_ID_I_DISCHARGE_LIMIT:        p_config->IDischargeLimit_Pu = value; break; /* Clamp or validate on set */
         case VBUS_CONFIG_ID_I_CHARGE_LIMIT:           p_config->IChargeLimit_Pu = value; break;
         default: break;
     }

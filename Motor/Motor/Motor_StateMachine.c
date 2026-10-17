@@ -423,6 +423,9 @@ static void Run_OnSpeed(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
     if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
+#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
+    if (p_context->FeedbackMode.Current == 1U) { Motor_ResolveISupplyLimits(p_motor); }
+#endif
 }
 
 static void Run_OnILimits(Motor_T * p_motor)

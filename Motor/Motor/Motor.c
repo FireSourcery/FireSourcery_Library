@@ -238,7 +238,7 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
     p_dev->P_MOTOR->Direction = direction;
     RotorSensor_ZeroInitial(p_dev->P_MOTOR->p_ActiveSensor);
-    Motor_ResolveSpeedLimits(p_dev->P_MOTOR);
+    // Motor_ResolveSpeedLimits(p_dev->P_MOTOR);
     Motor_ResolveILimits(p_dev->P_MOTOR);
 }
 
@@ -258,6 +258,9 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 /******************************************************************************/
 /*
     I Limits. Motoring aligns with Direction, Generating opposes.
+*/
+/*
+    Caller optionally calls resolve.
 */
 void _Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu)
 {

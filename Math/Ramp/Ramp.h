@@ -78,12 +78,10 @@
         Index based implementation need inverse function
 */
 /******************************************************************************/
-// int32_t TargetLimitUpper; /* optionally 2 layer limit, with Accumulator.Limit as hw saturation */
-// int32_t TargetLimitLower;
 typedef struct Ramp
 {
     Accumulator_T Accumulator;
-    accumulator_state_t Target; /* including target within Ramp scope collapses procNext paths, handle on set instaed */
+    accumulator_state_t Target; /* including target within Ramp scope collapses procNext paths, handle on set instead */
 }
 Ramp_T;
 

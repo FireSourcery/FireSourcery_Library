@@ -46,6 +46,7 @@
     or generic select, concurrent with float
 */
 /******************************************************************************/
+// static inline uint32_t math_abs_int(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 static inline uint32_t fixed_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 
 static inline int32_t fixed_max(int32_t value1, int32_t value2) { return ((value1 > value2) ? value1 : value2); }

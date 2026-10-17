@@ -38,17 +38,18 @@
 
 /******************************************************************************/
 /*
-    +/- Sign indicates absolute virtual direction, CW/CCW. NOT along/against direction selected.
+    +/- Sign indicates absolute virtual direction. NOT along/against direction selected.
+    +/- <-> CCW/CW
     A->B virtual CCW as Positive.
     Iq sign is rotation direction, NOT relative to Vq direction.
 
-    CCW +Vq +Iq => Forward Motoring Q1
-    CCW +Vq -Iq => Forward Regen Q2, VBemf > Vq > 0
-    CCW -Vq -Iq => Forward Plugging Q2
+    +ω +Vq +Iq => Forward Motoring Q1, Vq > VBemf
+    +ω +Vq -Iq => Forward Regen Q2, VBemf > Vq > 0
+    +ω -Vq -Iq => Forward Plugging Q2
 
-    CW -Vq -Iq => Reverse Motoring Q3
-    CW -Vq +Iq => Reverse Regen Q4, VBemf < Vq < 0
-    CW +Vq +Iq => Reverse Plugging Q4
+    -ω -Vq -Iq => Reverse Motoring Q3, Vq < VBemf
+    -ω -Vq +Iq => Reverse Regen Q4, VBemf < Vq < 0
+    -ω +Vq +Iq => Reverse Plugging Q4
 */
 /******************************************************************************/
 static inline bool Motor_FOC_IsMotoring(const Motor_Context_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) > 0); }
@@ -75,12 +76,6 @@ static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (
 /******************************************************************************/
 /* Supply current limits at this motor's operating point, [Cw:Ccw] */
 #if defined(VBUS_I_LIMIT_POWER_BALANCE)
-
-// static inline interval_t _Motor_VBusILimits(const VBus_T * p_vbus, const FOC_T * p_foc)
-// {
-//     return foc_iq_limits(_VBus_ILimits(p_vbus), VBus_Pu(p_vbus), foc_power_d(FOC_Vd(p_foc), FOC_Id(p_foc)), FOC_Vq(p_foc));
-// }
-
 static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqLimits(p_motor->P_VBUS, FOC_Vd(&p_motor->P_MOTOR->Foc), FOC_Id(&p_motor->P_MOTOR->Foc), FOC_Vq(&p_motor->P_MOTOR->Foc)); }
 #elif defined(VBUS_I_LIMIT_PHASE_BOUND)
 static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqPhaseLimits(p_motor->P_VBUS, math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR)), FOC_Id(&p_motor->P_MOTOR->Foc)); }
@@ -89,13 +84,15 @@ static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_
 static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { (void)p_motor; return interval_symmetric(0, FRACT16_MAX); }
 #endif
 
-/* Store only. [Motor_ApplyILimits] pushes it to the active state. */
+/* Store only. Takes effect on the next resolve. */
 static inline void Motor_CaptureISupplyLimits(Motor_T * p_motor) { p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits(p_motor); }
-static inline void Motor_ResolveISupplyLimits(Motor_T * p_motor)
-{
-    Motor_CaptureISupplyLimits(p_motor);
-    Motor_ResolveILimits(p_motor->P_MOTOR);
-}
+
+/*
+    The power balance moves with speed.
+        MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP    resolves on the speed loop of the state running the current loop
+        otherwise                           polled by the upper layer
+*/
+extern void Motor_ResolveISupplyLimits(Motor_T * p_motor);
 
 
 /*
@@ -103,7 +100,7 @@ static inline void Motor_ResolveISupplyLimits(Motor_T * p_motor)
 */
 static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor); }
 
-// static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, Motor_GetDecouplingOmega(p_motor)); }
+static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->Foc, Motor_GetDecouplingOmega(p_motor)); }
 
 
 /* Directly read register state */

@@ -162,8 +162,9 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:    _MotorController_VBus_EnterFault(p_dev);    break;
 #if defined(VBUS_I_LIMIT_V_DERATE)
         /* The ramps track VBus inside a warning band, and are back at 1.0 when it clears */
+        /* Motor_ResolveISupplyLimits */
         case VMONITOR_STATUS_WARNING_HIGH:
-        case VMONITOR_STATUS_WARNING_LOW:           MotorController_ApplyILimits(p_dev);        break;
+        case VMONITOR_STATUS_WARNING_LOW:           MotorController_ApplyILimits(p_dev);         break;
         case VMONITOR_STATUS_NORMAL:                if (VBus_IsClearingEdge(p_dev->P_VBUS) == true) { MotorController_ApplyILimits(p_dev); } break;
 #endif
         default: break;
@@ -244,7 +245,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
         {
-#if !defined(VBUS_I_LIMIT_V_DERATE)
+#if !defined(VBUS_I_LIMIT_V_DERATE) && !defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
             /* The only polled limit: the supply window follows the bus and each motor's operating point */
             for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
             {

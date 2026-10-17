@@ -269,11 +269,9 @@ void Motor_SetICmd_Norm(Motor_Context_T * p_motor, int16_t ratio) { Motor_SetICm
 // /* Scale to the board limit for testing */
 // void Motor_SetITest(Motor_Context_T * p_motor, int16_t ratio) { Motor_SetICmd(p_motor, fract16_mul(ratio, Phase_IRatedPeak_Pu())); }
 
-
-
 /******************************************************************************/
 /*!
-    Calibrated Referemce Frame
+    Calibrated Reference Frame
 */
 /******************************************************************************/
 /******************************************************************************/

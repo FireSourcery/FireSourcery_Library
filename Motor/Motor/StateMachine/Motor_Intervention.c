@@ -86,6 +86,9 @@ static void TorqueZero_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
+#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
+    Motor_ResolveISupplyLimits(p_motor);
+#endif
 }
 
 static const State_Action_T TORQUE_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
@@ -153,6 +156,9 @@ static void RampDown_CaptureSpeed(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
     Motor_ProcSpeedControlOf(p_context, 0); /* drive to zero speed */
+#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
+    Motor_ResolveISupplyLimits(p_motor);
+#endif
 }
 
 /* Shared with SafeStop - action dispatch is leaf-only */

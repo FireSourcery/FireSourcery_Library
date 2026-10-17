@@ -308,12 +308,19 @@ typedef struct Motor_Context
     /*
         Operating envelope. FOC layer owns voltage limits.
         Active Limit inputs. Unsigned user frame, PU. Ramp.Limits holds the materialized [Cw:Ccw] output.
-        Set by system constrains independent of torque direction.
+
         Held because Direction/FeedbackMode changes re-resolve without the upper layer,
             and Ramp.Limits cannot be read back — [0:0] on Direction NULL.
         Pushed by the upper layer. FRACT16_MAX => no cap, Config is the ceiling.
     */
-    struct { uint16_t Motoring; uint16_t Generating; } ILimit;
+    /*
+        This layer exists in Motor as state data, or passes as parameter data object.
+        It is the interface that separate what the caller can resolve without knowing Motor runtime state.
+        caller handles restore on source clear (e.g., when a limit is removed, the caller must reapply the appropriate ILimit).
+        e.g. System frame fan in.
+        Resolve converts to Ramp limits. Caller select timing and priority.
+    */
+    struct Motor_ILimit { uint16_t Motoring; uint16_t Generating; uint16_t Forward; uint16_t Reverse; } ILimit;
     struct { uint16_t Forward; uint16_t Reverse; } SpeedLimit;     /* one sided [0:Lim] [Lim:0]*/
     interval_t ISupplyLimits;   /* [Cw:Ccw] supply window at the operating point. Signed by power flow, independent of Direction. */
 
@@ -428,6 +435,7 @@ static inline uint16_t Motor_SpeedRated_Pu(Motor_T * p_motor) { return Motor_Get
 static inline angle_freq_t Motor_SpeedBase(Motor_T * p_motor) { return Motor_SpeedBase_AngleFreq(&Motor_Config(p_motor)->Electrical); }
 
 static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
+// static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_of(Motor_DirectionV(p_motor) * VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 
 
@@ -453,7 +461,6 @@ static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return i
 static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_Context_T * p_motor) { return (Motor_Direction_T)RotorSensor_GetFeedbackDirection(p_motor->p_ActiveSensor); }
 static inline Motor_Direction_T Motor_DirectionV(const Motor_Context_T * p_motor) { return p_motor->Direction; }
 // static inline Motor_Direction_T Motor_DirectionV(const Motor_Context_T * p_motor) { return (Motor_Direction_T)math_sign(p_motor->Foc.Vq); }
-// static inline Motor_Direction_T Motor_DirectionV(const Motor_Context_T * p_motor) { return (Motor_Direction_T)math_sign(p_motor->SpeedRamp.Target); }
 
 
 /*
@@ -473,20 +480,22 @@ static inline interval_t Motor_ILimitInterval(const Motor_Context_T * p_motor) {
 /*
     Direction resolve. I: Motoring aligns with Direction, NULL collapses to [0:0], within the supply window. Speed: Forward aligns with Config.DirectionForward.
 */
-static inline interval_t Motor_GetILimits(const Motor_Context_T * p_motor) { return interval_intersect(interval_of_sign_pair((sign_t)p_motor->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)), p_motor->ISupplyLimits); }
+static inline interval_t _Motor_ResolveILimits(const Motor_Context_T * p_motor) { return interval_intersect(interval_of_sign_pair((sign_t)p_motor->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)), p_motor->ISupplyLimits); }
+// static inline interval_t Motor_ILimit_Resolve(struct Motor_ILimit * p_ilimit, sign_t directionCalibration, sign_t direction)
+// {
+//     return interval_of_sign_pair(direction, p_ilimit->Motoring, p_ilimit->Generating);
+// }
+// return interval_intersect(interval_intersect(
+//     interval_of_sign_pair((sign_t)p_motor->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)),
+//     interval_of_sign_pair((sign_t)p_motor->Config.DirectionForward, p_motor->ILimit.Forward, p_motor->ILimit.Reverse)),
+//     p_motor->ISupplyLimits);
 
+static inline interval_t _Motor_ResolveSpeedLimits(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->Config.DirectionForward, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
 
-static inline interval_t Motor_GetSpeedLimits(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->Config.DirectionForward, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
-
-/*
-    Materialize — the single write point into the hot path. Ccw/Cw signed interval is what Ramp/PID consume.
-    TorqueRamp carries V limits in voltage mode; Run_Entry resolves them through [Motor_ResolveFeedbackLimits].
-*/
-/* Torque commands sent over serial/CAN clamped until next send */
-/* unconditional */
+/* interval helper  */
 static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
 {
-    Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
+    Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high); /* Torque commands sent over serial/CAN clamped until next send */
     PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high);
 }
 
@@ -496,11 +505,16 @@ static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t
 }
 
 /*
+    Materialize — the write point into the hot path. Ccw/Cw signed interval is what Ramp/PID consume.
     Resolve = [Pushed, Config, Direction, Supply] → write Ccw/Cw → flush PID/Ramp.
+    Poll or alternatively caller track input channels for clear
+
     Idempotent; call after any input change. Cold path.
 */
-static inline void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, Motor_GetILimits(p_motor)); }
-static inline void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, Motor_GetSpeedLimits(p_motor)); }
+/* unconditional */
+/* TorqueRamp carries V limits in voltage mode; Run_Entry resolves them through [Motor_ResolveFeedbackLimits]. */
+static inline void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, _Motor_ResolveILimits(p_motor)); }
+static inline void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, _Motor_ResolveSpeedLimits(p_motor)); }
 
 /* Catch-all on a feedback mode update, Run_Entry. TorqueRamp and SpeedPid output units follow FeedbackMode.Current */
 static inline void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
