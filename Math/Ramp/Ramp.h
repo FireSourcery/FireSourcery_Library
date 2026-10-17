@@ -81,7 +81,12 @@
 typedef struct Ramp
 {
     Accumulator_T Accumulator;
-    accumulator_state_t Target; /* including target within Ramp scope collapses procNext paths, handle on set instead */
+    /*
+        including target within Ramp scope collapses procNext paths, handle on set instead
+        mailbox between threads.Limits are enforced in exactly one place
+        binds to a single consume path. the ramps rate and identity cannot be shared.
+    */
+    accumulator_state_t Target;
 }
 Ramp_T;
 

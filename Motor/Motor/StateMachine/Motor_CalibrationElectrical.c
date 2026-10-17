@@ -275,7 +275,7 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_context->ControlTimerBase = 0U;
     Motor_FOC_ClearFeedbackState(p_context);
     // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-    Motor_FOC_SetAlignILimits(p_context); // v inject will surpass
+    Motor_ResolveAlignILimits(p_context); // v inject will surpass
     // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
     // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
 
@@ -330,7 +330,7 @@ static void Electrical_Proc(Motor_T * p_motor)
             break;
         case PARAMID_STEP_COMMIT:
             CommitResults(p_params, &p_context->Config.Electrical);
-            Motor_ResolveFocParams(p_motor);
+            Motor_FOC_InitParams(p_motor);
             break;
         case PARAMID_STEP_RAMPDOWN:
             // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, 0);

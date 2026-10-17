@@ -399,8 +399,13 @@ static void Run_Entry(Motor_T * p_motor)
         Motor_FOC_MatchVOutput(p_context);
     }
 
-    if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); } else { Motor_FOC_MatchTorqueVState(p_context); }
-    if (p_context->FeedbackMode.Speed == 1U) { Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp)); }
+    // if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); } else { Motor_FOC_MatchTorqueVState(p_context); }
+    Motor_FOC_MatchTorqueIState(p_context);
+    if (p_context->FeedbackMode.Speed == 1U)
+    {
+        Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp));
+        p_context->UserCmd = Motor_GetSpeedFeedback(p_context); /* UserCmd is speed in speed mode */
+    }
 
     // Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
 }
@@ -408,7 +413,8 @@ static void Run_Entry(Motor_T * p_motor)
 static void Run_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcAngleV(p_motor); }
+    // if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcAngleV(p_motor); }
+    Motor_FOC_ProcTorqueReq(p_motor, (p_context->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_context->PidSpeed) : p_context->UserCmd);
     // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     //     Motor_ExternControl(p_motor);
     // #endif
@@ -422,8 +428,8 @@ static void Run_OnSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
-    if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
-#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
+    if (p_context->FeedbackMode.Speed == 1U) { Motor_ProcSpeedControlOf(p_context, p_context->UserCmd); }
+#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP) /* DC limits depends on speed. may key with speed direction */
     if (p_context->FeedbackMode.Current == 1U) { Motor_ResolveISupplyLimits(p_motor); }
 #endif
 }

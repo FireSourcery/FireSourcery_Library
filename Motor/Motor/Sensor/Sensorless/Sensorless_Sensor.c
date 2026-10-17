@@ -37,7 +37,7 @@
 /******************************************************************************/
 /* Load tuning from NVM, bind the PLL PID, and clear per-tick state.
    The plant (G, Lq, Rs) is not stored tuning — it derives from the motor's
-   electrical model, so Motor_ResolveFocParams sets it via FOC_Sensorless_InitElectrical. */
+   electrical model, so Motor_FOC_InitParams sets it via FOC_Sensorless_InitElectrical. */
 static void Sensorless_Sensor_Init(const Sensorless_Sensor_T * p_sensor)
 {
     FOC_Sensorless_Init(p_sensor->P_OBSERVER, p_sensor->P_NVM_CONFIG);
@@ -84,7 +84,7 @@ static bool Sensorless_Sensor_VerifyCalibration(const Sensorless_Sensor_T * p_se
 /* No sensor-local unit state: the observer works entirely in the motor's per-unit
    basis. UnitRef.SpeedPuRef — the only field CAPTURE_SPEED reads — is held by the
    RotorSensor base, and the plant (G, Lq, Rs)
-   needs the motor's electrical model, so Motor_ResolveFocParams owns it. */
+   needs the motor's electrical model, so Motor_FOC_InitParams owns it. */
 static void Sensorless_Sensor_InitUnits(const Sensorless_Sensor_T * p_sensor)
 {
     (void)p_sensor;

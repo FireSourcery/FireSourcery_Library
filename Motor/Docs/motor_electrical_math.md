@@ -110,7 +110,7 @@ A stored pu value follows its base. Changing V_base or I_base (board), or F_base
 
 ## Storage and the FOC view
 
-FOC and the sensorless observer hold no unit bases and no model config. Motor_Electrical owns the speed base, derived from its AngleFreqPerVolt, and mediates the board base, V_base and I_base [Phase_Board_T], and Fs, the turn base. It returns per-unit values in its own terms (`Motor_Ld_PuTurn`, `Motor_Psi_PuTurn`, `Motor_Ls_PuTurn`) and names no algorithm type. `Motor_ResolveFocParams`, which holds both sides, assembles each algorithm's view, and each algorithm derives its own coefficients: the observer gain G = π / Ls_turn in `FOC_Sensorless_InitElectrical`.
+FOC and the sensorless observer hold no unit bases and no model config. Motor_Electrical owns the speed base, derived from its AngleFreqPerVolt, and mediates the board base, V_base and I_base [Phase_Board_T], and Fs, the turn base. It returns per-unit values in its own terms (`Motor_Ld_PuTurn`, `Motor_Psi_PuTurn`, `Motor_Ls_PuTurn`) and names no algorithm type. `Motor_FOC_InitParams`, which holds both sides, assembles each algorithm's view, and each algorithm derives its own coefficients: the observer gain G = π / Ls_turn in `FOC_Sensorless_InitElectrical`.
 
 ```mermaid
 flowchart LR
@@ -118,7 +118,7 @@ flowchart LR
     Fs["MOTOR_CONTROL_FREQ: Fs"] --> ME
     Model["Motor_Config_T.Electrical"] --> ME
     Tuning["Motor_Config_T.FieldWeakening"] --> Resolve
-    ME --> Resolve["Motor_ResolveFocParams"]
+    ME --> Resolve["Motor_FOC_InitParams"]
     Resolve --> View["FOC_T: Electrical, FieldWeakening"]
     Resolve -->|"FOC_Sensorless_InitElectrical"| Obs["FOC_Sensorless_T: Electrical"]
 ```
@@ -132,7 +132,7 @@ flowchart LR
 | `FOC_T.FieldWeakening` [FOC_FieldWeakeningTuning_T] | IdLimit, IdGain | I_base | no, derived: IfwLimit within the board FW rating |
 | `FOC_Sensorless_T.Electrical` [FOC_SensorlessElectrical_T] | G, Lq, Rs | turn | no, derived: G = π / Ls_turn for the SMO, Lq for the dq voltage model |
 
-`Motor_ResolveFocParams` derives them on `Motor_Init` and `Motor_Reinit`, after the calibration commit, and after every electrical var write. An invalid model keeps the prior view. The FOC view is at the turn base, so the decoupling input is Δθ (`Motor_GetDecouplingOmega`), and the products ω·L, ω·ψ are base-invariant. ψ_turn derives from AngleFreqPerVolt, the one copy of the motor constant. The FW limit stays as written; `Motor_Config_ValidateFw` bounds ILimitMotoring_Pu to the rated vector left beside it.
+`Motor_FOC_InitParams` derives them on `Motor_Init` and `Motor_Reinit`, after the calibration commit, and after every electrical var write. An invalid model keeps the prior view. The FOC view is at the turn base, so the decoupling input is Δθ (`Motor_GetDecouplingOmega`), and the products ω·L, ω·ψ are base-invariant. ψ_turn derives from AngleFreqPerVolt, the one copy of the motor constant. The FW limit stays as written; `Motor_Config_ValidateFw` bounds ILimitMotoring_Pu to the rated vector left beside it.
 
 `MOTOR_VAR_TYPE_FOC_CONFIG` carries [Motor_Var_ConfigElectrical_T], the fields as stored: the rates, Rs, and the field weakening tuning. Motor_Config owns the accessors, `_Motor_Var_ConfigElectrical_Get/Set`, and the SI form, `_Motor_Var_ConfigElectricalSi_Get/Set`: ψ [µWb], Ld, Lq [µH], Rs [mΩ]. The Motor_Var layer wraps the set to re-resolve the FOC params, `Motor_Var_ConfigElectrical_Set`. A ψ write re-resolves the FOC view at once. The speed base it also moves applies with the sensor units on `Motor_Reinit`, as Kv does.
 

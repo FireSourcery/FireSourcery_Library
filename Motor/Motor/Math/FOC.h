@@ -523,7 +523,7 @@ static inline accum32_t FOC_GetMagnetizingPower(const FOC_T * p_foc) { return _F
 static inline accum32_t _FOC_GetActivePower(const FOC_T * p_foc) { return foc_active_power(p_foc->Vd, p_foc->Id, p_foc->Vq, p_foc->Iq); }
 static inline accum32_t _FOC_GetReactivePower(const FOC_T * p_foc) { return foc_reactive_power(p_foc->Vd, p_foc->Id, p_foc->Vq, p_foc->Iq); }
 /* keep sign within fract16 */
-static inline accum32_t _FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_pu) { return fract16_div(_FOC_GetActivePower(p_foc), vBus_pu); }
+static inline accum32_t _FOC_IBusOf(const FOC_T * p_foc, ufract16_t vBus_pu) { return fract16_div(_FOC_GetActivePower(p_foc), vBus_pu); }
 
 /* [0:49150] */
 static inline accum32_t FOC_GetActivePower(const FOC_T * p_foc) { return _FOC_GetActivePower(p_foc) * 3 / 2; }

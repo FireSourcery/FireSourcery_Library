@@ -46,7 +46,7 @@ flowchart LR
     TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, RampDown<br/>MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP"]]
     MC10[["MC main ~10 ms (default)<br/>Motor_ResolveISupplyLimits"]]
     RES[["Motor_ResolveILimits<br/>each push, Motor_SetDirection,<br/>Run_Entry, Intervention_Entry"]]
-    AL[["Motor_FOC_SetAlignILimits"]]
+    AL[["Motor_ResolveAlignILimits"]]
     VM[["Run_Entry, voltage mode"]]
 
     C1S -.-> ARB

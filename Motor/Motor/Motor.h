@@ -279,6 +279,7 @@ typedef struct Motor_Context
     /* Effectively Substates StateMachine Controlled */
     Motor_Direction_T Direction;            /* Direction of applied/cmd V. now shadows FOC.VLimit  VLimit [0, +] or [-, 0], VLimit[vq-window, vq+window] */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
+    int32_t UserCmd;                        /* Feedback mode value */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
 
     /*
@@ -287,6 +288,9 @@ typedef struct Motor_Context
     const RotorSensor_T * p_ActiveSensor;   /* Pointer to entry in SENSOR_TABLE */
     RotorSensor_State_T SensorState;        /* Compile time configured address. Sensor State includes [Angle_T] */
 
+    /*
+        Active State binds ProcNextOf
+    */
     /*
         Speed Feedback
     */
@@ -510,9 +514,11 @@ static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t
     Poll or alternatively caller track input channels for clear
 
     Idempotent; call after any input change. Cold path.
+
+    Limits as state messages, resolve via polling, unifies handling.
+    Eliminate state check by caller.
 */
-/* unconditional */
-/* TorqueRamp carries V limits in voltage mode; Run_Entry resolves them through [Motor_ResolveFeedbackLimits]. */
+static inline void Motor_CaptureILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu) { p_motor->ILimit.Motoring = motoring_pu; p_motor->ILimit.Generating = generating_pu; }
 static inline void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, _Motor_ResolveILimits(p_motor)); }
 static inline void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, _Motor_ResolveSpeedLimits(p_motor)); }
 
@@ -603,14 +609,6 @@ static inline fract16_t Motor_ProcSpeedControlOf(Motor_Context_T * p_motor, int1
 }
 
 /*
-    Stored-target form: PID(feedback, Ramp_ProcNext(SpeedRamp)). Reads SpeedRamp.Target.
-*/
-static inline fract16_t Motor_ProcSpeedControl(Motor_Context_T * p_motor)
-{
-    return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Ramp_ProcNext(&p_motor->SpeedRamp));
-}
-
-/*
     Pid State on FeedbackMode/Resume
 */
 static inline void Motor_MatchSpeedTorqueState(Motor_Context_T * p_motor, int16_t torqueState)
@@ -644,6 +642,9 @@ static inline bool Motor_IsSpeedAligned(Motor_T * p_motor) { return ((Motor_GetS
 static inline int32_t _Motor_MotoringOnly(const Motor_Context_T * p_motor, int32_t value) { return (p_motor->Direction == (Motor_Direction_T)math_sign(value)) * value; }
 static inline int32_t _Motor_GeneratingOnly(const Motor_Context_T * p_motor, int32_t value) { return (p_motor->Direction != (Motor_Direction_T)math_sign(value)) * value; }
 
+/* UserCmd as a q-current request. Its units follow FeedbackMode, so only current (torque) mode holds one */
+static inline int32_t Motor_GetUserICmd(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Value == MOTOR_FEEDBACK_MODE_CURRENT.Value) ? p_motor->UserCmd : 0; }
+
 static inline Motor_Direction_T Motor_GetDirectionForward(const Motor_Context_T * p_motor) { return p_motor->Config.DirectionForward; }
 static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_Context_T * p_motor) { return (p_motor->Config.DirectionForward * -1); }
 /* User reference Motoring. Interpret as CCW/CW or Positive */
@@ -667,7 +668,7 @@ static inline uint16_t _Motor_GetIAlign(const Motor_Context_T * p_motor) { retur
 static inline uint16_t _Motor_GetVAlign(const Motor_Context_T * p_motor) { return p_motor->Config.VAlign_Pu; }
 
 /* d-axis align within [0:IAlign], independent of Direction and the pushed limits */
-static inline void Motor_FOC_SetAlignILimits(Motor_Context_T * p_motor) { Ramp_SetLimits(&p_motor->TorqueRamp, 0, _Motor_GetIAlign(p_motor)); }
+static inline void Motor_ResolveAlignILimits(Motor_Context_T * p_motor) { Ramp_SetLimits(&p_motor->TorqueRamp, 0, _Motor_GetIAlign(p_motor)); }
 
 
 /******************************************************************************/
@@ -683,7 +684,7 @@ extern void Motor_Reinit(Motor_T * p_motor);
 extern void Motor_InitUnits(Motor_Context_T * p_motor);
 extern bool Motor_IsConfigValid(Motor_T * p_motor);
 extern void Motor_ValidateConfig(Motor_T * p_motor);
-extern void Motor_ResolveFocParams(Motor_T * p_motor);
+extern void Motor_FOC_InitParams(Motor_Context_T * p_motor);
 
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);

@@ -59,13 +59,10 @@ void Motor_Init(Motor_T * p_dev)
     TimerT_Periodic_Init(&p_dev->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);
 
-    /* Limit inputs are upper layer owned. Init once, retained across Motor_Reset/Motor_Reinit */
-    Motor_ResetILimit(p_dev->P_MOTOR);
-    Motor_ResetSpeedLimit(p_dev->P_MOTOR);
-    p_dev->P_MOTOR->ISupplyLimits = interval_symmetric(0, FRACT16_MAX);
+    p_dev->P_MOTOR->ISupplyLimits = interval_symmetric(0, FRACT16_MAX); // call handle
+
 
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
-    Motor_ResolveFocParams(p_dev);
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 
@@ -89,8 +86,10 @@ void Motor_Reset(Motor_Context_T * p_motor)
     /* Limits update on direction set */
     Ramp_Init_Slope(&p_motor->SpeedRamp, p_motor->Config.SpeedRampSlope_PuPerTick);
     Ramp_Init_Slope(&p_motor->TorqueRamp, p_motor->Config.TorqueRampSlope_PuPerTick);
-    // Motor_ResolveSpeedLimits(p_motor);
-    // Motor_ResolveILimits(p_motor);
+    /* Limit inputs are upper layer owned. Init once, retained across Motor_Reset/Motor_Reinit */
+    Motor_ResetILimit(p_motor);
+    Motor_ResetSpeedLimit(p_motor);
+    Motor_FOC_InitParams(p_motor);
     // Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_VRated_Pu());
 
     /* Preset rate ramps do not need output limits */
@@ -105,7 +104,9 @@ void Motor_Reset(Motor_Context_T * p_motor)
     p_motor->ControlTimerBase = 0U;
 
     p_motor->Direction = MOTOR_DIRECTION_NULL;
-
+// #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+//     FOC_Sensorless_InitElectrical(p_context->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Ls_PuTurn(p_electrical), Motor_Lq_PuTurn(p_electrical), math_min(p_electrical->Rs, FRACT16_MAX));
+// #endif
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);
     // Motor_ResetUnitsIabc(p_motor);
@@ -122,7 +123,6 @@ void Motor_Reinit(Motor_T * p_motor)
 {
     if (p_motor->P_NVM_CONFIG != NULL) { p_motor->P_MOTOR->Config = *p_motor->P_NVM_CONFIG; }
     Motor_Reset(p_motor->P_MOTOR);
-    Motor_ResolveFocParams(p_motor);
 }
 
 /* Validate config across modules: base Motor config + field-weakening speed-limit consistency */
@@ -174,9 +174,8 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
     FOC params, derived. FOC and the observer hold no config: views of [Motor_Electrical_T] at the turn base, and the field weakening limit within the board FW rating.
     Re-resolve on a change of the model, the tuning, or the board base. An invalid model keeps the prior view.
 */
-void Motor_ResolveFocParams(Motor_T * p_motor)
+void Motor_FOC_InitParams(Motor_Context_T * p_context) /* optionally cal from state machine init to keep in Motor_FOC.h */
 {
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
     const Motor_Electrical_T * p_electrical = &p_context->Config.Electrical;
 
     if (Motor_Electrical_IsValid(p_electrical))
@@ -188,11 +187,7 @@ void Motor_ResolveFocParams(Motor_T * p_motor)
             .Rs     = p_electrical->Rs,
             .Psi    = Motor_Psi_PuTurn(p_electrical),
         });
-#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-        FOC_Sensorless_InitElectrical(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Ls_PuTurn(p_electrical), Motor_Lq_PuTurn(p_electrical), math_min(p_electrical->Rs, FRACT16_MAX));
-#endif
     }
-
     p_context->Foc.FieldWeakening = (FOC_FieldWeakeningTuning_T) { .IdLimit = Motor_FieldWeakening_IdLimit(&p_context->Config.FieldWeakening), .IdGain = p_context->Config.FieldWeakening.IfwGain, };
 }
 
@@ -208,8 +203,7 @@ void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
     Phase_Input_ClearV(&p_motor->PhaseInput);
     Ramp_SetOutputState(&p_motor->SpeedRamp, 0);
     Ramp_SetOutputState(&p_motor->TorqueRamp, 0);
-    Ramp_SetTarget(&p_motor->TorqueRamp, 0);
-    Ramp_SetTarget(&p_motor->SpeedRamp, 0);
+    p_motor->UserCmd = 0;
 }
 
 // void Motor_EnableSpeedRamp(Motor_Context_T * p_motor) { Ramp_Init_Slope(&p_motor->SpeedRamp, p_motor->Config.SpeedRampSlope_PuPerTick); }

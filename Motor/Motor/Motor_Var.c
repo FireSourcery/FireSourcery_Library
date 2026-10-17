@@ -274,7 +274,7 @@ int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T 
 void Motor_Var_ConfigElectrical_Set(Motor_T * p_motor, Motor_Var_ConfigElectrical_T varId, int varValue)
 {
     _Motor_Var_ConfigElectrical_Set(&p_motor->P_MOTOR->Config, varId, varValue);
-    Motor_ResolveFocParams(p_motor); /* alternatively call handle */
+    Motor_FOC_InitParams(p_motor->P_MOTOR); /* alternatively call handle */
 }
 
 

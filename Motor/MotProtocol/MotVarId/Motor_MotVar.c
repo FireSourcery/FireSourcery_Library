@@ -82,7 +82,7 @@ void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int 
         case MOTOR_VAR_TYPE_CONFIG_PID:             _Motor_Var_ConfigPid_Set(&p_motor->P_MOTOR->Config, varId, varValue);          break;
         case MOTOR_VAR_TYPE_CONFIG_DEBUG:           break;
         case MOTOR_VAR_TYPE_CONFIG_ELECTRICAL:      Motor_Var_ConfigElectrical_Set(p_motor, varId, varValue);                      break;
-        case MOTOR_VAR_TYPE_CONFIG_ELECTRICAL_PU:   _Motor_Var_ConfigElectricalPu_Set(&p_motor->P_MOTOR->Config, varId, varValue);  Motor_ResolveFocParams(p_motor);  break;
+        case MOTOR_VAR_TYPE_CONFIG_ELECTRICAL_PU:   _Motor_Var_ConfigElectricalPu_Set(&p_motor->P_MOTOR->Config, varId, varValue);  Motor_FOC_InitParams(p_motor->P_MOTOR);  break;
         // case MOTOR_VAR_TYPE_CONFIG_RESV:                 break;
         default: break;
     }
