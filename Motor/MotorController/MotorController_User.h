@@ -106,7 +106,6 @@ static inline void MotorController_ForceDisableControl(MotorController_T * p_dev
 // static inline void MotorController_ClearUserILimitAll(MotorController_T * p_dev) { Motor_Table_ResetILimit(&p_dev->MOTORS); }
 
 
-
 /******************************************************************************/
 /*
 

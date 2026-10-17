@@ -59,8 +59,12 @@ void Motor_Init(Motor_T * p_dev)
     TimerT_Periodic_Init(&p_dev->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);
 
+    /* Limit inputs are upper layer owned. Init once, retained across Motor_Reset/Motor_Reinit */
+    Motor_ResetILimit(p_dev->P_MOTOR);
+    Motor_ResetSpeedLimit(p_dev->P_MOTOR);
     p_dev->P_MOTOR->ISupplyLimits = interval_symmetric(0, FRACT16_MAX); // call handle
 
+    p_dev->P_MOTOR->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT; /* Voltage modes are not accepted, [Motor_ApplyFeedbackMode] */
 
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     StateMachine_Init(&p_dev->STATE_MACHINE);
@@ -86,9 +90,6 @@ void Motor_Reset(Motor_Context_T * p_motor)
     /* Limits update on direction set */
     Ramp_Init_Slope(&p_motor->SpeedRamp, p_motor->Config.SpeedRampSlope_PuPerTick);
     Ramp_Init_Slope(&p_motor->TorqueRamp, p_motor->Config.TorqueRampSlope_PuPerTick);
-    /* Limit inputs are upper layer owned. Init once, retained across Motor_Reset/Motor_Reinit */
-    Motor_ResetILimit(p_motor);
-    Motor_ResetSpeedLimit(p_motor);
     Motor_FOC_InitParams(p_motor);
     // Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_VRated_Pu());
 

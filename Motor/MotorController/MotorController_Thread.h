@@ -210,9 +210,11 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         /*
             Med Freq, Low Priority, 1 ms
         */
-        /* SubStates update on proc, Motor_StateMachine will have processed */
-        /* Handle Inputs as they are received */
-        /* All transition inputs are on the same thread, except enterFault on 1ms thread */
+        /*
+            SubStates update on proc, Motor_StateMachine will have processed
+            Handle Inputs as they are received
+            All transition inputs are on the same thread, except enterFault on 1ms thread
+        */
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
@@ -245,10 +247,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         {
 #if !defined(VBUS_I_LIMIT_V_DERATE) && !defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
             /* The supply window follows the bus and each motor's operating point. Store only, the motor resolves on its speed tick */
-            for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
-            {
-                Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]);
-            }
+            for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]); }
 #endif
 
             Blinky_Proc(&p_dev->BUZZER);

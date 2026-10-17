@@ -122,7 +122,6 @@ static inline Motor_QuadrantId_T Motor_QuadrantId(int16_t speed, fract16_t iq, f
 // static inline bool Motor_IsPlugging(Motor_QuadrantId_T s)  { return abs(s) == 3; }
 
 
-
 // typedef struct
 // {
 //     Motor_FeedbackMode_T FeedbackMode;

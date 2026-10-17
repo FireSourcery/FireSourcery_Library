@@ -98,7 +98,7 @@ typedef enum Motor_StateInput
     MOTOR_STATE_INPUT_CALIBRATION,      /* Calibration Cmd */
     // MOTOR_STATE_INPUT_STATE_CMD,     /* Transition Cmd, common entry for Stop, Start */
     // MOTOR_STATE_INPUT_USER_BUFFER,
-    MOTOR_STATE_INPUT_TARGET_STATE,
+    MOTOR_STATE_INPUT_INTERVENTION,     /* [State_T *] INTERVENTION sub-state */
     MOTOR_TRANSITION_TABLE_LENGTH,
 }
 Motor_StateInput_T;
@@ -108,7 +108,6 @@ typedef enum Motor_StateAction
 {
     MOTOR_STATE_INPUT_ON_SPEED, /* Speed feedback */
     MOTOR_STATE_INPUT_ON_PHASE, /* Phase I/V */
-    // MOTOR_STATE_INPUT_ON_I_LIMITS, /* I limit inputs changed, [Motor_ApplyILimits] */
     MOTOR_STATE_ACTION_TABLE_LENGTH,
 }
 Motor_StateAction_T;
@@ -239,30 +238,6 @@ static void Motor_Enable(Motor_T * p_motor)
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-// static void Motor_NormalizeToDisabled(Motor_T * p_motor)
-// {
-//     Motor_Calibration_Exit(p_motor);
-//     Motor_OpenLoop_Exit(p_motor);
-//     Motor_Disable(p_motor);
-// }
-
-
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-/*
-    Push the held I limit inputs to the active state, after [Motor_SetILimit*] or [Motor_CaptureISupplyLimits].
-    The state running the current loop resolves. Same lock as the async inputs.
-*/
-// void Motor_OnILimits(Motor_T * p_motor)
-// {
-//     if (_StateMachine_AcquireAsyncInput(p_motor->STATE_MACHINE.P_ACTIVE) == true)
-//     {
-//         _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_I_LIMITS);
-//         _StateMachine_ReleaseAsyncInput(p_motor->STATE_MACHINE.P_ACTIVE);
-//     }
-// }
 
 /******************************************************************************/
 /*
@@ -279,15 +254,11 @@ typedef union Motor_FaultCmd
 }
 Motor_FaultCmd_T;
 
+/* Motor_StateMachine_EnterFault */
 static void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
     StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T) { .FaultSet = faultFlags.Value }.Value);
 }
-
-// static void Motor_StateMachine_EnterFault(Motor_T * p_motor)
-// {
-//     StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultSet = UINT16_MAX }.Value);
-// }
 
 static void Motor_StateMachine_ClearFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {

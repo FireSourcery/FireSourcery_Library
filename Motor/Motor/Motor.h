@@ -104,6 +104,10 @@
 #define MOTOR_FOC_FIELD_WEAKENING_ENABLE
 #endif
 
+// #if !defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP) && VBUS_I
+// #define MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP
+// #endif
+
 
 #ifndef MOTOR_CALIBRATION_BUFFER_SIZE
 #define MOTOR_CALIBRATION_BUFFER_SIZE 128U
@@ -479,34 +483,27 @@ static inline ufract16_t Motor_ILimitGenerating(const Motor_Context_T * p_motor)
 static inline ufract16_t Motor_SpeedLimitForward(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Forward, p_motor->Config.SpeedLimitForward_Pu); }
 static inline ufract16_t Motor_SpeedLimitReverse(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Reverse, p_motor->Config.SpeedLimitReverse_Pu); }
 
-static inline interval_t Motor_ILimitInterval(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)) ; }
+static inline interval_t Motor_ILimitInterval(const Motor_Context_T * p_motor) { return interval_of_sign((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)) ; }
 
 
 /*
     Direction resolve. I: Motoring aligns with Direction, NULL collapses to [0:0], within the supply window. Speed: Forward aligns with Config.DirectionForward.
 */
-static inline interval_t _Motor_ResolveILimits(const Motor_Context_T * p_motor) { return interval_intersect(interval_of_sign_pair((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)), p_motor->ISupplyLimits); }
-// static inline interval_t Motor_ILimit_Resolve(struct Motor_ILimit * p_ilimit, sign_t directionCalibration, sign_t direction)
-// {
-//     return interval_of_sign_pair(direction, p_ilimit->Motoring, p_ilimit->Generating);
-// }
-// return interval_intersect(interval_intersect(
-//     interval_of_sign_pair((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)),
-//     interval_of_sign_pair((sign_t)p_motor->Config.DirectionForward, p_motor->ILimit.Forward, p_motor->ILimit.Reverse)),
-//     p_motor->ISupplyLimits);
+static inline interval_t _Motor_ResolveILimits(const Motor_Context_T * p_motor) { return interval_intersect(Motor_ILimitInterval(p_motor), p_motor->ISupplyLimits); }
 
-static inline interval_t _Motor_ResolveSpeedLimits(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->Config.DirectionForward, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
+
+static inline interval_t _Motor_ResolveSpeedLimits(const Motor_Context_T * p_motor) { return interval_of_sign((sign_t)p_motor->Config.DirectionForward, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
 
 /* interval helper  */
 static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
 {
-    _Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
+    Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
     PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high);
 }
 
 static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t sLimits)
 {
-    _Ramp_SetLimits(&p_motor->SpeedRamp, sLimits.low, sLimits.high);
+    Ramp_SetLimits(&p_motor->SpeedRamp, sLimits.low, sLimits.high);
 }
 
 /*
@@ -522,7 +519,6 @@ static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t
 static inline void Motor_CaptureILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu) { p_motor->ILimit.Motoring = motoring_pu; p_motor->ILimit.Generating = generating_pu; }
 static inline void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, _Motor_ResolveILimits(p_motor)); }
 static inline void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, _Motor_ResolveSpeedLimits(p_motor)); }
-
 
 
 /******************************************************************************/
@@ -544,6 +540,14 @@ static inline fract16_t Motor_SpeedLimitCw(const Motor_Context_T * p_motor) { re
 static inline interval_t Motor_RampILimits(const Motor_Context_T * p_motor) { return (interval_t) { .low = Motor_ILimitCw(p_motor), .high = Motor_ILimitCcw(p_motor) }; }
 static inline interval_t Motor_RampSpeedLimits(const Motor_Context_T * p_motor) { return (interval_t) { .low = Motor_SpeedLimitCw(p_motor), .high = Motor_SpeedLimitCcw(p_motor) }; }
 
+// static inline interval_t Motor_ILimit_Resolve(struct Motor_ILimit * p_ilimit, sign_t directionCalibration, sign_t direction)
+// {
+//     return interval_of_sign(direction, p_ilimit->Motoring, p_ilimit->Generating);
+// }
+// return interval_intersect(interval_intersect(
+//     interval_of_sign((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)),
+//     interval_of_sign((sign_t)p_motor->Config.DirectionForward, p_motor->ILimit.Forward, p_motor->ILimit.Reverse)),
+//     p_motor->ISupplyLimits);
 
 /******************************************************************************/
 /*
@@ -655,7 +659,7 @@ static inline bool Motor_IsDirectionStopped(const Motor_Context_T * p_motor) { r
 static inline uint16_t _Motor_GetIAlign(const Motor_Context_T * p_motor) { return p_motor->Config.IAlign_Pu; }
 static inline uint16_t _Motor_GetVAlign(const Motor_Context_T * p_motor) { return p_motor->Config.VAlign_Pu; }
 
-/* d-axis align within [0:IAlign], independent of Direction and the pushed limits */
+/* d-axis align within [0:IAlign], independent of Direction and the pushed limits. Unused: the align clamps its own request, the driving states take the slot on entry */
 static inline void Motor_ResolveAlignILimits(Motor_Context_T * p_motor) { Ramp_SetLimits(&p_motor->TorqueRamp, 0, _Motor_GetIAlign(p_motor)); }
 
 

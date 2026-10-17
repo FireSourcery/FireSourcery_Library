@@ -104,10 +104,11 @@ inline void Motor_ApplyControlState(Motor_T * p_motor, Phase_VOutMode_T state) {
 /*
     User set [FeedbackMode] without starting Run
     Using sync mode. activates the next pwm cycle
+    Voltage modes rejected: Run runs the current loop in every mode, a voltage UserCmd would be read as current.
 */
 inline void Motor_ApplyFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    if (mode.Value != p_motor->P_MOTOR->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
+    if ((mode.Current == 1U) && (mode.Value != p_motor->P_MOTOR->FeedbackMode.Value)) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 
 
@@ -137,46 +138,10 @@ void Motor_ApplyUserDirection(Motor_T * p_motor, Motor_Direction_T direction) { 
 */
 /******************************************************************************/
 #include "StateMachine/Motor_Intervention.h"
-/* SafeStop is committed */
-static State_T * _Motor_ApplyTorqueZero(Motor_T * p_motor, state_value_t value)
-{
-    (void)value; return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_SAFE_STOP) ? NULL : &INTERVENTION_STATE_TORQUE_ZERO;
-}
-
-/* From Run, or release SpeedZero */
-void Motor_ApplyTorqueZero(Motor_T * p_motor)
-{
-    static StateMachine_TransitionCmd_T FROM_RUN = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyTorqueZero };
-    static StateMachine_TransitionCmd_T FROM_SPEED_ZERO = { .P_START = &INTERVENTION_STATE_SPEED_ZERO, .NEXT = (State_Input_T)_Motor_ApplyTorqueZero };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_RUN, 0U);
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_SPEED_ZERO, 0U);
-}
-
-static State_T * _Motor_ApplySpeedZero(Motor_T * p_motor, state_value_t value)
-{
-    (void)p_motor; (void)value; return &INTERVENTION_STATE_SPEED_ZERO;
-}
-
-void Motor_ApplySpeedZero(Motor_T * p_motor)
-{
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplySpeedZero };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-}
-
-/* Self-transition would restart the watchdog */
-static State_T * _Motor_ApplySafeStop(Motor_T * p_motor, state_value_t value)
-{
-    (void)value; return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_SAFE_STOP) ? NULL : &INTERVENTION_STATE_SAFE_STOP;
-}
-
-/* From Run, or escalate from TorqueZero/SpeedZero */
-void Motor_ApplySafeStop(Motor_T * p_motor)
-{
-    static StateMachine_TransitionCmd_T FROM_RUN = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplySafeStop };
-    static StateMachine_TransitionCmd_T FROM_INTERVENTION = { .P_START = &MOTOR_STATE_INTERVENTION, .NEXT = (State_Input_T)_Motor_ApplySafeStop };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_RUN, 0U);
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_INTERVENTION, 0U);
-}
+/* From Run or Intervention */
+void Motor_ApplyTorqueZero(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_INTERVENTION, (uintptr_t)&INTERVENTION_STATE_TORQUE_ZERO); }
+void Motor_ApplySpeedZero(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_INTERVENTION, (uintptr_t)&INTERVENTION_STATE_SPEED_ZERO); }
+void Motor_ApplySafeStop(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_INTERVENTION, (uintptr_t)&INTERVENTION_STATE_SAFE_STOP); }
 
 /******************************************************************************/
 /*

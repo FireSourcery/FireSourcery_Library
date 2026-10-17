@@ -79,7 +79,6 @@ void MotorController_Init(MotorController_T * p_dev)
     Blinky_Init(&p_dev->BUZZER);
     Blinky_Init(&p_dev->METER);
     Pin_Output_Init(&p_dev->RELAY_PIN);
-    // UserDIn_Init(&p_dev->OPT_DIN); /* 5-10ms by default */
 
     TimerT_Periodic_Init(&p_dev->MILLIS_TIMER, 1U);
 
@@ -91,9 +90,6 @@ void MotorController_Init(MotorController_T * p_dev)
     ADC_Conversion_Mark(&p_dev->VBUS_CONVERSION);
     ADC_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
     ADC_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
-
-    // MotLimits_ClearIDerate(&p_dev->P_MC->Limits);
-    // MotLimits_ClearSpeedDerate(&p_dev->P_MC->Limits);
 
     p_mc->StandbyExitMode = MotorController_ResolveStandbyExitMode(p_dev);
 
@@ -140,14 +136,6 @@ static inline ufract16_t MotorController_IDerate(MotorController_T * p_dev) { re
 
 static inline ufract16_t MotorController_SpeedDerate(MotorController_T * p_dev) { return math_min(VBus_GetSpeedDerate(p_dev->P_VBUS), OptDin_LimitOf(p_dev->P_MC->OptDinState.p_SpeedLimit, p_dev->P_MC->Config.OptDinConfig.SpeedLimit)); }
 
-// static inline ufract16_t MotorController_IDerateNew(MotorController_T * p_dev)
-// {
-//     ufract16_t vbus = VBus_IDerateActive(p_dev->P_VBUS);
-//     ufract16_t heat = HeatMonitor_Group_GetDerate(&p_dev->HEAT_MOSFETS);
-//     ufract16_t optdin = OptDin_LimitOf(p_dev->P_MC->OptDinState.p_ILimit, p_dev->P_MC->Config.OptDinConfig.TorqueLimit);
-//     return math_min(math_min(heat, optdin), vbus);
-// }
-
 /*
     Recomposed from every source on each capture, no record of which source binds.
     VBUS_I_LIMIT_V_DERATE: the bus ramps join the ratio per side, captured on the VBus thread.
@@ -168,8 +156,6 @@ void MotorController_CaptureILimits(MotorController_T * p_dev)
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
     {
         Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, motoring, generating);
-        // Motor_ApplyILimits(&p_dev->MOTORS.P_DEVS[iMotor]);
-        // Motor_ResolveILimits(p_motor);
     }
 }
 

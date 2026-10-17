@@ -210,9 +210,13 @@ static State_T * SafeStop_InputControl(Motor_T * p_motor, state_value_t phaseOut
     }
 }
 
+/* Committed. SafeStop re-entry would restart the watchdog */
+static State_T * SafeStop_InputIntervention(Motor_T * p_motor, state_value_t statePtr) { (void)p_motor; (void)statePtr; return NULL; }
+
 static const State_Input_T SAFE_STOP_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)SafeStop_InputControl, /* override */
+    [MOTOR_STATE_INPUT_INTERVENTION]    = (State_Input_T)SafeStop_InputIntervention, /* override */
 };
 
 const State_T INTERVENTION_STATE_SAFE_STOP =

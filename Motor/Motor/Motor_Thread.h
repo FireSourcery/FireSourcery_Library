@@ -56,19 +56,17 @@ static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
 /*
     Capture State
 */
-static inline void Motor_CaptureSensor(Motor_T * p_motor)
+static inline void Motor_CaptureSensor(Motor_T * p_dev)
 {
-    Motor_Context_T * p_state = p_motor->P_MOTOR;
-
-    RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
-    if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
+    RotorSensor_CaptureAngle(p_dev->P_MOTOR->p_ActiveSensor);
+    if (TimerT_Periodic_Poll(&p_dev->SPEED_TIMER) == true)
     {
-        RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
-        _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_SPEED); /* No critical section. Same thread as ISR */
+        RotorSensor_CaptureSpeed(p_dev->P_MOTOR->p_ActiveSensor);
+        _StateMachine_ActionInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MOTOR_STATE_INPUT_ON_SPEED); /* No critical section. Same thread as ISR */
     }
 }
 
-// static inline void Motor_CaptureIBatch(Motor_T * p_motor)
+// static inline void Motor_CaptureIabc(Motor_T * p_motor)
 // {
 //     Motor_Context_T * p_state = p_motor->P_MOTOR;
 // //    p_state->PhaseInput.I = Phase_Analog_Batch(p_state);
@@ -88,24 +86,15 @@ static inline void Motor_CaptureSensor(Motor_T * p_motor)
 */
 static inline void Motor_PWM_Thread(Motor_T * p_dev)
 {
-    Motor_Context_T * p_fields = p_dev->P_MOTOR;
     Motor_CaptureSensor(p_dev);
 
     _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
     // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
     // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
-
-
     // Motor_FOC_WriteDuty_Thread(p_dev);
 
-    p_fields->ControlTimerBase++;
+    p_dev->P_MOTOR->ControlTimerBase++;
 }
-
-
-/* Controls StateMachine Proc. Local Critical */
-// static inline void Motor_ClearInterrupt(Motor_T * p_motor) { Phase_ClearInterrupt(&p_motor->PHASE); }
-// static inline void Motor_DisableInterrupt(Motor_T * p_motor) { Phase_DisableInterrupt(&p_motor->PHASE); }
-// static inline void Motor_EnableInterrupt(Motor_T * p_motor) { Phase_EnableInterrupt(&p_motor->PHASE); }
 
 /******************************************************************************/
 /*
@@ -128,3 +117,28 @@ static inline void Motor_Heat_Thread(Motor_T * p_dev)
     if (Monitor_IsEnabled(p_dev->HEAT_MONITOR.P_STATE) == true) { ADC_Conversion_Mark(&p_dev->HEAT_MONITOR_CONVERSION); }
 }
 
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+
+
+/* Controls StateMachine Proc. Local Critical */
+// static inline void Motor_ClearInterrupt(Motor_T * p_motor) { Phase_ClearInterrupt(&p_motor->PHASE); }
+// static inline void Motor_DisableInterrupt(Motor_T * p_motor) { Phase_DisableInterrupt(&p_motor->PHASE); }
+// static inline void Motor_EnableInterrupt(Motor_T * p_motor) { Phase_EnableInterrupt(&p_motor->PHASE); }
+
+
+/*
+    Push the held I limit inputs to the active state, after [Motor_SetILimit*] or [Motor_CaptureISupplyLimits].
+    The state running the current loop resolves. Same lock as the async inputs.
+*/
+// void Motor_OnILimits(Motor_T * p_motor)
+// {
+//     if (_StateMachine_AcquireAsyncInput(p_motor->STATE_MACHINE.P_ACTIVE) == true)
+//     {
+//         _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_I_LIMITS);
+//         _StateMachine_ReleaseAsyncInput(p_motor->STATE_MACHINE.P_ACTIVE);
+//     }
+// }

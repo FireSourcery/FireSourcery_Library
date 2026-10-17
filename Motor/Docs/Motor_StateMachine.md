@@ -63,6 +63,7 @@ The freewheel speed limit is where floating the phases is still safe. Above it, 
 | DIRECTION | [Motor_Direction_T] | Applied in DEACTIVATED, and at zero speed in PASSIVE, OPEN_LOOP, CALIBRATION. Ignored in RUN, INTERVENTION, FAULT |
 | OPEN_LOOP | sub-state pointer | Enters from PASSIVE at zero speed. NULL exits to PASSIVE |
 | CALIBRATION | sub-state pointer | Enters from DEACTIVATED at zero speed, or from FAULT. NULL exits to PASSIVE |
+| INTERVENTION | sub-state pointer | Enters from RUN or INTERVENTION. A target already on the active branch is a no-op. SAFE_STOP rejects. Sent by Motor_ApplyTorqueZero, Motor_ApplySpeedZero, Motor_ApplySafeStop |
 
 Transition commands act only from a named start state.
 
@@ -70,9 +71,6 @@ Transition commands act only from a named start state.
 |---|---|---|
 | Motor_Enable | DEACTIVATED | PASSIVE |
 | Motor_Disable | PASSIVE, zero speed | DEACTIVATED |
-| Motor_ApplyTorqueZero | RUN, SPEED_ZERO | TORQUE_ZERO |
-| Motor_ApplySpeedZero | RUN | SPEED_ZERO |
-| Motor_ApplySafeStop | RUN, INTERVENTION | SAFE_STOP |
 
 [Motor_StateAction_T] are per-state hooks, not transitions: ON_SPEED runs the speed loop tick, ON_I_LIMITS re-resolves
 current limits.
@@ -98,7 +96,7 @@ stateDiagram-v2
             INTERVENTION_STATE_SAFE_STOP
         }
         INTERVENTION_STATE_SPEED_ZERO --> INTERVENTION_STATE_TORQUE_ZERO: Motor_ApplyTorqueZero
-        INTERVENTION_STATE_TORQUE_ZERO --> INTERVENTION_STATE_SPEED_ZERO: release above freewheel limit
+        INTERVENTION_STATE_TORQUE_ZERO --> INTERVENTION_STATE_SPEED_ZERO: Motor_ApplySpeedZero, release above freewheel limit
     }
 
     RUN --> INTERVENTION_STATE_TORQUE_ZERO: Motor_ApplyTorqueZero

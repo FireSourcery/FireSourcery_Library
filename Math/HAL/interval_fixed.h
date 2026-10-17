@@ -63,7 +63,7 @@
 // }
 
 // /* sign-keyed asymmetric pair: aligned magnitude goes with the sign, opposed goes against */
-// static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, int32_t opposedMag)
+// static inline interval_t interval_of_sign(sign_t sign, int32_t alignedMag, int32_t opposedMag)
 // {
 //     switch (sign)
 //     {
@@ -81,8 +81,8 @@
 // static inline bool interval_contains(interval_t b, int32_t v) { return fixed_is_in_range(v, b.low, b.high); }
 
 // /*
-//     Inverse of interval_of_sign_pair — recover the unsigned magnitudes from a resolved interval.
-//     interval_of_sign_pair(sign, interval_aligned(i, sign), interval_opposed(i, sign)) == i
+//     Inverse of interval_of_sign — recover the unsigned magnitudes from a resolved interval.
+//     interval_of_sign(sign, interval_aligned(i, sign), interval_opposed(i, sign)) == i
 // */
 // static inline int32_t interval_aligned(interval_t interval, sign_t sign) { return (sign == SIGN_NEGATIVE) ? -interval.low : interval.high; }
 // static inline int32_t interval_opposed(interval_t interval, sign_t sign) { return (sign == SIGN_NEGATIVE) ? interval.high : -interval.low; }

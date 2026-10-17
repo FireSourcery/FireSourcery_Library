@@ -83,7 +83,6 @@ static void Calibration_Entry(Motor_T * p_motor)
     Phase_ActivateV0(&p_motor->PHASE);
     Motor_FOC_ClearFeedbackState(p_context);
     FOC_SetVLimits(&p_context->Foc, (sign_t)Motor_GetDirectionForward(p_context), VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS));
-    Motor_ResolveAlignILimits(p_context);
 
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_context->Config.AlignTime_Cycles);
     Hall_StartCalibrate(GetHall(p_motor));

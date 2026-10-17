@@ -61,7 +61,8 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
         (p_config->IAlign_Pu <= p_config->ILimitMotoring_Pu) &&
         (p_config->VAlign_Pu <= _Motor_VRatedLimit()) &&
         (p_config->OpenLoopRampIFinal_Pu <= _Motor_IRatedLimit()) &&
-        (p_config->OpenLoopRampSpeedFinal_Pu <= _Motor_SpeedRatedLimit(p_config) / 2)
+        (p_config->OpenLoopRampSpeedFinal_Pu <= _Motor_SpeedRatedLimit(p_config) / 2) &&
+        (p_config->SpeedRampSlope_PuPerTick != 0U) && (p_config->TorqueRampSlope_PuPerTick != 0U) /* A zero slope never moves the output */
     );
 }
 
@@ -234,8 +235,9 @@ static inline uint32_t Motor_Config_GetTorqueRampSlope_PuPerTick(const Motor_Con
 void Motor_Config_SetSpeedRampSlope_PuPerTick(Motor_Config_T * p_config, uint32_t slope) { p_config->SpeedRampSlope_PuPerTick = slope; }
 void Motor_Config_SetTorqueRampSlope_PuPerTick(Motor_Config_T * p_config, uint32_t slope) { p_config->TorqueRampSlope_PuPerTick = slope; }
 
-void Motor_Config_SetSpeedRampTime_Ticks(Motor_Config_T * p_config, uint32_t cycles) { p_config->SpeedRampSlope_PuPerTick = (cycles != 0U) ? RAMP_COEF_OF_TICKS(p_config->SpeedLimitForward_Pu, cycles) : 0; }
-void Motor_Config_SetTorqueRampTime_Ticks(Motor_Config_T * p_config, uint32_t cycles) { p_config->TorqueRampSlope_PuPerTick = (cycles != 0U) ? RAMP_COEF_OF_TICKS(p_config->ILimitMotoring_Pu, cycles) : 0; }
+/* 0 => no ramp, the full range in one tick */
+void Motor_Config_SetSpeedRampTime_Ticks(Motor_Config_T * p_config, uint32_t cycles) { p_config->SpeedRampSlope_PuPerTick = (cycles != 0U) ? RAMP_COEF_OF_TICKS(p_config->SpeedLimitForward_Pu, cycles) : RAMP_COEF_OF_TICKS(INT16_MAX, 1U); }
+void Motor_Config_SetTorqueRampTime_Ticks(Motor_Config_T * p_config, uint32_t cycles) { p_config->TorqueRampSlope_PuPerTick = (cycles != 0U) ? RAMP_COEF_OF_TICKS(p_config->ILimitMotoring_Pu, cycles) : RAMP_COEF_OF_TICKS(INT16_MAX, 1U); }
 void Motor_Config_SetSpeedRampTime_Millis(Motor_Config_T * p_config, uint16_t millis) { Motor_Config_SetSpeedRampTime_Ticks(p_config, MOTOR_SPEED_CYCLES(millis)); }
 void Motor_Config_SetTorqueRampTime_Millis(Motor_Config_T * p_config, uint16_t millis) { Motor_Config_SetTorqueRampTime_Ticks(p_config, MOTOR_TORQUE_CYCLES(millis)); }
 

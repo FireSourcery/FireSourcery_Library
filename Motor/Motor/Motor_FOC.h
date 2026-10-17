@@ -119,7 +119,6 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
         otherwise                           captured by the upper layer, [Motor_CaptureISupplyLimits]
 */
 extern void Motor_FOC_ResolveILimits(Motor_T * p_motor);
-// extern void Motor_ResolveISupplyLimits(Motor_T * p_motor);
 
 /******************************************************************************/
 /*!

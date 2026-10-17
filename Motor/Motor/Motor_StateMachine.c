@@ -73,6 +73,14 @@ static State_T * TransitionFault(Motor_T * p_motor, state_value_t faultCmd)
     return (p_motor->P_MOTOR->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : NULL;
 }
 
+/* Run and Intervention: already on the requested branch is a no-op, repeated requests hold without re-entry */
+static State_T * TransitionIntervention(Motor_T * p_motor, state_value_t statePtr)
+{
+    State_T * p_state = (State_T *)statePtr;
+    if (p_state->P_TOP != &MOTOR_STATE_INTERVENTION) { return NULL; }
+    return StateMachine_IsActiveBranch(p_motor->STATE_MACHINE.P_ACTIVE, p_state) ? NULL : p_state;
+}
+
 /* Monitor Flags */
 static void Motor_PollFaultFlags(Motor_T * p_motor)
 {
@@ -423,6 +431,7 @@ static void Run_Proc(Motor_T * p_motor)
 }
 
 /*
+    I Bus power balance is derived from speed sign
 */
 static void Run_OnSpeed(Motor_T * p_motor)
 {
@@ -433,10 +442,6 @@ static void Run_OnSpeed(Motor_T * p_motor)
     if (p_context->FeedbackMode.Speed == 1U) { Motor_ProcSpeedControlOf(p_context, p_context->UserCmd); }
 }
 
-// static void Run_OnILimits(Motor_T * p_motor)
-// {
-//     if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_FOC_ResolveILimits(p_motor->P_MOTOR); }
-// }
 
 static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
@@ -476,14 +481,6 @@ static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedback
     // return NULL;
 }
 
-static State_T * Run_InputTargetState(Motor_T * p_motor, state_value_t targetState)
-{
-    State_T * p_state = (State_T *)targetState;
-    if (p_state == &INTERVENTION_STATE_TORQUE_ZERO) { return &INTERVENTION_STATE_TORQUE_ZERO; }
-    else if (p_state == &INTERVENTION_STATE_SPEED_ZERO) { return &INTERVENTION_STATE_SPEED_ZERO; }
-    return NULL;
-}
-
 static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
@@ -491,7 +488,7 @@ static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
     [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Run_InputControl,
     // [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Run_InputStop,
     [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,
-    [MOTOR_STATE_INPUT_TARGET_STATE]    = (State_Input_T)Run_InputTargetState,
+    [MOTOR_STATE_INPUT_INTERVENTION]    = (State_Input_T)TransitionIntervention,
     [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
 };
 
@@ -556,6 +553,7 @@ static const State_Input_T INTERVENTION_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_
     [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
     [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Intervention_InputControl,
     [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Intervention_InputFeedbackMode,
+    [MOTOR_STATE_INPUT_INTERVENTION]    = (State_Input_T)TransitionIntervention,
 };
 
 const State_T MOTOR_STATE_INTERVENTION =

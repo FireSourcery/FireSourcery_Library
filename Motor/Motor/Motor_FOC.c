@@ -107,8 +107,6 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 /* idReq input is userReq or preset IAlign. */
 void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t angle, fract16_t idReq)
 {
-    // Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, Motor_ILimitMotoring(p_motor))), 0);
-    // Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))), 0);
     Motor_FOC_AngleControl(p_motor, vBus, angle, _Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))), 0);
 }
 
@@ -263,7 +261,6 @@ void Motor_FOC_SetAlignCmdAngle(Motor_Context_T * p_motor, angle16_t angle)
 void Motor_FOC_StartAlignCmd(Motor_Context_T * p_motor)
 {
     Motor_FOC_ClearFeedbackState(p_motor); /* reset TorqueRamp i/v to start at 0 */
-    Motor_ResolveAlignILimits(p_motor);
 }
 
 void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
@@ -283,7 +280,6 @@ void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
 void Motor_FOC_StartStartUpAlign(Motor_Context_T * p_motor)
 {
     Motor_FOC_ClearFeedbackState(p_motor); /* Resets Ramp */
-    Motor_ResolveAlignILimits(p_motor);
     Angle_ZeroCaptureState(&p_motor->OpenLoopAngle); /* always align A */
 }
 

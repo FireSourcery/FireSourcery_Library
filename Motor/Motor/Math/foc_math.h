@@ -243,7 +243,7 @@ static inline interval_t foc_iq_phase_limits(interval_t i_dc, sign_t motion, fra
 {
     ufract16_t along = foc_q_circle_limit(foc_i_phase_of_i_dc(i_dc.high), id);
     ufract16_t against = foc_q_circle_limit(foc_i_phase_of_i_dc(math_min(i_dc.high, -i_dc.low)), id);
-    return (motion != SIGN_ZERO) ? interval_of_sign_pair(motion, along, against) : interval_symmetric(0, along);
+    return (motion != SIGN_ZERO) ? interval_of_sign(motion, along, against) : interval_symmetric(0, along);
 }
 
 /******************************************************************************/
@@ -605,5 +605,5 @@ static inline struct foc_sincos6 foc_abc_dq_angle(angle16_t theta)
 //     ufract16_t along = fract16_sat(fract16_div(power.high, math_max(root, 1)));
 //     ufract16_t plug = fract16_sat(fract16_div(root, math_max(r, 1)));
 //     ufract16_t regen = (h * h > r * -power.low) ? fract16_sat(fract16_div(-power.low, _foc_emf_root(h, r, power.low))) : FRACT16_MAX;
-//     return interval_of_sign_pair((e < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE, along, math_min(regen, plug));
+//     return interval_of_sign((e < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE, along, math_min(regen, plug));
 // }

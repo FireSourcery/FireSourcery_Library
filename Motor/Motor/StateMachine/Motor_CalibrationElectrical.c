@@ -275,7 +275,6 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_context->ControlTimerBase = 0U;
     Motor_FOC_ClearFeedbackState(p_context);
     // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-    Motor_ResolveAlignILimits(p_context); // v inject will surpass
     // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
     // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
 

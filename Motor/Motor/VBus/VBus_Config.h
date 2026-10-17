@@ -209,12 +209,13 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
 {
     switch (id)
     {
-        case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        p_config->VSupplyNominal_V = value; break;
+        case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        VBus_SetVSupplyNominal_V(p_config, value); break;
         case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    p_config->IDerateUnderVFloor = value; break;
         case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor = value; break;
         case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor = value; break;
-        case VBUS_CONFIG_ID_I_DISCHARGE_LIMIT:        p_config->IDischargeLimit_Pu = value; break; /* Clamp or validate on set */
-        case VBUS_CONFIG_ID_I_CHARGE_LIMIT:           p_config->IChargeLimit_Pu = value; break;
+        /* Clamped on set, a pack rating above the board's never binds. [VBus_Config_IsValid] would otherwise fault the next boot */
+        case VBUS_CONFIG_ID_I_DISCHARGE_LIMIT:        p_config->IDischargeLimit_Pu = math_clamp(value, 0, _VBus_Config_ILimit()); break;
+        case VBUS_CONFIG_ID_I_CHARGE_LIMIT:           p_config->IChargeLimit_Pu = math_clamp(value, 0, _VBus_Config_ILimit()); break;
         default: break;
     }
 }
