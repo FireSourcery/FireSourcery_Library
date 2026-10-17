@@ -144,7 +144,7 @@ void Traction_StartBrakeMode(const Traction_T * p_vehicle, Motor_Table_T * p_mot
 */
 static void Traction_ProcBrakeHold(Motor_Table_T * p_motors)
 {
-    if (Motor_Table_IsAny(p_motors, Motor_IsSpeedAligned) == false) { Motor_Table_ForEach(p_motors, Motor_ApplyRampDown); }
+    if (Motor_Table_IsAny(p_motors, Motor_IsSpeedAligned) == false) { Motor_Table_ForEach(p_motors, Motor_ApplySpeedZero); }
 }
 
 /*!
@@ -179,7 +179,7 @@ void Traction_StartDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_mot
     switch (p_vehicle->Config.ZeroMode)
     {
         case TRACTION_ZERO_MODE_FLOAT:   Motor_Table_ApplyControl(p_motors, PHASE_VOUT_Z);         break;
-        case TRACTION_ZERO_MODE_IZERO:   Motor_Table_ForEach(p_motors, Motor_ApplyTorque0);   break;
+        case TRACTION_ZERO_MODE_IZERO:   Motor_Table_ForEach(p_motors, Motor_ApplyTorqueZero);     break;
         case TRACTION_ZERO_MODE_REGEN:       /* Traction_SetRegenMotorAll(p_this); */           break;
         default: break;
     }

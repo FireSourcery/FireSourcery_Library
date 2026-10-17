@@ -70,8 +70,8 @@ Transition commands act only from a named start state.
 |---|---|---|
 | Motor_Enable | DEACTIVATED | PASSIVE |
 | Motor_Disable | PASSIVE, zero speed | DEACTIVATED |
-| Motor_ApplyTorque0 | RUN, RAMP_DOWN | TORQUE_ZERO |
-| Motor_ApplyRampDown | RUN | RAMP_DOWN |
+| Motor_ApplyTorqueZero | RUN, SPEED_ZERO | TORQUE_ZERO |
+| Motor_ApplySpeedZero | RUN | SPEED_ZERO |
 | Motor_ApplySafeStop | RUN, INTERVENTION | SAFE_STOP |
 
 [Motor_StateAction_T] are per-state hooks, not transitions: ON_SPEED runs the speed loop tick, ON_I_LIMITS re-resolves
@@ -94,15 +94,15 @@ stateDiagram-v2
 
     state MOTOR_STATE_INTERVENTION {
         INTERVENTION_STATE_TORQUE_ZERO
-        state INTERVENTION_STATE_RAMP_DOWN {
+        state INTERVENTION_STATE_SPEED_ZERO {
             INTERVENTION_STATE_SAFE_STOP
         }
-        INTERVENTION_STATE_RAMP_DOWN --> INTERVENTION_STATE_TORQUE_ZERO: Motor_ApplyTorque0
-        INTERVENTION_STATE_TORQUE_ZERO --> INTERVENTION_STATE_RAMP_DOWN: release above freewheel limit
+        INTERVENTION_STATE_SPEED_ZERO --> INTERVENTION_STATE_TORQUE_ZERO: Motor_ApplyTorqueZero
+        INTERVENTION_STATE_TORQUE_ZERO --> INTERVENTION_STATE_SPEED_ZERO: release above freewheel limit
     }
 
-    RUN --> INTERVENTION_STATE_TORQUE_ZERO: Motor_ApplyTorque0
-    RUN --> INTERVENTION_STATE_RAMP_DOWN: Motor_ApplyRampDown, release above freewheel limit
+    RUN --> INTERVENTION_STATE_TORQUE_ZERO: Motor_ApplyTorqueZero
+    RUN --> INTERVENTION_STATE_SPEED_ZERO: Motor_ApplySpeedZero, release above freewheel limit
     RUN --> INTERVENTION_STATE_SAFE_STOP: Motor_ApplySafeStop
     MOTOR_STATE_INTERVENTION --> INTERVENTION_STATE_SAFE_STOP: Motor_ApplySafeStop
     MOTOR_STATE_INTERVENTION --> RUN: PHASE_OUTPUT PWM, except SAFE_STOP
@@ -114,8 +114,8 @@ stateDiagram-v2
 | Sub-state | Control | Resume |
 |---|---|---|
 | TORQUE_ZERO (ZTC) | Current loop, generating current only | PHASE_OUTPUT PWM |
-| RAMP_DOWN | Speed loop to zero speed | PHASE_OUTPUT PWM |
-| SAFE_STOP (SS1) | RAMP_DOWN's loop, watchdog to FAULT | rejected |
+| SPEED_ZERO | Speed loop to zero speed | PHASE_OUTPUT PWM |
+| SAFE_STOP (SS1) | SPEED_ZERO's loop, watchdog to FAULT | rejected |
 
 ## Sub-States
 

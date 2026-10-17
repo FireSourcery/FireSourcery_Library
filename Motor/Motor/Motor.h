@@ -277,10 +277,10 @@ typedef struct Motor_Context
     uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, state counter. Overflow 20Khz: 59 hours */
 
     /* Effectively Substates StateMachine Controlled */
-    Motor_Direction_T Direction;            /* Direction of applied/cmd V. now shadows FOC.VLimit  VLimit [0, +] or [-, 0], VLimit[vq-window, vq+window] */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
     int32_t UserCmd;                        /* Feedback mode value */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
+    Motor_Direction_T Direction;            /* Direction lock policy. same as VLimit when VLimit is one-sided */
 
     /*
         Position Sensor
@@ -438,8 +438,13 @@ static inline uint16_t Motor_SpeedRated_Pu(Motor_T * p_motor) { return Motor_Get
 /* Optionally select a base other than controller V_MAX */
 static inline angle_freq_t Motor_SpeedBase(Motor_T * p_motor) { return Motor_SpeedBase_AngleFreq(&Motor_Config(p_motor)->Electrical); }
 
-static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
-// static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_of(Motor_DirectionV(p_motor) * VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
+/*
+    Applied direction. Readers go through here, so the source can move to Foc.VLimit or speed.
+*/
+static inline Motor_Direction_T Motor_Direction(const Motor_Context_T * p_motor) { return (Motor_Direction_T)p_motor->Direction; }
+// static inline Motor_Direction_T Motor_DirectionV(const Motor_Context_T * p_motor) { return (Motor_Direction_T)math_sign(p_motor->Foc.Vq); }
+
+static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_of(Motor_Direction(p_motor->P_MOTOR) * VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 
 
@@ -462,10 +467,6 @@ static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return i
     Ramp holds Cached directional limits — single materialized layer for hot-path PID/Ramp clamps
 */
 /******************************************************************************/
-static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_Context_T * p_motor) { return (Motor_Direction_T)RotorSensor_GetFeedbackDirection(p_motor->p_ActiveSensor); }
-static inline Motor_Direction_T Motor_DirectionV(const Motor_Context_T * p_motor) { return p_motor->Direction; }
-// static inline Motor_Direction_T Motor_DirectionV(const Motor_Context_T * p_motor) { return (Motor_Direction_T)math_sign(p_motor->Foc.Vq); }
-
 
 /*
     Inline local compose — function IS the spec for which local sources exist.
@@ -478,19 +479,19 @@ static inline ufract16_t Motor_ILimitGenerating(const Motor_Context_T * p_motor)
 static inline ufract16_t Motor_SpeedLimitForward(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Forward, p_motor->Config.SpeedLimitForward_Pu); }
 static inline ufract16_t Motor_SpeedLimitReverse(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Reverse, p_motor->Config.SpeedLimitReverse_Pu); }
 
-static inline interval_t Motor_ILimitInterval(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)) ; }
+static inline interval_t Motor_ILimitInterval(const Motor_Context_T * p_motor) { return interval_of_sign_pair((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)) ; }
 
 
 /*
     Direction resolve. I: Motoring aligns with Direction, NULL collapses to [0:0], within the supply window. Speed: Forward aligns with Config.DirectionForward.
 */
-static inline interval_t _Motor_ResolveILimits(const Motor_Context_T * p_motor) { return interval_intersect(interval_of_sign_pair((sign_t)p_motor->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)), p_motor->ISupplyLimits); }
+static inline interval_t _Motor_ResolveILimits(const Motor_Context_T * p_motor) { return interval_intersect(interval_of_sign_pair((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)), p_motor->ISupplyLimits); }
 // static inline interval_t Motor_ILimit_Resolve(struct Motor_ILimit * p_ilimit, sign_t directionCalibration, sign_t direction)
 // {
 //     return interval_of_sign_pair(direction, p_ilimit->Motoring, p_ilimit->Generating);
 // }
 // return interval_intersect(interval_intersect(
-//     interval_of_sign_pair((sign_t)p_motor->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)),
+//     interval_of_sign_pair((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)),
 //     interval_of_sign_pair((sign_t)p_motor->Config.DirectionForward, p_motor->ILimit.Forward, p_motor->ILimit.Reverse)),
 //     p_motor->ISupplyLimits);
 
@@ -499,13 +500,13 @@ static inline interval_t _Motor_ResolveSpeedLimits(const Motor_Context_T * p_mot
 /* interval helper  */
 static inline void _Motor_ApplyILimits(Motor_Context_T * p_motor, interval_t iLimits)
 {
-    Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high); /* Torque commands sent over serial/CAN clamped until next send */
+    _Ramp_SetLimits(&p_motor->TorqueRamp, iLimits.low, iLimits.high);
     PID_SetOutputLimits(&p_motor->PidSpeed, iLimits.low, iLimits.high);
 }
 
 static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t sLimits)
 {
-    Ramp_SetLimits(&p_motor->SpeedRamp, sLimits.low, sLimits.high);
+    _Ramp_SetLimits(&p_motor->SpeedRamp, sLimits.low, sLimits.high);
 }
 
 /*
@@ -522,20 +523,7 @@ static inline void Motor_CaptureILimits(Motor_Context_T * p_motor, uint16_t moto
 static inline void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, _Motor_ResolveILimits(p_motor)); }
 static inline void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, _Motor_ResolveSpeedLimits(p_motor)); }
 
-/* Catch-all on a feedback mode update, Run_Entry. TorqueRamp and SpeedPid output units follow FeedbackMode.Current */
-static inline void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
-{
-    Motor_Context_T * p_motor = p_dev->P_MOTOR;
-    interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
 
-    /* Current mode: resolve from inputs, TorqueRamp may hold V limits from voltage mode. */
-    if (p_motor->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor); }
-    else
-    {
-        if (p_motor->FeedbackMode.Speed == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
-        Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
-    }
-}
 
 /******************************************************************************/
 /*
@@ -622,25 +610,25 @@ static inline void Motor_MatchSpeedTorqueState(Motor_Context_T * p_motor, int16_
 /*
     Direction - User/Unsigned Config
 
-    [p_motor->Config.DirectionForward * p_motor->Direction]
+    [p_motor->Config.DirectionForward * Motor_Direction]
     Physical rotor rotation — CW or CCW as viewed from shaft end
     User/application direction — "Forward"/"Reverse" is application-defined (a vehicle, a pump, a spindle)
 
-    [p_motor->Direction]
+    [Motor_Direction]
     Electrical commutation direction — determines torque sign
     Feedback sign conventions — speed, current, voltage must be consistently signed
 */
 /******************************************************************************/
 /* Rotating along the applied Direction. False at standstill or counter-rotation */
-static inline bool Motor_IsSpeedAligned(Motor_T * p_motor) { return ((Motor_GetSpeedFeedback(p_motor->P_MOTOR) * p_motor->P_MOTOR->Direction) > 0); }
+static inline bool Motor_IsSpeedAligned(Motor_T * p_motor) { return ((Motor_GetSpeedFeedback(p_motor->P_MOTOR) * Motor_Direction(p_motor->P_MOTOR)) > 0); }
 
 /*
     One direction clamp
     Ccw: [0:value]
     Cw: [value:0]
 */
-static inline int32_t _Motor_MotoringOnly(const Motor_Context_T * p_motor, int32_t value) { return (p_motor->Direction == (Motor_Direction_T)math_sign(value)) * value; }
-static inline int32_t _Motor_GeneratingOnly(const Motor_Context_T * p_motor, int32_t value) { return (p_motor->Direction != (Motor_Direction_T)math_sign(value)) * value; }
+static inline int32_t _Motor_MotoringOnly(const Motor_Context_T * p_motor, int32_t value) { return (Motor_Direction(p_motor) == (Motor_Direction_T)math_sign(value)) * value; }
+static inline int32_t _Motor_GeneratingOnly(const Motor_Context_T * p_motor, int32_t value) { return (Motor_Direction(p_motor) != (Motor_Direction_T)math_sign(value)) * value; }
 
 /* UserCmd as a q-current request. Its units follow FeedbackMode, so only current (torque) mode holds one */
 static inline int32_t Motor_GetUserICmd(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Value == MOTOR_FEEDBACK_MODE_CURRENT.Value) ? p_motor->UserCmd : 0; }
@@ -649,11 +637,11 @@ static inline Motor_Direction_T Motor_GetDirectionForward(const Motor_Context_T 
 static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_Context_T * p_motor) { return (p_motor->Config.DirectionForward * -1); }
 /* User reference Motoring. Interpret as CCW/CW or Positive */
 /* Motoring Ccw / Forward */
-static inline Motor_Direction_T Motor_GetUserDirection(const Motor_Context_T * p_motor) { return p_motor->Config.DirectionForward * p_motor->Direction; }
+static inline Motor_Direction_T Motor_GetUserDirection(const Motor_Context_T * p_motor) { return p_motor->Config.DirectionForward * Motor_Direction(p_motor); }
 /* IsMotoringForward */
 static inline bool Motor_IsDirectionForward(const Motor_Context_T * p_motor) { return (Motor_GetUserDirection(p_motor) == 1); } /* DirectionForward == Direction, excluding null case */
 static inline bool Motor_IsDirectionReverse(const Motor_Context_T * p_motor) { return (Motor_GetUserDirection(p_motor) == -1); }
-static inline bool Motor_IsDirectionStopped(const Motor_Context_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_NULL); }
+static inline bool Motor_IsDirectionStopped(const Motor_Context_T * p_motor) { return (Motor_Direction(p_motor) == MOTOR_DIRECTION_NULL); }
 
 
 

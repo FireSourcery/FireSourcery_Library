@@ -90,7 +90,7 @@ static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /*
 /* signed aligned interval, defined as [low:high] */
 typedef struct { int32_t low; int32_t high; } interval_t;
 
-/* [0:value] or [value:0] keyed by value sign */
+/* [0:value] or [value:0] keyed by value sign. sign-keyed half-plane. */
 static inline interval_t interval_of(int32_t value) { return (interval_t) { .low = math_min(0, value), .high = math_max(0, value) }; }
 
 static inline interval_t interval_symmetric(int32_t center, uint32_t magnitude) { return (interval_t) { .low = center - magnitude, .high = center + magnitude }; }

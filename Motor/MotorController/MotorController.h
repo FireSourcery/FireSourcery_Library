@@ -354,5 +354,5 @@ extern MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(
 // extern bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit);
 // extern bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id);
 
-extern void MotorController_ApplyILimits(MotorController_T * p_dev);
-extern void MotorController_ApplySpeedLimits(MotorController_T * p_dev);
+extern void MotorController_CaptureILimits(MotorController_T * p_dev);
+extern void MotorController_CaptureSpeedLimits(MotorController_T * p_dev);

@@ -170,12 +170,12 @@ Edges of [Traction_Cmd_T] start a mode; values in between set the command.
 | Cmd | Motor |
 |---|---|
 | THROTTLE | Feedback mode by [Traction_ThrottleMode_T], PHASE_OUTPUT PWM: PASSIVE → RUN |
-| BRAKE | By [Traction_BrakeMode_T]: current feedback, PWM, opposing current cmd. INTERVENTION RAMP_DOWN holds zero speed once no motor advances |
+| BRAKE | By [Traction_BrakeMode_T]: current feedback, PWM, opposing current cmd. INTERVENTION SPEED_ZERO holds zero speed once no motor advances |
 | RELEASE | By [Traction_ZeroMode_T], below |
 
 | [Traction_ZeroMode_T] | Motor |
 |---|---|
-| FLOAT | PHASE_OUTPUT Z: RUN → PASSIVE within the freewheel speed limit, else INTERVENTION RAMP_DOWN |
+| FLOAT | PHASE_OUTPUT Z: RUN → PASSIVE within the freewheel speed limit, else INTERVENTION SPEED_ZERO |
 | IZERO | RUN → INTERVENTION TORQUE_ZERO |
 | REGEN | not implemented |
 | ZERO | setpoint zero, no state change |
@@ -224,9 +224,9 @@ sequenceDiagram
     U->>T: Release edge
     alt ZeroMode FLOAT
         T->>M: PHASE_OUTPUT Z
-        M->>M: PASSIVE, or INTERVENTION RAMP_DOWN above freewheel limit
+        M->>M: PASSIVE, or INTERVENTION SPEED_ZERO above freewheel limit
     else ZeroMode IZERO
-        T->>M: Motor_ApplyTorque0
+        T->>M: Motor_ApplyTorqueZero
         M->>M: INTERVENTION TORQUE_ZERO
     end
 ```

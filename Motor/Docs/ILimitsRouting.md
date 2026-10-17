@@ -41,9 +41,9 @@ flowchart LR
     GET --> SLOT
 
     %% Call sites
-    C1S[["MC main 1 s<br/>MotorController_ApplyILimits<br/>→ Motor_SetILimitDerates"]]
+    C1S[["MC main 1 s<br/>MotorController_CaptureILimits<br/>→ Motor_SetILimitDerates"]]
     CVB[["VBus thread, V_DERATE<br/>push on update"]]
-    TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, RampDown<br/>MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP"]]
+    TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, SpeedZero<br/>MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP"]]
     MC10[["MC main ~10 ms (default)<br/>Motor_ResolveISupplyLimits"]]
     RES[["Motor_ResolveILimits<br/>each push, Motor_SetDirection,<br/>Run_Entry, Intervention_Entry"]]
     AL[["Motor_ResolveAlignILimits"]]

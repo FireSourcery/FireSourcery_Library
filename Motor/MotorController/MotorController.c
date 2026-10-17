@@ -129,7 +129,7 @@ MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorCo
 /******************************************************************************/
 /*
     Collective Setting Limit
-    System sources composed by hand, pushed to every motor as a ratio of its Config.
+    System sources composed by hand, stored to every motor as a ratio of its Config.
 */
 /******************************************************************************/
 /*
@@ -149,13 +149,13 @@ static inline ufract16_t MotorController_SpeedDerate(MotorController_T * p_dev) 
 // }
 
 /*
-    Recomposed from every source on each push, no record of which source binds.
-    VBUS_I_LIMIT_V_DERATE: the bus ramps join the ratio per side.
+    Recomposed from every source on each capture, no record of which source binds.
+    VBUS_I_LIMIT_V_DERATE: the bus ramps join the ratio per side, captured on the VBus thread.
         Motoring draws from the bus and Generating returns to it while the V limits are anti-plugging.
     Otherwise each motor captures its supply window at its own operating point.
-    Pushed to each motor's active state.
+    Stored only. Each motor's active state resolves on its speed tick.
 */
-void MotorController_ApplyILimits(MotorController_T * p_dev)
+void MotorController_CaptureILimits(MotorController_T * p_dev)
 {
     ufract16_t derate = MotorController_IDerate(p_dev);
 #if defined(VBUS_I_LIMIT_V_DERATE)
@@ -173,7 +173,7 @@ void MotorController_ApplyILimits(MotorController_T * p_dev)
     }
 }
 
-void MotorController_ApplySpeedLimits(MotorController_T * p_dev)
+void MotorController_CaptureSpeedLimits(MotorController_T * p_dev)
 {
     ufract16_t derate = MotorController_SpeedDerate(p_dev);
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_SetSpeedLimitDerate(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, derate); }

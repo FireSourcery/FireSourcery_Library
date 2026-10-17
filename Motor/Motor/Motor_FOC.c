@@ -39,12 +39,21 @@ void Motor_FOC_WriteDuty(Motor_T * p_motor)
     Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
 }
 
-/* Out of line: one copy of the divides for every state that runs the current loop */
-void Motor_ResolveISupplyLimits(Motor_T * p_motor)
+/* Out of line: one copy for every state that runs the current loop */
+void Motor_FOC_ResolveILimits(Motor_T * p_motor)
 {
+#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
     Motor_CaptureISupplyLimits(p_motor);
+#endif
     Motor_ResolveILimits(p_motor->P_MOTOR);
 }
+
+/* Push alternative: capture and resolve from any state */
+// void Motor_ResolveISupplyLimits(Motor_T * p_motor)
+// {
+//     Motor_CaptureISupplyLimits(p_motor);
+//     Motor_ResolveILimits(p_motor->P_MOTOR);
+// }
 
 
 /******************************************************************************/
@@ -151,7 +160,7 @@ void Motor_FOC_MatchVOutput(Motor_Context_T * p_context)
 /* Vabc is either 0 from clear on entry to PASSIVE or set by CaptureAngleVBemf */
 void Motor_FOC_MatchVFreewheel(Motor_Context_T * p_context, ufract16_t vbus)
 {
-    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
+    Motor_FOC_CaptureVSpeed(p_context);
 #if defined(MOTOR_V_MATCH_SENSOR)
     FOC_MatchIVSensor(&p_context->Foc);
 #elif defined(MOTOR_V_MATCH_SPEED)
@@ -229,14 +238,12 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor)
     FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
 }
 
-
 void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
     Motor_SetDirection(p_dev, direction);
     // FOC_SetVAntiPlugging(p_foc, direction, vPhaseLimit);
     FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS));
 }
-
 
 /******************************************************************************/
 /*!
@@ -308,9 +315,9 @@ void Motor_FOC_StartOpenLoop(Motor_Context_T * p_motor)
 void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Pu * p_context->Direction);
+    fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Pu * Motor_Direction(p_context));
     angle16_t angle = Angle_IntegrateSpeed_Pu(&p_context->OpenLoopAngle, &p_context->SensorState.UnitRef.SpeedPuRef, speed); //todo change to delta
-    fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, math_min(p_context->Config.OpenLoopRampIFinal_Pu, Motor_ILimitMotoring(p_context)) * p_context->Direction);
+    fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, math_min(p_context->Config.OpenLoopRampIFinal_Pu, Motor_ILimitMotoring(p_context)) * Motor_Direction(p_context));
     Motor_FOC_AngleControl(p_context, VBus_Pu(p_motor->P_VBUS), angle, 0, iq);
 }
 

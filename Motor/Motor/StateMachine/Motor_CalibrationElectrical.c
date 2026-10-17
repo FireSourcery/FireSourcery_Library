@@ -330,7 +330,7 @@ static void Electrical_Proc(Motor_T * p_motor)
             break;
         case PARAMID_STEP_COMMIT:
             CommitResults(p_params, &p_context->Config.Electrical);
-            Motor_FOC_InitParams(p_motor);
+            Motor_FOC_InitParams(p_context);
             break;
         case PARAMID_STEP_RAMPDOWN:
             // _Motor_FOC_ProcAngleAlign(p_context, VBus_Pu(p_motor->P_VBUS), 0, 0);

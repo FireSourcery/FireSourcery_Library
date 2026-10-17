@@ -87,12 +87,6 @@ static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { (void)p_motor; r
 /* Store only. Takes effect on the next resolve. */
 static inline void Motor_CaptureISupplyLimits(Motor_T * p_motor) { p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits(p_motor); }
 
-/*
-    The power balance moves with speed.
-        MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP    resolves on the speed loop of the state running the current loop
-        otherwise                           polled by the upper layer
-*/
-extern void Motor_ResolveISupplyLimits(Motor_T * p_motor);
 
 
 /*
@@ -118,6 +112,14 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
     }
 }
 
+/*
+    The state running the current loop resolves the held inputs, on entry and on its speed tick.
+    The supply window moves with the operating point:
+        MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP    captured by the same poll
+        otherwise                           captured by the upper layer, [Motor_CaptureISupplyLimits]
+*/
+extern void Motor_FOC_ResolveILimits(Motor_T * p_motor);
+// extern void Motor_ResolveISupplyLimits(Motor_T * p_motor);
 
 /******************************************************************************/
 /*!
@@ -134,8 +136,6 @@ extern void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t qReq);
 extern void Motor_FOC_ProcAngleV(Motor_T * p_motor);
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
 extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor);
-
-void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction);
 
 extern void Motor_FOC_ClearFeedbackState(Motor_Context_T * p_motor);
 extern void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_state);

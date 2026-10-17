@@ -104,6 +104,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
     p_motor->ControlTimerBase = 0U;
 
     p_motor->Direction = MOTOR_DIRECTION_NULL;
+    FOC_SetVAntiPlugging(&p_motor->Foc, SIGN_ZERO, 0U);
 // #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 //     FOC_Sensorless_InitElectrical(p_context->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Ls_PuTurn(p_electrical), Motor_Lq_PuTurn(p_electrical), math_min(p_electrical->Rs, FRACT16_MAX));
 // #endif
@@ -222,40 +223,57 @@ void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
     // Motor_ResolveFeedbackLimits(p_dev);
 }
 
+/*
+    Push alternative, with [_Motor_SetILimits]: catch-all on a feedback mode update, Run_Entry.
+    TorqueRamp and SpeedPid output units follow FeedbackMode.Current
+*/
+ void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
+{
+    Motor_Context_T * p_motor = p_dev->P_MOTOR;
+    interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
+
+    /* Current mode: resolve from inputs, TorqueRamp may hold V limits from voltage mode. */
+    if (p_motor->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor); }
+    else
+    {
+        if (p_motor->FeedbackMode.Speed == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
+        Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
+    }
+}
 
 /******************************************************************************/
 /*
-    Direction - applied voltage direction
+    Direction - applied voltage direction, and its VLimit half-plane.
 */
 /******************************************************************************/
 void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
+    FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS));
     p_dev->P_MOTOR->Direction = direction;
     RotorSensor_ZeroInitial(p_dev->P_MOTOR->p_ActiveSensor);
     // Motor_ResolveSpeedLimits(p_dev->P_MOTOR);
-    Motor_ResolveILimits(p_dev->P_MOTOR);
+    // Motor_ResolveILimits(p_dev->P_MOTOR);
 }
 
 
 
 /******************************************************************************/
 /*!
-    Active Limits — push interface
+    Active Limits — held inputs
 
-    The upper layer pushes its composed limit in PU, or a derate as a ratio of Config.
+    The upper layer stores its composed limit in PU, or a derate as a ratio of Config.
     Motor owns the Config comparison and the direction resolve.
-        limit = min(Pushed, Config)  => Motor_Resolve*Limits => Ramp/PID
+        limit = min(Stored, Config)  => Motor_Resolve*Limits => Ramp/PID
 
     Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. FRACT16_MAX => no cap.
     I resolves within ISupplyLimits, signed already, captured at the operating point by [Motor_CaptureISupplyLimits].
+    Store only. The state running the current loop resolves on entry and on its speed tick, [Motor_FOC_ResolveILimits].
 */
 /******************************************************************************/
 /*
     I Limits. Motoring aligns with Direction, Generating opposes.
 */
-/*
-    Caller optionally calls resolve.
-*/
+/* Push alternative: store and resolve from any state */
 void _Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu)
 {
     p_motor->ILimit.Motoring = motoring_pu;
@@ -265,12 +283,12 @@ void _Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t
 
 void Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu)
 {
-    _Motor_SetILimits(p_motor, math_min(motoring_pu, p_motor->Config.ILimitMotoring_Pu), math_min(generating_pu, p_motor->Config.ILimitGenerating_Pu));
+    Motor_CaptureILimits(p_motor, math_min(motoring_pu, p_motor->Config.ILimitMotoring_Pu), math_min(generating_pu, p_motor->Config.ILimitGenerating_Pu));
 }
 
 void Motor_SetILimitDerates(Motor_Context_T * p_motor, ufract16_t motoring, ufract16_t generating)
 {
-    _Motor_SetILimits(p_motor, fract16_mul(motoring, p_motor->Config.ILimitMotoring_Pu), fract16_mul(generating, p_motor->Config.ILimitGenerating_Pu));
+    Motor_CaptureILimits(p_motor, fract16_mul(motoring, p_motor->Config.ILimitMotoring_Pu), fract16_mul(generating, p_motor->Config.ILimitGenerating_Pu));
 }
 
 void Motor_SetILimitMotoring(Motor_Context_T * p_motor, uint16_t motoring_pu) { Motor_SetILimits(p_motor, motoring_pu, p_motor->ILimit.Generating); }
@@ -280,7 +298,12 @@ void Motor_SetILimitGenerating(Motor_Context_T * p_motor, uint16_t generating_pu
 // void Motor_SetILimit(Motor_Context_T * p_motor, uint16_t i_pu) { Motor_SetILimits(p_motor, i_pu, i_pu); }
 
 /* No cap. Config is the ceiling. */
-void Motor_ResetILimit(Motor_Context_T * p_motor) { _Motor_SetILimits(p_motor, p_motor->Config.ILimitMotoring_Pu, p_motor->Config.ILimitGenerating_Pu); }
+void Motor_ResetILimit(Motor_Context_T * p_motor)
+{
+    Motor_CaptureILimits(p_motor, p_motor->Config.ILimitMotoring_Pu, p_motor->Config.ILimitGenerating_Pu);
+    p_motor->ILimit.Forward = FRACT16_MAX;
+    p_motor->ILimit.Reverse = FRACT16_MAX;
+}
 
 
 /******************************************************************************/
@@ -295,7 +318,7 @@ void Motor_SetSpeedLimits(Motor_Context_T * p_motor, uint16_t forward_pu, uint16
 {
     p_motor->SpeedLimit.Forward = forward_pu;
     p_motor->SpeedLimit.Reverse = reverse_pu;
-    Motor_ResolveSpeedLimits(p_motor);
+    // Motor_ResolveSpeedLimits(p_motor);
 }
 
 void Motor_SetSpeedLimitForward(Motor_Context_T * p_motor, uint16_t forward_pu) { Motor_SetSpeedLimits(p_motor, forward_pu, p_motor->SpeedLimit.Reverse); }

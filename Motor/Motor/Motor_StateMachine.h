@@ -98,6 +98,7 @@ typedef enum Motor_StateInput
     MOTOR_STATE_INPUT_CALIBRATION,      /* Calibration Cmd */
     // MOTOR_STATE_INPUT_STATE_CMD,     /* Transition Cmd, common entry for Stop, Start */
     // MOTOR_STATE_INPUT_USER_BUFFER,
+    MOTOR_STATE_INPUT_TARGET_STATE,
     MOTOR_TRANSITION_TABLE_LENGTH,
 }
 Motor_StateInput_T;
@@ -107,7 +108,7 @@ typedef enum Motor_StateAction
 {
     MOTOR_STATE_INPUT_ON_SPEED, /* Speed feedback */
     MOTOR_STATE_INPUT_ON_PHASE, /* Phase I/V */
-    MOTOR_STATE_INPUT_ON_I_LIMITS, /* I limit inputs changed, [Motor_ApplyILimits] */
+    // MOTOR_STATE_INPUT_ON_I_LIMITS, /* I limit inputs changed, [Motor_ApplyILimits] */
     MOTOR_STATE_ACTION_TABLE_LENGTH,
 }
 Motor_StateAction_T;

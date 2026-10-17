@@ -66,13 +66,13 @@ static inline fract16_t Motor_User_GetVSpeed_Pu(Motor_T * p_motor) { return Moto
 */
 static inline ufract16_t Motor_GetIPhaseMagnitude_Pu(const Motor_Context_T * p_motor) { return FOC_GetIMagnitude(&p_motor->Foc); }
 /* iPhase motoring as positive. generating as negative. */
-static inline fract16_t Motor_GetIPhase_Pu(const Motor_Context_T * p_motor) { return Motor_GetIPhaseMagnitude_Pu(p_motor) * p_motor->Direction; ; }
+static inline fract16_t Motor_GetIPhase_Pu(const Motor_Context_T * p_motor) { return Motor_GetIPhaseMagnitude_Pu(p_motor) * Motor_Direction(p_motor); ; }
 
 /*
     Sampled BEMF during freewheel or VOut during active control
 */
 static inline ufract16_t Motor_GetVPhaseMagnitude_Pu(const Motor_Context_T * p_motor) { return FOC_GetVMagnitude(&p_motor->Foc); }
-static inline fract16_t Motor_GetVPhase_Pu(const Motor_Context_T * p_motor) { return Motor_GetVPhaseMagnitude_Pu(p_motor) * p_motor->Direction; ; }
+static inline fract16_t Motor_GetVPhase_Pu(const Motor_Context_T * p_motor) { return Motor_GetVPhaseMagnitude_Pu(p_motor) * Motor_Direction(p_motor); ; }
 
 /*
     Ideal electrical power physical VA
@@ -103,8 +103,8 @@ static inline int16_t Motor_GetVPhase_Volts(const Motor_Context_T * p_motor)    
 /*
     Caller maintain feedback state to determine units
 */
-static inline int16_t _Motor_GetIVSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Direction; }
-static inline int16_t _Motor_GetSpeedMotoringSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Direction; }
+static inline int16_t _Motor_GetIVSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->TorqueRamp) * Motor_Direction(p_motor); }
+static inline int16_t _Motor_GetSpeedMotoringSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->SpeedRamp) * Motor_Direction(p_motor); }
 
 static inline int16_t _Motor_GetTorqueSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
 static inline int16_t _Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; }
@@ -115,11 +115,11 @@ static inline fract16_t Motor_GetISetpoint(const Motor_Context_T * p_motor) { re
 static inline fract16_t Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }
 // static inline bool Motor_IsSpeedRampEnabled(const Motor_Context_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
 
-/* quick derive view - unsigned magnitudes of the applied pair. Inverse of the Motor_Set*Limits resolve. */
-static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return interval_aligned(Motor_RampILimits(p_motor), (sign_t)p_motor->Direction); }
-static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return interval_opposed(Motor_RampILimits(p_motor), (sign_t)p_motor->Direction); }
-static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return interval_aligned(Motor_RampSpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
-static inline ufract16_t Motor_User_SpeedLimitReverse(const Motor_Context_T * p_motor) { return interval_opposed(Motor_RampSpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
+/* Unsigned magnitudes of the resolved envelope. The Ramp holds it only while a state runs the current loop. */
+static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return interval_aligned(_Motor_ResolveILimits(p_motor), (sign_t)Motor_Direction(p_motor)); }
+static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return interval_opposed(_Motor_ResolveILimits(p_motor), (sign_t)Motor_Direction(p_motor)); }
+static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return interval_aligned(_Motor_ResolveSpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
+static inline ufract16_t Motor_User_SpeedLimitReverse(const Motor_Context_T * p_motor) { return interval_opposed(_Motor_ResolveSpeedLimits(p_motor), (sign_t)p_motor->Config.DirectionForward); }
 
 /*
 
@@ -199,8 +199,8 @@ extern void Motor_SetICmd(Motor_Context_T * p_motor, int16_t i_pu);
 extern void Motor_SetICmd_Norm(Motor_Context_T * p_motor, int16_t scalar);
 extern void Motor_SetITest(Motor_Context_T * p_motor, int16_t scalar);
 
-extern void Motor_ApplyTorque0(Motor_T * p_motor);
-extern void Motor_ApplyRampDown(Motor_T * p_motor);
+extern void Motor_ApplyTorqueZero(Motor_T * p_motor);
+extern void Motor_ApplySpeedZero(Motor_T * p_motor);
 extern void Motor_ApplySafeStop(Motor_T * p_motor);
 
 

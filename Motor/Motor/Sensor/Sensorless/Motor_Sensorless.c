@@ -226,7 +226,7 @@ static const State_T SENSORLESS_START_UP =
 */
 void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
 {
-    if (p_motor->P_MOTOR->Direction == MOTOR_DIRECTION_NULL) { return; }
+    if (Motor_Direction(p_motor->P_MOTOR) == MOTOR_DIRECTION_NULL) { return; }
     if (p_motor->P_MOTOR->p_ActiveSensor != &GetSensorless(p_motor)->BASE) { return; }
     Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN);
 }

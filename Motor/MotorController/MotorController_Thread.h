@@ -160,15 +160,13 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
     {
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:    _MotorController_VBus_EnterFault(p_dev);    break;
-#if defined(VBUS_I_LIMIT_V_DERATE)
-        /* The ramps track VBus inside a warning band, and are back at 1.0 when it clears */
-        /* Motor_ResolveISupplyLimits */
-        case VMONITOR_STATUS_WARNING_HIGH:
-        case VMONITOR_STATUS_WARNING_LOW:           MotorController_ApplyILimits(p_dev);         break;
-        case VMONITOR_STATUS_NORMAL:                if (VBus_IsClearingEdge(p_dev->P_VBUS) == true) { MotorController_ApplyILimits(p_dev); } break;
-#endif
         default: break;
     }
+
+#if defined(VBUS_I_LIMIT_V_DERATE)
+    /* The ramps track VBus. The only writer of the derate pair in this mode, same priority as the PWM thread */
+    MotorController_CaptureILimits(p_dev);
+#endif
 
     // if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotBuzzer_MonitorTrigger(MotorController_Buzzer(p_dev)); }
 
@@ -246,10 +244,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
         {
 #if !defined(VBUS_I_LIMIT_V_DERATE) && !defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
-            /* The only polled limit: the supply window follows the bus and each motor's operating point */
+            /* The supply window follows the bus and each motor's operating point. Store only, the motor resolves on its speed tick */
             for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
             {
-                Motor_ResolveISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]);
+                Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]);
             }
 #endif
 
@@ -271,10 +269,12 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
 
-            MotorController_ApplyILimits(p_dev);
+#if !defined(VBUS_I_LIMIT_V_DERATE)
+            MotorController_CaptureILimits(p_dev);
+#endif
 
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
-            MotorController_ApplySpeedLimits(p_dev);
+            MotorController_CaptureSpeedLimits(p_dev);
             // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true)
 
             /* Can use low priority check, as motor is already in fault state. */

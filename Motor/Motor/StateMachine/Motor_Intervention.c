@@ -44,11 +44,7 @@
 #define MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG (200000U) /* 10 seconds at 20kHz */
 #endif
 
-/* Current control regardless of FeedbackMode, shared by the Intervention leaves */
-static void Intervention_OnILimits(Motor_T * p_motor)
-{
-    Motor_ResolveILimits(p_motor->P_MOTOR);
-}
+
 
 /******************************************************************************/
 /*
@@ -85,23 +81,20 @@ static void TorqueZero_Proc(Motor_T * p_motor)
 static void TorqueZero_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
-#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
-    Motor_ResolveISupplyLimits(p_motor);
-#endif
+    Motor_FOC_CaptureVSpeed(p_context);
+    Motor_FOC_ResolveILimits(p_motor);
 }
 
 static const State_Action_T TORQUE_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)TorqueZero_CaptureSpeed,
     [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
-    [MOTOR_STATE_INPUT_ON_I_LIMITS] = (State_Action_T)Intervention_OnILimits,
 };
 
 static State_T * TorqueZero_Next(Motor_T * p_motor)
 {
     // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
-    // if (p_motor->P_MOTOR->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_RAMP_DOWN; }
+    // if (p_motor->P_MOTOR->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_SPEED_ZERO; }
     return NULL;
 }
 
@@ -122,13 +115,13 @@ const State_T INTERVENTION_STATE_TORQUE_ZERO =
 
 /******************************************************************************/
 /*!
-    @brief SubState: Ramp Down
+    @brief SubState: Speed Zero
 
     Active deceleration using speed PID targeting zero speed.
     Inherits Intervention_InputControl - user may resume to Run.
 */
 /******************************************************************************/
-static void RampDown_Entry(Motor_T * p_motor)
+static void SpeedZero_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     /* Intervention_Entry calls MatchIVState */
@@ -137,53 +130,50 @@ static void RampDown_Entry(Motor_T * p_motor)
     p_context->ControlTimerBase = 0U;
 }
 
-static void RampDown_Proc(Motor_T * p_motor)
+static void SpeedZero_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_ProcTorqueReq(p_motor, PID_GetOutput(&p_context->PidSpeed));
     Motor_FOC_WriteDuty(p_motor);
 }
 
-static State_T * RampDown_Next(Motor_T * p_motor)
+static State_T * SpeedZero_Next(Motor_T * p_motor)
 {
     (void)p_motor;
     // if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { return &MOTOR_STATE_PASSIVE; }
     return NULL;
 }
 
-static void RampDown_CaptureSpeed(Motor_T * p_motor)
+static void SpeedZero_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
+    Motor_FOC_CaptureVSpeed(p_context);
+    Motor_FOC_ResolveILimits(p_motor); /* Before the speed loop clamps against them */
     Motor_ProcSpeedControlOf(p_context, 0); /* drive to zero speed */
-#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
-    Motor_ResolveISupplyLimits(p_motor);
-#endif
 }
 
 /* Shared with SafeStop - action dispatch is leaf-only */
-static const State_Action_T RAMP_DOWN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
+static const State_Action_T SPEED_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
-    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)RampDown_CaptureSpeed,
+    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)SpeedZero_CaptureSpeed,
     [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
-    [MOTOR_STATE_INPUT_ON_I_LIMITS] = (State_Action_T)Intervention_OnILimits,
 };
 
-static const State_Input_T RAMP_DOWN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T SPEED_ZERO_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
 };
 
-const State_T INTERVENTION_STATE_RAMP_DOWN =
+const State_T INTERVENTION_STATE_SPEED_ZERO =
 {
     .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_INTERVENTION }, /* sub-state id not yet allocated: reports as the root state */
     .P_TOP      = &MOTOR_STATE_INTERVENTION,
     .P_PARENT   = &MOTOR_STATE_INTERVENTION,
     .DEPTH      = 1U,
-    .ENTRY      = (State_Action_T)RampDown_Entry,
-    .LOOP       = (State_Action_T)RampDown_Proc,
-    .NEXT       = (State_Input0_T)RampDown_Next,
-    .P_TRANSITION_TABLE = &RAMP_DOWN_TRANSITION_TABLE[0U],
-    .P_ACTION_TABLE = &RAMP_DOWN_ACTION_TABLE[0U],
+    .ENTRY      = (State_Action_T)SpeedZero_Entry,
+    .LOOP       = (State_Action_T)SpeedZero_Proc,
+    .NEXT       = (State_Input0_T)SpeedZero_Next,
+    .P_TRANSITION_TABLE = &SPEED_ZERO_TRANSITION_TABLE[0U],
+    .P_ACTION_TABLE = &SPEED_ZERO_ACTION_TABLE[0U],
 };
 
 
@@ -191,11 +181,11 @@ const State_T INTERVENTION_STATE_RAMP_DOWN =
 /*!
     @brief SubState: Safe Stop (SS1)
 
-    RampDown with user resume rejected - committed to stop.
-    Inherits RampDown LOOP. Escalates to Fault on watchdog timeout.
+    SpeedZero with user resume rejected - committed to stop.
+    Inherits SpeedZero LOOP. Escalates to Fault on watchdog timeout.
 */
 /******************************************************************************/
-/* Entry from Run traverses RampDown_Entry. Entry from RampDown continues the ramp in progress. */
+/* Entry from Run traverses SpeedZero_Entry. Entry from SpeedZero continues the ramp in progress. */
 static void SafeStop_Entry(Motor_T * p_motor)
 {
     p_motor->P_MOTOR->ControlTimerBase = 0U;
@@ -229,10 +219,10 @@ const State_T INTERVENTION_STATE_SAFE_STOP =
 {
     .PATH_ID      = { .Depth0 = MOTOR_STATE_ID_INTERVENTION }, /* sub-state id not yet allocated: reports as the root state */
     .P_TOP      = &MOTOR_STATE_INTERVENTION,
-    .P_PARENT   = &INTERVENTION_STATE_RAMP_DOWN,
+    .P_PARENT   = &INTERVENTION_STATE_SPEED_ZERO,
     .DEPTH      = 2U,
     .ENTRY      = (State_Action_T)SafeStop_Entry,
     .NEXT       = (State_Input0_T)SafeStop_Next,
     .P_TRANSITION_TABLE = &SAFE_STOP_TRANSITION_TABLE[0U],
-    .P_ACTION_TABLE = &RAMP_DOWN_ACTION_TABLE[0U],
+    .P_ACTION_TABLE = &SPEED_ZERO_ACTION_TABLE[0U],
 };

@@ -104,10 +104,6 @@ VBus_Config_T;
 static inline VBus_Config_T VBus_Config_LiIon(uint16_t vNominal_V) { return VBUS_CONFIG_LIION(math_min(vNominal_V, Phase_VRated_Volts()), Phase_IRatedPeak_Pu()); }
 static inline VMonitor_Config_T VBus_MonitorConfig_LiIon(uint16_t vNominal_V) { return VBUS_MONITOR_CONFIG_LIION(math_min(vNominal_V, Phase_VRated_Volts()), Phase_VMaxVolts()); }
 
-static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_V)
-{
-    *p_config = VBus_Config_LiIon(vNominal_V);
-}
 
 
 /******************************************************************************/
@@ -207,14 +203,13 @@ static int VBus_ConfigId_Get(const VBus_Config_T * p_config, VBus_ConfigId_T id)
     return value;
 }
 
-/* may overwrite floors if called in the same packet */
+/* alternatively move to a command id */
+// caller handle VBus_Config_LiIon /* re-init whole partition, profile anchored to nominal */
 static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int value)
 {
     switch (id)
     {
-        // case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        p_config->VSupplyNominal_V = value; break;
-        /* alternatively move to a command id */
-        case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        VBus_Config_Init_LiIon(p_config, value); break; /* re-init whole partition, profile anchored to nominal */
+        case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        p_config->VSupplyNominal_V = value; break;
         case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    p_config->IDerateUnderVFloor = value; break;
         case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor = value; break;
         case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor = value; break;
@@ -223,9 +218,6 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
         default: break;
     }
 }
-
-/* interface for alternate value */
-// static inline uint16_t VBus_PerUnitRef( ) { return Phase_VMaxVolts(); }
 
 #include "../Phase_Input/Phase_Analog.h" /*  */
 /*  */

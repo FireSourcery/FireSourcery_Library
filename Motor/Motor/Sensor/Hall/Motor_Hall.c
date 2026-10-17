@@ -140,6 +140,7 @@ static State_T * Calibration_End(Motor_T * p_motor)
     if (GetBuffer(p_motor)->Step < CAL_STEP_COUNT) { return NULL; }
 
     Phase_Deactivate(&p_motor->PHASE);
+    FOC_SetVLimits(&p_motor->P_MOTOR->Foc, SIGN_ZERO, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); /* VLimit back with Direction NULL, the align ran in the forward half-plane */
     p_motor->P_MOTOR->FaultFlags.PositionSensor = !Hall_IsCalibrationTableValid(GetHall(p_motor)->P_STATE);
 
     return (p_motor->P_MOTOR->FaultFlags.PositionSensor == 1U) ? &MOTOR_STATE_FAULT : &MOTOR_STATE_CALIBRATION;

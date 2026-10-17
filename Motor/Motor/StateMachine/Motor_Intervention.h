@@ -35,8 +35,8 @@
 
     SubStates:
       TORQUE_ZERO  (ZTC) - coast/Regen, user may resume.
-      RAMP_DOWN          - Active deceleration to zero speed, user may resume.
-      SAFE_STOP    (SS1) - RAMP_DOWN child. User resume rejected, watchdog to Fault.
+      SPEED_ZERO         - Active deceleration to zero speed, user may resume.
+      SAFE_STOP    (SS1) - SPEED_ZERO child. User resume rejected, watchdog to Fault.
 */
 /******************************************************************************/
 #include "../Motor_StateMachine.h"
@@ -48,6 +48,6 @@
 */
 /******************************************************************************/
 extern const State_T INTERVENTION_STATE_TORQUE_ZERO;
-extern const State_T INTERVENTION_STATE_RAMP_DOWN;
+extern const State_T INTERVENTION_STATE_SPEED_ZERO;
 extern const State_T INTERVENTION_STATE_SAFE_STOP;
 

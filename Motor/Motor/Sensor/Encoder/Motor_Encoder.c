@@ -298,6 +298,7 @@ static const State_T VALIDATE_ALIGN =
 static void ValidateClosedLoopEntry(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles * 2U);
+    Motor_FOC_ResolveILimits(p_motor); /* Runs the current loop, held from entry */
     Motor_FOC_MatchTorqueIState(p_motor->P_MOTOR);
     Motor_FOC_MatchVOutput(p_motor->P_MOTOR);
 }

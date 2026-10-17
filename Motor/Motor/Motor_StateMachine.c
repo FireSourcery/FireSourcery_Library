@@ -79,20 +79,17 @@ static void Motor_PollFaultFlags(Motor_T * p_motor)
     // p_motor->P_MOTOR->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR->Thermistor);
     p_motor->P_MOTOR->FaultFlags.Overheat = 0;
 }
-
 /*
     Set on Direction change
     Clip opposite user direction range, no plugging.
 */
-static void _Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
-{
-    Motor_SetDirection(p_dev, direction);
-    FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS)); /* overwritten on loop */
-    // FOC_SetVAntiPlugging(p_foc, direction, vPhaseLimit);
-}
+// static void _Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
+// {
+//     Motor_FOC_SetDirection(p_dev, direction);
+// }
 
 /* if eliminating Motor_Context.Direction which shadows FOC.VLimit */
-// static Motor_Direction_T _Motor_GetDirectionApplied(const Motor_T * p_dev)
+// static Motor_Direction_T _Motor_DirectionV(const Motor_T * p_dev)
 // {
 //     return sign_of(p_dev->P_MOTOR->Foc.VLimit);
 // }
@@ -175,7 +172,7 @@ static void Deactivated_Entry(Motor_T * p_motor)
     Phase_Deactivate(&p_motor->PHASE);
     Phase_WriteDuty_Fract16(&p_motor->PHASE, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);/* clear the duties for resume cycle. */
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
-    _Motor_SetDirection(p_motor, MOTOR_DIRECTION_NULL);
+    Motor_SetDirection(p_motor, MOTOR_DIRECTION_NULL);
     p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */
 }
 
@@ -191,7 +188,7 @@ static State_T * Deactivated_InputDirection(Motor_T * p_motor, state_value_t dir
         case MOTOR_DIRECTION_NULL:
         case MOTOR_DIRECTION_CW:
         case MOTOR_DIRECTION_CCW:
-            _Motor_SetDirection(p_motor, direction); break;
+            Motor_SetDirection(p_motor, direction); break;
         default: break; /* Invalid direction */
     }
     return NULL;
@@ -282,7 +279,7 @@ static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutp
             Phase_ActivateV0(&p_motor->PHASE);
             break;
         case PHASE_VOUT_PWM:
-            if (p_motor->P_MOTOR->Direction != MOTOR_DIRECTION_NULL)
+            if (Motor_Direction(p_motor->P_MOTOR) != MOTOR_DIRECTION_NULL)
             {
                 //optionally substate for wait bemf capture
                 if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
@@ -319,7 +316,7 @@ static State_T * Passive_InputDirection(Motor_T * p_motor, state_value_t directi
             case MOTOR_DIRECTION_NULL: /* Intentional fall-through */
             case MOTOR_DIRECTION_CW:
             case MOTOR_DIRECTION_CCW:
-                _Motor_SetDirection(p_motor, direction); break;
+                Motor_SetDirection(p_motor, direction); break;
             default: break; /* Invalid direction */
         }
         /* Null direction can function as disable while other directions not function as enable. */
@@ -385,7 +382,10 @@ static void Run_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
 
-    Motor_ResolveFeedbackLimits(p_motor); /* Intervention holds I limits regardless of FeedbackMode */
+    /* Takes the slots before matching, which clamps against them */
+    Motor_FOC_ResolveILimits(p_motor);
+    Motor_ResolveSpeedLimits(p_motor->P_MOTOR);
+    // Motor_ResolveFeedbackLimits(p_motor->P_MOTOR);
 
     if (Phase_ReadVOut(&p_motor->PHASE) == PHASE_VOUT_Z) /* prev state is freewheel */
     {
@@ -427,23 +427,21 @@ static void Run_Proc(Motor_T * p_motor)
 static void Run_OnSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
+    Motor_FOC_CaptureVSpeed(p_context);
+    Motor_FOC_ResolveILimits(p_motor); /* Before the speed loop clamps against them */
+    Motor_ResolveSpeedLimits(p_motor->P_MOTOR);
     if (p_context->FeedbackMode.Speed == 1U) { Motor_ProcSpeedControlOf(p_context, p_context->UserCmd); }
-#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP) /* DC limits depends on speed. may key with speed direction */
-    if (p_context->FeedbackMode.Current == 1U) { Motor_ResolveISupplyLimits(p_motor); }
-#endif
 }
 
-static void Run_OnILimits(Motor_T * p_motor)
-{
-    if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor->P_MOTOR); }
-}
+// static void Run_OnILimits(Motor_T * p_motor)
+// {
+//     if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_FOC_ResolveILimits(p_motor->P_MOTOR); }
+// }
 
 static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)Run_OnSpeed,
     [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
-    [MOTOR_STATE_INPUT_ON_I_LIMITS] = (State_Action_T)Run_OnILimits,
     // [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Motor_FOC_ProcAngleControl,
 };
 
@@ -451,7 +449,7 @@ static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 */
 static State_T * Run_InputRelease(Motor_T * p_motor)
 {
-    return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_DOWN;
+    return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_SPEED_ZERO;
 }
 
 /* App layer handle conditional release for now. substate for passive torque 0. change input from user cmd */
@@ -460,7 +458,7 @@ static State_T * Run_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:      return Run_InputRelease(p_motor);
-        case PHASE_VOUT_0:      return Run_InputRelease(p_motor);  /* return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE_V0 : &INTERVENTION_STATE_RAMP_DOWN; */
+        case PHASE_VOUT_0:      return Run_InputRelease(p_motor);  /* return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE_V0 : &INTERVENTION_STATE_SPEED_ZERO; */
         case PHASE_VOUT_PWM:    return NULL;
         default:                return NULL;
     }
@@ -478,6 +476,14 @@ static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedback
     // return NULL;
 }
 
+static State_T * Run_InputTargetState(Motor_T * p_motor, state_value_t targetState)
+{
+    State_T * p_state = (State_T *)targetState;
+    if (p_state == &INTERVENTION_STATE_TORQUE_ZERO) { return &INTERVENTION_STATE_TORQUE_ZERO; }
+    else if (p_state == &INTERVENTION_STATE_SPEED_ZERO) { return &INTERVENTION_STATE_SPEED_ZERO; }
+    return NULL;
+}
+
 static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
@@ -485,6 +491,7 @@ static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
     [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Run_InputControl,
     // [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Run_InputStop,
     [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,
+    [MOTOR_STATE_INPUT_TARGET_STATE]    = (State_Input_T)Run_InputTargetState,
     [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
 };
 
@@ -504,8 +511,8 @@ const State_T MOTOR_STATE_RUN =
     @brief State Intervention - Motor-level safety supervisor
     Active control with an alternative control variable path.
       TORQUE_ZERO (ZTC) - Coast with zero torque, user may resume
-      RAMP_DOWN         - Active deceleration to zero, user may resume
-      SAFE_STOP   (SS1) - RAMP_DOWN, resume rejected
+      SPEED_ZERO        - Active deceleration to zero, user may resume
+      SAFE_STOP   (SS1) - SPEED_ZERO, resume rejected
 
     FeedbackMode flags ignored, userCmd augmented.
 */
@@ -513,7 +520,7 @@ const State_T MOTOR_STATE_RUN =
 static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    Motor_ResolveILimits(p_context); /* Current control regardless of FeedbackMode. SpeedPid output is I. */
+    Motor_FOC_ResolveILimits(p_motor); /* Current control regardless of FeedbackMode. SpeedPid output is I. */
     Motor_FOC_MatchTorqueIState(p_context);
     Motor_FOC_MatchVOutput(p_context);
 }
@@ -523,7 +530,7 @@ static void Intervention_Entry(Motor_T * p_motor)
 static void Intervention_Proc(Motor_T * p_motor) { (void)p_motor; }
 
 /*
-    Inherited by TorqueZero and RampDown.
+    Inherited by TorqueZero and SpeedZero.
     SafeStop overrides to reject resume.
 */
 static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
@@ -531,7 +538,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_DOWN;
+        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_SPEED_ZERO;
         case PHASE_VOUT_PWM:    return RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL;
         default: return NULL;
     }
@@ -603,7 +610,7 @@ static State_T * OpenLoop_InputDirection(Motor_T * p_motor, state_value_t direct
             /* Intentional fall-through */
             case MOTOR_DIRECTION_CW:
             case MOTOR_DIRECTION_CCW:
-                _Motor_SetDirection(p_motor, direction); break;
+                Motor_SetDirection(p_motor, direction); break;
             default: break; /* Invalid direction */
         }
     }
@@ -660,7 +667,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 {
     Phase_ActivateV0(&p_motor->PHASE); /* Transition from Deactivated or Substates */
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
-    // _Motor_SetDirection(p_motor, Motor_GetDirectionForward(p_motor->P_MOTOR)); /* reset direction limits */
+    // Motor_SetDirection(p_motor, Motor_GetDirectionForward(p_motor->P_MOTOR)); /* reset direction limits */
     p_motor->P_MOTOR->ControlTimerBase = 0U;
 }
 
@@ -691,7 +698,7 @@ static State_T * Calibration_InputDirection(Motor_T * p_motor, state_value_t dir
             case MOTOR_DIRECTION_NULL:  /* Intentional fall-through */
             case MOTOR_DIRECTION_CW:
             case MOTOR_DIRECTION_CCW:
-                _Motor_SetDirection(p_motor, direction); break;
+                Motor_SetDirection(p_motor, direction); break;
             default: break; /* Invalid direction */
         }
     }

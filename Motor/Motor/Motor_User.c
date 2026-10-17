@@ -123,7 +123,7 @@ inline void Motor_ApplyFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode
 */
 void Motor_ApplyVirtualDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (direction != p_motor->P_MOTOR->Direction) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_DIRECTION, direction); }
+    if (direction != Motor_Direction(p_motor->P_MOTOR)) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_DIRECTION, direction); }
 }
 
 /* calibrated positive or ccw */
@@ -132,34 +132,34 @@ void Motor_ApplyUserDirection(Motor_T * p_motor, Motor_Direction_T direction) { 
 
 /******************************************************************************/
 /*
-   User Request Torque 0, Ramp Down - user may resume
+   User Request TorqueZero, SpeedZero - user may resume
    System Request Safe Stop - committed
 */
 /******************************************************************************/
 #include "StateMachine/Motor_Intervention.h"
 /* SafeStop is committed */
-static State_T * _Motor_ApplyTorque0(Motor_T * p_motor, state_value_t value)
+static State_T * _Motor_ApplyTorqueZero(Motor_T * p_motor, state_value_t value)
 {
     (void)value; return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_SAFE_STOP) ? NULL : &INTERVENTION_STATE_TORQUE_ZERO;
 }
 
-/* From Run, or release RampDown */
-void Motor_ApplyTorque0(Motor_T * p_motor)
+/* From Run, or release SpeedZero */
+void Motor_ApplyTorqueZero(Motor_T * p_motor)
 {
-    static StateMachine_TransitionCmd_T FROM_RUN = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyTorque0 };
-    static StateMachine_TransitionCmd_T FROM_RAMP_DOWN = { .P_START = &INTERVENTION_STATE_RAMP_DOWN, .NEXT = (State_Input_T)_Motor_ApplyTorque0 };
+    static StateMachine_TransitionCmd_T FROM_RUN = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyTorqueZero };
+    static StateMachine_TransitionCmd_T FROM_SPEED_ZERO = { .P_START = &INTERVENTION_STATE_SPEED_ZERO, .NEXT = (State_Input_T)_Motor_ApplyTorqueZero };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_RUN, 0U);
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_RAMP_DOWN, 0U);
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &FROM_SPEED_ZERO, 0U);
 }
 
-static State_T * _Motor_ApplyRampDown(Motor_T * p_motor, state_value_t value)
+static State_T * _Motor_ApplySpeedZero(Motor_T * p_motor, state_value_t value)
 {
-    (void)p_motor; (void)value; return &INTERVENTION_STATE_RAMP_DOWN;
+    (void)p_motor; (void)value; return &INTERVENTION_STATE_SPEED_ZERO;
 }
 
-void Motor_ApplyRampDown(Motor_T * p_motor)
+void Motor_ApplySpeedZero(Motor_T * p_motor)
 {
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyRampDown };
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplySpeedZero };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
@@ -169,7 +169,7 @@ static State_T * _Motor_ApplySafeStop(Motor_T * p_motor, state_value_t value)
     (void)value; return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_SAFE_STOP) ? NULL : &INTERVENTION_STATE_SAFE_STOP;
 }
 
-/* From Run, or escalate from TorqueZero/RampDown */
+/* From Run, or escalate from TorqueZero/SpeedZero */
 void Motor_ApplySafeStop(Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T FROM_RUN = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplySafeStop };
@@ -217,7 +217,7 @@ void Motor_ForceDisableControl(Motor_T * p_motor)
 */
 static inline int32_t Motor_UserForwardOf(const Motor_Context_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
 /* Positive as the active appliedV/motoring direction. */
-static inline int32_t Motor_UserMotoringOf(const Motor_Context_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
+static inline int32_t Motor_UserMotoringOf(const Motor_Context_T * p_motor, int32_t userCmd) { return (Motor_Direction(p_motor) * userCmd); }
 
 /* Input from ratio always != INT16_MIN */
 // assert(math_clamp(userCmd, -Phase_IRatedPeak_Pu(), Phase_IRatedPeak_Pu()));
@@ -269,7 +269,7 @@ void Motor_SetICmd_Norm(Motor_Context_T * p_motor, int16_t ratio) { Motor_SetICm
 
 /******************************************************************************/
 /*!
-    Calibrated Reference Frame
+    Direction Calibration Reference Frame
 */
 /******************************************************************************/
 /******************************************************************************/
