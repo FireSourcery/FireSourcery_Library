@@ -27,28 +27,84 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-/******************************************************************************/
 #include "Phase_VOut.h"
 #include "Math/Fixed/fract16.h"
 
-void Phase_Init(Phase_VOut_T * p_phase)
+
+
+/******************************************************************************/
+/*!
+    Public
+*/
+/******************************************************************************/
+/*
+    fract16 scale, PWM_DUTY_MAX as 100%
+*/
+void Phase_WriteDuty(Phase_VOut_T * p_phase, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC)
 {
-    PWM_Module_Init(&p_phase->PWM_MODULE);
-    PWM_Channel_Init(&p_phase->PWM_A);
-    PWM_Channel_Init(&p_phase->PWM_B);
-    PWM_Channel_Init(&p_phase->PWM_C);
-    Pin_Output_Init(&p_phase->PIN_A);
-    Pin_Output_Init(&p_phase->PIN_B);
-    Pin_Output_Init(&p_phase->PIN_C);
-    // p_phase->PolarMode = PHASE_MODE_UNIPOLAR_1;
+    PWM_WriteDuty(&p_phase->PWM_A, pwmA);
+    PWM_WriteDuty(&p_phase->PWM_B, pwmB);
+    PWM_WriteDuty(&p_phase->PWM_C, pwmC);
+    _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
 }
 
+/* High-Z */
+void Phase_Deactivate(Phase_VOut_T * p_phase) { _Phase_WriteGates(p_phase, PHASE_ID_0); }
+
+/* active stored */
+void Phase_ActivateOutput(Phase_VOut_T * p_phase) { _Phase_WriteGates(p_phase, PHASE_ID_ABC); }
+
+/* V0 */
+/* Enable all at 0 duty. NOT for Bipolar active. */
+void Phase_ActivateV0(Phase_VOut_T * p_phase)
+{
+    // assert(p_phase->PolarMode != PHASE_MODE_BIPOLAR);
+    Phase_WriteDuty(p_phase, 0U, 0U, 0U);
+    Phase_ActivateOutput(p_phase);
+}
+
+/* SVM0 or Magnitude0 */
+void Phase_ActivateT0(Phase_VOut_T * p_phase)
+{
+    Phase_WriteDuty(p_phase, PWM_DUTY_MAX / 2U, PWM_DUTY_MAX / 2U, PWM_DUTY_MAX / 2U);
+    Phase_ActivateOutput(p_phase);
+}
+
+void Phase_ActivateVOut(Phase_VOut_T * p_phase, Phase_VOutMode_T state)
+{
+    switch (state)
+    {
+        case PHASE_VOUT_Z:      Phase_Deactivate(p_phase);      break;
+        case PHASE_VOUT_0:      Phase_ActivateV0(p_phase);      break;
+        case PHASE_VOUT_PWM:    Phase_ActivateT0(p_phase);      break;
+        default: break;
+    }
+}
+
+
+/* Collective state */
+Phase_VOutMode_T Phase_ReadVOut(Phase_VOut_T * p_phase)
+{
+    if (_Phase_ReadGates(p_phase).Bits == PHASE_ID_0)       { return PHASE_VOUT_Z; }
+    if (_Phase_ReadDutyAlign(p_phase).Bits == PHASE_ID_0)   { return PHASE_VOUT_0; }
+    return PHASE_VOUT_PWM;
+}
 
 /******************************************************************************/
 /*
     3-Phase Align
 */
 /******************************************************************************/
+/*
+    Duty only
+*/
+void _Phase_Align(Phase_VOut_T * p_phase, Phase_Bitmask_T id, uint16_t duty) { Phase_WriteDuty(p_phase, duty * id.A, duty * id.B, duty * id.C); }
+void Phase_Align(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t duty) { _Phase_Align(p_phase, Phase_Bitmask(id), duty); }
+
+
+/*
+
+*/
 /* VAlign = (2/3) * duty * VBus. scales Ratio to 1/2 VBus */
 static inline uint16_t _Phase_VAlignDutyOfRatio(uint16_t ratio) { return (uint32_t)ratio * 3 / 4; }
 
@@ -58,39 +114,20 @@ static inline uint16_t _Phase_VAlignDutyOfRatio(uint16_t ratio) { return (uint32
 /* 3/2 on the inverse holds precision at low VBus; the 64-bit product saturates where the int32 form overflows at VAlign >= 2 VBus */
 static inline uint16_t _Phase_VAlignDutyOfPu(uint16_t pu, uint32_t vBusInv_pu) { return fract16_sat_positive(accum32_mul(pu, vBusInv_pu * 3U / 2U)); }
 
-/*
-    Duty only
-*/
-void Phase_Align(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t duty)
-{
-    Phase_Bitmask_T state = Phase_Bitmask(id);
-    Phase_WriteDuty(p_phase, duty * state.A, duty * state.B, duty * state.C);
-}
-
 /* 1 as 1/2 vBus */
-void Phase_Align_VScalar(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t scalar)
-{
-    Phase_Align(p_phase, id, _Phase_VAlignDutyOfRatio(scalar));
-}
+/* fract16 scale */
+void Phase_Align_VRatio(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t scalar) { Phase_Align(p_phase, id, _Phase_VAlignDutyOfRatio(scalar)); }
 
 /* v in the pu base of VBus */
-void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_pu, uint16_t v_pu)
-{
-    Phase_Align(p_phase, id, _Phase_VAlignDutyOfPu(v_pu, vBusInv_pu));
-}
+void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_pu, uint16_t v_pu) { Phase_Align(p_phase, id, _Phase_VAlignDutyOfPu(v_pu, vBusInv_pu)); }
 
-/*
-    Enable Ouput
-*/
-// void Phase_ActivateAlign(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t duty)
-// {
-//     Phase_Align(p_phase, id, duty);
-//     Phase_ActivateOutput(p_phase);
-// }
 
+
+/******************************************************************************/
 /*
     Jog with prev State
 */
+/******************************************************************************/
 /* valid after align output write only */
 Phase_Id_T Phase_ReadAlign(Phase_VOut_T * p_phase) { return (Phase_Id_T)_Phase_ReadDutyAlign(p_phase).Bits; }
 Phase_Id_T Phase_ReadAlignNext(Phase_VOut_T * p_phase) { return Phase_NextOf(Phase_ReadAlign(p_phase)); }
@@ -130,8 +167,16 @@ Phase_Id_T Phase_JogSigned(Phase_VOut_T * p_phase, int16_t dutySigned)
 //     else { /* no change */ }
 // }
 
+void Phase_Init(Phase_VOut_T * p_phase)
+{
+    PWM_Module_Init(&p_phase->PWM_MODULE);
+    PWM_Channel_Init(&p_phase->PWM_A);
+    PWM_Channel_Init(&p_phase->PWM_B);
+    PWM_Channel_Init(&p_phase->PWM_C);
+    Pin_Output_Init(&p_phase->PIN_A);
+    Pin_Output_Init(&p_phase->PIN_B);
+    Pin_Output_Init(&p_phase->PIN_C);
+    // p_phase->PolarMode = PHASE_MODE_UNIPOLAR_1;
+}
 
-/******************************************************************************/
-/*! */
-/******************************************************************************/
 

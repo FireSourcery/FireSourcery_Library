@@ -69,6 +69,10 @@ static inline bool Motor_FOC_IsPlugging(const Motor_Context_T * p_motor) { retur
 /* Generating  AND Vq aligns with speed - true regeneration */
 static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (Motor_FOC_IsGenerating(p_motor) && !Motor_FOC_IsPlugging(p_motor)); }
 
+
+
+
+
 /******************************************************************************/
 /*
 

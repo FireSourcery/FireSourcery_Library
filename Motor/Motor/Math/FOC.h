@@ -79,6 +79,7 @@ typedef struct
 }
 FOC_Electrical_T;
 
+
 typedef struct FOC
 {
     /* Theta - Save for Inverse Park */
@@ -140,27 +141,18 @@ static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta)
 /*
     InputI
 */
-// static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
-// {
-//     struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
-//     p_foc->Id = i.d;
-//     p_foc->Iq = i.q;
-// }
-
 static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
 {
-    struct foc_alphabeta iab = foc_clarke(ia, ib, ic);
-    struct foc_dq idq = foc_park_vector(iab.alpha, iab.beta, p_foc->Sine, p_foc->Cosine);
-    p_foc->Ialpha = iab.alpha;
-    p_foc->Ibeta = iab.beta;
-    p_foc->Id = idq.d;
-    p_foc->Iq = idq.q;
+    struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
+    p_foc->Id = fract16_sat(i.d);
+    p_foc->Iq = fract16_sat(i.q);
 }
+
 
 // static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 // {
 //     foc_clarke_ab(&p_foc->Ialpha, &p_foc->Ibeta, p_foc->Ia, p_foc->Ib);
-//     foc_park_vector(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
+//     foc_park (&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
 // }
 
 /*
@@ -189,25 +181,13 @@ static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
     return _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
 }
 
-// static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
-// {
-//     struct foc_abc v = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-//     p_foc->Va = v.a;
-//     p_foc->Vb = v.b;
-//     p_foc->Vc = v.c;
-// }
-
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 {
-    struct foc_alphabeta vab = foc_inv_park_vector(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-    struct foc_abc v = foc_inv_clarke(vab.alpha, vab.beta);
-    p_foc->Valpha = vab.alpha;
-    p_foc->Vbeta = vab.beta;
-    p_foc->Va = v.a;
-    p_foc->Vb = v.b;
-    p_foc->Vc = v.c;
+    struct foc_abc v = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+    p_foc->Va = fract16_sat(v.a);
+    p_foc->Vb = fract16_sat(v.b);
+    p_foc->Vc = fract16_sat(v.c);
 }
-
 
 /******************************************************************************/
 /*
@@ -217,8 +197,8 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
 {
     struct foc_dq v = foc_clarke_park(va, vb, vc, p_foc->Sine, p_foc->Cosine);
-    p_foc->Vd = v.d;
-    p_foc->Vq = v.q;
+    p_foc->Vd = fract16_sat(v.d);
+    p_foc->Vq = fract16_sat(v.q);
 }
 
 /******************************************************************************/
@@ -333,19 +313,16 @@ static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_f
 static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
 #endif
 
-// using hal select
-// this would unify both implementations, but only M0 would improve by a few cycles
-// need additional return fract16k
-// 1 ms can also use fract16k_mul
-// static void FOC_CaptureSpeed_(FOC_T * p_foc, angle16_t delta)
-// {
-//     p_foc->ElectricalSpeed.OmegaLd = fract16k(accum32_mul(p_foc->Electrical.Ld, delta), p_foc->LShift);
-//     p_foc->ElectricalSpeed.OmegaLq = fract16k(accum32_mul(p_foc->Electrical.Lq, delta), p_foc->LShift);
-//     p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Electrical.Psi, delta);
-// }
+/*
+    V policy, window form. v_q within VWindow of the steady-state back-EMF, ω·ψ + ω·L_d·i_d, so field weakening stays inside.
+    FRACT16_MAX is the identity under |ω_pu| ≤ 1, where |e_q| ≤ V_base/2. 0, the init value, pins v_q to e_q.
+*/
+static inline interval_t FOC_VqWindow(const FOC_T * p_foc) { return interval_symmetric(FOC_VqFeedforward(p_foc), p_foc->VWindow); }
 
-// static inline accum32_t FOC_VdFeedforward_(const FOC_T * p_foc) { return foc_vd_ff_k(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
-// static inline accum32_t FOC_VqFeedforward_(const FOC_T * p_foc) { return foc_vq_ff_k(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
+/* The v_q band at the operating point, [foc_vq_band] */
+static inline interval_t FOC_VqBand(const FOC_T * p_foc, ufract16_t vqCircleLimit) { return foc_vq_band(vqCircleLimit, p_foc->VLimit, FOC_VqWindow(p_foc)); }
+
+
 
 /*
     Vd_cmd = Vd_PI + Vd_ff,
@@ -480,15 +457,18 @@ static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPha
     PID_SetOutputLimits(&p_foc->PidId, 0 - vPhaseLimit, vPhaseLimit);
 }
 
+/* The side a half-plane allows. Symmetric and [0:0] read 0 */
+static inline sign_t FOC_GetVLimitDirection(const FOC_T * p_foc) { return math_sign(p_foc->VLimit.low + p_foc->VLimit.high); }
+
+/* Some v_q is allowed. [0:0] is closed */
+static inline bool FOC_IsVLimitOpen(const FOC_T * p_foc) { return (p_foc->VLimit.high > p_foc->VLimit.low); }
+
 
 /******************************************************************************/
 /*!
     Query
 */
 /******************************************************************************/
-/*
-
-*/
 static inline fract16_t FOC_Id(const FOC_T * p_foc) { return p_foc->Id; }
 static inline fract16_t FOC_Iq(const FOC_T * p_foc) { return p_foc->Iq; }
 static inline fract16_t FOC_Vd(const FOC_T * p_foc) { return p_foc->Vd; }
@@ -531,8 +511,6 @@ static inline accum32_t FOC_GetReactivePower(const FOC_T * p_foc) { return _FOC_
 static inline accum32_t FOC_GetApparentPower(const FOC_T * p_foc) { return fract16_mul(FOC_GetIMagnitude(p_foc), FOC_GetVMagnitude(p_foc)) * 3 / 2; }
 static inline accum32_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16_div(_FOC_GetActivePower(p_foc), fract16_mul(FOC_GetIMagnitude(p_foc), FOC_GetVMagnitude(p_foc))); }
 static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_pu) { return fract16_div(_FOC_GetActivePower(p_foc), vBus_pu) * 3 / 2; }
-
-
 
 
 /******************************************************************************/
@@ -692,3 +670,13 @@ static int FOC_Var_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
 // }
 // FOC_Var_RefState_T;
 
+// using hal select
+// this would unify both implementations, but only M0 would improve by a few cycles
+// need additional return fract16k
+// 1 ms can also use fract16k_mul
+// static void FOC_CaptureSpeed_(FOC_T * p_foc, angle16_t delta)
+// {
+//     p_foc->ElectricalSpeed.OmegaLd = fract16k(accum32_mul(p_foc->Electrical.Ld, delta), p_foc->LShift);
+//     p_foc->ElectricalSpeed.OmegaLq = fract16k(accum32_mul(p_foc->Electrical.Lq, delta), p_foc->LShift);
+//     p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Electrical.Psi, delta);
+// }

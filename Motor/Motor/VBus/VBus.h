@@ -330,3 +330,4 @@ static inline void VBus_Config_Set(VBus_T * p_vbus, VBus_ConfigId_T id, int valu
     VBus_ConfigId_Set(&p_vbus->Config, id, value);
     if (id == VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V) { p_vbus->MonitorState.Config = VBus_MonitorConfig_LiIon(p_vbus->Config.VSupplyNominal_V); }
 }
+

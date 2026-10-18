@@ -215,8 +215,16 @@ static inline interval_t fract16_interval_div(interval_t i, fract16_t d)
     fractional functions stay with hal layer.
 */
 /******************************************************************************/
-static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)((int64_t)rad * ANGLE32_PER_RADIAN / ((int64_t)ANGLE16_PER_REVOLUTION * FRACT16_SCALE)); }
-static inline accum32_t angle16_to_rad_accum32(angle16_t theta) { return (int64_t)theta * FRACT16_PI / (ANGLE16_PER_REVOLUTION / 2); }
+/* runtime 32 bit */
+/* rad of turn */
+static inline accum32_t fract16_arc_unit(angle16_t theta) { return theta * (fract16_t)(2 * FRACT16_PI / 8) / (ANGLE16_PER_REVOLUTION / 8); }
+/* turns of arc */
+/* input up to π radians */
+static inline angle16_t fract16_inv_arc(accum32_t arc_radians) { return fract16_mul(arc_radians, ANGLE16_PER_RADIAN); }
+
+/*  */
+static inline accum32_t fract16_arc_length(angle16_t theta, fract16_t r) { return fract16_mul(theta, r) * (fract16_t)(2 * FRACT16_PI / 8) / (ANGLE16_PER_REVOLUTION / 8); }
+
 
 /*  */
 extern fract16_t fract16_sin(angle16_t theta);

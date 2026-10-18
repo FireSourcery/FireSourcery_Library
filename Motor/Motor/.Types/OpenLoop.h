@@ -54,7 +54,14 @@
 //     Ramp_T IRamp;          /* output: I_ref in fract16 */
 // }
 // OpenLoop_T;
-
+/* Open-loop / alignment phase */
+// typedef struct
+// {
+//     uint16_t LimitScalar;
+//     uint16_t IAlign_Pu;
+//     uint16_t VAlign_Pu;
+// }
+// Motor_OpenLoopAlign_T;
 /******************************************************************************/
 /*!
     Per-control-tick step. Advances the speed and current ramps and integrates

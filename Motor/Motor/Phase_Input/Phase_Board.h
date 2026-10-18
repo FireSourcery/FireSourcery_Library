@@ -51,8 +51,12 @@ typedef const struct Phase_Board
     volatile uint16_t I_RATED_PEAK_PU;
     volatile uint16_t I_RATED_FW_PU;
     volatile uint16_t _RESV[3U];
+    // volatile uint16_t F_MOD_HZ; /* Der */
 }
 Phase_Board_T;
+
+/* separately interface to base */
+
 
 /* Define in Main App */
 /* run-time overwrite or compile time def. */

@@ -29,6 +29,7 @@
     @brief  Motor electrical model. Speed base shapes, electrical parameters, field weakening tuning.
 */
 /******************************************************************************/
+#include "Model/Motor_Types.h"
 #include "Motor/Motor/Math/motor_electrical_math.h"
 #include "Math/Angle/angle_speed_math.h"
 #include "Math/math_general.h"
@@ -100,9 +101,9 @@ static inline void Motor_SetLq_PuTurn(Motor_Electrical_T * p_electrical, uint32_
 static inline uint32_t Motor_Ls_PuTurn(const Motor_Electrical_T * p_electrical) { return ((uint64_t)Motor_Ld_PuTurn(p_electrical) + Motor_Lq_PuTurn(p_electrical)) / 2U; }
 
 
-/* SI [s/rad] · scale and the rate are reciprocal: ψ in Wb, L in H. Unset reads 0 both ways */
-static inline int32_t _Motor_Electrical_SiOf(angle_freq_t rate, uint32_t scale) { return (rate > 0) ? s_per_rad_of_angle_freq(rate, scale) : 0; }
-static inline angle_freq_t _Motor_Electrical_RateOfSi(int32_t si, uint32_t scale) { return (si > 0) ? angle_freq_of_s_per_rad(si, scale) : 0; }
+/* e = ω · ψ as s = θ · r, at a unit arc: ψ in Wb, L in H are the radius, the rate is the angle. Unset reads 0 both ways */
+static inline int32_t _Motor_Electrical_SiOf(angle_freq_t rate, uint32_t scale) { return (rate > 0) ? angle16_arc_radius(rate, scale) : 0; }
+static inline angle_freq_t _Motor_Electrical_RateOfSi(int32_t si, uint32_t scale) { return (si > 0) ? angle16_of_arc(scale, si) : 0; }
 
 
 // #define MOTOR_ANGLE_FREQ_RAD     ANGLE_FREQ_OF_RADS(MOTOR_CONTROL_FREQ)  /* 1 rad per Ts. ω_base = Fs [rad/s] */
@@ -199,7 +200,10 @@ static inline angle_freq_t _Motor_Electrical_RateOfSi(int32_t si, uint32_t scale
     ψ_pu fixed to 0.5
     OmegaPsi = 0.5, when ω_pu = 1.0 pu
 */
-static inline angle_freq_t Motor_SpeedBase_AngleFreq(const Motor_Electrical_T * p_electrical) { return (uint64_t)p_electrical->AngleFreqPerVolt * Phase_VMaxVolts() * MOTOR_SPEED_BASE_V_PU / FRACT16_SCALE; }
+/* Speed at a bus voltage, phase peak back-EMF = V_bus / 2. V_MAX gives the base, VNominal the rated speed */
+static inline angle_freq_t Motor_Speed_AngleFreqOfVBus(const Motor_Electrical_T * p_electrical, uint16_t vBus_V) { return (uint64_t)p_electrical->AngleFreqPerVolt * vBus_V * MOTOR_SPEED_BASE_V_PU / FRACT16_SCALE; }
+
+static inline angle_freq_t Motor_SpeedBase_AngleFreq(const Motor_Electrical_T * p_electrical) { return Motor_Speed_AngleFreqOfVBus(p_electrical, Phase_VMaxVolts()); }
 static inline angle_dt_t Motor_SpeedBase_AngleDt(const Motor_Electrical_T * p_electrical) { return angle_dt_of_angle_freq(MOTOR_CONTROL_FREQ, Motor_SpeedBase_AngleFreq(p_electrical)); }
 static inline uint32_t Motor_SpeedBase_Rpm(const Motor_Electrical_T * p_electrical) { return mech_rpm_of_el_angle_freq(p_electrical->PolePairs, Motor_SpeedBase_AngleFreq(p_electrical)); }
 
@@ -208,8 +212,6 @@ static inline accum32_t Motor_Speed_PuOfRpm(const Motor_Electrical_T * p_electri
 static inline int16_t Motor_Speed_RpmOfPu(const Motor_Electrical_T * p_electrical, accum32_t speed_pu) { return speed_pu * (int32_t)Motor_SpeedBase_Rpm(p_electrical) / 32768; }
 // static inline int16_t Motor_Rated_AngleOfRpm(const Motor_Rated_T * p_rated, accum32_t speed_rpm) { return el_angle_dt_of_mech_rpm(MOTOR_CONTROL_FREQ, p_rated->PolePairs, speed_rpm); }
 // static inline int16_t Motor_Rated_RpmOfAngle(const Motor_Rated_T * p_rated, accum32_t speed_angle16) { return mech_rpm_of_el_angle_dt(MOTOR_CONTROL_FREQ, p_rated->PolePairs, speed_angle16); }
-
-
 
 /******************************************************************************/
 /*
@@ -229,4 +231,7 @@ static inline ufract16_t Motor_FieldWeakening_IsMax(const Motor_FieldWeakeningTu
 static inline ufract16_t Motor_FieldWeakening_IdLimit(const Motor_FieldWeakeningTuning_T * p_tuning) { return math_min(p_tuning->IfwLimit, Phase_IRatedFw_Pu()); }
 static inline ufract16_t Motor_FieldWeakening_IqLimit(const Motor_FieldWeakeningTuning_T * p_tuning) { return fract16_vector_component(Motor_FieldWeakening_IdLimit(p_tuning), Phase_IRatedPeak_Pu()); }
 static inline bool Motor_FieldWeakening_IsEnabled(const Motor_FieldWeakeningTuning_T * p_tuning) { return (Motor_FieldWeakening_IdLimit(p_tuning) > 0U); }
+
+
+static inline Motor_UnitBasis_T Motor_UnitBasis_Board(void) { return (Motor_UnitBasis_T) { .V = Phase_VMaxVolts(), .I = Phase_IMaxAmps(), .F = MOTOR_ANGLE_FREQ_MAX }; }
 

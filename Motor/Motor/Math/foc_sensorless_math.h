@@ -157,9 +157,20 @@ static inline accum32_t foc_g_pu_of_l_pu(uint32_t angle_speed_base, uint32_t l_p
     a Lq error offsets θ̂ in proportion to the load current.
 */
 /******************************************************************************/
-static inline accum32_t foc_dq_emf_d(fract16_t Rs_pu, accum32_t omega_Lq, fract16_t vd, fract16_t id, fract16_t iq) { return (accum32_t)vd - fract16_mul(Rs_pu, id) - foc_vd_ff(omega_Lq, iq); }
-static inline accum32_t foc_dq_emf_q(fract16_t Rs_pu, accum32_t omega_Lq, fract16_t vq, fract16_t id, fract16_t iq) { return (accum32_t)vq - fract16_mul(Rs_pu, iq) - foc_vq_ff(omega_Lq, 0, id); }
+static inline accum32_t foc_dq_emf_d(fract16_t Rs_pu, accum32_t omega_Lq, accum32_t vd, accum32_t id, accum32_t iq) { return vd - fract16_mul(Rs_pu, id) - foc_vd_ff(omega_Lq, iq); }
+static inline accum32_t foc_dq_emf_q(fract16_t Rs_pu, accum32_t omega_Lq, accum32_t vq, accum32_t id, accum32_t iq) { return vq - fract16_mul(Rs_pu, iq) - foc_vq_ff(omega_Lq, 0, id); }
 
+/* Rotating frame, steady state: e = v − R·i − ω·L·J·i. (ω·Ld, ω·Lq) gives e_q = ω·ψ; ω·Lq on both axes gives e_q = E */
+// static inline struct foc_dq foc_emf_dq(fract16_t r, accum32_t omega_ld, accum32_t omega_lq, struct foc_dq v, struct foc_dq i)
+// {
+//     return (struct foc_dq) { .d = foc_dq_emf_d(r, omega_lq, v.d, i.d, i.q), .q = foc_dq_emf_q(r, omega_ld, v.q, i.d, i.q) };
+// }
+
+// /* Stationary frame, per axis: e = v − R·i − L·Δi. The axes don't couple. L = Lq gives the extended EMF of a salient rotor */
+// static inline struct foc_alphabeta foc_emf_alphabeta(accum32_t r, accum32_t l_rad, struct foc_alphabeta v, struct foc_alphabeta i, struct foc_alphabeta i_prev)
+// {
+//     return (struct foc_alphabeta) { .alpha = motor_emf(r, l_rad, i_prev.alpha, i.alpha, v.alpha), .beta = motor_emf(r, l_rad, i_prev.beta, i.beta, v.beta) };
+// }
 
 /******************************************************************************/
 /*!

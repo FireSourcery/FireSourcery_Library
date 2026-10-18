@@ -70,9 +70,6 @@ void Motor_Init(Motor_T * p_dev)
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 
-// void Motor_InitFrom(Motor_T * p_dev, const Motor_Config_T * p_config)
-// {
-// }
 
 /*
     Reset derived reference and state variables
@@ -117,6 +114,12 @@ void Motor_Reset(Motor_Context_T * p_motor)
 //     PID_Init(&p_motor->PidIBus);
 //     BEMF_Init(&p_motor->Bemf);
 // #endif
+}
+
+void Motor_InitFrom(Motor_Context_T * p_motor, const Motor_Config_T * p_config)
+{
+    if (p_config != NULL) { p_motor->Config = *p_config; }
+    Motor_Reset(p_motor);
 }
 
 /* common reinit. without hw registers. reload flash. */
@@ -356,7 +359,12 @@ void _Motor_ResetTuning(Motor_T * p_motor)
     Motor_ResetIPid(p_motor->P_MOTOR);
 }
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 /* Maintain consistency between runtime and Nvm */
+/* PID drops config to keep 1 copy */
 void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
 {
     p_state->Config.PidSpeed.Kp = value;

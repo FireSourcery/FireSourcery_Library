@@ -126,23 +126,15 @@ static inline angle_freq_t angle_freq_of_angle_dt(uint32_t fs, angle_dt_t angle_
 static inline angle_freq_t angle_freq_of_rpm(int32_t rpm) { return (int64_t)rpm * ANGLE16_PER_REVOLUTION / SECONDS_PER_MINUTE; }
 static inline int32_t rpm_of_angle_freq(angle_freq_t freq) { return (int64_t)freq * SECONDS_PER_MINUTE / ANGLE16_PER_REVOLUTION; } /* add round up for user view if needed */
 
-static inline angle_freq_t angle_freq_of_rads(int32_t rads, uint32_t scale) { return (int64_t)rads * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / scale; }
-static inline int32_t rads_of_angle_freq(angle_freq_t freq, uint32_t scale) { return (int64_t)freq * ANGLE16_PER_REVOLUTION * scale / ANGLE32_PER_RADIAN; }
-
-
-/* [s/rad], the reciprocal of [rad/s]. F · x = scale · 2^15 / π: the same expression both ways. e.g. ψ [Wb] per V, L [H] per Ω */
-static inline int32_t angle_freq_invert(angle_freq_t freq, uint32_t scale) { return (int64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / freq; }
-
-static inline angle_freq_t angle_freq_of_s_per_rad(int32_t s_per_rad, uint32_t scale) { return (int64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / s_per_rad; }
-static inline int32_t s_per_rad_of_angle_freq(angle_freq_t freq, uint32_t scale) { return (int64_t)scale * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / freq; }
+/* rad/s, s/rad: [angle16_of_arc], [angle16_arc_radius], [angle16_arc_length] */
 
 /******************************************************************************/
 /*!
     @brief  SI views of [angle_dt_t], composed through [angle_freq_t]
 */
 /******************************************************************************/
-static inline int32_t angle_dt_of_rads(uint32_t fs, int32_t rads, uint16_t scale) { return angle_dt_of_angle_freq(fs, angle_freq_of_rads(rads, scale)); }
-static inline int32_t rads_of_angle_dt(uint32_t fs, angle_dt_t angle_dt, uint16_t scale) { return rads_of_angle_freq(angle_freq_of_angle_dt(fs, angle_dt), scale); }
+static inline int32_t angle_dt_of_rads(uint32_t fs, int32_t rads, uint16_t scale) { return angle_dt_of_angle_freq(fs, angle16_of_arc(rads, scale)); }
+static inline int32_t rads_of_angle_dt(uint32_t fs, angle_dt_t angle_dt, uint16_t scale) { return angle16_arc_length(angle_freq_of_angle_dt(fs, angle_dt), scale); }
 
 static inline int32_t angle_dt_of_rpm(uint32_t fs, int32_t rpm) { return angle_dt_of_angle_freq(fs, angle_freq_of_rpm(rpm)); }
 static inline int32_t rpm_of_angle_dt(uint32_t fs, angle_dt_t angle_dt) { return rpm_of_angle_freq(angle_freq_of_angle_dt(fs, angle_dt)); }
@@ -164,16 +156,6 @@ static inline int32_t rps_of_angle_dt(uint32_t fs, angle_dt_t angle_dt) { return
 */
 /******************************************************************************/
 /*
-    Angle Rate Ref — π-free
-*/
-// /* angle_dt = ω_pu_fract16 · (rate_base / Fs) */
-// static inline angle_dt_t angle_dt_of_angle_freq_pu(uint32_t fs, angle_freq_t base_rate, int16_t pu_fract16) { return ((int64_t)pu_fract16 * base_rate) / (fs * FRACT16_SCALE); }
-
-// /* ω_pu_fract16 = angle_dt · Fs / rate_base */
-// static inline int32_t angle_freq_pu_of_angle_dt(uint32_t fs, angle_freq_t base_rate, angle_dt_t angle_dt) { return ((int64_t)angle_dt * fs * FRACT16_SCALE) / base_rate; }
-
-
-/*
     direct runtime conversion, collapse const for int32 mul
 */
 /*
@@ -183,24 +165,11 @@ static inline int32_t rps_of_angle_dt(uint32_t fs, angle_dt_t angle_dt) { return
 static inline angle_dt_t angle_dt_of_pu_rpm(uint32_t fs, uint32_t base_rpm, int16_t pu_fract16) { return (pu_fract16 * base_rpm) / ((SECONDS_PER_MINUTE / 2) * fs); }
 static inline int16_t pu_rpm_of_angle_dt(uint32_t fs, uint32_t base_rpm, angle_dt_t angle_dt) { return (angle_dt * ((SECONDS_PER_MINUTE / 2) * fs)) / base_rpm; }
 
+/* angle_dt = ω_pu_fract16 · (rate_base / Fs) */
 static inline angle_dt_t angle_dt_of_hz_pu(uint32_t fs, uint16_t base_hz, int16_t pu_fract16) { return (pu_fract16 * base_hz) / (fs); }
+/* ω_pu_fract16 = angle_dt · Fs / rate_base */
 static inline int32_t hz_pu_of_angle_dt(uint32_t fs, uint16_t base_hz, angle_dt_t angle_dt) { return (angle_dt * fs) / base_hz; }
 
-// /*
-//     optional include rads scaling
-//     static inline angle_dt_t angle_dt_of_pu_rads(uint32_t fs, uint32_t base_rads, rads_scale, int16_t rads_pu)
-// */
-// /* angle_dt = ω_pu_fract16 · ω_base · ANGLE16_PER_RADIAN / Fs */
-// static inline angle_dt_t angle_dt_of_pu_rads(uint32_t fs, uint32_t base_rads, int16_t pu_fract16)
-// {
-//     return (int64_t)pu_fract16 * base_rads * ANGLE32_PER_RADIAN / ((int64_t)fs * ANGLE16_PER_REVOLUTION * FRACT16_SCALE);
-// }
-
-// /* ω_pu_fract16 = angle_dt · Fs / (ω_base · ANGLE16_PER_RADIAN) */
-// static inline int32_t pu_rads_of_angle_dt(uint32_t fs, uint32_t base_rads, angle_dt_t angle_dt)
-// {
-//     return (int64_t)angle_dt * fs * ANGLE16_PER_REVOLUTION * FRACT16_SCALE / ((int64_t)ANGLE32_PER_RADIAN * base_rads);
-// }
 
 /******************************************************************************/
 /*

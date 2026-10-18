@@ -44,13 +44,14 @@
 
     alternative to accum32_t, accum32_t multiply without 64-bit intermediate
 
-    typedef struct { int16_t mantissa; int8_t exp; } fract_e_t;
+    typedef struct { int32_t mantissa; int8_t exp; } fract_e_t;
     fract16e_mul(fract_e_t a, accum32_t b) { return ((int32_t)a.mantissa * b >> (FRACT16_N_BITS - a.exp)); }
 */
 /******************************************************************************/
-typedef struct { int16_t mantissa; uint8_t shift; } fract16e_t;
+typedef struct { int32_t mantissa; uint8_t shift; } fract16e_t;
 
 static inline int8_t fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a.shift; }
+static inline int8_t fract16e_nshift(fract16e_t a) { return a.shift; }
 
 
 /******************************************************************************/
@@ -60,12 +61,12 @@ static inline int8_t fract16e_exponent(fract16e_t a) { return FRACT16_N_BITS - a
 /******************************************************************************/
 /* value · 2^-shift. Exact within int16, otherwise floored to 15 significant bits. */
 /* caller-chosen format */
-static inline fract16e_t _fract16e(int32_t value, int8_t shift)
-{
-    uint8_t excess = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0);
-    assert(math_is_in_range(shift - excess, 0, 31));
-    return (fract16e_t) { .mantissa = (int16_t)(value >> excess), .shift = shift - excess };
-}
+// static inline fract16e_t _fract16e(int32_t value, int8_t n)
+// {
+//     uint8_t excess = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0);
+//     assert(math_is_in_range(n - excess, 0, 31));
+//     return (fract16e_t) { .mantissa = (int16_t)(value >> excess), .shift = n - excess };
+// }
 
 /*
     Known integer bit width of the value.
@@ -126,13 +127,10 @@ static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b)
     return ((int32_t)a.mantissa * b >> a.shift);
 }
 
+/* fract16e_value */
 static inline accum32_t accum32_of_fract16e(fract16e_t a) { return fract16e_mul(a, FRACT16_SCALE); }
 
 
-// #define fract16_mul_wide(a, b) _Generic((a), \
-//     accum32_t: accum32_mul, \
-//     fract16e_t: fract16e_mul \
-// )(a, b)
 
 
 /*
@@ -157,55 +155,8 @@ static inline accum32_t fract16k_mul(fract16k_t k, accum32_t b) { return accum32
 static inline accum32_t accum32_of_fract16k(fract16k_t k) { return k; }
 #endif
 
-
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-// typedef struct { int32_t mantissa; int8_t exp; } fract_e_t;
-// static inline fract_e_t _fract16e(int32_t value, int8_t shift)
-// {
-//     uint8_t excess = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0);
-//     assert(math_is_in_range(shift - excess, 0, 31));
-//     return (fract_e_t) { .mantissa = (int16_t)(value >> excess), .shift = shift - excess };
-// }
-
-/* From factor/divisor ratio (general slope) */
-// static inline fract_e_t fract16e_of_ratio(int32_t factor, int32_t divisor, int32_t inputMax)
-// {
-//     uint8_t shift = fixed_lshift_max_signed((inputMax * 2 - 1) * factor / divisor);
-//     return (fract_e_t) { .mantissa = (factor << shift) / divisor, .shift = shift };
-// }
-
-/* From millis duration: step per tick to traverse range in duration_Ms
-   e.g. ramp slope: output += (range * Factor) >> Shift each tick */
-// static inline fract_e_t fract16e_of_millis(uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range)
-// {
-//     uint32_t ticks = (duration_Ms != 0U) ? (updateFreq_Hz * duration_Ms / 1000U) : 1U;
-//     uint8_t shift = fixed_lshift_max_signed((int32_t)range);
-//     return (fract_e_t) { .mantissa = ((int32_t)range << shift) / ticks, .shift = shift };
-// }
-
-// /* From per-second rate: result += rate_PerS / updateFreq per tick */
-// static inline fract_e_t fract16e_of_rate_per_second(uint32_t updateFreq_Hz, uint16_t ratePerS)
-// {
-//     uint8_t shift = fixed_lshift_max_signed((int32_t)ratePerS);
-//     return (fract_e_t) { .mantissa = ((int32_t)ratePerS << shift) / updateFreq_Hz, .shift = shift };
-// }
-
-// /* From fixed-point fractional bits (identity scaled to Q format)
-//    e.g. map [0:xRange] => [0:(1 << nBits)] */
-// static inline fract_e_t fract16e_of_fixed(uint8_t nFractionalBits, int32_t xRange)
-// {
-//     uint8_t shift = fixed_lshift_max_signed(xRange);
-//     return (fract_e_t) { .mantissa = ((int32_t)1 << (nFractionalBits + shift)) / xRange, .shift = shift };
-// }
-
-// /* From two-point map: maps [0:inputMax] => [0:outputMax] */
-// static inline fract_e_t fract16e_of_map(int32_t inputMax, int32_t outputMax)
-// {
-//     uint8_t shift = fixed_lshift_max_signed((inputMax * 2 - 1) * outputMax / inputMax);
-//     return (fract_e_t) { .mantissa = (outputMax << shift) / inputMax, .shift = shift };
-// }
+// #define fract16k_mul (a, b) _Generic((a), \
+//     accum32_t: accum32_mul, \
+//     fract16e_t: fract16e_mul \
+// )(a, b)
 

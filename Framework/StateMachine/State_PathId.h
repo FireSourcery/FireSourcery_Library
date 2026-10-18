@@ -80,9 +80,6 @@ State_PathId_T;
 /*
     .ID = (State_PathId_T){ ROOT_ID, SUB_ID, ... }.Id
 */
-// #define STATE_PATH_ID(ROOT_ID, ...) (State_PathId_T){ ROOT_ID, __VA_ARGS__ }.Id
-
-
 #define STATE_ID_BITS     (4U)
 #define STATE_ID_MASK     (0xFU)
 #define STATE_ID_MAX      (15U)  /* per level. 0 reserved as "no state" at depth >= 1 */
@@ -91,23 +88,24 @@ State_PathId_T;
 /*
 */
 /* Base building block: place a value at a given depth */
+/* debugging use */
 #define _STATE_ID(Value, Depth)    ((state_t)(Value) << ((Depth) * STATE_ID_BITS))
 
-// /* Construct IDs at each nesting depth */
-// #define STATE_ID_0(Root)                (_STATE_ID(Root, 0))
-// #define STATE_ID_1(Root, D1)            (_STATE_ID(Root, 0) | _STATE_ID(D1, 1))
-// #define STATE_ID_2(Root, D1, D2)        (_STATE_ID(Root, 0) | _STATE_ID(D1, 1) | _STATE_ID(D2, 2))
-// #define STATE_ID_3(Root, D1, D2, D3)    (_STATE_ID(Root, 0) | _STATE_ID(D1, 1) | _STATE_ID(D2, 2) | _STATE_ID(D3, 3))
+// // /* Construct IDs at each nesting depth */
+// // #define STATE_ID_0(Root)                (_STATE_ID(Root, 0))
+// // #define STATE_ID_1(Root, D1)            (_STATE_ID(Root, 0) | _STATE_ID(D1, 1))
+// // #define STATE_ID_2(Root, D1, D2)        (_STATE_ID(Root, 0) | _STATE_ID(D1, 1) | _STATE_ID(D2, 2))
+// // #define STATE_ID_3(Root, D1, D2, D3)    (_STATE_ID(Root, 0) | _STATE_ID(D1, 1) | _STATE_ID(D2, 2) | _STATE_ID(D3, 3))
 
-// #define _STATE_ID_FOLD(Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_1((Depth) + 1, __VA_ARGS__)))
-#define _STATE_ID_FOLD_1(D1, ...) (_STATE_ID(D1, 1) __VA_OPT__(| _STATE_ID_FOLD_2(__VA_ARGS__)))
-#define _STATE_ID_FOLD_2(D2, ...) (_STATE_ID(D2, 2) __VA_OPT__(| _STATE_ID_FOLD_3(__VA_ARGS__)))
-#define _STATE_ID_FOLD_3(D3, ...) (_STATE_ID(D3, 3) __VA_OPT__(| _STATE_ID_FOLD_4(__VA_ARGS__)))
-#define _STATE_ID_FOLD_4(D4, ...) (_STATE_ID(D4, 4) __VA_OPT__(| _STATE_ID_FOLD_5(__VA_ARGS__)))
-#define _STATE_ID_FOLD_5(D5, ...) (_STATE_ID(D5, 5) __VA_OPT__(| _STATE_ID_FOLD_6(__VA_ARGS__)))
-#define _STATE_ID_FOLD_6(D6, ...) (_STATE_ID(D6, 6) __VA_OPT__(| _STATE_ID_FOLD_7(__VA_ARGS__)))
-#define _STATE_ID_FOLD_7(D7, ...) (_STATE_ID(D7, 7))  /* Max depth 7 (8th level) */
+// // #define _STATE_ID_FOLD(Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_1((Depth) + 1, __VA_ARGS__)))
+// #define _STATE_ID_FOLD_1(D1, ...) (_STATE_ID(D1, 1) __VA_OPT__(| _STATE_ID_FOLD_2(__VA_ARGS__)))
+// #define _STATE_ID_FOLD_2(D2, ...) (_STATE_ID(D2, 2) __VA_OPT__(| _STATE_ID_FOLD_3(__VA_ARGS__)))
+// #define _STATE_ID_FOLD_3(D3, ...) (_STATE_ID(D3, 3) __VA_OPT__(| _STATE_ID_FOLD_4(__VA_ARGS__)))
+// #define _STATE_ID_FOLD_4(D4, ...) (_STATE_ID(D4, 4) __VA_OPT__(| _STATE_ID_FOLD_5(__VA_ARGS__)))
+// #define _STATE_ID_FOLD_5(D5, ...) (_STATE_ID(D5, 5) __VA_OPT__(| _STATE_ID_FOLD_6(__VA_ARGS__)))
+// #define _STATE_ID_FOLD_6(D6, ...) (_STATE_ID(D6, 6) __VA_OPT__(| _STATE_ID_FOLD_7(__VA_ARGS__)))
+// #define _STATE_ID_FOLD_7(D7, ...) (_STATE_ID(D7, 7))  /* Max depth 7 (8th level) */
 
-#define STATE_PATH_ID(D0, ...) (_STATE_ID(D0, 0) __VA_OPT__(| _STATE_ID_FOLD_1(__VA_ARGS__)))
+// #define STATE_PATH_ID(D0, ...) (_STATE_ID(D0, 0) __VA_OPT__(| _STATE_ID_FOLD_1(__VA_ARGS__)))
 
 

@@ -25,11 +25,7 @@
 /*!
     @file   Phase_VOut.h
     @author FireSourcery
-
     @brief   Part of Phase. 2-Phase Polar implementation
-        Treats each phase as a complementary PWM output.
-        2-Phase: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
-        e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
 */
 /******************************************************************************/
 #ifndef PHASE_POLAR_H
@@ -37,6 +33,11 @@
 
 #include "Phase_VOut.h"
 
+/*
+    Treats each phase as a complementary PWM output.
+    2-Phase: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
+    e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
+*/
 /*
     2-Phase Active, Six-Step Commutation
 */
@@ -63,34 +64,13 @@ typedef enum Phase_Polar_Mode
 Phase_Polar_Mode_T;
 
 
-extern void Phase_Unipolar1_ActivateDutyAC(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyBC(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyBA(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyCA(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyCB(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyAB(Phase_VOut_T * p_phase, uint16_t duty);
-
-extern void Phase_Unipolar2_ActivateDutyAC(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyBC(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyBA(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyCA(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyCB(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyAB(Phase_VOut_T * p_phase, uint16_t duty);
-
-extern void Phase_Bipolar_ActivateDutyAC(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyBC(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyBA(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyCA(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyCB(Phase_VOut_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyAB(Phase_VOut_T * p_phase, uint16_t duty);
-
+void Phase_Unipolar_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId);
+void Phase_Unipolar1_WriteDuty(Phase_VOut_T * p_phase, Phase_Polar_T phaseId, uint16_t duty);
+void Phase_Unipolar2_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId);
+void Phase_Unipolar2_WriteDuty(Phase_VOut_T * p_phase, Phase_Polar_T phaseId, uint16_t duty);
+void Phase_Bipolar_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId);
+void Phase_Bipolar_WriteDuty(Phase_VOut_T * p_phase, Phase_Polar_T phaseId, uint16_t duty);
 extern void Phase_Polar_Ground(Phase_VOut_T * p_phase);
-extern void Phase_Polar_ActivateOutputAC(Phase_VOut_T * p_phase);
-extern void Phase_Polar_ActivateOutputBC(Phase_VOut_T * p_phase);
-extern void Phase_Polar_ActivateOutputBA(Phase_VOut_T * p_phase);
-extern void Phase_Polar_ActivateOutputCA(Phase_VOut_T * p_phase);
-extern void Phase_Polar_ActivateOutputCB(Phase_VOut_T * p_phase);
-extern void Phase_Polar_ActivateOutputAB(Phase_VOut_T * p_phase);
 
 extern void Phase_Polar_ActivateMode(Phase_VOut_T * p_phase, Phase_Polar_Mode_T phaseMode);
 extern void Phase_Polar_Activate(Phase_VOut_T * p_phase, Phase_Polar_T phaseId, uint16_t duty);

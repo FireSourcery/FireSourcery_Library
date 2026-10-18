@@ -35,7 +35,7 @@ flowchart LR
 
 ## Routing
 
-Speed units enter only through `angle_freq_of_rpm`, `angle_freq_of_rads` and `ANGLE_FREQ(Hz)`. Callers compose the base and call the core; the rpm and rad/s variants are commented out. The turn forms (`*_pu_turn_of_*`) are written directly against Fs. They equal the core at `angle_freq_nyquist(Fs)`, where F / 2^15 = Fs exactly. Against the previous direct forms (V_base 24–150 V, base 16–990 Hz, ψ 0.4–120 mWb, L 5–5000 µH, values ≤ 4 pu), rpm and rad/s bases through the core are within 1 LSB in ≤ 0.2% of cases, where F_base / 2^15 is not whole.
+Speed units enter only through `angle_freq_of_rpm`, `angle16_of_arc(rads, scale)` and `ANGLE_FREQ(Hz)`. Callers compose the base and call the core; the rpm and rad/s variants are commented out. The turn forms (`*_pu_turn_of_*`) are written directly against Fs. They equal the core at `angle_freq_nyquist(Fs)`, where F / 2^15 = Fs exactly. Against the previous direct forms (V_base 24–150 V, base 16–990 Hz, ψ 0.4–120 mWb, L 5–5000 µH, values ≤ 4 pu), rpm and rad/s bases through the core are within 1 LSB in ≤ 0.2% of cases, where F_base / 2^15 is not whole.
 
 The core divides by a Q15 constant first and by the variable divisor last, so one truncation is in effect:
 
@@ -70,7 +70,7 @@ Kv and rpm are views at the user boundary (`Motor_Config_GetKv` / `SetKv`, the r
 | Entry | Compile time | Runtime | View |
 |---|---|---|---|
 | Kv, M = 2 | `MOTOR_ANGLE_FREQ_OF_KV(Kv, P)` | `angle_freq_of_kv(Kv, P)` | `kv_of_angle_freq(rate, P)`, rounds |
-| ψ | `MOTOR_PSI_INV(ψ)` | `angle_freq_of_s_per_rad(ψ, scale)` | `s_per_rad_of_angle_freq(rate, scale)` |
+| ψ | `MOTOR_PSI_INV(ψ)` | `angle16_of_arc(scale, ψ)` | `angle16_arc_radius(rate, scale)` |
 
 Example: Kv 150 with 4 pole pairs is 20 Hz/V = 1,310,720 angle16/s / V, so 940 Hz electrical, 14100 rpm at V_base 94 V. The compile-time Kv macro computes in double and equals the runtime adapter for every integer Kv (30,000 of 30,000, Kv 1–1000, P 1–30), and keeps a fractional Kv: 8.4 at 23 pp gives 422,051 (exact 422,051.8).
 
@@ -95,7 +95,7 @@ L takes the shape of ψ. The rate is the speed at which the reactance X = ω · 
 
 | Entry | Compile time | Runtime | View |
 |---|---|---|---|
-| L [H] | `MOTOR_L_INV(L)` | `angle_freq_of_s_per_rad(L, scale)` | `s_per_rad_of_angle_freq(rate, scale)` |
+| L [H] | `MOTOR_L_INV(L)` | `angle16_of_arc(scale, L)` | `angle16_arc_radius(rate, scale)` |
 | L_pu at a base | | `angle_freq_of_l_pu(F_base, V_base, I_base, L_pu)` | `l_pu_of_angle_freq(F_base, V_base, I_base, rate)` |
 | ψ_pu at a base | | | `psi_pu_of_angle_freq(F_base, V_base, rate)` |
 
@@ -216,7 +216,7 @@ Angle: angle16, 65536 per turn, 32768 = π rad. `ANGLE16_PER_RADIAN` = 2^15 / π
 |---|---|---|
 | Hz | `ANGLE_FREQ`, `angle_freq` | `angle_freq_to_hz` |
 | erpm | `ANGLE_FREQ_OF_RPM`, `angle_freq_of_rpm` | `rpm_of_angle_freq` |
-| rad/s, scaled | `ANGLE_FREQ_OF_RADS`, `angle_freq_of_rads` | `rads_of_angle_freq` |
+| rad/s, scaled | `ANGLE_FREQ_OF_RADS`, `angle16_of_arc(rads, scale)` | `angle16_arc_length(rate, scale)` |
 | angle16/Ts | `angle_freq_of_angle_dt` | `ANGLE_DT_OF_FREQ`, `angle_dt_of_angle_freq` |
 | Mechanical rpm | | `mech_rpm_of_el_angle_freq`, rounds |
 | Turn base | `ANGLE_FREQ_NYQUIST`, `angle_freq_nyquist` = Fs · 2^15 | |

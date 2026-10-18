@@ -133,7 +133,6 @@ typedef struct FOC_Sensorless
     ufract16_t EmfMag;
 
     AnglePll_T Pll;                     /* θ̂, ω̂ */
-    // Angle_SpeedPuRef_T SpeedPuRef;
 
     /* Lock detector. */
     uint16_t LockCount;
@@ -194,8 +193,8 @@ static void FOC_Sensorless_StepVModel(FOC_Sensorless_T * p_obs, fract16_t i_alph
 {
     struct fract16_xy unit_i = Angle_UnitVector(&p_obs->Pll.Base);
     struct fract16_xy unit_v = fract16_vector(Angle_Value(&p_obs->Pll.Base) - Angle_Delta(&p_obs->Pll.Base) / 2);
-    struct foc_dq i = foc_park_vector(i_alpha, i_beta, unit_i.y, unit_i.x);
-    struct foc_dq v = foc_park_vector(p_obs->VAlpha, p_obs->VBeta, unit_v.y, unit_v.x);
+    struct foc_dq i = foc_park(i_alpha, i_beta, unit_i.y, unit_i.x);
+    struct foc_dq v = foc_park(p_obs->VAlpha, p_obs->VBeta, unit_v.y, unit_v.x);
     accum32_t omega_Lq = accum32_mul(p_obs->Electrical.Lq, Angle_Delta(&p_obs->Pll.Base));
 
     p_obs->EmfD = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfD, fract16_sat(foc_dq_emf_d(p_obs->Electrical.Rs, omega_Lq, v.d, i.d, i.q)));

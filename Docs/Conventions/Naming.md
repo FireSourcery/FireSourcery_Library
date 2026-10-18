@@ -39,6 +39,9 @@ StateMachine_Branch_ProcInput() rather than StateMachine_ProcInput_Branch
 Function Suffixes by overload, concurrent use.
 GetSpeed_Rpm
 
+Naming by what it is not qualifiers.
+organizes by concept axis, consistent with OOP
+
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */

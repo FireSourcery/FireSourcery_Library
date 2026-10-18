@@ -64,22 +64,6 @@ static inline uint32_t v_rms_of_peak(uint32_t v_peak) { return (uint64_t)v_peak 
 
 /******************************************************************************/
 /*!
-    @brief  Voltage-Model Back-EMF Estimator
-
-        v = R·i + L·di/dt + ω·ψ
-        e = ω·ψ = v - Rs·i - Ls·di/dt
-
-    Discrete one-step form, caller supplies the precomputed Δi = i[k] - i[k-1]:
-        ê[k] = v[k] - Rs_pu·i[k] - Ls_pu_rad·Δi[k]
-*/
-/******************************************************************************/
-static inline accum32_t motor_v_stator(accum32_t Rs_pu, accum32_t Ls_pu_rad, fract16_t i_prev, fract16_t i) { return accum32_mul(Rs_pu, i) + accum32_mul(Ls_pu_rad, i - i_prev); }
-/* Ls at the turn base, ω_base = π · Fs: Fs / ω_base = 1 / π */
-static inline accum32_t motor_v_stator_turn(accum32_t Rs_pu, accum32_t Ls_pu_turn, fract16_t i_prev, fract16_t i) { return motor_v_stator(Rs_pu, accum32_mul(Ls_pu_turn, FRACT16_1_DIV_PI), i_prev, i); }
-static inline accum32_t motor_emf(accum32_t Rs_pu, accum32_t Ls_pu_rad, fract16_t i_prev, fract16_t i, fract16_t v) { return v - motor_v_stator(Rs_pu, Ls_pu_rad, i_prev, i); }
-
-/******************************************************************************/
-/*!
     @brief  Electrical angle and mechanical RPM conversions.
 
     el_rads / mech_rpm through angle freq
@@ -144,7 +128,7 @@ static inline uint32_t pu_tau_rebase(uint32_t x_pu, angle_freq_t base_from, angl
     AngleFreqPerVolt  [angle16/s / V]
     AngleFreqPerOhm   [angle16/s · A/V],   ψ / L [A], the short-circuit current.
 */
-/*  angle_freq_of_s_per_rad, s_per_rad_of_angle_freq  */
+/*  SI of the rate: angle16_arc_radius(rate, scale), angle16_of_arc(scale, si)  */
 
 /******************************************************************************/
 /*!
@@ -291,11 +275,8 @@ static inline uint32_t l_h_of_pu(uint16_t v_base_V, uint16_t i_base_A, angle_fre
 /* L_pu_turn [Volt·Ts/angle16/Amp]. Turn base ω_base = π · Fs */
 #define MOTOR_L_PU_TURN(Fs, V_Base, I_Base, L_Henries)   ((float)(L_Henries) * (I_Base) * PI_FLOAT * (Fs) / (V_Base))
 
-
 static inline uint32_t l_pu_turn_of_h(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_base_A * FRACT16_PI * fs_hz / ((uint64_t)v_base_V * scale); }
 static inline uint32_t l_h_of_pu_turn(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / ((uint64_t)FRACT16_PI * fs_hz * i_base_A); }
-
-
 
 
 /*!
@@ -422,3 +403,28 @@ static inline uint16_t kv_of_psi_pu_turn(uint32_t fs_hz, uint16_t v_base_V, uint
 // static inline accum32_t kt_nm_per_amp_of(uint16_t kv, scale) { return ((uint64_t)60 * FRACT16_SQRT3_DIV_2 * FRACT16_SCALE / kv * 2 * FRACT16_PI); }
 // static inline uint32_t kt_unm_per_a_of_kv(uint16_t kv_rpm_per_V) { return 3UL * ke_mech_uvsrad_of_kv(kv_rpm_per_V) / 2UL; }
 // static inline uint32_t kt_rms_unm_per_a_of_kv(uint16_t kv_rpm_per_V) { return ke_mech_uvsrad_of_kv(kv_rpm_per_V); }
+
+
+/******************************************************************************/
+/*!
+    @brief  Voltage-Model Back-EMF Estimator
+
+        v = R·i + L·di/dt + ω·ψ
+        e = ω·ψ = v - Rs·i - Ls·di/dt
+
+    Discrete one-step form, caller supplies the precomputed Δi = i[k] - i[k-1]:
+        ê[k] = v[k] - Rs_pu·i[k] - Ls_pu_rad·Δi[k]
+*/
+/******************************************************************************/
+static inline accum32_t motor_v_stator(accum32_t Rs_pu, accum32_t Ls_pu_rad, fract16_t i_prev, fract16_t i) { return accum32_mul(Rs_pu, i) + accum32_mul(Ls_pu_rad, i - i_prev); }
+static inline accum32_t motor_emf(accum32_t Rs_pu, accum32_t Ls_pu_rad, fract16_t i_prev, fract16_t i, fract16_t v) { return v - motor_v_stator(Rs_pu, Ls_pu_rad, i_prev, i); }
+/* Ls at the turn base, ω_base = π · Fs: Fs / ω_base = 1 / π */
+static inline accum32_t motor_v_stator_turn(accum32_t Rs_pu, accum32_t Ls_pu_turn, fract16_t i_prev, fract16_t i) { return motor_v_stator(Rs_pu, accum32_mul(Ls_pu_turn, FRACT16_1_DIV_PI), i_prev, i); }
+
+/*
+    v held across the period [i_prev : i], the PWM output: ê is the period average.
+        ê = v − Rs·(i + i_prev) / 2 − Ls·Δi
+    Rs on the end sample instead offsets ê by Rs·Δi / 2, in proportion to speed.
+*/
+static inline accum32_t motor_v_stator_held(accum32_t Rs_pu, accum32_t Ls_pu_rad, fract16_t i_prev, fract16_t i) { return accum32_mul(Rs_pu, ((int32_t)i + i_prev) / 2) + accum32_mul(Ls_pu_rad, (int32_t)i - i_prev); }
+static inline accum32_t motor_emf_held(accum32_t Rs_pu, accum32_t Ls_pu_rad, fract16_t i_prev, fract16_t i, fract16_t v) { return v - motor_v_stator_held(Rs_pu, Ls_pu_rad, i_prev, i); }

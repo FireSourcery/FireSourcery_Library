@@ -137,6 +137,9 @@ static inline interval_t interval_hull(interval_t a, interval_t b) { return (int
 
 static inline interval_t interval_offset(interval_t i, int32_t k) { return (interval_t) { .low = i.low + k, .high = i.high + k }; }
 
+/* i with each bound clamped into b. The intersection when they overlap, else the edge of b nearest i. Never empty for a non-empty b. */
+static inline interval_t interval_clamp_each(interval_t b, interval_t i) { return (interval_t) { .low = interval_clamp(b, i.low), .high = interval_clamp(b, i.high) }; }
+
 
 /*
     interval

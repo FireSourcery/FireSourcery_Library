@@ -60,7 +60,7 @@ static inline fract16_t Motor_User_GetVSpeed_Pu(Motor_T * p_motor) { return Moto
     Conversion functions only on user call. No periodic proc.
     Partial conversion local side. Alternatively app side handle
 */
-/* FOC_ calls migrate wrap with communtation as needed */
+/* FOC_ calls migrate wrap with commutation as needed */
 /*!
     @return IPhase Zero to Peak.
 */
@@ -134,9 +134,6 @@ static inline ufract16_t Motor_User_SpeedLimitReverse(const Motor_Context_T * p_
 // }
 
 
-// static inline Motor_ElectricalBase_T _Motor_GetCalibBase(const Motor _T * p_config
-// static inline Motor_ElectricalBase_T _Motor_GetRatedBase(const Motor * p_config)
-
 /******************************************************************************/
 /*!
     Data Interfaces
@@ -158,6 +155,23 @@ static inline ufract16_t Motor_User_SpeedLimitReverse(const Motor_Context_T * p_
 //     // stateCmd for on edge
 // }
 // Motor_Input_T;
+
+static inline Motor_QuadrantId_T Motor_FOC_GetQuadrant(const Motor_Context_T * p_motor)
+{
+    return Motor_QuadrantId(Motor_GetSpeedFeedback(p_motor), FOC_Iq(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
+}
+
+// static inline Motor_UnitBasis_T Motor_CalibUnitBasis(Motor_T * p_motor)
+// {
+//     return (Motor_UnitBasis_T) { .V = Phase_VMaxVolts(), .I = Phase_IMaxAmps(), .F = Motor_SpeedBase_AngleFreq(&Motor_Config(p_motor)->Electrical) };
+// }
+
+static inline Motor_UnitBasis_T Motor_RatedUnitBasis(Motor_T * p_motor)
+{
+    uint16_t vNominal = VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config);
+    return (Motor_UnitBasis_T) { .V = vNominal, .I = Phase_IRatedPeak_Amps(), .F = Motor_Speed_AngleFreqOfVBus(&Motor_Config(p_motor)->Electrical, vNominal) };
+}
+
 
 
 /******************************************************************************/

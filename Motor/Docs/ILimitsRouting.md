@@ -73,17 +73,3 @@ flowchart LR
 
 Green stadium: live limit source. Grey cylinder: stored config limit. Purple hexagon: frame conversion. Blue box: merge point. Red box: active clamp in the hot path. Amber dashed box: call site, with dotted edges meaning "invokes". Solid edges carry limit values.
 
-##
-```mermaid
-flowchart LR
-    SC["Speed cmd"] --> SL["clamp: speed limits"] --> RFG["Speed ramp (RFG)<br/>acc/dec, hold, set, bypass, quick stop"] --> PI["Speed PI"]
-    TC["Torque cmd"] --> TCL["clamp: effective limits"] --> TR["Torque ramp<br/>slope"]
-    PI --> SEL["mode select"]
-    TR --> SEL
-    SEL --> LIM["Torque limitation<br/>[max of lowers : min of uppers]<br/>+ active-source status"] --> CC["Current loop"]
-    SRC["Sources: fixed/variable limits,<br/>power motoring/regen, Vdc controller,<br/>current, thermal"] --> LIM
-    LIM -. "effective limits" .-> PI
-    LIM -. "effective limits" .-> TCL
-    LIM -. "at limit: tracking" .-> RFG
-```
-

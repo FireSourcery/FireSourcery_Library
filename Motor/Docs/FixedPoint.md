@@ -76,7 +76,7 @@ A speed is angle per time, and ψ and L hold time in the numerator, so their bas
 - The turn form is time in ticks of Fs. Δθ_base = 2^15, a half turn, so ω_pu and Δθ are one integer, Q15 of π rad per tick.
 - The speed form anchors to the motor and resolves k = Fs · 2^15 / F_base times finer.
 - ψ and L move between forms by F_to / F_from (`pu_tau_rebase`), ω_pu by F_from / F_to.
-- ψ and L are stored as rates, 1 / ψ [angle16/s / V] and 1 / L [angle16/s · A/V]. Each form is one division from the rate: x_pu = F_base / (rate · Z_base), Z_base = V_base for ψ and V_base / I_base for L (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`). ψ per volt and L per ohm are both [s/rad] (`angle_freq_of_s_per_rad`).
+- ψ and L are stored as rates, 1 / ψ [angle16/s / V] and 1 / L [angle16/s · A/V]. Each form is one division from the rate: x_pu = F_base / (rate · Z_base), Z_base = V_base for ψ and V_base / I_base for L (`psi_pu_of_angle_freq`, `l_pu_of_angle_freq`). ψ per volt and L per ohm are both [s/rad]: e = ω · ψ is s = θ · r, so the SI value is the radius of a unit arc at the rate (`angle16_arc_radius`, `angle16_of_arc`).
 
 A product's unit is the product of the bases. It is valid when that product is in the set (ω_pu · ψ_pu → v_pu), and when factors through ω_base share a form. Motor bases and the speed base in detail: [Motor/Motor/Math/_.md](../../Motor/Motor/Math/_.md).
 

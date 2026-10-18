@@ -178,7 +178,7 @@ const State_T MOTOR_STATE_INIT =
 static void Deactivated_Entry(Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
-    Phase_WriteDuty_Fract16(&p_motor->PHASE, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);/* clear the duties for resume cycle. */
+    Phase_WriteDuty(&p_motor->PHASE, PWM_DUTY_MAX / 2U, PWM_DUTY_MAX / 2U, PWM_DUTY_MAX / 2U);/* clear the duties for resume cycle. */
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
     Motor_SetDirection(p_motor, MOTOR_DIRECTION_NULL);
     p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */

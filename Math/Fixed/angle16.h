@@ -77,20 +77,31 @@ static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / 2π */
 static const angle32_t ANGLE32_PER_RADIAN = 683565275UL; /* 2^32 / 2π */
 
-
 #define ANGLE16_OF_RADIANS(radians) ((angle16_t)((radians) * ANGLE16_PER_REVOLUTION / (2.0F * PI_FLOAT)))
-#define ANGLE16_OF_TURNS(turns) ((angle16_t)((turns) * 65536.0F))
+#define ANGLE16_OF_TURNS(turns)     ((angle16_t)((turns) * 65536.0F))
+#define ANGLE16_OF_ARC(s, r)        ((rot32_t)((double)(s) / (double)(r) * ANGLE16_PER_REVOLUTION / (2.0F * PI_FLOAT)))
 
 /* Caller cast result */
 /* angle / FRACT16_SCALE * PI_FLOAT */
 #define ANGLE16_TO_RAD(angle) (((float)(angle) * (2.0F * PI_FLOAT / ANGLE16_PER_REVOLUTION)))
 
+// static inline angle16_t angle16(int32_t s, int32_t r) { return s * ANGLE16_PER_RADIAN / r; }
+
 /*
-    radian si scaled
-    [0:1.0f/2pi] ~0.16 of rev
+    Arc: s = θ · r, θ [angle16]
+    s and r share any representation, r := its one: FRACT16_SCALE for a Q15 radian, scale for SI storage.
+    θ as rot32 spans rates [angle16/s]; the angle16_t cast is the turn wrap.
+    int64, divide at init time. fract16_arc_length for 32 bit runtime.
+    e.g.
+        ω [angle16/s] = angle16_of_arc(rads, scale)
+        ψ [Wb · scale] = angle16_arc_radius(AngleFreqPerVolt, scale)
 */
-/* from scaled storage */
-static inline angle16_t angle16_of_radians(int32_t rad, int32_t scaling) { return (angle16_t)((int64_t)rad * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / scaling); }
+static inline rot32_t angle16_of_arc(int32_t arc_length, int32_t r) { return (int64_t)arc_length * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / r; }
+
+static inline int32_t angle16_arc_radius(rot32_t theta, int32_t arc_length) { return (int64_t)arc_length * ANGLE32_PER_RADIAN / ANGLE16_PER_REVOLUTION / theta; }
+
+static inline int32_t angle16_arc_length(rot32_t theta, int32_t r) { return (int64_t)theta * r * ANGLE16_PER_REVOLUTION / ANGLE32_PER_RADIAN; }
+
 
 /*
 

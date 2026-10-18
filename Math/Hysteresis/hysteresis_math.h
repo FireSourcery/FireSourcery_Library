@@ -96,6 +96,16 @@ static inline bool hysteresis_output_state(int32_t setpoint, int32_t resetpoint,
 //     return 0;
 // }
 
+/*
+    Sign with a deadband around 0. ±1 from |value| >= on, 0 from |value| <= off, held between. off < on.
+    The held sign must match the value's, so a sign change within the band returns 0 rather than the stale side.
+*/
+static inline sign_t hysteresis_sign(uint32_t on, uint32_t off, sign_t prev, int32_t value)
+{
+    if (math_abs(value) >= on) { return math_sign(value); }
+    return ((math_abs(value) > off) && (math_sign(value) == prev)) ? prev : SIGN_ZERO;
+}
+
 /******************************************************************************/
 /*
     Asymmetric Hysteresis Functions - Value Output

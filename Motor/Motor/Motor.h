@@ -303,7 +303,7 @@ typedef struct Motor_Context
     // PID_T PidPosition;
 
     volatile Phase_Input_T PhaseInput;
-    // Phase_Data_T VOut; /* output buffer */
+    // Phase_Data_T VOut; /* testing output buffer */
 
     /*
         FOC
@@ -328,9 +328,13 @@ typedef struct Motor_Context
         e.g. System frame fan in.
         Resolve converts to Ramp limits. Caller select timing and priority.
     */
+    /* Pu or Ratio. I pu is global. */
     struct Motor_ILimit { uint16_t Motoring; uint16_t Generating; uint16_t Forward; uint16_t Reverse; } ILimit;
-    struct { uint16_t Forward; uint16_t Reverse; } SpeedLimit;     /* one sided [0:Lim] [Lim:0]*/
     interval_t ISupplyLimits;   /* [Cw:Ccw] supply window at the operating point. Signed by power flow, independent of Direction. */
+
+    /* Ratio or angle16 can be global */
+    /* Pu for now */
+    struct { uint16_t Forward; uint16_t Reverse; } SpeedLimit;     /* one sided [0:Lim] [Lim:0]  */
 
     /* OpenLoop Preset, StartUp. No boundary checking */
     Ramp_T OpenLoopSpeedRamp;       /* Preset Speed Ramp */
@@ -447,6 +451,11 @@ static inline angle_freq_t Motor_SpeedBase(Motor_T * p_motor) { return Motor_Spe
 */
 static inline Motor_Direction_T Motor_Direction(const Motor_Context_T * p_motor) { return (Motor_Direction_T)p_motor->Direction; }
 // static inline Motor_Direction_T Motor_DirectionV(const Motor_Context_T * p_motor) { return (Motor_Direction_T)math_sign(p_motor->Foc.Vq); }
+/* VLimit form: the lock is the half-plane. Symmetric reads NULL, no lock */
+// static inline Motor_Direction_T Motor_Direction(const Motor_Context_T * p_motor) { return (Motor_Direction_T)FOC_GetVLimitDirection(&p_motor->Foc); }
+
+/* Run arming, some v_q allowed. Equals Direction != NULL while VLimit is only ever a half-plane */
+static inline bool Motor_IsArmed(const Motor_Context_T * p_motor) { return FOC_IsVLimitOpen(&p_motor->Foc); }
 
 static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_of(Motor_Direction(p_motor->P_MOTOR) * VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
@@ -484,6 +493,12 @@ static inline ufract16_t Motor_SpeedLimitForward(const Motor_Context_T * p_motor
 static inline ufract16_t Motor_SpeedLimitReverse(const Motor_Context_T * p_motor) { return math_min(p_motor->SpeedLimit.Reverse, p_motor->Config.SpeedLimitReverse_Pu); }
 
 static inline interval_t Motor_ILimitInterval(const Motor_Context_T * p_motor) { return interval_of_sign((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)) ; }
+
+/* Mot/Gen by the mechanical quadrant, for no direction lock. At standstill both sides draw, so both take the motoring limit */
+static inline interval_t Motor_ILimitIntervalOfMotion(const Motor_Context_T * p_motor, sign_t motion)
+{
+    return (motion != SIGN_ZERO) ? interval_of_sign(motion, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)) : interval_symmetric(0, Motor_ILimitMotoring(p_motor));
+}
 
 
 /*
@@ -633,6 +648,9 @@ static inline bool Motor_IsSpeedAligned(Motor_T * p_motor) { return ((Motor_GetS
 */
 static inline int32_t _Motor_MotoringOnly(const Motor_Context_T * p_motor, int32_t value) { return (Motor_Direction(p_motor) == (Motor_Direction_T)math_sign(value)) * value; }
 static inline int32_t _Motor_GeneratingOnly(const Motor_Context_T * p_motor, int32_t value) { return (Motor_Direction(p_motor) != (Motor_Direction_T)math_sign(value)) * value; }
+
+/* Torque against the motion only, by the mechanical quadrant. Nothing at standstill */
+static inline int32_t _Motor_BrakingOnly(sign_t motion, int32_t value) { return (math_sign(value) == -motion) * value; }
 
 /* UserCmd as a q-current request. Its units follow FeedbackMode, so only current (torque) mode holds one */
 static inline int32_t Motor_GetUserICmd(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Value == MOTOR_FEEDBACK_MODE_CURRENT.Value) ? p_motor->UserCmd : 0; }

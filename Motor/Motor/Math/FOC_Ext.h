@@ -86,8 +86,22 @@ static inline Phase_Triplet_T FOC_Vabc(const FOC_T * p_foc) { return (Phase_Trip
 static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
 {
     struct foc_abc vOut = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-    return (Phase_Triplet_T) { .A = vOut.a, .B = vOut.b, .C = vOut.c, };
+    return (Phase_Triplet_T) { .A = fract16_sat(vOut.a), .B = fract16_sat(vOut.b), .C = fract16_sat(vOut.c), };
 }
+
+
+
+/*
+    Operating point. One sample of the dq state. Every condition below reads the sample, not the live FOC fields.
+*/
+typedef struct Motor_OperatingPoint
+{
+    accum32_t Speed;    /* ω, speed pu, Ccw positive */
+    fract16_t Id, Iq;
+    fract16_t Vd, Vq;
+}
+Motor_OperatingPoint_T;
+
 
 
 /******************************************************************************/
@@ -104,69 +118,6 @@ static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
     .Psi = ACCUM32(MOTOR_PSI_PU(Freq_Base, V_Base, (Psi_uWb) * 1.0E-6F)), \
 }
 
-
-
-
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*!
-    Quadrant Detection
-    Sign convention: CCW/Forward = Positive Vq, Positive Iq
-    Q1: Forward Motoring   - +Vq, +Iq (Vq*Iq > 0, Iq > 0)
-    Q2: Forward Generating - +Vq, -Iq (Vq*Iq < 0, Iq > 0)
-    Q3: Reverse Motoring   - -Vq, -Iq (Vq*Iq > 0, Iq < 0)
-    Q4: Reverse Generating - -Vq, +Iq (Vq*Iq < 0, Iq < 0)
-
-    Plugging: Voltage opposes back-EMF direction, active braking beyond regeneration
-    Forward Plugging: -Vq with -Iq (motor spinning CCW, voltage reversed)
-    Reverse Plugging: +Vq with +Iq (motor spinning CW, voltage reversed)
-
-    Inner layer assume plugging is clamped. speed sign = v sign.
-*/
-/******************************************************************************/
-// implementation depends on if OmegaPsi is non optional
-// static inline bool _FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
-// static inline bool _FOC_IsGenerating(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
-
-// // static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Iq * p_foc->ElectricalSpeed.OmegaPsi > 0); }
-// static inline bool FOC_IsMotoring(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed > 0); }
-// static inline bool FOC_IsGenerating(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed < 0); }
-
-// /*
-//     Plugging: applied Vq opposes back-EMF direction (speed sign)
-//     Speed sign gives true rotor direction regardless of Vq/Iq
-// */
-// /* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
-// static inline bool FOC_IsPlugging(const FOC_T * p_foc, int32_t speed) { return (p_foc->Vq * (int32_t)speed < 0); }
-// /*
-//     Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
-// */
-// /* Generating  AND Vq aligns with speed - true regeneration */
-// static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC_IsGenerating(p_foc, speed) && !FOC_IsPlugging(p_foc, speed)); }
-
-// static inline bool _FOC_IsGeneratingReq(int32_t speed, int16_t iqReq) { return (speed * iqReq) < 0; }
-
-// typedef enum FOC_Quadrant
-// {
-//     FOC_QUADRANT_0 = 0,    /* Zero / Idle */
-//     FOC_QUADRANT_FORWARD_MOTORING   = 1,    /* Q1: +Vq, +Iq */
-//     FOC_QUADRANT_FORWARD_GENERATING = 2,    /* Q2: +Vq, -Iq */
-//     FOC_QUADRANT_REVERSE_MOTORING   = 3,    /* Q3: -Vq, -Iq */
-//     FOC_QUADRANT_REVERSE_GENERATING = 4,    /* Q4: -Vq, +Iq */
-// }
-// FOC_Quadrant_T;
-
-// static inline FOC_Quadrant_T FOC_GetQuadrant(const FOC_T * p_foc)
-// {
-//     if (p_foc->Iq == 0 && p_foc->Vq == 0) { return FOC_QUADRANT_0; }
-//     if (p_foc->Iq > 0)  { return (p_foc->Vq >= 0) ? FOC_QUADRANT_FORWARD_MOTORING : FOC_QUADRANT_REVERSE_GENERATING; }
-//     else                { return (p_foc->Vq <= 0) ? FOC_QUADRANT_REVERSE_MOTORING : FOC_QUADRANT_FORWARD_GENERATING; }
-// }
 
 
 /******************************************************************************/

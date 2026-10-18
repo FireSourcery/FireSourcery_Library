@@ -35,22 +35,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-void PWM_Init(const PWM_T * p_pwm)
-{
-    HAL_PWM_InitModule(p_pwm->P_HAL_PWM);
-    HAL_PWM_InitChannel(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID);
-}
+// void PWM_Init(const PWM_T * p_pwm)
+// {
+//     HAL_PWM_InitModule(p_pwm->P_HAL_PWM);
+//     HAL_PWM_InitChannel(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID);
+// }
 
-/* Init As Channel */
-void PWM_Channel_Init(const PWM_T * p_pwm)
-{
-    HAL_PWM_InitChannel(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID);
-}
+// /* Init As Channel */
+// void PWM_Channel_Init(const PWM_T * p_pwm)
+// {
+//     HAL_PWM_InitChannel(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID);
+// }
 
-/* Init As Module */
-void PWM_Module_Init(const PWM_Module_T * p_pwm)
-{
-    HAL_PWM_InitModule(p_pwm->P_HAL_PWM_MODULE);
-    HAL_PWM_InitModulePeriod(p_pwm->P_HAL_PWM_MODULE, p_pwm->PERIOD_TICKS);
-}
+// /* Init As Module */
+// void PWM_Module_Init(const PWM_Module_T * p_pwm)
+// {
+//     HAL_PWM_InitModule(p_pwm->P_HAL_PWM_MODULE);
+//     HAL_PWM_InitModulePeriod(p_pwm->P_HAL_PWM_MODULE, p_pwm->PERIOD_TICKS);
+// }
 

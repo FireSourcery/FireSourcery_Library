@@ -270,5 +270,5 @@ static inline void Phase_CaptureA(volatile Phase_Data_T * p_data, int16_t value)
 static inline void Phase_CaptureB(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_B, value); }
 static inline void Phase_CaptureC(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_C, value); }
 
-// batch returns entire shape
-// static inline Phase_Data_T Phase_Data(int16_t a, int16_t b, int16_t c) { return (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits = PHASE_ID_ABC }; }
+
+

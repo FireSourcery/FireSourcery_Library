@@ -131,9 +131,9 @@ typedef State_Input_T(*State_InputMapper_T)(state_input_t inputId);
 typedef uint8_t state_cmd_t;
 typedef state_value_t(*State_Cmd_T)(void * context, state_value_t value);
 /*  */
-typedef state_value_t(*State_Data_T)(void * context);
+// typedef state_value_t(*State_Data_T)(void * context);
 // typedef state_value_t(*State_DataInput_T)(void * context, state_value_t value);
-typedef State_Data_T State_DataVector_T[];
+// typedef State_Data_T State_DataVector_T[];
 // typedef struct State_DataVector_T
 // {
 //     State_Data_T Vector[0];
@@ -208,20 +208,18 @@ typedef const struct State
     */
     State_InputMapper_T TRANSITION_MAPPER;
 
-    // todo
     /*
         Accessor functions
         State controlled value access
         Input mapped per state unrelated to transitions
         mapped input without state transition, no critical section
+        e.g a separate space for functions called from within the state machine
     */
     const State_Action_T * P_ACTION_TABLE; /* Internal event */
-    // const State_Action_T * P_VIRTUAL_INPUTS;
-    // const State_Action_T * P_VIRTUAL_OUTPUTS; /* a seperate space for functions called from within the state machine */
 
+    // todo
     const State_Cmd_T * P_CMD_TABLE; /* Internal Transition with return status */
     const State_Accessor_T * P_ACCESSOR_TABLE; /* Virtual getter setter */
-    const State_Data_T * P_DATA_VECTOR; /* Optional data vector. Virtualize access to state data. */ /* user optionally cast struct view */
 
     /* const sub-TYPE context */
     const void * P_ADAPTER; /* Maybe more convenient than inheritance */
