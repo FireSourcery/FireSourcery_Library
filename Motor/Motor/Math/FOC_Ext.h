@@ -94,13 +94,13 @@ static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
 /*
     Operating point. One sample of the dq state. Every condition below reads the sample, not the live FOC fields.
 */
-typedef struct Motor_OperatingPoint
-{
-    accum32_t Speed;    /* ω, speed pu, Ccw positive */
-    fract16_t Id, Iq;
-    fract16_t Vd, Vq;
-}
-Motor_OperatingPoint_T;
+// typedef struct Motor_OperatingPoint
+// {
+//     accum32_t Speed;    /* ω, speed pu, Ccw positive */
+//     fract16_t Id, Iq;
+//     fract16_t Vd, Vq;
+// }
+// Motor_OperatingPoint_T;
 
 
 
@@ -125,20 +125,6 @@ Motor_OperatingPoint_T;
 
 */
 /******************************************************************************/
-/* Estimate efficiency based on I²R losses */
-// static inline ufract16_t FOC_GetEfficiency(const FOC_T * p_foc, fract16_t rPhase)
-// {
-//     accum32_t activePower = FOC_GetActivePower(p_foc);
-//     if (activePower <= 0) return 0;
-
-//     ufract16_t iMag = FOC_GetIMagnitude(p_foc);
-//     accum32_t resistiveLoss = fract16_mul(fract16_mul(iMag, iMag), rPhase) * 3;
-
-//     return (activePower << 15) / (activePower + resistiveLoss);
-// }
-
-
-
 
 /* For interior PM motors, add MTPA calculation:
 Id_opt = -λ_pm/(2*Ld) + sqrt((λ_pm/(2*Ld))² + Iq²)
@@ -192,75 +178,3 @@ Id_opt = -λ_pm/(2*Ld) + sqrt((λ_pm/(2*Ld))² + Iq²)
 // }
 
 
-
-
-// // Add motor health monitoring
-// typedef struct FOC_Diagnostics
-// {
-//     uint32_t overCurrentCount;
-//     uint32_t overVoltageCount;
-//     uint32_t commutationErrorCount;
-//     uint32_t sensorErrorCount;
-//     ufract16_t maxCurrent;
-//     ufract16_t avgPower;
-//     fract16_t temperatureEst;
-// }
-// FOC_Diagnostics_T;
-
-// static inline void FOC_UpdateDiagnostics(FOC_T * p_foc, FOC_Diagnostics_T * p_diag)
-// {
-//     ufract16_t iMag = FOC_GetIMagnitude(p_foc);
-//     ufract16_t vMag = FOC_GetVMagnitude(p_foc);
-
-//     /* Track maximum current */
-//     if (iMag > p_diag->maxCurrent)
-//     {
-//         p_diag->maxCurrent = iMag;
-//     }
-
-//     /* Count fault conditions */
-//     if (iMag > MOTOR_CURRENT_LIMIT)
-//     {
-//         p_diag->overCurrentCount++;
-//     }
-
-//     if (vMag > MOTOR_VOLTAGE_LIMIT)
-//     {
-//         p_diag->overVoltageCount++;
-//     }
-
-//     /* Estimate temperature from I²R losses */
-//     accum32_t power = FOC_GetTotalPower(p_foc);
-//     p_diag->avgPower = (p_diag->avgPower * 15 + power) >> 4;  /* IIR filter */
-// }
-
-/*
-    Debug
-*/
-// bool FOC_ValidateInputs(const FOC_T * p_foc)
-// {
-//     /* Check for reasonable current values */
-//     if (abs(p_foc->Ia) > FRACT16_MAX * 9 / 10) return false;
-//     if (abs(p_foc->Ib) > FRACT16_MAX * 9 / 10) return false;
-//     if (abs(p_foc->Ic) > FRACT16_MAX * 9 / 10) return false;
-
-//     /* Validate Kirchhoff's current law: Ia + Ib + Ic ≈ 0 */
-//     int32_t currentSum = (int32_t)p_foc->Ia + p_foc->Ib + p_foc->Ic;
-//     if (abs(currentSum) > FRACT16_MAX / 20) return false;  /* 5% tolerance */
-
-//     /* Check for reasonable voltage requests */
-//     int32_t vMagSq = (int32_t)p_foc->Vd * p_foc->Vd + (int32_t)p_foc->Vq * p_foc->Vq;
-//     if (vMagSq > (int32_t)FRACT16_MAX * FRACT16_MAX) return false;
-
-//     return true;
-// }
-
-// bool FOC_ValidateTheta(fract16_t sine, fract16_t cosine)
-// {
-//     /* Validate unit circle: sin²θ + cos²θ ≈ 1 */
-//     int32_t magnitudeSquared = (int32_t)sine * sine + (int32_t)cosine * cosine;
-//     int32_t expected = (int32_t)FRACT16_MAX * FRACT16_MAX;
-//     int32_t tolerance = expected / 20;  /* 5% tolerance */
-
-//     return abs(magnitudeSquared - expected) < tolerance;
-// }

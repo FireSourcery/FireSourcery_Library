@@ -59,7 +59,7 @@ void Motor_FOC_InitParams(Motor_T *);  /* Foc.Electrical from Motor_Electrical's
 
 - Hold the derived fields directly. A separate `Ref_T` earns its place only for a collective property or chunked operation, as `FOC_Electrical_T` passed whole to FOC, or to set fixed-after-init tuning apart from live state, as `FOC_FieldWeakeningTuning_T` beside the integrator `IdFw`.
 - Raw values the runtime needs as stored are read from the Config at the call site, not copied into the Ref.
-- A runtime that takes per-unit values holds no base. The model returns per-unit values in its own terms, the composite that holds both assembles the Ref, and the runtime derives its own coefficients: Motor_Electrical's tick views into `FOC_Electrical_T` in `Motor_FOC_InitParams`, Ls into the observer gain in `FOC_Sensorless_InitElectrical`. The model header names no algorithm type.
+- A runtime that takes per-unit values holds no base. The model returns per-unit values in its own terms, the composite that holds both assembles the Ref, and the runtime derives its own coefficients: Motor_Electrical's tick views into `FOC_Electrical_T` in `Motor_FOC_InitParams`, Lq into the observer's plant and gain in `FOC_Sensorless_InitElectrical`. The model header names no algorithm type.
 - Used by: FOC, which has no Config. Available for PID (Kp to gain and shift; `PidI` shared by Iq and Id) and AngleCounter (caller-built `AngleCounter_Ref_T`, nothing persisted).
 
 ## Choosing

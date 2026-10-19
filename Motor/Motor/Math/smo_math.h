@@ -35,24 +35,6 @@
 #include "Math/Fixed/fract16.h"
 
 
-/* σ, saturated. |î − i| reaches 2.0 */
-static inline fract16_t smo_sigma(fract16_t i_est, fract16_t i_meas) { return fract16_sat((accum32_t)i_est - i_meas); }
-
-/******************************************************************************/
-/*!
-    @brief  Sliding-Mode switching function — bounded sign with linear region.
-
-        sat(x, thr) = clamp(x / thr, -1, +1)
-
-    Replaces hard sign() inside the SMO to suppress chatter; thr is the
-    boundary-layer width in the same per-unit basis as x. thr > 0.
-*/
-/******************************************************************************/
-static inline fract16_t smo_sat(fract16_t thr, fract16_t x) { return fract16_sat(fract16_div(x, thr)); }
-
-/* First-order law. z = K_smo · sat(σ, thr) */
-static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t sigma) { return fract16_mul(K_smo, smo_sat(thr, sigma)); }
-
 
 /******************************************************************************/
 /*!
@@ -81,23 +63,23 @@ static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t sigma) {
 */
 /******************************************************************************/
 /* sqrt(|x|) · sign(x) — STA forcing primitive. Guards x = INT16_MIN. */
-static inline fract16_t sta_sqrt_signed(fract16_t x)
-{
-    fract16_t mag_sqrt = (fract16_t)fract16_sqrt(fract16_abs_sat(x));
-    return (x >= 0) ? mag_sqrt : -mag_sqrt;
-}
+// static inline fract16_t sta_sqrt_signed(fract16_t x)
+// {
+//     fract16_t mag_sqrt = (fract16_t)fract16_sqrt(fract16_abs_sat(x));
+//     return (x >= 0) ? mag_sqrt : -mag_sqrt;
+// }
 
-/* STA continuous switching output. w is the current integrator state. */
-static inline fract16_t sta_z(fract16_t lambda, fract16_t w, fract16_t sigma) { return fract16_sat((accum32_t)w + fract16_mul(lambda, sta_sqrt_signed(sigma))); }
+// /* STA continuous switching output. w is the current integrator state. */
+// static inline fract16_t sta_z(fract16_t lambda, fract16_t w, fract16_t sigma) { return fract16_sat((accum32_t)w + fract16_mul(lambda, sta_sqrt_signed(sigma))); }
 
-/* STA integrator update: w[k+1] = w[k] + (α·dt) · sign(σ). */
-static inline fract16_t sta_w_step(fract16_t alpha_dt, fract16_t w, fract16_t sigma) { return fract16_sat((accum32_t)w + (accum32_t)alpha_dt * math_sign(sigma)); }
+// /* STA integrator update: w[k+1] = w[k] + (α·dt) · sign(σ). */
+// static inline fract16_t sta_w_step(fract16_t alpha_dt, fract16_t w, fract16_t sigma) { return fract16_sat((accum32_t)w + (accum32_t)alpha_dt * math_sign(sigma)); }
 
-struct sta_axis { fract16_t z, w; };
+// struct sta_axis { fract16_t z, w; };
 
-/* Combined STA single-axis step — yields (z, w_next) from (w, î, i_meas). */
-static inline struct sta_axis sta_axis_step(fract16_t lambda, fract16_t alpha_dt, fract16_t w, fract16_t i_est, fract16_t i_meas)
-{
-    fract16_t sigma = smo_sigma(i_est, i_meas);
-    return (struct sta_axis) { .z = sta_z(lambda, w, sigma), .w = sta_w_step(alpha_dt, w, sigma), };
-}
+// /* Combined STA single-axis step — yields (z, w_next) from (w, î, i_meas). */
+// static inline struct sta_axis sta_axis_step(fract16_t lambda, fract16_t alpha_dt, fract16_t w, fract16_t i_est, fract16_t i_meas)
+// {
+//     fract16_t sigma = smo_sigma(i_est, i_meas);
+//     return (struct sta_axis) { .z = sta_z(lambda, w, sigma), .w = sta_w_step(alpha_dt, w, sigma), };
+// }

@@ -30,9 +30,9 @@
 
     Differs from Hall/Encoder/SinCos: the underlying engine is push-driven (it
     needs i_αβ and v_αβ from FOC, not a peripheral). The integration layer
-    invokes Sensorless_Sensor_Proc(p, p_foc) once per control tick, after the
-    FOC proc (i.e. after Motor_FOC_AngleControl). Proc captures FOC's αβ image
-    [Stator_AlphaBeta_T] and steps the observer on it. The vtable's CAPTURE_ANGLE/CAPTURE_SPEED publish
+    invokes Sensorless_Sensor_Proc(p, p_context) once per control tick, after the
+    FOC proc (i.e. after Motor_FOC_AngleControl). Proc captures the period into the
+    observer's αβ image [Stator_AlphaBeta_T] and steps it. The vtable's CAPTURE_ANGLE/CAPTURE_SPEED publish
     observer state into RotorSensor_State idempotently.
 
     Only the sensorless start-up substates (Motor_Sensorless.c) drive Proc;

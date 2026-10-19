@@ -61,13 +61,18 @@ static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { ret
 */
 /******************************************************************************/
 /*
-    One control tick of the observer, after the FOC proc: image the period the proc's sample ends, then step on it.
+    One control tick of the observer, after the FOC proc: capture the period the proc's sample closes, then step on it.
+    i is the phase sample the proc took. v is the proc's command rotated back from dq at θ, the αβ it applies across the next period.
     Motor_FOC_AngleControl runs the proc in each substate.
 */
-static inline void Sensorless_Sensor_Proc(const Sensorless_Sensor_T * p_sensor, FOC_T * p_foc)
+static inline void Sensorless_Sensor_Proc(const Sensorless_Sensor_T * p_sensor, const Motor_Context_T * p_context)
 {
-    FOC_CaptureStator(p_foc);
-    FOC_Sensorless_Step(p_sensor->P_OBSERVER, &p_foc->Stator);
+    Stator_AlphaBeta_T * p_stator = &p_sensor->P_OBSERVER->Stator;
+    struct foc_alphabeta v = foc_inv_park(FOC_Vd(&p_context->Foc), FOC_Vq(&p_context->Foc), p_context->Foc.Sine, p_context->Foc.Cosine);
+
+    Stator_AlphaBeta_CaptureIabc(p_stator, p_context->PhaseInput.I.Values.A, p_context->PhaseInput.I.Values.B, p_context->PhaseInput.I.Values.C);
+    Stator_AlphaBeta_CaptureVOut(p_stator, fract16_sat(v.alpha), fract16_sat(v.beta));
+    FOC_Sensorless_Step(p_sensor->P_OBSERVER);
 }
 
 /* Bumpless transfer from open-loop ramp into closed-loop observer tracking. */
@@ -86,7 +91,7 @@ static inline const FOC_Sensorless_T * Sensorless_Sensor_GetObserver(const Senso
 */
 static void ProcObserver(Motor_T * p_motor)
 {
-    Sensorless_Sensor_Proc(GetSensorless(p_motor), &p_motor->P_MOTOR->Foc);
+    Sensorless_Sensor_Proc(GetSensorless(p_motor), p_motor->P_MOTOR);
 }
 
 
@@ -154,20 +159,7 @@ static void StartUp_Proc(Motor_T * p_motor)
     Motor_FOC_WriteDuty(p_motor);
     ProcObserver(p_motor);
 }
-// FOC_Sensorless_ResetState(&p_motor->P_MOTOR->FocSensorless);
-// FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
-// FOC_Sensorless_SeedAngle(&p_context->FocSensorless, Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
 
-// fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Pu * p_context->Direction);
-// angle16_t angle = Angle_IntegrateSpeed_Pu(&p_context->OpenLoopAngle, &p_context->SensorState.UnitRef.SpeedPuRef, speed);
-// fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, (int32_t)p_context->Config.OpenLoopRampIFinal_Pu * p_context->Direction);
-// FOC_SetTheta(&p_context->Foc, angle);
-// FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
-// FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), 0, iq);
-// // FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
-// FOC_ProcInvClarkePark(&p_context->Foc);
-// // FOC_Sensorless_CaptureVoltage(&p_context->FocSensorless, p_context->Foc.Valpha, p_context->Foc.Vbeta);
-// // capture for debugging
 
 /*
     Hand off to closed loop. θ̂ is already published into RotorSensor_State by

@@ -317,18 +317,6 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
     Motor_FOC_AngleControl(p_context, VBus_Pu(p_motor->P_VBUS), angle, 0, iq);
 }
 
-// void Motor_FOC_ProcSensorless(Motor_T * p_motor)
-// {
-//     Motor_Context_T * p_context = p_motor->P_MOTOR;
-//     FOC_SetTheta(&p_context->Foc, angle);
-//     if (FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I) == true)
-//     {
-//         FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), 0, iq);
-//     }
-//     // Step
-//     FOC_ProcInvClarkePark(&p_context->Foc);
-// }
-
 
 // static inline void ProcClarkePark(Motor_Context_T * p_motor)
 // {

@@ -2,3 +2,4 @@
 - Separate static policy from dynamic authority: store static V bands, resolve speed or EEMF keyed overlays inside FOC each control cycle.
 - Keep one-shot workflow progress in its owning state machine or timer; do not add workflow flags or accumulators to an ISR-hot sensor state unless every pulse-path consumer requires them.
 - For ADC architecture questions, reason from the trigger and batch contract directly; treat vendor register guides as hardware context, not as the generic design model.
+- Untypedef'd structs (`struct foc_dq`, `struct sta_axis`) are only a pure function's multiple returns: unpack them into typed fields at the call. Never store one in a stateful struct, or pass or return one through a stateful function, private helpers included.

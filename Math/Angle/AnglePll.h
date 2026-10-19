@@ -55,16 +55,12 @@ static inline fract16_t angle_pll(ufract16_t mag_floor, fract16_t x, fract16_t y
 /* sin(θ̂ − θ), |x| stripped so the loop gain holds across amplitude. 0 at or below the floor, where θ is indeterminate */
 static inline fract16_t angle_pll_error_normalized(ufract16_t mag_floor, fract16_t x, fract16_t y, fract16_t sin, fract16_t cos)
 {
-    // ufract16_t mag = fract16_vector_magnitude(x, y);
-    // return (mag <= mag_floor) ? 0 : fract16_sat(fract16_div(angle_pll_error(x, y, sin, cos), mag));
     return angle_pll(mag_floor, x, y, angle_pll_error(x, y, sin, cos));
 }
 
 /* x already rotated into the frame of θ̂, so θ̂ = 0: sin(−∠x) */
 static inline fract16_t angle_pll_error_normalized_relative(ufract16_t mag_floor, fract16_t x, fract16_t y)
 {
-    // ufract16_t mag = fract16_vector_magnitude(x, y);
-    // return (mag <= mag_floor) ? 0 : fract16_sat(fract16_div(0 - (accum32_t)y, mag));
     return angle_pll(mag_floor, x, y, 0 - (accum32_t)y);
 }
 

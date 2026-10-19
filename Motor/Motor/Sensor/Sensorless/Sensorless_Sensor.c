@@ -36,7 +36,7 @@
 */
 /******************************************************************************/
 /* Load tuning from NVM, bind the PLL PID, and clear per-tick state.
-   The plant (G, Lq, Rs) is not stored tuning — it derives from the motor's
+   The plant (Stator.RL) is not stored tuning — it derives from the motor's
    electrical model, so Motor_FOC_InitParams sets it via FOC_Sensorless_InitElectrical. */
 static void Sensorless_Sensor_Init(const Sensorless_Sensor_T * p_sensor)
 {
@@ -74,16 +74,16 @@ static void Sensorless_Sensor_ZeroInitial(const Sensorless_Sensor_T * p_sensor)
 
 /* Observer is "calibrated" if the tuning gains and the plant are populated. K_smo == 0
    means K·sat(·) produces no forcing, LpfCoef == 0 freezes the EMF
-   estimate, and G == 0 (no Ls) holds î — each alone leaves the observer non-functional. */
+   estimate, and G == 0 (no plant) holds î — each alone leaves the observer non-functional. */
 static bool Sensorless_Sensor_VerifyCalibration(const Sensorless_Sensor_T * p_sensor)
 {
     const FOC_SensorlessConfig_T * c = &p_sensor->P_OBSERVER->Config;
-    return (c->K_smo != 0) && (c->LpfCoef != 0) && (p_sensor->P_OBSERVER->Electrical.G != 0);
+    return (c->K_smo != 0) && (c->LpfCoef != 0) && (p_sensor->P_OBSERVER->Stator.RL.G != 0);
 }
 
 /* No sensor-local unit state: the observer works entirely in the motor's per-unit
    basis. UnitRef.SpeedPuRef — the only field CAPTURE_SPEED reads — is held by the
-   RotorSensor base, and the plant (G, Lq, Rs)
+   RotorSensor base, and the plant (Stator.RL)
    needs the motor's electrical model, so Motor_FOC_InitParams owns it. */
 static void Sensorless_Sensor_InitUnits(const Sensorless_Sensor_T * p_sensor)
 {

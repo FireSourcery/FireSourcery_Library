@@ -218,10 +218,28 @@ static inline accum32_t _foc_vq_ff_direct(accum32_t Ld_pu, accum32_t psi_pu, fra
 */
 /******************************************************************************/
 /* One rotating axis at the operating point, signals DC: v = Rs·i + v_ff + e. v_ff couples in the other axis, [foc_vd_ff] [foc_vq_ff] */
-static inline accum32_t foc_vemf_dq_axis(fract16_t Rs_pu, accum32_t v, accum32_t v_ff, accum32_t i) { return v - fract16_mul(Rs_pu, i) - v_ff; }
+static inline accum32_t foc_vemf_dq_axis(accum32_t Rs_pu, accum32_t v, accum32_t v_ff, accum32_t i) { return v - accum32_mul(Rs_pu, i) - v_ff; }
 
-static inline accum32_t foc_vemf_d(fract16_t Rs_pu, accum32_t omega_Lq, accum32_t vd, accum32_t id, accum32_t iq) { return foc_vemf_dq_axis(Rs_pu, vd, foc_vd_ff(omega_Lq, iq), id); }
-static inline accum32_t foc_vemf_q(fract16_t Rs_pu, accum32_t omega_Lq, accum32_t vq, accum32_t id, accum32_t iq) { return foc_vemf_dq_axis(Rs_pu, vq, foc_vq_ff(omega_Lq, 0, id), iq); }
+static inline accum32_t foc_vemf_d(accum32_t Rs_pu, accum32_t omega_Lq, accum32_t vd, accum32_t id, accum32_t iq) { return foc_vemf_dq_axis(Rs_pu, vd, foc_vd_ff(omega_Lq, iq), id); }
+static inline accum32_t foc_vemf_q(accum32_t Rs_pu, accum32_t omega_Lq, accum32_t vq, accum32_t id, accum32_t iq) { return foc_vemf_dq_axis(Rs_pu, vq, foc_vq_ff(omega_Lq, 0, id), iq); }
+
+/******************************************************************************/
+/*!
+    @brief  Electrical speed estimate from EMF magnitude.
+
+        |e| = |ω_e| · ψ_f       →       |ω̂_e| = |e| / ψ_f
+
+    With Psi_pu per psi_pu_turn, the result is the electrical
+    angle increment per control cycle:
+
+        |Δθ̂_e| [angle16/dt] = |e_pu| / Psi_pu
+
+    Sign of ω is not recoverable from |e|; combine with foc_pll_error sign
+    or the open-loop reference. Returns 0 when Psi_pu is zero (uninitialized).
+*/
+/******************************************************************************/
+// static inline angle16_t foc_speed_of_emf(accum32_t Psi_pu, ufract16_t e_mag) { return (angle16_t)fract16_div(e_mag, Psi_pu); }
+
 
 /******************************************************************************/
 /*!

@@ -21,7 +21,7 @@ Module_Config_T      — Persistent parameters (NVM-storable)
 Module_Calib_T       — User-unit parameters
 Module_Ref_T         — Precomputed/derived from Config
 
-alternatively struct without typedef for data objects, or
+alternatively for data objects:
 Module_Data_T        — Pure passive data (no invariants)
 Module_Input_T       — Data written by external, read by module
 Module_Output_T      — Data written by module, read by external
@@ -54,6 +54,10 @@ typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
         - Functions use snake_case: module_verb(type_t a, type_t b) -> type_t
         - No pointers, callbacks, ownership, or lifecycle.
         - Records, not descriptors
+
+    `struct snake_case`, no typedef: a pure function's multiple returns, e.g. `struct foc_dq`, `struct sta_axis`.
+        - Returned by value from a snake_case function, unpacked into the caller's fields at the call.
+        - Never a field of a `CamelCase_T`, never a parameter or return of a `Module_Verb` function.
 
     `CamelCase_T`: Aggregate types, > 64 bits, OR has associated behavioral functions.
         - Passed by pointer: Module_Verb(Module_T * p_module)
