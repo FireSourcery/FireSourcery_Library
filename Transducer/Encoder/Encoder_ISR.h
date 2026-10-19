@@ -31,6 +31,7 @@
 /******************************************************************************/
 #include "Encoder.h"
 #include "Encoder_MT.h"
+#include <stdint.h>
 
 
 /******************************************************************************/
@@ -46,32 +47,30 @@
     ENCODER_HW_EMULATED mode. M/T: DeltaD counts, DeltaT edge timing
 */
 /******************************************************************************/
-static inline Encoder_Phases_T _Encoder_ReadPins(Encoder_T * p_encoder)
+/* (Encoder_Phases_T) { .PrevA = state.A, .PrevB = state.B, .A = pins.A, .B = pins.B  } doesn't optimize on gcc15 arm */
+static inline Encoder_Phases_T _Encoder_NextStateOf(Encoder_Phases_T state, Encoder_Phases_T pins)
 {
-    return (Encoder_Phases_T) { .A = Pin_Input_ReadPhysical(&p_encoder->PIN_A), .B = Pin_Input_ReadPhysical(&p_encoder->PIN_B) };
+    return (Encoder_Phases_T){ .Value = (uint8_t)(((state.Value << 2U) | pins.Value) & 0x0FU) };
 }
 
-static inline Encoder_Phases_T _Encoder_NextStateOf(const Encoder_State_T * p_encoder, Encoder_Phases_T phases)
+static inline Encoder_Phases_T _Encoder_CapturePhasesState(Encoder_State_T * p_encoder, Encoder_Phases_T phases)
 {
-    return  (Encoder_Phases_T) { .PrevA = p_encoder->Phases.PrevA, .PrevB = p_encoder->Phases.PrevB, .A = p_encoder->Phases.A, .B = p_encoder->Phases.B };
+    p_encoder->Phases = _Encoder_NextStateOf(p_encoder->Phases, phases);
+    return p_encoder->Phases;
 }
 
 /*!
     Determine Speed and Angle
     @param[in] count { -2, -1, 0, +1, +2 }
+    instead of imitating the hw decoder case, capture a separate angle32 wrap
     caller handle Direction comp on get
 */
-/* instead of imitating the hw decoder case, capture a separate Angle32 */
-static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count)
-{
-    // p_encoder->P_STATE->ErrorCount += (uint32_t)math_abs(count) >> 1U; (count == +2||-2)
-    AngleCounter_CaptureCount(&p_encoder->AngleCounter, count);
-}
+// p_encoder->P_STATE->ErrorCount += (uint32_t)math_abs(count) >> 1U; (count == +2||-2)
+static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count) { AngleCounter_CaptureCount(&p_encoder->AngleCounter, count); }
 
-static inline uint8_t _Encoder_CapturePhasesState(Encoder_State_T * p_encoder, Encoder_Phases_T phases)
+static inline Encoder_Phases_T _Encoder_ReadPins(Encoder_T * p_encoder)
 {
-    p_encoder->Phases = _Encoder_NextStateOf(p_encoder, phases);
-    return p_encoder->Phases.Value;
+    return (Encoder_Phases_T) { .A = Pin_Input_ReadPhysical(&p_encoder->PIN_A), .B = Pin_Input_ReadPhysical(&p_encoder->PIN_B) };
 }
 
 /******************************************************************************/
@@ -99,8 +98,8 @@ static inline int8_t _Encoder_Quadrature_CountOf(uint8_t phasesState)
 
 static inline void _Encoder_Quadrature_CapturePulse(Encoder_T * p_encoder)
 {
-    _Encoder_CapturePhasesState(p_encoder->P_STATE, _Encoder_ReadPins(p_encoder));
-    _Encoder_CaptureCount(p_encoder->P_STATE, _Encoder_Quadrature_CountOf(p_encoder->P_STATE->Phases.Value));
+   uint8_t phases = _Encoder_CapturePhasesState(p_encoder->P_STATE, _Encoder_ReadPins(p_encoder)).Value;
+    _Encoder_CaptureCount(p_encoder->P_STATE, _Encoder_Quadrature_CountOf(phases));
 }
 
 /* Alternatively, single phase signed capture or combine with B */

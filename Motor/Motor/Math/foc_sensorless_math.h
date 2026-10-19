@@ -84,10 +84,8 @@ static inline fract16_t lpf_step(fract16_t k_lp, fract16_t y, fract16_t x) { ret
     The signed ê_q would also restore it, but would make θ̂ = θ + π a second stable lock.
     0 when |ê| is below the noise floor (lock indeterminate).
 */
-
 /* The rotor vector −j·sign(ω)·e, along θ with length |ω|·ψ */
 static inline struct fract16_xy foc_rotor_of_emf(sign_t sign, fract16_t e_x, fract16_t e_y) { return (struct fract16_xy) { .x = sign * e_y, .y = -sign * e_x }; }
-
 
 
 /******************************************************************************/
@@ -189,5 +187,51 @@ static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t sigma) {
     to prove and requires reasonable startup alignment.
 */
 /******************************************************************************/
-// static inline fract16_t smo_eemf_i_decouple(accum32_t G, accum32_t Rs, accum32_t v, accum32_t v_ff, fract16_t i_est, fract16_t z) { return smo_axis_i(G, Rs, v - v_ff, i_est, z); }
-// static inline fract16_t smo_eemf_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i) { return smo_axis_z(K_smo, thr, i_est, i); }
+
+/******************************************************************************/
+/*!
+    @brief  Super-Twisting Algorithm (STA) — 2nd-order sliding-mode observer.
+
+    Continuous-output alternative to the classical smo_z(K·sat) — replaces
+    the discontinuous switching variable with one produced by integrating
+    sign(σ). The output z is continuous, so no equivalent-control LPF is
+    needed downstream.
+
+    Per axis, with σ = î − i_meas:
+        z[k]   = w[k] + λ · √|σ| · sign(σ)        (continuous correction)
+        w[k+1] = w[k] + (α·dt) · sign(σ)          (integrator state)
+
+    The current-observer update is identical to the classical SMO; only z
+    changes:
+        î[k+1] = î[k] + G_pu · ( v − Rs·î − z )
+
+    At σ → 0 (sliding), the √|σ| term vanishes and z → w; both converge to
+    the disturbance ê. Feed w (cleaner) into the PLL discriminator.
+
+    Tuning (Moreno 2008), L = Lipschitz bound on dê/dt in pu:
+        λ      > √L                practical: 1.5 · √L
+        α · dt > L · dt            practical: 1.1 · L · dt
+    Caller supplies α already multiplied by dt.
+*/
+/******************************************************************************/
+/* sqrt(|x|) · sign(x) — STA forcing primitive. Guards x = INT16_MIN. */
+// static inline fract16_t sta_sqrt_signed(fract16_t x)
+// {
+//     fract16_t mag_sqrt = (fract16_t)fract16_sqrt(fract16_abs_sat(x));
+//     return (x >= 0) ? mag_sqrt : -mag_sqrt;
+// }
+
+// /* STA continuous switching output. w is the current integrator state. */
+// static inline fract16_t sta_z(fract16_t lambda, fract16_t w, fract16_t sigma) { return fract16_sat((accum32_t)w + fract16_mul(lambda, sta_sqrt_signed(sigma))); }
+
+// /* STA integrator update: w[k+1] = w[k] + (α·dt) · sign(σ). */
+// static inline fract16_t sta_w_step(fract16_t alpha_dt, fract16_t w, fract16_t sigma) { return fract16_sat((accum32_t)w + (accum32_t)alpha_dt * math_sign(sigma)); }
+
+// struct sta_axis { fract16_t z, w; };
+
+// /* Combined STA single-axis step — yields (z, w_next) from (w, î, i_meas). */
+// static inline struct sta_axis sta_axis_step(fract16_t lambda, fract16_t alpha_dt, fract16_t w, fract16_t i_est, fract16_t i_meas)
+// {
+//     fract16_t sigma = smo_sigma(i_est, i_meas);
+//     return (struct sta_axis) { .z = sta_z(lambda, w, sigma), .w = sta_w_step(alpha_dt, w, sigma), };
+// }

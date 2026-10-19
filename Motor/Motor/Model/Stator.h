@@ -53,7 +53,9 @@ Stator_Axis_T;
 static inline void Stator_Axis_CaptureI(Stator_Axis_T * p_axis, fract16_t i) { p_axis->IPrev = p_axis->I; p_axis->I = i; p_axis->V = p_axis->VOut; }
 static inline void Stator_Axis_CaptureVOut(Stator_Axis_T * p_axis, fract16_t v) { p_axis->VOut = v; }
 
-static inline fract16_t Stator_Axis_IMean(const Stator_Axis_T * p_axis) { return ((int32_t)p_axis->IPrev + p_axis->I) / 2; }
+static inline fract16_t Stator_Axis_IAvg(const Stator_Axis_T * p_axis) { return ((int32_t)p_axis->IPrev + p_axis->I) / 2; }
+static inline fract16_t Stator_Axis_IDelta(const Stator_Axis_T * p_axis) { return p_axis->I - p_axis->IPrev; }
+
 
 /*
     Per phase. L = Lq resolves the extended EMF E = ω·(ψ + (Ld − Lq)·i_d) of a salient rotor. Ls = (Ld + Lq) / 2 leaves a 2θ error.
@@ -63,6 +65,7 @@ typedef struct Stator_RL
     accum32_t R;    /* phase resistance */
     accum32_t L;    /* phase inductance at the rad base */
     accum32_t G;    /* 1 / L at the rad base */
+    // union { accum32_t L; accum32_t G; }; /* determined by axis type */
 }
 Stator_RL_T;
 
@@ -83,16 +86,24 @@ static inline accum32_t Stator_Axis_PowerEmf(const Stator_Axis_T * p_axis, const
 
 static inline accum32_t Stator_Axis_I(const Stator_Axis_T * p_axis, const Stator_RL_T * p_rl) { return stator_i_next(p_rl->R, p_rl->G, p_axis->I, p_axis->V, Stator_Axis_Emf(p_axis, p_rl)); }
 
-
-// static inline fract16_t smo_axis_i(accum32_t G_pu, accum32_t Rs_pu, accum32_t v, fract16_t i_est_prev, fract16_t z_prev) { return fract16_sat(stator_i_next(Rs_pu, G_pu, i_est_prev, v, z_prev)); }
-// static inline fract16_t smo_axis_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i_meas) { return smo_z(K_smo, thr, smo_sigma(i_est, i_meas)); }
-// static inline accum32_t Stator_Axis_ISmo(Stator_Axis_T * p_axis, const Stator_RL_T * p_rl, accum32_t e)
+// duplicates params
+// typedef struct
 // {
-//     p_axis->IPrev = p_axis->I;
-//     p_axis->I = stator_i_next(p_rl->R, p_rl->G, p_axis->I, p_axis->V, e);
-//     return p_axis->I;
+//     Stator_RL_T RL;
+//     Stator_Axis_T Axis;
 // }
+// Stator_AxisModel_T;
 
+// calling function can handle
+// typedef struct
+// {
+//     Stator_RL_T * p_RL;
+//     Stator_Axis_T Axis;
+// }
+// Stator_AxisModel_T;
+
+
+// static inline Stator_Axis_T Stator_Axis_Step(Stator_Axis_T * p_axis, fract16_t i, fract16_t v) {  return (Stator_Axis_T){ .IPrev = p_axis->I, .I = i, .V = p_axis->VOut, .VOut = v }; }
 /*
     The stator equation closes the period in place of a sample: I from v held across it, e in place of the EMF [stator_i_next].
     A model's image, run beside the sampled one.
@@ -104,9 +115,6 @@ static inline void Stator_Axis_Integrate(Stator_Axis_T * p_axis, const Stator_RL
     p_axis->V = fract16_sat(v);
 }
 
-// static inline fract16_t smo_eemf_i_decouple(accum32_t G, accum32_t Rs, accum32_t v, accum32_t v_ff, fract16_t i_est, fract16_t z) { return smo_axis_i(G, Rs, v - v_ff, i_est, z); }
-// static inline fract16_t smo_eemf_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i) { return smo_axis_z(K_smo, thr, i_est, i); }
-
 
 /*
     An axis holds the quantities of one axis: the operand of the stator equation, stator_math.h. The image stores axes.
@@ -117,14 +125,14 @@ static inline void Stator_Axis_Integrate(Stator_Axis_T * p_axis, const Stator_RL
     abc image, per phase.
 */
 /******************************************************************************/
-// typedef struct Stator_Abc
+// typedef struct Stator_Physical
 // {
 //     Stator_RL_T RL;
 //     Stator_Axis_T A;
 //     Stator_Axis_T B;
 //     Stator_Axis_T C;
 // }
-// Stator_Abc_T;
+// Stator_Physical_T;
 
 
 /******************************************************************************/
@@ -132,6 +140,7 @@ static inline void Stator_Axis_Integrate(Stator_Axis_T * p_axis, const Stator_RL
     αβ image. No zero sequence: the neutral offset of the voltages and the common error of the current sensors drop out.
 */
 /******************************************************************************/
+/* Stator_Stationary */
 typedef struct Stator_AlphaBeta
 {
     Stator_RL_T RL;
@@ -159,6 +168,30 @@ static inline void Stator_AlphaBeta_CaptureIabc(Stator_AlphaBeta_T * p_stator, f
     Stator_AlphaBeta_CaptureI(p_stator, fract16_sat(i.alpha), fract16_sat(i.beta));
 }
 
+static inline void Stator_AlphaBeta_StepAlpha(Stator_AlphaBeta_T * p_stator, accum32_t v_alpha, accum32_t emf_alpha)
+{
+    Stator_Axis_Integrate(&p_stator->Alpha, &p_stator->RL, v_alpha, emf_alpha);
+}
+
+static inline void Stator_AlphaBeta_StepBeta(Stator_AlphaBeta_T * p_stator, accum32_t v_beta, accum32_t emf_beta)
+{
+    Stator_Axis_Integrate(&p_stator->Beta, &p_stator->RL, v_beta, emf_beta);
+}
+
+// caller handle
+// static inline void Stator_AlphaBeta_Step(Stator_AlphaBeta_T * p_stator, accum32_t v_alpha, accum32_t emf_alpha, accum32_t v_beta, accum32_t emf_beta)
+// {
+//     Stator_AlphaBeta_StepAlpha(p_stator, v_alpha, emf_alpha);
+//     Stator_AlphaBeta_StepBeta(p_stator, v_beta, emf_beta);
+// }
+
+// static inline void Stator_AlphaBeta_Step(Stator_AlphaBeta_T * p_stator)
+// {
+//     // Stator_Axis_Integrate
+//     // Stator_Axis_Step(&p_stator->Alpha, &p_stator->RL);
+//     // Stator_Axis_Step(&p_stator->Beta, &p_stator->RL);
+// }
+
 static inline ufract16_t Stator_AlphaBeta_IMagnitude(const Stator_AlphaBeta_T * p_stator) { return fract16_vector_magnitude(p_stator->Alpha.I, p_stator->Beta.I); }
 static inline ufract16_t Stator_AlphaBeta_VMagnitude(const Stator_AlphaBeta_T * p_stator) { return fract16_vector_magnitude(p_stator->Alpha.V, p_stator->Beta.V); }
 
@@ -169,7 +202,7 @@ static inline accum32_t Stator_AlphaBeta_PowerEmf(const Stator_AlphaBeta_T * p_s
 /* V × ī, rotation invariant: the dq form [foc_reactive_power] */
 static inline accum32_t Stator_AlphaBeta_ReactivePower(const Stator_AlphaBeta_T * p_stator)
 {
-    return foc_reactive_power(p_stator->Alpha.V, Stator_Axis_IMean(&p_stator->Alpha), p_stator->Beta.V, Stator_Axis_IMean(&p_stator->Beta));
+    return foc_reactive_power(p_stator->Alpha.V, Stator_Axis_IAvg(&p_stator->Alpha), p_stator->Beta.V, Stator_Axis_IAvg(&p_stator->Beta));
 }
 
 
@@ -188,7 +221,12 @@ static inline accum32_t Stator_AlphaBeta_ReactivePower(const Stator_AlphaBeta_T 
 // typedef struct Stator_Dq
 // {
 //     Stator_RL_T RL;
+//     struct {  fract16_t Sine, Cosine; } Theta;
 //     Stator_DqAxis_T D;
 //     Stator_DqAxis_T Q;
 // }
 // Stator_Dq_T;
+
+// static inline void Stator_StepD(Stator_Dq_T * p_stator, accum32_t v, accum32_t v_ff, accum32_t emf)
+// {
+// }

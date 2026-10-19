@@ -94,10 +94,12 @@ typedef struct FOC
     alignas(4) fract16_t Vd, Vq; /* VdReq, VqReq */
 
     /* VOut */
-    alignas(4) fract16_t Va, Vb, Vc;
+    alignas(4) fract16_t Va, Vb, Vc; /* drop for outer */
 
     /* Stationary image of the control period, [FOC_CaptureStator] */
     // Stator_AlphaBeta_T Stator;
+    alignas(4) fract16_t Valpha, Vbeta;
+    alignas(4) fract16_t Ialpha, Ibeta;
 
     /*
         Inner current loop — pair has no semantic life outside the d-q frame.
@@ -143,11 +145,20 @@ static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta)
 */
 static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
 {
-    struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
-    p_foc->Id = fract16_sat(i.d);
-    p_foc->Iq = fract16_sat(i.q);
+    struct foc_alphabeta iab = foc_clarke(ia, ib, ic);
+    struct foc_dq idq = foc_park(iab.alpha, iab.beta, p_foc->Sine, p_foc->Cosine);
+    p_foc->Ialpha = fract16_sat(iab.alpha);
+    p_foc->Ibeta = fract16_sat(iab.beta);
+    p_foc->Id = fract16_sat(idq.d);
+    p_foc->Iq = fract16_sat(idq.q);
 }
 
+// static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
+// {
+//     struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
+//     p_foc->Id = fract16_sat(i.d);
+//     p_foc->Iq = fract16_sat(i.q);
+// }
 
 // static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 // {
@@ -183,11 +194,22 @@ static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
 
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 {
-    struct foc_abc v = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+    struct foc_alphabeta vab = foc_inv_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+    struct foc_abc v = foc_inv_clarke(vab.alpha, vab.beta);
+    p_foc->Valpha = fract16_sat(vab.alpha);
+    p_foc->Vbeta = fract16_sat(vab.beta);
     p_foc->Va = fract16_sat(v.a);
     p_foc->Vb = fract16_sat(v.b);
     p_foc->Vc = fract16_sat(v.c);
 }
+
+// static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
+// {
+//     struct foc_abc v = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+//     p_foc->Va = fract16_sat(v.a);
+//     p_foc->Vb = fract16_sat(v.b);
+//     p_foc->Vc = fract16_sat(v.c);
+// }
 
 /*
     Stationary image, rotated back from the dq captured and commanded at θ: the proc itself carries no αβ.

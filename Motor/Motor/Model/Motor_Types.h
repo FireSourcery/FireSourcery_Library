@@ -60,7 +60,6 @@ typedef struct Motor_UnitBasis
 }
 Motor_UnitBasis_T;
 
-
 /*
     Conversions at the user boundary. Units into pu scale 1.0 to INT16_MAX, as [Phase_V_PuOfVolts].
 */
@@ -71,9 +70,9 @@ static inline accum32_t Motor_UnitBasis_PuOfAmps(Motor_UnitBasis_T * p_basis, in
 static inline int16_t Motor_UnitBasis_AmpsOfPu(Motor_UnitBasis_T * p_basis, accum32_t pu) { return pu * p_basis->I / 32768; }
 
 /* Mechanical rpm at 1.0 pu */
-// static inline uint32_t Motor_UnitBasis_Rpm(Motor_UnitBasis_T * p_basis, uint8_t polePairs) { return mech_rpm_of_el_angle_freq(polePairs, p_basis->F); }
-// static inline accum32_t Motor_UnitBasis_PuOfRpm(Motor_UnitBasis_T * p_basis, uint8_t polePairs, int16_t rpm) { return rpm * INT16_MAX / (int32_t)Motor_UnitBasis_Rpm(basis, polePairs); }
-// static inline int16_t Motor_UnitBasis_RpmOfPu(Motor_UnitBasis_T * p_basis, uint8_t polePairs, accum32_t pu) { return pu * (int32_t)Motor_UnitBasis_Rpm(basis, polePairs) / 32768; }
+static inline uint32_t Motor_UnitBasis_Rpm(Motor_UnitBasis_T * p_basis, uint8_t polePairs) { return mech_rpm_of_el_angle_freq(polePairs, p_basis->F); }
+static inline accum32_t Motor_UnitBasis_PuOfRpm(Motor_UnitBasis_T * p_basis, uint8_t polePairs, int16_t rpm) { return rpm * INT16_MAX / (int32_t)Motor_UnitBasis_Rpm(p_basis, polePairs); }
+static inline int16_t Motor_UnitBasis_RpmOfPu(Motor_UnitBasis_T * p_basis, uint8_t polePairs, accum32_t pu) { return pu * (int32_t)Motor_UnitBasis_Rpm(p_basis, polePairs) / 32768; }
 
 static inline int32_t Motor_UnitBasis_WattsOfPu(Motor_UnitBasis_T * p_basis, accum32_t pu) { return (int64_t)pu * p_basis->V * p_basis->I / 32768; }
 

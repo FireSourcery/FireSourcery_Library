@@ -128,8 +128,9 @@ typedef struct FOC_Sensorless
     Stator_Axis_T SmoD, SmoQ;           /* in the frame θ̂, its turn in the axis voltage */
 
     /* SMO internal state. Step in αβ, StepEemf and StepEemfSta in the estimated dq. */
-    // fract16_t SmoIAlpha, SmoIBeta;      /* current-estimator state î */
+    // fract16_t SmoIAlpha, SmoIBeta;   /* current-estimator state î */
     fract16_t SmoZAlpha, SmoZBeta;      /* raw switching variable z */
+
     // fract16_t SmoId, SmoIq;
     fract16_t SmoZd, SmoZq;
 
@@ -189,33 +190,13 @@ static void _FOC_Sensorless_ProcPllAlphaBeta(FOC_Sensorless_T * p_obs)
     _FOC_Sensorless_ProcLock(p_obs);
 }
 
-/******************************************************************************/
-/*!
-    @brief  PLL Phase Detector — d-axis projection of estimated EMF.
-
-    With d aligned to rotor flux ψ_f, back-EMF lies on the q-axis, e = jω·ψ·e^{jθ}. In the frame of θ̂:
-        e_d  =   e_α·cos(θ̂) + e_β·sin(θ̂)
-        e_q  =  -e_α·sin(θ̂) + e_β·cos(θ̂)
-    e_d → 0 at lock; near lock e_d ≈ −E·sin(θ − θ̂) ≈ −E·Δθ, E = ω·ψ.
-
-    Sign of e_d flips with rotation direction (E ∝ ω). The rotor vector [foc_rotor_of_emf]
-    removes it, so the detector [angle_pll_error] sees a vector along θ in either direction.
-*/
-/******************************************************************************/
-/* ê_dq, already in the frame of θ̂: the rotor vector relative to it */
-static void _FOC_Sensorless_ProcPllDq(FOC_Sensorless_T * p_obs)
-{
-    struct fract16_xy rotor = foc_rotor_of_emf(_FOC_Sensorless_Direction(p_obs), p_obs->EmfD, p_obs->EmfQ);
-    p_obs->EmfMag = fract16_vector_magnitude(rotor.x, rotor.y);
-    AnglePll_Proc(&p_obs->Pll, angle_pll_error_normalized_relative(p_obs->Config.LockEmfMin, rotor.x, rotor.y));
-    _FOC_Sensorless_ProcLock(p_obs);
-}
-
-
 /*
     SMO, stationary frame. The model's image across the period [Stator_Axis_Integrate], then z against the sample that ends it [smo_z]; z is the raw EMF.
 */
+// Stator_AlphaBeta_CaptureIabc(p_stator, p_context->PhaseInput.I.Values.A, p_context->PhaseInput.I.Values.B, p_context->PhaseInput.I.Values.C);
+// Stator_AlphaBeta_CaptureVOut(p_stator, fract16_sat(v.alpha), fract16_sat(v.beta));
 static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs)
+// static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
 {
     /* 1. The model across the period, then z against the sample. */
     Stator_Axis_Integrate(&p_obs->SmoAlpha, &p_obs->Stator.RL, p_obs->Stator.Alpha.V, p_obs->SmoZAlpha);
@@ -241,7 +222,27 @@ static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs)
     _FOC_Sensorless_ProcPllAlphaBeta(p_obs);
 }
 
+/******************************************************************************/
+/*!
+    @brief  PLL Phase Detector — d-axis projection of estimated EMF.
 
+    With d aligned to rotor flux ψ_f, back-EMF lies on the q-axis, e = jω·ψ·e^{jθ}. In the frame of θ̂:
+        e_d  =   e_α·cos(θ̂) + e_β·sin(θ̂)
+        e_q  =  -e_α·sin(θ̂) + e_β·cos(θ̂)
+    e_d → 0 at lock; near lock e_d ≈ −E·sin(θ − θ̂) ≈ −E·Δθ, E = ω·ψ.
+
+    Sign of e_d flips with rotation direction (E ∝ ω). The rotor vector [foc_rotor_of_emf]
+    removes it, so the detector [angle_pll_error] sees a vector along θ in either direction.
+*/
+/******************************************************************************/
+/* ê_dq, already in the frame of θ̂: the rotor vector relative to it */
+static void _FOC_Sensorless_ProcPllDq(FOC_Sensorless_T * p_obs)
+{
+    struct fract16_xy rotor = foc_rotor_of_emf(_FOC_Sensorless_Direction(p_obs), p_obs->EmfD, p_obs->EmfQ);
+    p_obs->EmfMag = fract16_vector_magnitude(rotor.x, rotor.y);
+    AnglePll_Proc(&p_obs->Pll, angle_pll_error_normalized_relative(p_obs->Config.LockEmfMin, rotor.x, rotor.y));
+    _FOC_Sensorless_ProcLock(p_obs);
+}
 
 /*
     The image in the frame θ̂ [foc_park]: I sampled at θ̂, V held across the period at its mean angle θ̂ − Δθ̂/2.
@@ -307,6 +308,7 @@ static void FOC_Sensorless_StepEemf(FOC_Sensorless_T * p_obs)
 
 /*
     Super-twisting EEMF SMO, estimated dq frame θ̂: î as StepEemf, z by [sta_axis_step]. z is continuous;
+
     its integrator w converges to the EMF, so ê is w itself, no LPF.
 */
 // static void FOC_Sensorless_StepEemfSta(FOC_Sensorless_T * p_obs)
@@ -367,7 +369,7 @@ static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, const FOC_SensorlessCo
 */
 static void FOC_Sensorless_InitElectrical(FOC_Sensorless_T * p_obs, uint32_t lq_turn, accum32_t rs)
 {
-    p_obs->Stator.RL = (Stator_RL_T) { .R = rs, .L = accum32_mul(lq_turn, FRACT16_1_DIV_PI), .G = g_l_pu_turn(lq_turn) };
+    p_obs->Stator.RL = (Stator_RL_T) { .R = rs, /* .L = accum32_mul(lq_turn, FRACT16_1_DIV_PI), */ .G = g_l_pu_turn(lq_turn) };
 }
 
 
