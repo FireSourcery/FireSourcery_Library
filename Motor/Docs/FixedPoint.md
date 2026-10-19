@@ -188,7 +188,7 @@ d/dt over a tick is Δ · Fs, while ω_base is per radian, so a pu term with d/d
 
     v_pu = L_pu · (di_pu / dt) / ω_base = L_pu · Δi_pu · Fs / ω_base       per tick
 
-In the turn form Fs / ω_base = 1 / π, so v_pu = L_turn · Δi_pu / π. Rotational terms need no factor, as ω_pu supplies ω_base: ω_pu · L_pu · i_pu, ω_pu · ψ_pu. π lands on the derivative side, off the FOC decoupling path. Identification multiplies it back (`l_pu_turn_of_step`, `l_pu_turn_of_rs_tau_cycles`). The rad form, ω_base = Fs, has Fs / ω_base = 1: v_pu = L_rad · Δi_pu (`motor_v_stator`).
+In the turn form Fs / ω_base = 1 / π, so v_pu = L_turn · Δi_pu / π. Rotational terms need no factor, as ω_pu supplies ω_base: ω_pu · L_pu · i_pu, ω_pu · ψ_pu. π lands on the derivative side, off the FOC decoupling path. Identification multiplies it back (`l_pu_turn_of_step`, `l_pu_turn_of_rs_tau_cycles`). The rad form, ω_base = Fs, has Fs / ω_base = 1: v_pu = L_rad · Δi_pu (`stator_v_drop`).
 
 ## Rules
 

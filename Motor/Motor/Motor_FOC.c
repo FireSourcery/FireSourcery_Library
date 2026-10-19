@@ -227,7 +227,7 @@ void Motor_FOC_ClearFeedbackState(Motor_Context_T * p_motor)
     Passive State
     ProcAngleObserve
     Angle Observe VBemf FreeWheel and Stop State
-    Updates Vabc, Valpha, Vbeta, Vd, Vq
+    Updates Vd, Vq
 */
 /******************************************************************************/
 void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor)

@@ -31,8 +31,8 @@
     Differs from Hall/Encoder/SinCos: the underlying engine is push-driven (it
     needs i_αβ and v_αβ from FOC, not a peripheral). The integration layer
     invokes Sensorless_Sensor_Proc(p, p_foc) once per control tick, after the
-    FOC pipeline has captured i_abc and written v_αβ (i.e. after
-    Motor_FOC_AngleControl). The vtable's CAPTURE_ANGLE/CAPTURE_SPEED publish
+    FOC proc (i.e. after Motor_FOC_AngleControl). Proc captures FOC's αβ image
+    [Stator_AlphaBeta_T] and steps the observer on it. The vtable's CAPTURE_ANGLE/CAPTURE_SPEED publish
     observer state into RotorSensor_State idempotently.
 
     Only the sensorless start-up substates (Motor_Sensorless.c) drive Proc;
@@ -53,7 +53,7 @@ typedef const struct Sensorless_Sensor
 Sensorless_Sensor_T;
 
 /* Observer live state — file-scope static duration, held by the const table entry. */
-#define SENSORLESS_OBSERVER_ALLOC() (&(FOC_Sensorless_T){0})
+#define SENSORLESS_OBSERVER_ALLOC() (&(FOC_Sensorless_T){})
 
 extern const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE;
 

@@ -61,7 +61,6 @@ typedef struct Motor_UnitBasis
 Motor_UnitBasis_T;
 
 
-
 /*
     Conversions at the user boundary. Units into pu scale 1.0 to INT16_MAX, as [Phase_V_PuOfVolts].
 */
@@ -150,3 +149,11 @@ Motor_CmdFrame_T;
 // static inline Motor_Cmd_T Motor_Cmd_Speed(int16_t Value) { return (Motor_Cmd_T){ .Frame = MOTOR_CMD_FRAME_FORWARD, .Value = Value, .Mode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT }; }
 
 
+// typedef struct Motor_FOC_OperatingPoint
+// {
+//     alignas(4) fract16_t Vd, Vq;    /* [V_base] applied, or the back-EMF while freewheeling */
+//     alignas(4) fract16_t Id, Iq;    /* [I_base] */
+//     angle16_t Delta;                /* ω [angle16/Ts], the decoupling basis */
+//     ufract16_t VBus_Pu;             /* V_dc the voltages were produced under */
+// }
+// Motor_FOC_OperatingPoint_T;             /* 12 bytes */

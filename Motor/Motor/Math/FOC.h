@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "foc_math.h"
+#include "../Model/Stator.h"
 #include "Math/Fixed/fract16.h"
 #include "Math/PID/PID.h"
 
@@ -95,9 +96,8 @@ typedef struct FOC
     /* VOut */
     alignas(4) fract16_t Va, Vb, Vc;
 
-    /* Intermediate values */
-    fract16_t Ialpha, Ibeta;
-    fract16_t Valpha, Vbeta;
+    /* Stationary image of the control period, [FOC_CaptureStator] */
+    // Stator_AlphaBeta_T Stator;
 
     /*
         Inner current loop — pair has no semantic life outside the d-q frame.
@@ -189,6 +189,18 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     p_foc->Vc = fract16_sat(v.c);
 }
 
+/*
+    Stationary image, rotated back from the dq captured and commanded at θ: the proc itself carries no αβ.
+    Once per tick, after the proc. CaptureI closes the period the last VOut was applied across.
+*/
+// static inline void FOC_CaptureStator(FOC_T * p_foc)
+// {
+//     struct foc_alphabeta i = foc_inv_park(p_foc->Id, p_foc->Iq, p_foc->Sine, p_foc->Cosine);
+//     struct foc_alphabeta v = foc_inv_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+//     Stator_AlphaBeta_CaptureI(&p_foc->Stator, fract16_sat(i.alpha), fract16_sat(i.beta));
+//     Stator_AlphaBeta_CaptureVOut(&p_foc->Stator, fract16_sat(v.alpha), fract16_sat(v.beta));
+// }
+
 /******************************************************************************/
 /*
     VBemf of Freewheel
@@ -220,6 +232,7 @@ static inline void FOC_SetVWindow(FOC_T * p_foc, int32_t window) { p_foc->VWindo
     Direct V control
 */
 /******************************************************************************/
+// static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vBus, fract16_t vdReq, fract16_t vqReq)
 static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vCircle, fract16_t vdReq, fract16_t vqReq)
 {
     int32_t vq = interval_clamp(p_foc->VLimit, vqReq);
@@ -275,7 +288,7 @@ static inline void FOC_MatchIVState_Base(FOC_T * p_foc)
 
 /*
     Post-proc circle limit — windup correction after both PIDs run.
-    no sqrt during common case
+    no sqrt during common case without ff
     the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited.
 */
 static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
@@ -406,6 +419,8 @@ static void FOC_ClearCaptureState(FOC_T * p_foc)
 {
     p_foc->Id = 0;
     p_foc->Iq = 0;
+    // p_foc->Stator.Alpha.I = 0;
+    // p_foc->Stator.Beta.I = 0;
 }
 
 static void FOC_ClearOutputState(FOC_T * p_foc)
@@ -415,6 +430,8 @@ static void FOC_ClearOutputState(FOC_T * p_foc)
     p_foc->Va = 0;
     p_foc->Vb = 0;
     p_foc->Vc = 0;
+    // p_foc->Stator.Alpha.VOut = 0;
+    // p_foc->Stator.Beta.VOut = 0;
 }
 
 static void FOC_ResetFeedbackState(FOC_T * p_foc)
@@ -590,6 +607,7 @@ static void FOC_InitElectrical(FOC_T * p_foc, const FOC_Electrical_T * p_electri
 {
     p_foc->Electrical = *p_electrical;
     p_foc->LShift = fixed_bit_width(math_max(p_electrical->Ld, p_electrical->Lq) >> FRACT16_N_BITS);
+    // p_foc->Stator.RL = (Stator_RL_T) { .R = fract16_sat(p_electrical->Rs), .L = accum32_mul(p_electrical->Lq, FRACT16_1_DIV_PI) }; /* EEMF Lq, at the rad base L_turn / π */
 }
 
 static void FOC_InitFieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning_T * p_fwTuning)

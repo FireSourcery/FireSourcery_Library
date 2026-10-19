@@ -31,7 +31,7 @@ flowchart LR
     ADB --> Ref["Angle_SpeedPuRef_T: ω_pu ↔ Δθ"]
 ```
 
-ψ_turn is v_pu per [angle16/Ts]. A named base gives the angle per Ts at ω_pu = 1.0: `_pu_turn` a half turn, the Q15 full scale of Δθ; `_pu_rad` 1 rad, where the time-derivative term needs no factor, v = L_rad · Δi (`motor_v_stator`). x_turn = π · x_rad.
+ψ_turn is v_pu per [angle16/Ts]. A named base gives the angle per Ts at ω_pu = 1.0: `_pu_turn` a half turn, the Q15 full scale of Δθ; `_pu_rad` 1 rad, where the time-derivative term needs no factor, v = L_rad · Δi (`stator_v_drop`). x_turn = π · x_rad.
 
 ## Routing
 

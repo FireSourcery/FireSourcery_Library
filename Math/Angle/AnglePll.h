@@ -31,10 +31,42 @@
         phase error → PI → ω̂ → integrate → θ̂
 
     The caller's phase detector supplies the error, ≈ sin(θ̂ − θ). The PI regulates it to 0, so θ̂ lagging θ raises ω̂.
+    Or the caller supplies a vector along θ, and ProcVector detects it against θ̂.
 */
 /******************************************************************************/
 #include "Angle.h"
 #include "../PID/PID.h"
+
+/******************************************************************************/
+/*
+    Phase detector. x points along the tracked angle θ, as a resolver's (cos θ, sin θ).
+        |x|·sin(θ̂ − θ) = x·sin θ̂ − y·cos θ̂
+*/
+/******************************************************************************/
+static inline accum32_t angle_pll_error(fract16_t x, fract16_t y, fract16_t sin, fract16_t cos) { return fract16_mul(x, sin) - fract16_mul(y, cos); }
+
+
+static inline fract16_t angle_pll(ufract16_t mag_floor, fract16_t x, fract16_t y, fract16_t error)
+{
+    ufract16_t mag = fract16_vector_magnitude(x, y);
+    return (mag <= mag_floor) ? 0 : fract16_sat(fract16_div(error, mag));
+}
+
+/* sin(θ̂ − θ), |x| stripped so the loop gain holds across amplitude. 0 at or below the floor, where θ is indeterminate */
+static inline fract16_t angle_pll_error_normalized(ufract16_t mag_floor, fract16_t x, fract16_t y, fract16_t sin, fract16_t cos)
+{
+    // ufract16_t mag = fract16_vector_magnitude(x, y);
+    // return (mag <= mag_floor) ? 0 : fract16_sat(fract16_div(angle_pll_error(x, y, sin, cos), mag));
+    return angle_pll(mag_floor, x, y, angle_pll_error(x, y, sin, cos));
+}
+
+/* x already rotated into the frame of θ̂, so θ̂ = 0: sin(−∠x) */
+static inline fract16_t angle_pll_error_normalized_relative(ufract16_t mag_floor, fract16_t x, fract16_t y)
+{
+    // ufract16_t mag = fract16_vector_magnitude(x, y);
+    // return (mag <= mag_floor) ? 0 : fract16_sat(fract16_div(0 - (accum32_t)y, mag));
+    return angle_pll(mag_floor, x, y, 0 - (accum32_t)y);
+}
 
 /*
     [AnglePll_T]
@@ -48,6 +80,7 @@ typedef struct AnglePll
 }
 AnglePll_T;
 
+
 /******************************************************************************/
 /*
     Per tick
@@ -57,6 +90,13 @@ static inline angle16_t AnglePll_Proc(AnglePll_T * p_pll, fract16_t phaseError)
 {
     p_pll->PhaseError = phaseError;
     return Angle_Integrate(&p_pll->Base, PID_ProcPI(&p_pll->LoopFilter, phaseError, 0));
+}
+
+/* x along θ, detected against θ̂ */
+static inline angle16_t AnglePll_ProcVector(AnglePll_T * p_pll, ufract16_t magFloor, fract16_t x, fract16_t y)
+{
+    struct fract16_xy unit = Angle_UnitVector(&p_pll->Base);
+    return AnglePll_Proc(p_pll, angle_pll_error_normalized(magFloor, x, y, unit.y, unit.x));
 }
 
 /******************************************************************************/

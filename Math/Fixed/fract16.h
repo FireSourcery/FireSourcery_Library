@@ -210,6 +210,13 @@ static inline interval_t fract16_interval_div(interval_t i, fract16_t d)
     return interval_of_bounds(fract16_sat(fract16_div(i.low, divisor)), fract16_sat(fract16_div(i.high, divisor)));
 }
 
+/* accum32_mul(54612, 2^30)  */
+// static inline interval_t fract16_interval_div_(interval_t i, fract16_t d)
+// {
+//     accum32_t inv = fract16_div(FRACT16_SCALE, (d != 0) ? d : 1);
+//     return interval_of_bounds(fract16_sat(accum32_mul(i.low, inv)), fract16_sat(accum32_mul(i.high, inv)));
+// }
+
 /******************************************************************************/
 /*!
     fractional functions stay with hal layer.
@@ -217,13 +224,13 @@ static inline interval_t fract16_interval_div(interval_t i, fract16_t d)
 /******************************************************************************/
 /* runtime 32 bit */
 /* rad of turn */
-static inline accum32_t fract16_arc_unit(angle16_t theta) { return theta * (fract16_t)(2 * FRACT16_PI / 8) / (ANGLE16_PER_REVOLUTION / 8); }
+static inline accum32_t fract16_arc_unit(angle16_t theta) { return theta * (fract16_t)((int32_t)2 * FRACT16_PI / 8) / ((int32_t)ANGLE16_PER_REVOLUTION / 8); }
 /* turns of arc */
 /* input up to π radians */
 static inline angle16_t fract16_inv_arc(accum32_t arc_radians) { return fract16_mul(arc_radians, ANGLE16_PER_RADIAN); }
 
 /*  */
-static inline accum32_t fract16_arc_length(angle16_t theta, fract16_t r) { return fract16_mul(theta, r) * (fract16_t)(2 * FRACT16_PI / 8) / (ANGLE16_PER_REVOLUTION / 8); }
+static inline accum32_t fract16_arc_length(angle16_t theta, fract16_t r) { return fract16_arc_unit(fract16_mul(theta, r)); }
 
 
 /*  */

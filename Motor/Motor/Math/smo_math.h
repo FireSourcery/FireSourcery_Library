@@ -26,11 +26,17 @@
 /*!
     @file   smo_math.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Sliding-mode correction laws.
+
+    The innovation σ = î − i, the model's estimate against the measurement, drives a correction z
+    that takes the place of the unknown disturbance in the model. The model is the caller's.
 */
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
 
+
+/* σ, saturated. |î − i| reaches 2.0 */
+static inline fract16_t smo_sigma(fract16_t i_est, fract16_t i_meas) { return fract16_sat((accum32_t)i_est - i_meas); }
 
 /******************************************************************************/
 /*!
@@ -44,42 +50,8 @@
 /******************************************************************************/
 static inline fract16_t smo_sat(fract16_t thr, fract16_t x) { return fract16_sat(fract16_div(x, thr)); }
 
-/******************************************************************************/
-/*!
-    @brief  Sliding-Mode Current Observer — single-axis step (αβ frame).
-
-    Plant (per axis):
-        di/dt = (Ls)⁻¹ · ( v - Rs·i - e )
-
-    Discrete observer:
-        z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
-        î[k+1]  = î[k] + G_int · ( v[k] - Rs_pu·î[k] - z[k] )
-
-        G_int = dt · V_max / (Ls · I_max) = 1 / Ls_pu_rad = π / Ls_pu_turn
-
-    The switching variable z drives (î - i) → 0; its slow component
-    (extracted by lpf_step) is the back-EMF estimate ê used by the
-    angle tracker.
-
-    @param  G_pu      observer integrator gain = 1 / Ls_pu
-    @param  K_smo     sliding gain; > peak EMF in pu so z dominates ê
-    @param  thr       boundary-layer width (smo_sat); typ. 0.05..0.2 of i_max
-*/
-/******************************************************************************/
-static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i_meas) { return fract16_mul(K_smo, smo_sat(thr, i_est - i_meas)); }
-static inline accum32_t smo_v_eff(fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return ((accum32_t)v - fract16_mul(Rs_pu, i_est) - z); }
-// /* if G_pu > 1.0 */
-static inline accum32_t _smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return accum32_mul(G_pu, smo_v_eff(Rs_pu, v, i_est, z)); }
-// static inline fract16_t smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return fract16_sat((accum32_t)i_est + fract16_mul(G_pu, smo_v_eff(Rs_pu, v, i_est, z))); }
-static inline fract16_t smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return fract16_sat((accum32_t)i_est + _smo_i(G_pu, Rs_pu, v, i_est, z)); }
-
-struct smo_axis { fract16_t i_est, z; };
-
-static inline struct smo_axis smo_axis_step(fract16_t K_smo, fract16_t thr, accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t i_meas)
-{
-    fract16_t z = smo_z(K_smo, thr, i_est, i_meas);
-    return (struct smo_axis) { .i_est = smo_i(G_pu, Rs_pu, v, i_est, z), .z = z, };
-}
+/* First-order law. z = K_smo · sat(σ, thr) */
+static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t sigma) { return fract16_mul(K_smo, smo_sat(thr, sigma)); }
 
 
 /******************************************************************************/
@@ -126,6 +98,6 @@ struct sta_axis { fract16_t z, w; };
 /* Combined STA single-axis step — yields (z, w_next) from (w, î, i_meas). */
 static inline struct sta_axis sta_axis_step(fract16_t lambda, fract16_t alpha_dt, fract16_t w, fract16_t i_est, fract16_t i_meas)
 {
-    fract16_t sigma = fract16_sat((accum32_t)i_est - i_meas);
+    fract16_t sigma = smo_sigma(i_est, i_meas);
     return (struct sta_axis) { .z = sta_z(lambda, w, sigma), .w = sta_w_step(alpha_dt, w, sigma), };
 }

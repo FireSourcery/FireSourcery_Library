@@ -53,20 +53,22 @@ static inline accum32_t _VBus_FOC_IBusOf(const VBus_T * p_vbus, accum32_t power)
 static inline accum32_t VBus_FOC_IBusOf(const VBus_T * p_vbus, accum32_t power) { return foc_i_dc(power, VBus_Inv_Pu(p_vbus)); }
 
 
+
+/* VBus is the conceptual source. FOC_T acts as collaborator */
 /******************************************************************************/
 /*!
     Supply limits as q-axis limits. i_q along v_q draws from the supply, i_q against v_q returns to it.
 */
 /******************************************************************************/
-// /* Power balance at the operating point (powerD = v_d·i_d, vq) */
+/* Power balance at the operating point (powerD = v_d·i_d, vq) */
 // static inline uint16_t VBus_IqDischargeLimit_Pu(const VBus_T * p_vbus, accum32_t powerD, fract16_t vq) { return foc_iq_discharge_limit(VBus_IDischargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), powerD, vq); }
 // static inline uint16_t VBus_IqChargeLimit_Pu(const VBus_T * p_vbus, accum32_t powerD, fract16_t vq) { return foc_iq_charge_limit(VBus_IChargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), powerD, vq); }
-// static inline uint16_t VBus_FOC_IqDischargeLimit_Pu(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_discharge_limit(VBus_IDischargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
-// static inline uint16_t VBus_FOC_IqChargeLimit_Pu(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_charge_limit(VBus_IChargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
+static inline uint16_t VBus_FOC_IqDischargeLimit_Pu(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_discharge_limit(VBus_IDischargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
+static inline uint16_t VBus_FOC_IqChargeLimit_Pu(const VBus_T * p_vbus, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_charge_limit(VBus_IChargeLimit_Pu(p_vbus), VBus_Pu(p_vbus), foc_power_d(vd, id), vq); }
 
 // /* Phase-current bound on |i_dq| */
-// static inline uint16_t VBus_IPhaseDischargeLimit_Pu(const VBus_T * p_vbus) { return foc_i_phase_of_i_dc(VBus_IDischargeLimit_Pu(p_vbus)); }
-// static inline uint16_t VBus_IPhaseChargeLimit_Pu(const VBus_T * p_vbus) { return foc_i_phase_of_i_dc(VBus_IChargeLimit_Pu(p_vbus)); }
+static inline uint16_t VBus_IPhaseDischargeLimit_Pu(const VBus_T * p_vbus) { return foc_i_phase_of_i_dc(VBus_IDischargeLimit_Pu(p_vbus)); }
+static inline uint16_t VBus_IPhaseChargeLimit_Pu(const VBus_T * p_vbus) { return foc_i_phase_of_i_dc(VBus_IChargeLimit_Pu(p_vbus)); }
 
 
 /******************************************************************************/
@@ -80,14 +82,6 @@ static inline interval_t VBus_FOC_IqLimits(const VBus_T * p_vbus, fract16_t vd, 
 
 /* [foc_iq_phase_limits], motion as the sign of the rotor speed */
 static inline interval_t VBus_FOC_IqPhaseLimits(const VBus_T * p_vbus, sign_t motion, fract16_t id) { return foc_iq_phase_limits(VBus_ILimitInterval(p_vbus), motion, id); }
-
-
-/* VBus is the conceptual source. FOC_T acts as collaborator */
-// static inline interval_t VBus_FOC_IqLimits(const VBus_T * p_vbus, const FOC_T * p_foc)
-// {
-//     return foc_iq_limits(VBus_ILimitInterval(p_vbus), VBus_Pu(p_vbus), foc_power_d(FOC_Vd(p_foc), FOC_Id(p_foc)), FOC_Vq(p_foc));
-// }
-
 
 
 

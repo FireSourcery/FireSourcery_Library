@@ -57,34 +57,17 @@ static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { ret
 
 /******************************************************************************/
 /*!
-    Push-driven entrypoints.
-
-    Step reads i_αβ from FOC (captured this tick) and v_αβ from the observer's
-    own store (applied last tick). CaptureVoltage then stores the v_αβ this tick
-    commits, for the next Step. Order is load-bearing — CaptureVoltage before
-    Step would feed the observer a v that has not been applied yet.
+    Push-driven entrypoint.
 */
 /******************************************************************************/
-/* Push-driven step. */
-static inline void Sensorless_Sensor_Step(const Sensorless_Sensor_T * p_sensor, const FOC_T * p_foc)
-{
-    FOC_Sensorless_Step(p_sensor->P_OBSERVER, p_foc->Ialpha, p_foc->Ibeta);
-}
-
-static inline void Sensorless_Sensor_CaptureVoltage(const Sensorless_Sensor_T * p_sensor, fract16_t v_alpha, fract16_t v_beta)
-{
-    FOC_Sensorless_CaptureVoltage(p_sensor->P_OBSERVER, v_alpha, v_beta);
-}
-
 /*
-    One control tick of the observer. Call after the FOC proc has run Clarke on
-    the sampled i_abc and InvClarkePark onto v_αβ — a single Motor_FOC_AngleControl
-    spans both, so both halves land here.
+    One control tick of the observer, after the FOC proc: image the period the proc's sample ends, then step on it.
+    Motor_FOC_AngleControl runs the proc in each substate.
 */
-static inline void Sensorless_Sensor_Proc(const Sensorless_Sensor_T * p_sensor, const FOC_T * p_foc)
+static inline void Sensorless_Sensor_Proc(const Sensorless_Sensor_T * p_sensor, FOC_T * p_foc)
 {
-    Sensorless_Sensor_Step(p_sensor, p_foc);
-    Sensorless_Sensor_CaptureVoltage(p_sensor, p_foc->Valpha, p_foc->Vbeta);
+    FOC_CaptureStator(p_foc);
+    FOC_Sensorless_Step(p_sensor->P_OBSERVER, &p_foc->Stator);
 }
 
 /* Bumpless transfer from open-loop ramp into closed-loop observer tracking. */
@@ -99,8 +82,7 @@ static inline const FOC_Sensorless_T * Sensorless_Sensor_GetObserver(const Senso
 }
 
 /*
-    Observer drive. Runs after the FOC proc so i_αβ is this tick's sample and
-    v_αβ is this tick's commit — see Sensorless_Sensor_Proc for the ordering.
+    Observer drive. Runs after the FOC proc, see Sensorless_Sensor_Proc.
 */
 static void ProcObserver(Motor_T * p_motor)
 {

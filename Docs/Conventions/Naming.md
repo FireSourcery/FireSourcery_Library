@@ -21,6 +21,7 @@ Module_Config_T      — Persistent parameters (NVM-storable)
 Module_Calib_T       — User-unit parameters
 Module_Ref_T         — Precomputed/derived from Config
 
+alternatively struct without typedef for data objects, or
 Module_Data_T        — Pure passive data (no invariants)
 Module_Input_T       — Data written by external, read by module
 Module_Output_T      — Data written by module, read by external
@@ -34,7 +35,7 @@ _Data suffix = no behavioral invariants, any field writeable.
 // "_Output" suffix — this module writes to it, another module reads from it
 <!-- _Calib	User-facing units	Persistent (NVM)	User/host tool -->
 
-Function Prefixes by API `set`, group use case independent from other group.
+Function Prefixes by API group, use case independent from other group.
 StateMachine_Branch_ProcInput() rather than StateMachine_ProcInput_Branch
 Function Suffixes by overload, concurrent use.
 GetSpeed_Rpm

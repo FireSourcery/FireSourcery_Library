@@ -124,11 +124,9 @@ static inline uint32_t _angle_dt32_per_count(uint32_t fs, uint32_t angle32_per_c
 */
 static inline uint32_t angle_speed_pu32_per_count(uint32_t sample_freq, uint32_t cpr, angle_freq_t base) { return ((uint64_t)(FRACT16_SCALE << 15) * ANGLE16_PER_REVOLUTION * sample_freq) / ((uint64_t)cpr * base); }
 
-// /* Generic base, args scaled by caller. speed_pu = ΔD · [sample_freq / cpr], 1.0 at 1 rev/s. e.g. rpm base: (sample_freq · 60, cpr · base_rpm) */
-// static inline uint32_t accum32_per_count(uint32_t sample_freq, uint32_t cpr) { return ((uint64_t)(FRACT16_SCALE << 15) * sample_freq) / cpr; }
+/* Generic base, args scaled by caller. speed_pu = ΔD · [sample_freq  / (cpr · f)] */
+// static inline uint32_t angle_speed_pu32_per_count_hz(uint32_t sample_freq, uint32_t cpr, uint32_t base_f) { return ((uint64_t)(FRACT16_SCALE << 15)  * sample_freq) / ((uint64_t)cpr * base_f); }
 
-// /* speed_pu = ΔD · [sample_freq · 60 / (cpr · base_rpm)] */
-// static inline uint32_t rpm_accum32_per_count(uint32_t sample_freq, uint32_t cpr, uint32_t base_rpm) { return ((uint64_t)(FRACT16_SCALE << 15) * SECONDS_PER_MINUTE * sample_freq) / ((uint64_t)cpr * base_rpm); }
 
 
 /******************************************************************************/

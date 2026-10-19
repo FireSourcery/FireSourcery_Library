@@ -30,8 +30,9 @@
             PLL phase detector, and EMF-to-angle/speed extraction.
 
     Stateless per-tick step functions that compose into a sensorless rotor
-    position observer; state is owned by the caller. All signals share the
-    fract16 per-unit basis used by foc_math.h / motor_params_math.h:
+    position observer; state is owned by the caller. The plant is stator_math.h,
+    the correction laws smo_math.h, the smoothing Math/Filter. All signals share the
+    fract16 per-unit basis used by foc_math.h / motor_electrical_math.h:
 
     Two families are included, distinguished by working frame:
 
@@ -45,14 +46,15 @@
 */
 /******************************************************************************/
 #include "foc_math.h"
+#include "stator_math.h"
+#include "smo_math.h"
 #include "Math/Fixed/fract16.h"
-
 
 /******************************************************************************/
 /*!
     @brief  First-order discrete low-pass step.
 
-        y[k+1] = y[k] + k_lp · ( x[k] - y[k] ),       k_lp = dt / (τ + dt)
+        y[k+1] = y[k] + k_lp · (x[k] - y[k]),       k_lp = dt / (τ + dt)
 
     Used to extract the equivalent control of z (≈ ê) from the SMO output and
     to smooth ê before the angle tracker. Choose τ such that the cutoff sits
@@ -60,6 +62,7 @@
 */
 /******************************************************************************/
 static inline fract16_t lpf_step(fract16_t k_lp, fract16_t y, fract16_t x) { return fract16_sat((accum32_t)y + fract16_mul(k_lp, x - y)); }
+
 
 
 /******************************************************************************/
@@ -103,11 +106,43 @@ static inline fract16_t foc_pll_error_normalized(ufract16_t e_floor, fract16_t e
     pass +1 forward, -1 reverse.
 
     More accurate than the small-signal PLL detector but has no inherent
-    smoothing — pair with foc_lpf_step on e_αβ before calling for noisy
+    smoothing — pair with lpf_step on e_αβ before calling for noisy
     SMO output.
 */
 /******************************************************************************/
 static inline angle16_t foc_theta_of_emf(sign_t sign, fract16_t e_alpha, fract16_t e_beta) { return (sign >= 0) ? fract16_atan2(e_alpha, -e_beta) : fract16_atan2(-e_alpha, e_beta); }
+
+/******************************************************************************/
+/*!
+    @brief  EEMF phase-error extraction (estimated dq frame).
+
+    Takes the LPF'd EEMF (ê_d, ê_q) — typically lpf_step on (zd, zq) from
+    the observer output — and returns either the raw small-signal phase signal
+    (ê_d), a magnitude-normalised phase signal (≈ sin(Δθ)), or the full angle
+    correction Δθ to apply to θ̂.
+
+    Sign of ê_q encodes rotation direction (positive for forward, negative for
+    reverse). Caller supplies `sign` to disambiguate; pass +1 forward, -1 reverse.
+*/
+/******************************************************************************/
+/*
+    Normalized phase error ≈ −sin(θ − θ̂) in either direction, independent of |E|.
+    |ê| strips the magnitude of E, not its sign: `sign` restores the direction, e.g. sign(ω̂).
+    The signed ê_q would also restore it, but would make θ̂ = θ + π a second stable lock.
+    Returns 0 when |ê| is below the noise floor (lock indeterminate).
+*/
+// static inline fract16_t foc_eemf_dq_error_normalized(ufract16_t e_floor, fract16_t ed, fract16_t eq)
+// {
+//     ufract16_t mag = fract16_vector_magnitude(ed, eq);
+//     return (mag <= e_floor) ? 0 : (fract16_t)fract16_div(ed, mag);
+// }
+
+/* Full angle correction Δθ to add to θ̂. Large-signal, no small-Δθ assumption. */
+// static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_t eq)
+// {
+//     return (sign >= 0) ? fract16_atan2(ed, eq) : fract16_atan2(-ed, -eq);
+// }
+
 
 /******************************************************************************/
 /*!
@@ -127,50 +162,52 @@ static inline angle16_t foc_theta_of_emf(sign_t sign, fract16_t e_alpha, fract16
 static inline angle16_t foc_speed_of_emf(accum32_t Psi_pu, ufract16_t e_mag) { return (angle16_t)fract16_div(e_mag, Psi_pu); }
 
 
-/*
-    Turn base, ω_base = π / Ts
-    G = Ts / L · (V_base/I_base)
-*/
-static inline accum32_t foc_g_pu_of_l_turn(uint32_t l_pu_turn) { return (uint64_t)FRACT16_PI * FRACT16_SCALE / l_pu_turn; }
-
-/*
-    1 / (L_pu · Fs / ω_base)
-*/
-static inline accum32_t foc_g_pu_of_l_pu(uint32_t angle_speed_base, uint32_t l_pu)
-{
-    return (uint64_t)angle_speed_base * FRACT16_SCALE * FRACT16_SCALE * ANGLE16_PER_REVOLUTION / ((uint64_t)ANGLE32_PER_RADIAN * l_pu);
-}
-
 /******************************************************************************/
 /*!
-    @brief  dq voltage model — back-EMF in the estimated dq frame, from the
-            steady-state stator voltage equation (did/dt = diq/dt = 0).
+    @brief  Sliding-Mode Current Observer — single-axis step (αβ frame).
 
-    Lq on both axes (EEMF form). Rs + ω·Lq·J is invariant under rotation, so the
-    saliency lands in E and ê_d stays a pure phase detector, IPM included:
-        ê_d = vd − Rs·id − foc_vd_ff(ω·Lq, iq)      = vd − Rs·id + ω·Lq·iq    ≈ −E·sin(θ − θ̂)
-        ê_q = vq − Rs·iq − foc_vq_ff(ω·Lq, 0, id)   = vq − Rs·iq − ω·Lq·id    ≈  E·cos(θ − θ̂)
-        E = ω·(ψ_f + (Ld − Lq)·id), signed with ω
+    Plant (per axis), the current model [stator_i_next]:
+        di/dt = (Ls)⁻¹ · ( v - Rs·i - e )
 
-    Caller precomputes ω·Lq in v_pu basis, as for the decoupling feedforward.
-    No internal state, no di/dt term — cheapest of the dq-frame trackers. Needs Rs and Lq;
-    a Lq error offsets θ̂ in proportion to the load current.
+    Discrete observer, across the period ending at the sample i_meas, v held across it:
+        î[k]  = î[k-1] + G_pu · ( v - Rs_pu·î[k-1] - z[k-1] )     z in place of e
+        z[k]  = K_smo · sat( î[k] - i_meas[k], thr )
+
+        G_pu = dt · V_max / (Ls · I_max) = 1 / Ls_pu_rad = π / Ls_pu_turn
+
+    The recurrence of z[k] then î[k+1], bounded at the sample instead: that form takes
+    the v about to be applied, this one the v applied, so it runs on capture alone.
+
+
+    The switching variable z drives (î - i) → 0; its slow component
+    (extracted by lpf_step) is the back-EMF estimate ê used by the
+    angle tracker. The cutoff sits above the maximum tracked electrical
+    frequency, below the chatter band.
+
+    @param  G_pu      observer integrator gain = 1 / Ls_pu_rad
+    @param  K_smo     sliding gain; > peak EMF in pu so z dominates ê
+    @param  thr       boundary-layer width (smo_sat); typ. 0.05..0.2 of i_max
 */
 /******************************************************************************/
-static inline accum32_t foc_dq_emf_d(fract16_t Rs_pu, accum32_t omega_Lq, accum32_t vd, accum32_t id, accum32_t iq) { return vd - fract16_mul(Rs_pu, id) - foc_vd_ff(omega_Lq, iq); }
-static inline accum32_t foc_dq_emf_q(fract16_t Rs_pu, accum32_t omega_Lq, accum32_t vq, accum32_t id, accum32_t iq) { return vq - fract16_mul(Rs_pu, iq) - foc_vq_ff(omega_Lq, 0, id); }
+struct smo_axis { fract16_t i_est, z; };
 
-/* Rotating frame, steady state: e = v − R·i − ω·L·J·i. (ω·Ld, ω·Lq) gives e_q = ω·ψ; ω·Lq on both axes gives e_q = E */
-// static inline struct foc_dq foc_emf_dq(fract16_t r, accum32_t omega_ld, accum32_t omega_lq, struct foc_dq v, struct foc_dq i)
+static inline struct smo_axis smo_axis_step(fract16_t K_smo, fract16_t thr, accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est_prev, fract16_t z_prev, fract16_t i_meas)
+{
+    fract16_t i_est = fract16_sat(stator_i_next(Rs_pu, G_pu, i_est_prev, v, z_prev));
+    return (struct smo_axis) { .i_est = i_est, .z = smo_z(K_smo, thr, smo_sigma(i_est, i_meas)), };
+}
+
+// /*
+//     Discrete observer:
+//         z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
+//         î[k+1]  = î[k] + G_int · ( v[k] - Rs_pu·î[k] - z[k] )
+// */
+// static inline struct smo_axis smo_axis_step(fract16_t K_smo, fract16_t thr, accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t i_meas)
 // {
-//     return (struct foc_dq) { .d = foc_dq_emf_d(r, omega_lq, v.d, i.d, i.q), .q = foc_dq_emf_q(r, omega_ld, v.q, i.d, i.q) };
+//     fract16_t z = smo_z(K_smo, thr, i_est, i_meas);
+//     return (struct smo_axis) { .i_est = smo_i(G_pu, Rs_pu, v, i_est, z), .z = z, };
 // }
 
-// /* Stationary frame, per axis: e = v − R·i − L·Δi. The axes don't couple. L = Lq gives the extended EMF of a salient rotor */
-// static inline struct foc_alphabeta foc_emf_alphabeta(accum32_t r, accum32_t l_rad, struct foc_alphabeta v, struct foc_alphabeta i, struct foc_alphabeta i_prev)
-// {
-//     return (struct foc_alphabeta) { .alpha = motor_emf(r, l_rad, i_prev.alpha, i.alpha, v.alpha), .beta = motor_emf(r, l_rad, i_prev.beta, i.beta, v.beta) };
-// }
 
 /******************************************************************************/
 /*!
@@ -198,7 +235,7 @@ static inline accum32_t foc_dq_emf_q(fract16_t Rs_pu, accum32_t omega_Lq, accum3
 
         G_pu = dt · V_max / (Lq · I_max) = 1 / Lq_pu
 
-    (zd, zq) drive (î − i) → 0; their LPF'd values (foc_lpf_step) are (ê_d, ê_q):
+    (zd, zq) drive (î − i) → 0; their LPF'd values (lpf_step) are (ê_d, ê_q):
         ê_d → 0      at lock
         ê_q → ω·(ψ_f + (Ld−Lq)·id)
 
@@ -212,45 +249,13 @@ static inline accum32_t foc_dq_emf_q(fract16_t Rs_pu, accum32_t omega_Lq, accum3
     to prove and requires reasonable startup alignment.
 */
 /******************************************************************************/
-// static inline fract16_t foc_eemf_zd(fract16_t K_smo, fract16_t thr, fract16_t id_est, fract16_t id) { return  smo_z(K_smo, thr, id_est, id); }
-// static inline fract16_t foc_eemf_zq(fract16_t K_smo, fract16_t thr, fract16_t iq_est, fract16_t iq) { return  smo_z(K_smo, thr, iq_est, iq); }
+static inline fract16_t smo_eemf_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i) { return smo_z(K_smo, thr, smo_sigma(i_est, i)); }
+static inline fract16_t smo_eemf_i_decouple(accum32_t G, fract16_t Rs, fract16_t v, accum32_t v_ff, fract16_t i_est, fract16_t z) { return fract16_sat(stator_i_next(Rs, G, i_est, (accum32_t)v - v_ff, z)); }
 
-// static inline fract16_t foc_smo_i_decouple(accum32_t G, fract16_t Rs, fract16_t v, accum32_t v_ff, fract16_t i_est, fract16_t z) { return  smo_i(G, Rs, ((accum32_t)v - v_ff), i_est, z); }
-// /* vd_ff on iq_est */
+/* vd_ff on iq_est */
 // static inline fract16_t foc_eemf_id(accum32_t G_pu, fract16_t Rs_pu, fract16_t vd, accum32_t vd_ff, fract16_t id_est, fract16_t zd) { return smo_i_decouple(G_pu, Rs_pu, vd, vd_ff, id_est, zd); }
-// /* vq_ff on id_est */
-// static inline fract16_t foc_eemf_iq(accum32_t G_pu, fract16_t Rs_pu, fract16_t vq, accum32_t vq_ff, fract16_t iq_est, fract16_t zq) { return  smo_i_decouple(G_pu, Rs_pu, vq, vq_ff, iq_est, zq); }
+/* vq_ff on id_est */
+// static inline fract16_t foc_eemf_iq(accum32_t G_pu, fract16_t Rs_pu, fract16_t vq, accum32_t vq_ff, fract16_t iq_est, fract16_t zq) { return smo_i_decouple(G_pu, Rs_pu, vq, vq_ff, iq_est, zq); }
 
-
-/******************************************************************************/
-/*!
-    @brief  EEMF phase-error extraction (estimated dq frame).
-
-    Takes the LPF'd EEMF (ê_d, ê_q) — typically foc_lpf_step on (zd, zq) from
-    the observer output — and returns either the raw small-signal phase signal
-    (ê_d), a magnitude-normalised phase signal (≈ sin(Δθ)), or the full angle
-    correction Δθ to apply to θ̂.
-
-    Sign of ê_q encodes rotation direction (positive for forward, negative for
-    reverse). Caller supplies `sign` to disambiguate; pass +1 forward, -1 reverse.
-*/
-/******************************************************************************/
-/*
-    Normalized phase error ≈ −sin(θ − θ̂) in either direction, independent of |E|.
-    |ê| strips the magnitude of E, not its sign: `sign` restores the direction, e.g. sign(ω̂).
-    The signed ê_q would also restore it, but would make θ̂ = θ + π a second stable lock.
-    Returns 0 when |ê| is below the noise floor (lock indeterminate).
-*/
-static inline fract16_t foc_eemf_dq_error_normalized(sign_t sign, ufract16_t e_floor, fract16_t ed, fract16_t eq)
-{
-    ufract16_t mag = fract16_vector_magnitude(ed, eq);
-    return (mag <= e_floor) ? 0 : (fract16_t)(sign * fract16_div_sat(ed, mag));
-}
-
-/* Full angle correction Δθ to add to θ̂. Large-signal, no small-Δθ assumption. */
-// static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_t eq)
-// {
-//     return (sign >= 0) ? fract16_atan2(ed, eq) : fract16_atan2(-ed, -eq);
-// }
 
 

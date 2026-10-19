@@ -29,6 +29,7 @@
     @brief  FOC pure math functions.
 */
 /******************************************************************************/
+#include "motor_electrical_math.h"
 #include "Math/Fixed/fract16.h"
 #include "Math/Fixed/fract16e.h"
 
@@ -202,26 +203,54 @@ static inline accum32_t _foc_vq_ff_direct(accum32_t Ld_pu, accum32_t psi_pu, fra
 
 /******************************************************************************/
 /*!
+    @brief  dq voltage model — back-EMF in the estimated dq frame, from the
+            steady-state stator voltage equation (did/dt = diq/dt = 0).
+
+    Lq on both axes (EEMF form). Rs + ω·Lq·J is invariant under rotation, so the
+    saliency lands in E and ê_d stays a pure phase detector, IPM included:
+        ê_d = vd − Rs·id − foc_vd_ff(ω·Lq, iq)      = vd − Rs·id + ω·Lq·iq    ≈ −E·sin(θ − θ̂)
+        ê_q = vq − Rs·iq − foc_vq_ff(ω·Lq, 0, id)   = vq − Rs·iq − ω·Lq·id    ≈  E·cos(θ − θ̂)
+        E = ω·(ψ_f + (Ld − Lq)·id), signed with ω
+
+    Caller precomputes ω·Lq in v_pu basis, as for the decoupling feedforward.
+    No internal state, no di/dt term — cheapest of the dq-frame trackers. Needs Rs and Lq;
+    a Lq error offsets θ̂ in proportion to the load current.
+*/
+/******************************************************************************/
+/* One rotating axis at the operating point, signals DC: v = Rs·i + v_ff + e. v_ff couples in the other axis, [foc_vd_ff] [foc_vq_ff] */
+static inline accum32_t foc_vemf_dq_axis(fract16_t Rs_pu, accum32_t v, accum32_t v_ff, accum32_t i) { return v - fract16_mul(Rs_pu, i) - v_ff; }
+
+static inline accum32_t foc_vemf_d(fract16_t Rs_pu, accum32_t omega_Lq, accum32_t vd, accum32_t id, accum32_t iq) { return foc_vemf_dq_axis(Rs_pu, vd, foc_vd_ff(omega_Lq, iq), id); }
+static inline accum32_t foc_vemf_q(fract16_t Rs_pu, accum32_t omega_Lq, accum32_t vq, accum32_t id, accum32_t iq) { return foc_vemf_dq_axis(Rs_pu, vq, foc_vq_ff(omega_Lq, 0, id), iq); }
+
+/******************************************************************************/
+/*!
 
 */
 /******************************************************************************/
 /*
     limit around d
     mag_limit^2 - d^2 = q^2
+    no sqrt on back-calculation limit
 */
 static inline struct foc_dq foc_circle_limit(fract16_t d, fract16_t q, ufract16_t magnitude_limit)
 {
-    uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
+    uint32_t mag_limit_squared = (uint32_t)magnitude_limit * magnitude_limit;
     uint32_t d_squared = (int32_t)d * d;
     uint32_t q_squared = (int32_t)q * q;
 
-    /* abs(d) > d_limit */
+    /* abs(d) > d_limit. gcc optimizes away when d is 0 */
     if (d_squared > mag_limit_squared) { return (struct foc_dq) { .d = math_sign(d) * magnitude_limit, .q = 0 }; }
     /* |Vdq| > magnitude_limit */
     if (d_squared + q_squared > mag_limit_squared) { return (struct foc_dq) { .d = d, .q = math_sign(q) * fixed_sqrt(mag_limit_squared - d_squared) }; }
     return (struct foc_dq) { .d = d, .q = q };
 }
 
+/* saturate into the fract16 domain only; foc_circle_limit applies the radius */
+static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t magnitude_limit)
+{
+    return foc_circle_limit(fract16_sat(d), fract16_sat(q), magnitude_limit);
+}
 
 /*
     q budget remaining after d has claimed its share of the circle.
@@ -235,25 +264,6 @@ static inline ufract16_t foc_q_circle_limit(ufract16_t magnitude_limit, fract16_
     return (d_squared < limit_squared) ? fixed_sqrt(limit_squared - d_squared) : 0U;
 }
 
-
-// static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t magnitude_limit)
-// {
-//     if (d > (int32_t)magnitude_limit) return (struct foc_dq) { .d = (fract16_t)magnitude_limit, .q = 0 };
-//     if (d < -(int32_t)magnitude_limit) return (struct foc_dq) { .d = -(fract16_t)magnitude_limit, .q = 0 };
-
-//     /* d now fits int16 and |d| ≤ magnitude_limit, so d*d ≤ magnitude_limit² fits uint32. */
-//     uint32_t q_max = fixed_sqrt((uint32_t)magnitude_limit * magnitude_limit - (d * d));
-
-//     return (struct foc_dq) { .d = (fract16_t)d, .q = math_clamp(q, -(int32_t)q_max, (int32_t)q_max) };
-// }
-
-static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t magnitude_limit)
-{
-    fract16_t d_limited = math_clamp(d, -(int32_t)magnitude_limit, magnitude_limit);
-    int32_t q_max = foc_q_circle_limit(magnitude_limit, d_limited);
-    return (struct foc_dq) { .d = d_limited, .q = (fract16_t)math_clamp(q, -q_max, q_max) };
-}
-
 /******************************************************************************/
 /*!
     Power Balance
@@ -262,6 +272,11 @@ static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t
     Powers are in v·i units, the dq products without the 3/2.
 */
 /******************************************************************************/
+static inline accum32_t foc_power_d(fract16_t vd, fract16_t id) { return fract16_mul(vd, id); }
+static inline accum32_t foc_power_q(fract16_t vq, fract16_t iq) { return fract16_mul(vq, iq); }
+static inline accum32_t foc_active_power(fract16_t vd, fract16_t id, fract16_t vq, fract16_t iq) { return foc_power_d(vd, id) + foc_power_q(vq, iq); }
+static inline accum32_t foc_reactive_power(fract16_t vd, fract16_t id, fract16_t vq, fract16_t iq) { return fract16_mul(vq, id) - fract16_mul(vd, iq); }
+
 /*
     i_dc = 3/2·(v_d·i_d + v_q·i_q) / V_dc, by the reciprocal 1 / V_dc.
     |v_dq| < 2·V_dc keeps power·v_dc_inv within 32 bits. The _ form omits the 3/2, keeping the sign within fract16 range.
@@ -269,33 +284,11 @@ static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t
 static inline accum32_t _foc_i_dc(accum32_t power, accum32_t v_dc_inv) { return fract16_mul(power, v_dc_inv); }
 static inline accum32_t foc_i_dc(accum32_t power, accum32_t v_dc_inv) { return _foc_i_dc(power, v_dc_inv) * 3 / 2; }
 
-/* 2/3·V_dc, the power per unit i_dc */
-static inline accum32_t foc_power_per_i_dc(ufract16_t v_dc) { return fract16_mul(v_dc, FRACT16_2_DIV_3); }
 /* 2/3·V_dc·i_dc, the power that carries i_dc */
-static inline accum32_t foc_power_of_i_dc(ufract16_t i_dc, ufract16_t v_dc) { return fract16_mul(i_dc, foc_power_per_i_dc(v_dc)); }
-
-/*
-    The phase current that bounds i_dc at every operating point, linear SVPWM |v_dq| <= V_dc/√3:
-        i_dc = 3/2·(v_d·i_d + v_q·i_q) / V_dc <= √3/2·|i_dq|   =>   |i_dq| <= 2/√3·i_dc
-    Exact at full modulation and unity power factor, conservative below.
-*/
-static inline ufract16_t foc_i_phase_of_i_dc(ufract16_t i_dc) { return math_min(fract16_mul(i_dc, FRACT16_2_DIV_SQRT3), FRACT16_MAX); }
-
-/*
-
-*/
-static inline accum32_t foc_power_d(fract16_t vd, fract16_t id) { return fract16_mul(vd, id); }
-static inline accum32_t foc_power_q(fract16_t vq, fract16_t iq) { return fract16_mul(vq, iq); }
-static inline accum32_t foc_active_power(fract16_t vd, fract16_t id, fract16_t vq, fract16_t iq) { return foc_power_d(vd, id) + foc_power_q(vq, iq); }
-static inline accum32_t foc_reactive_power(fract16_t vd, fract16_t id, fract16_t vq, fract16_t iq) { return fract16_mul(vq, id) - fract16_mul(vd, iq); }
-
+static inline accum32_t foc_power_of_i_dc(ufract16_t i_dc, ufract16_t v_dc) { return fract16_mul(i_dc, fract16_mul(v_dc, FRACT16_2_DIV_3)); }
 
 /* |i_q| = power / |v_q|. None once the power is spent, open toward v_q = 0 */
 static inline ufract16_t foc_iq_of_power(accum32_t power, fract16_t vq) { return math_min(fract16_div(math_max(power, 0), math_max(math_abs(vq), 1)), FRACT16_MAX); }
-
-// /* |i_q| = power / |v_q|. None once the power is spent. v_q = 0 carries no q-axis power, any i_q holds */
-// static inline ufract16_t foc_iq_of_power(accum32_t power, fract16_t vq) { return (vq == 0) ? FRACT16_MAX : math_min(fract16_div(math_max(power, 0), math_abs(vq)), FRACT16_MAX); }
-
 
 /*
     Inverse at the operating point, i_d held. The |i_q| at which the inverter
@@ -313,19 +306,22 @@ static inline ufract16_t foc_iq_charge_limit(ufract16_t i_chg, ufract16_t v_dc, 
 /*
     Power balance at the operating point, i_d held.
         v_q·i_q ∈ P_q = 2/3·V_dc·i_dc − v_d·i_d   ⟹   i_q ∈ P_q / v_q
-    i_q along v_q draws from the supply, against v_q returns to it. v_q = 0 moves no q-axis power, both sides open.
-    P_q holds 0: a d-axis that spends a side's budget leaves that side no i_q, rather than a reversed one.
+    v_q = 0 takes the v_q > 0 orientation. A zero key would close the window at rest, where i_q = 0 holds v_q = 0.
 */
 static inline interval_t foc_iq_limits(interval_t i_dc, ufract16_t v_dc, accum32_t power_d, fract16_t vq)
 {
-    interval_t power_q = interval_offset(fract16_interval_scale(i_dc, foc_power_per_i_dc(v_dc)), -power_d);
-    return fract16_interval_div(interval_hull(power_q, (interval_t){ .low = 0, .high = 0 }), vq);
+    ufract16_t iq_dis = foc_iq_discharge_limit(i_dc.high, v_dc, power_d, vq);
+    ufract16_t iq_chg = foc_iq_charge_limit(-i_dc.low, v_dc, power_d, vq);
+    return interval_of_sign((vq < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE, iq_dis, iq_chg);
 }
 
-// static inline interval_t foc_iq_limits(interval_t i_dc, ufract16_t v_dc, accum32_t power_d, fract16_t vq)
-// {
-//     return fract16_interval_div(interval_shift(fract16_interval_scale(i_dc, foc_power_of_i_dc(...)), -power_d), vq);
-// }
+
+/*
+    The phase current that bounds i_dc at every operating point, linear SVPWM |v_dq| <= V_dc/√3:
+        i_dc = 3/2·(v_d·i_d + v_q·i_q) / V_dc <= √3/2·|i_dq|   =>   |i_dq| <= 2/√3·i_dc
+    Exact at full modulation and unity power factor, conservative below.
+*/
+static inline ufract16_t foc_i_phase_of_i_dc(ufract16_t i_dc) { return math_min(fract16_mul(i_dc, FRACT16_2_DIV_SQRT3), FRACT16_MAX); }
 
 /*
     Phase-current bound, keyed by the motion (the back-EMF sign) rather than v_q. [foc_i_phase_of_i_dc] bounds |i_dc| both ways.
@@ -341,6 +337,12 @@ static inline interval_t foc_iq_phase_limits(interval_t i_dc, sign_t motion, fra
     return (motion != SIGN_ZERO) ? interval_of_sign(motion, along, against) : interval_symmetric(0, along);
 }
 
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 /* The supply window as q-axis power, holding 0. Shared by both inversions. */
 // static inline interval_t foc_power_q_window(interval_t i_dc, ufract16_t v_dc, accum32_t power_d)
 //     { return interval_hull(interval_offset(fract16_interval_scale(i_dc, foc_power_per_i_dc(v_dc)), -power_d), (interval_t){ 0 }); }
@@ -367,8 +369,6 @@ static inline interval_t foc_iq_phase_limits(interval_t i_dc, sign_t motion, fra
 //     ufract16_t regen = (h * h > r * -power.low) ? fract16_sat(fract16_div(-power.low, _foc_emf_root(h, r, power.low))) : FRACT16_MAX;
 //     return interval_of_sign((e < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE, along, math_min(regen, plug));
 // }
-
-
 
 
 /******************************************************************************/
@@ -407,7 +407,7 @@ static inline interval_t foc_vq_band(ufract16_t vq_circle_limit, interval_t v_li
     The window alone in the circle, at the edge nearest ω·ψ when the window lies beyond it.
     circle 50, ω·ψ 80, window 10: [70:90] in [−50:50] gives [50:50]
 */
-// static inline interval_t foc_vq_band_emf(ufract16_t vq_circle_limit, accum32_t omega_psi, ufract16_t window)
+// static inline interval_t foc_vq_band_w(ufract16_t vq_circle_limit, accum32_t omega_psi, ufract16_t window)
 // {
 //     return interval_clamp_each(interval_symmetric(0, vq_circle_limit), interval_symmetric(omega_psi, window));
 // }
@@ -440,160 +440,4 @@ static inline interval_t _foc_v_dynamic_band(ufract16_t vq_circle_limit, interva
 {
     return foc_vq_band(vq_circle_limit, interval_intersect(v_limit, side), window);
 }
-
-
-
-/******************************************************************************/
-/*!
-    Torque and the power split
-        p     = v_d·i_d + v_q·i_q               terminal        [foc_active_power]
-        p_em  = (ω·ψ + ω·(L_d − L_q)·i_d)·i_q   air gap, ω·τ
-        p_r   = R·(i_d² + i_q²)                 winding
-    Steady state p = p_em + p_r. The residual is model error and L·di/dt;
-    at low speed it tracks R(T), copper +0.39 %/K; at speed it also carries iron loss.
-*/
-/******************************************************************************/
-/* τ = (ψ + (L_d − L_q)·i_d)·i_q, per unit of the turn base. 3/2·p for N·m. The reluctance term adds at i_d < 0 where L_q > L_d. */
-// static inline accum32_t foc_torque(accum32_t psi, accum32_t ld, accum32_t lq, fract16_t id, fract16_t iq) { return accum32_mul(psi + accum32_mul(ld - lq, id), iq); }
-
-// static inline accum32_t foc_power_em(accum32_t omega_psi, accum32_t omega_ld, accum32_t omega_lq, fract16_t id, fract16_t iq) { return accum32_mul(omega_psi + accum32_mul(omega_ld - omega_lq, id), iq); }
-
-// static inline accum32_t foc_power_r(accum32_t r, fract16_t id, fract16_t iq) { return accum32_mul(r, fract16_mul(id, id) + fract16_mul(iq, iq)); }
-
-/******************************************************************************/
-/* Experimental */
-/******************************************************************************/
-/******************************************************************************/
-/*!
-    @brief
-*/
-/******************************************************************************/
-struct foc_dq0 { fract16_t d, q, zero; };
-struct foc_sincos6 { fract16_t cos, sin, cos_120, sin_120, cos_240, sin_240; };
-
-// static inline fract16_t foc_d_of_abc(fract16_t a, fract16_t b, fract16_t c, fract16_t cos, fract16_t cos_120, fract16_t cos_240)
-// {
-//     return fract16_mul(a, cos) + fract16_mul(b, cos_120) + fract16_mul(c, cos_240);
-// }
-
-// static inline fract16_t foc_q_of_abc(fract16_t a, fract16_t b, fract16_t c, fract16_t sin, fract16_t sin_120, fract16_t sin_240)
-// {
-//     return -fract16_mul(a, sin) - fract16_mul(b, sin_120) - fract16_mul(c, sin_240);
-// }
-
-/*!
-    Direct DQ0 Transform - converts 3-phase (a, b, c) directly to rotor reference frame (d, q, 0)
-    Combines Clarke and Park transforms in one operation
-
-    @param[in] a, b, c - Three phase values
-    @param[in] sine, cosine - Rotor angle sin/cos values
-*/
-/*
-    DQ0 transformation matrix multiplication:
-    [d]         [cos(θ)     cos(θ-2π/3)  cos(θ+2π/3)] [a]
-    [q] = 2/3 * [-sin(θ)   -sin(θ-2π/3) -sin(θ+2π/3)] [b]
-    [0]         [1/2       1/2          1/2         ] [c]
-*/
-/* park_dq */
-static inline struct foc_dq foc_abc_dq_transform
-(
-    fract16_t a, fract16_t b, fract16_t c,
-    fract16_t cos, fract16_t sin,
-    fract16_t cos_120, fract16_t sin_120,
-    fract16_t cos_240, fract16_t sin_240
-)
-{
-    int32_t d = fract16_mul(a, cos) + fract16_mul(b, cos_120) + fract16_mul(c, cos_240);
-    int32_t q = -fract16_mul(a, sin) - fract16_mul(b, sin_120) - fract16_mul(c, sin_240);
-
-    return (struct foc_dq) { .d = fract16_mul(d, FRACT16_2_DIV_3), .q = fract16_mul(q, FRACT16_2_DIV_3) };
-}
-
-/*!
-    Inverse DQ0 Transform - converts rotor reference frame (d, q, 0) directly to 3-phase (a, b, c)
-    Combines inverse Park and inverse Clarke transforms in one operation
-
-    @param[in] d, q - Direct and quadrature axis components
-    @param[in] zero - Zero sequence component (typically 0 for balanced systems)
-    @param[in] sine, cosine - Rotor angle sin/cos values
-*/
-/*
-    Inverse DQ0 transformation matrix multiplication:
-    [a]   [cos(θ)      -sin(θ)      1] [d]
-    [b] = [cos(θ-2π/3) -sin(θ-2π/3) 1] [q]
-    [c]   [cos(θ+2π/3) -sin(θ+2π/3) 1] [0]
-*/
-static inline struct foc_abc foc_inv_abc_dq_transform
-(
-    fract16_t d, fract16_t q,
-    fract16_t cos, fract16_t sin,
-    fract16_t cos_120, fract16_t sin_120,
-    fract16_t cos_240, fract16_t sin_240
-)
-{
-    return (struct foc_abc)
-    {
-        .a = fract16_mul(d, cos) - fract16_mul(q, sin),
-        .b = fract16_mul(d, cos_120) - fract16_mul(q, sin_120),
-        .c = fract16_mul(d, cos_240) - fract16_mul(q, sin_240),
-    };
-}
-
-
-/******************************************************************************/
-/*!
-    optimized versions with precomputed sin/cos for 120 and 240 degree shifts
-*/
-/******************************************************************************/
-static inline struct foc_sincos6 foc_abc_dq_angle(angle16_t theta)
-{
-    fract16_t cos = fract16_cos(theta);
-    fract16_t sin = fract16_sin(theta);
-    fract16_t cos_120 = fract16_mul(cos, FRACT16_COS_120) - fract16_mul(sin, FRACT16_SIN_120);  /* cos(θ-120°) */
-    fract16_t sin_120 = fract16_mul(sin, FRACT16_COS_120) + fract16_mul(cos, FRACT16_SIN_120);  /* sin(θ-120°) */
-
-    return (struct foc_sincos6) { .cos = cos, .sin = sin, .cos_120 = cos_120, .sin_120 = sin_120, .cos_240 = cos_120, .sin_240 = -sin_120 };
-}
-
-// static inline struct foc_abc foc_inv_abc_dq0_transform(fract16_t d, fract16_t q, fract16_t zero, fract16_t sine, fract16_t cosine)
-// {
-//     /* Pre-calculate angle shifts for 120° and 240° */
-//     fract16_t cos120 = fract16_mul(cosine, FRACT16_COS_120) - fract16_mul(sine, FRACT16_SIN_120);  /* cos(θ-120°) */
-//     fract16_t sin120 = fract16_mul(sine, FRACT16_COS_120) + fract16_mul(cosine, FRACT16_SIN_120);  /* sin(θ-120°) */
-//     fract16_t cos240 = fract16_mul(cosine, FRACT16_COS_240) - fract16_mul(sine, FRACT16_SIN_240);  /* cos(θ+120°) */
-//     fract16_t sin240 = fract16_mul(sine, FRACT16_COS_240) + fract16_mul(cosine, FRACT16_SIN_240);  /* sin(θ+120°) */
-
-//     /* Calculate three-phase components */
-//     return (struct foc_abc)
-//     {
-//         .a = fract16_mul(d, cosine) - fract16_mul(q, sine) + zero,
-//         .b = fract16_mul(d, cos120) - fract16_mul(q, sin120) + zero,
-//         .c = fract16_mul(d, cos240) - fract16_mul(q, sin240) + zero
-//     };
-// }
-
-
-// static inline struct foc_dq0 foc_abc_dq0_transform(fract16_t a, fract16_t b, fract16_t c, fract16_t sine, fract16_t cosine)
-// {
-//     /* Pre-calculate angle shifts for 120° and 240° */
-//     fract16_t cos120 = fract16_mul(cosine, FRACT16_COS_120) - fract16_mul(sine, FRACT16_SIN_120);  /* cos(θ-120°) */
-//     fract16_t sin120 = fract16_mul(sine, FRACT16_COS_120) + fract16_mul(cosine, FRACT16_SIN_120);  /* sin(θ-120°) */
-//     fract16_t cos240 = fract16_mul(cosine, FRACT16_COS_240) - fract16_mul(sine, FRACT16_SIN_240);  /* cos(θ+120°) */
-//     fract16_t sin240 = fract16_mul(sine, FRACT16_COS_240) + fract16_mul(cosine, FRACT16_SIN_240);  /* sin(θ+120°) */
-
-//     /* Calculate d-axis component */
-//     /* Calculate q-axis component (negative sine for proper orientation) */
-//     accum32_t d = fract16_mul(a, cosine) + fract16_mul(b, cos120) + fract16_mul(c, cos240);
-//     accum32_t q = -fract16_mul(a, sine) - fract16_mul(b, sin120) - fract16_mul(c, sin240);
-
-//     /* Calculate zero sequence component */
-//     accum32_t zero = (accum32_t)a + (accum32_t)b + (accum32_t)c;
-
-//     return (struct foc_dq0)
-//     {
-//         .d = fract16_mul(d, FRACT16_2_DIV_3),
-//         .q = fract16_mul(q, FRACT16_2_DIV_3),
-//         .zero = fract16_mul(zero, FRACT16_1_DIV_3)
-//     };
-// }
 

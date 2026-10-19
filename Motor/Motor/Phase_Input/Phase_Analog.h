@@ -147,7 +147,6 @@ static inline void Phase_Analog_CaptureV(volatile Phase_Input_T * p_phase, Phase
 {
     // assert(adcu <= PHASE_ANALOG_V_MAX_ADCU);
     Phase_Capture(&p_phase->V, channel, Phase_Analog_VPuOf(adcu));
-    // Phase_Capture(&p_phase->V, channel, Phase_Analog_VPuOf(adcu) + p_phase->V.Values[channel] / 2);
 }
 
 static inline void Phase_Analog_CaptureVa(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_Analog_CaptureV(p_phase, PHASE_INDEX_A, adcu); }
