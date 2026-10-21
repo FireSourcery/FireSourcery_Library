@@ -201,6 +201,7 @@ static inline accum32_t foc_vq_ff_k(fract16k_t omega_Ld, accum32_t omega_psi, fr
 static inline accum32_t _foc_vd_ff_direct(accum32_t L_pu, fract16_t omega, fract16_t iq) { return -((int64_t)omega * L_pu * iq) / ((int64_t)FRACT16_SCALE * FRACT16_SCALE); }
 static inline accum32_t _foc_vq_ff_direct(accum32_t Ld_pu, accum32_t psi_pu, fract16_t omega, fract16_t id) { return ((int64_t)omega * Ld_pu * id) / ((int64_t)FRACT16_SCALE * FRACT16_SCALE) + ((int64_t)omega * psi_pu) / FRACT16_SCALE; }
 
+
 /******************************************************************************/
 /*!
     @brief  dq voltage model — back-EMF in the estimated dq frame, from the
@@ -223,22 +224,6 @@ static inline accum32_t foc_vemf_dq_axis(accum32_t Rs_pu, accum32_t v, accum32_t
 static inline accum32_t foc_vemf_d(accum32_t Rs_pu, accum32_t omega_Lq, accum32_t vd, accum32_t id, accum32_t iq) { return foc_vemf_dq_axis(Rs_pu, vd, foc_vd_ff(omega_Lq, iq), id); }
 static inline accum32_t foc_vemf_q(accum32_t Rs_pu, accum32_t omega_Lq, accum32_t vq, accum32_t id, accum32_t iq) { return foc_vemf_dq_axis(Rs_pu, vq, foc_vq_ff(omega_Lq, 0, id), iq); }
 
-/******************************************************************************/
-/*!
-    @brief  Electrical speed estimate from EMF magnitude.
-
-        |e| = |ω_e| · ψ_f       →       |ω̂_e| = |e| / ψ_f
-
-    With Psi_pu per psi_pu_turn, the result is the electrical
-    angle increment per control cycle:
-
-        |Δθ̂_e| [angle16/dt] = |e_pu| / Psi_pu
-
-    Sign of ω is not recoverable from |e|; combine with foc_pll_error sign
-    or the open-loop reference. Returns 0 when Psi_pu is zero (uninitialized).
-*/
-/******************************************************************************/
-// static inline angle16_t foc_speed_of_emf(accum32_t Psi_pu, ufract16_t e_mag) { return (angle16_t)fract16_div(e_mag, Psi_pu); }
 
 
 /******************************************************************************/

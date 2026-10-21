@@ -187,7 +187,7 @@ treeView-beta
 │   │   │   ├── FOC.c/h                        ## FOC state over the pure math
 │   │   │   ├── FOC_Ext.h                      ## current capture, loop helpers
 │   │   │   ├── foc_math.h                     ## Clarke, Park, limits
-│   │   │   ├── FOC_Sensorless.c/h             ## rotor position observer
+│   │   │   ├── FOC_Sensorless.c/h             ## rotor position observer, superseded by Sensor/Sensorless/EmfObserver.h
 │   │   │   ├── foc_sensorless_math.h          ## back-EMF, SMO, PLL detector
 │   │   │   ├── motor_electrical_math.h        ## per-unit parameters, identification
 │   │   │   ├── smo_math.h                     ## sliding-mode switching function
@@ -197,7 +197,7 @@ treeView-beta
 │   │   ├── Sensor/                            ## RotorSensor interface, sensor table
 │   │   │   ├── Encoder/                       ## quadrature encoder
 │   │   │   ├── Hall/                          ## Hall sensors
-│   │   │   ├── Sensorless/                    ## observer as angle source
+│   │   │   ├── Sensorless/                    ## stator as angle source: EmfObserver (Stator image, EMF estimate, AnglePll)
 │   │   │   └── SinCos/                        ## analog sin/cos
 │   │   ├── StateMachine/                      ## substates
 │   │   │   ├── Motor_Calibration.c/h          ## calibration entry

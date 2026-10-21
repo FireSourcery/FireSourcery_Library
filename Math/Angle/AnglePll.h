@@ -31,7 +31,8 @@
         phase error → PI → ω̂ → integrate → θ̂
 
     The caller's phase detector supplies the error, ≈ sin(θ̂ − θ). The PI regulates it to 0, so θ̂ lagging θ raises ω̂.
-    Or the caller supplies a vector along θ, and ProcVector detects it against θ̂.
+    Or the caller supplies a vector along θ, and ProcVector detects it against θ̂, or ProcRelative in the frame of θ̂.
+    The vector entries also hold its magnitude and the lock on it.
 */
 /******************************************************************************/
 #include "Angle.h"
@@ -45,24 +46,30 @@
 /******************************************************************************/
 static inline accum32_t angle_pll_error(fract16_t x, fract16_t y, fract16_t sin, fract16_t cos) { return fract16_mul(x, sin) - fract16_mul(y, cos); }
 
-
-static inline fract16_t angle_pll(ufract16_t mag_floor, fract16_t x, fract16_t y, fract16_t error)
-{
-    ufract16_t mag = fract16_vector_magnitude(x, y);
-    return (mag <= mag_floor) ? 0 : fract16_sat(fract16_div(error, mag));
-}
+/* x already rotated into the frame of θ̂, so θ̂ = 0 */
+static inline accum32_t angle_pll_error_relative(fract16_t y) { return 0 - (accum32_t)y; }
 
 /* sin(θ̂ − θ), |x| stripped so the loop gain holds across amplitude. 0 at or below the floor, where θ is indeterminate */
+static inline fract16_t angle_pll_normalize(ufract16_t mag_floor, ufract16_t mag, accum32_t error) { return (mag <= mag_floor) ? 0 : fract16_sat(fract16_div(error, mag)); }
+
 static inline fract16_t angle_pll_error_normalized(ufract16_t mag_floor, fract16_t x, fract16_t y, fract16_t sin, fract16_t cos)
 {
-    return angle_pll(mag_floor, x, y, angle_pll_error(x, y, sin, cos));
+    return angle_pll_normalize(mag_floor, fract16_vector_magnitude(x, y), angle_pll_error(x, y, sin, cos));
 }
 
-/* x already rotated into the frame of θ̂, so θ̂ = 0: sin(−∠x) */
 static inline fract16_t angle_pll_error_normalized_relative(ufract16_t mag_floor, fract16_t x, fract16_t y)
 {
-    return angle_pll(mag_floor, x, y, 0 - (accum32_t)y);
+    return angle_pll_normalize(mag_floor, fract16_vector_magnitude(x, y), angle_pll_error_relative(y));
 }
+
+
+typedef struct AnglePll_FilterTuning
+{
+    ufract16_t MagFloor;        /* |x| at or below which θ is indeterminate: the error reads 0 */
+    ufract16_t LockErrTol;      /* |error| within which θ̂ tracks θ */
+    uint16_t LockHoldCount;     /* consecutive ticks above the floor and within tolerance */
+}
+AnglePll_FilterTuning_T;
 
 /*
     [AnglePll_T]
@@ -71,11 +78,24 @@ static inline fract16_t angle_pll_error_normalized_relative(ufract16_t mag_floor
 typedef struct AnglePll
 {
     Angle_T Base;           /* Angle is θ̂. Delta is ω̂ [angle16/dt] */
+
     PID_T LoopFilter;       /* PI, phase error → ω̂ */
     fract16_t PhaseError;   /* last error */
+
+    /* Lock state */
+    AnglePll_FilterTuning_T FilterTuning;
+    ufract16_t Magnitude;       /* |x| of the last detected vector */
+    uint16_t LockCount;
 }
 AnglePll_T;
 
+// typedef struct
+// {
+//     AnglePll_FilterTuning_T FilterTuning;
+//     ufract16_t Magnitude;       /* |x| of the last detected vector */
+//     uint16_t LockCount;
+// }
+// AnglePll_Collab_T;
 
 /******************************************************************************/
 /*
@@ -88,12 +108,39 @@ static inline angle16_t AnglePll_Proc(AnglePll_T * p_pll, fract16_t phaseError)
     return Angle_Integrate(&p_pll->Base, PID_ProcPI(&p_pll->LoopFilter, phaseError, 0));
 }
 
+/*
+    Lock: a strong signal and a tight error, sustained.
+    Only the vector entries see the signal: below the floor the error reads 0, as it does at lock.
+*/
+static inline void _AnglePll_ProcLock(AnglePll_T * p_pll, ufract16_t magnitude, fract16_t phaseError)
+{
+    bool stable = (magnitude > p_pll->FilterTuning.MagFloor) && (fract16_abs(phaseError) < p_pll->FilterTuning.LockErrTol);
+    p_pll->Magnitude = magnitude;
+    p_pll->LockCount = stable ? (uint16_t)math_min(p_pll->LockCount + 1, p_pll->FilterTuning.LockHoldCount) : 0;
+}
+
+/* The detected vector: its error normalized against the floor, the lock on both, then the loop */
+static inline angle16_t _AnglePll_ProcDetected(AnglePll_T * p_pll, ufract16_t magnitude, accum32_t error)
+{
+    fract16_t phaseError = angle_pll_normalize(p_pll->FilterTuning.MagFloor, magnitude, error);
+    _AnglePll_ProcLock(p_pll, magnitude, phaseError);
+    return AnglePll_Proc(p_pll, phaseError);
+}
+
 /* x along θ, detected against θ̂ */
-static inline angle16_t AnglePll_ProcVector(AnglePll_T * p_pll, ufract16_t magFloor, fract16_t x, fract16_t y)
+static inline angle16_t AnglePll_ProcVector(AnglePll_T * p_pll, fract16_t x, fract16_t y)
 {
     struct fract16_xy unit = Angle_UnitVector(&p_pll->Base);
-    return AnglePll_Proc(p_pll, angle_pll_error_normalized(magFloor, x, y, unit.y, unit.x));
+    return _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error(x, y, unit.y, unit.x));
 }
+
+/* x already in the frame of θ̂ */
+static inline angle16_t AnglePll_ProcRelative(AnglePll_T * p_pll, fract16_t x, fract16_t y)
+{
+    return _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error_relative(y));
+}
+
+static inline bool AnglePll_IsLocked(const AnglePll_T * p_pll) { return (p_pll->LockCount >= p_pll->FilterTuning.LockHoldCount); }
 
 /******************************************************************************/
 /*
@@ -117,6 +164,8 @@ static inline void AnglePll_Reset(AnglePll_T * p_pll)
     Angle_ZeroCaptureState(&p_pll->Base);
     PID_Reset(&p_pll->LoopFilter);
     p_pll->PhaseError = 0;
+    p_pll->Magnitude = 0;
+    p_pll->LockCount = 0;
 }
 
 /* Loop filter SampleFreq is the Proc rate */
@@ -124,4 +173,15 @@ static inline void AnglePll_InitFrom(AnglePll_T * p_pll, const PID_Config_T * p_
 {
     PID_InitFrom(&p_pll->LoopFilter, p_loopFilter);
     AnglePll_Reset(p_pll);
+}
+
+static inline void AnglePll_InitPid(AnglePll_T * p_pll, const PID_Config_T * p_loopFilter)
+{
+    PID_InitFrom(&p_pll->LoopFilter, p_loopFilter);
+    // AnglePll_Reset(p_pll);
+}
+
+static inline void AnglePll_InitFilterTuning(AnglePll_T * p_pll, const AnglePll_FilterTuning_T * p_loopFilter)
+{
+    p_pll->FilterTuning = *p_loopFilter;
 }

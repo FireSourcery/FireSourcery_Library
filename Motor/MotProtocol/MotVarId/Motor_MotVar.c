@@ -108,7 +108,7 @@ void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int 
     [VarType_SubModule]
 */
 /******************************************************************************/
-#include "Motor/Motor/Math/FOC_Sensorless.h"
+#include "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.h"
 
 int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId)
 {
@@ -128,8 +128,8 @@ int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typ
         case MOTOR_VAR_TYPE_FOC_CONFIG:                 return 0; /* reserved */
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
         /* Read the table entry, not p_ActiveSensor — observer telemetry stays visible while tuning against another selected sensor. */
-        case MOTOR_VAR_TYPE_FOC_SENSORLESS:             return FOC_Sensorless_GetVar(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, varId);
-        case MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG:      return FOC_SensorlessConfig_Get(&p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER->Config, varId);
+        case MOTOR_VAR_TYPE_FOC_SENSORLESS:             return EmfObserver_GetVar(p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER, varId);
+        case MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG:      return EmfObserver_Config_Get(&p_motor->SENSOR_TABLE.SENSORLESS.P_OBSERVER->Config, varId);
 #endif
         default: break;
     }

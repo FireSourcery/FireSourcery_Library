@@ -61,7 +61,7 @@
 <!-- - **Fixed-point math**: 16-bit fractional (`fract16`) and Q16 fixed-point arithmetic — no floating point at runtime -->
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
     This pattern is only for hardware descriptors and static polymorphism. Do not use it for what could be mutable only structs.
-- **Stateless pure functions layer**: function parameter contain the entire state. Reusable or physically meaningful pieces.
+- **Stateless pure functions layer**: function parameter contain the entire state. Reusable pieces, or established, published concepts, physical or not.
 - **Untypedef'd structs are the pure layer's multiple returns**, e.g. `struct foc_dq`, `struct foc_alphabeta`, `struct sta_axis`. A pure function returns one by value, and the caller unpacks it into its own fields at the call.
     The stateful layer never stores one as a field, and never takes or returns one in its functions, private helpers included.
 - Utility functions pass context that is the closest layer the logic requires. No tramp parameters. Don't pass bool.

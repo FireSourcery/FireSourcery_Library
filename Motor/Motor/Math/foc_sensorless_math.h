@@ -86,6 +86,22 @@ static inline fract16_t lpf_step(fract16_t k_lp, fract16_t y, fract16_t x) { ret
 */
 /* The rotor vector −j·sign(ω)·e, along θ with length |ω|·ψ */
 static inline struct fract16_xy foc_rotor_of_emf(sign_t sign, fract16_t e_x, fract16_t e_y) { return (struct fract16_xy) { .x = sign * e_y, .y = -sign * e_x }; }
+/******************************************************************************/
+/*!
+    @brief  Electrical speed estimate from EMF magnitude.
+
+        |e| = |ω_e| · ψ_f       →       |ω̂_e| = |e| / ψ_f
+
+    With Psi_pu per psi_pu_turn, the result is the electrical
+    angle increment per control cycle:
+
+        |Δθ̂_e| [angle16/dt] = |e_pu| / Psi_pu
+
+    Sign of ω is not recoverable from |e|; combine with foc_pll_error sign
+    or the open-loop reference. Returns 0 when Psi_pu is zero (uninitialized).
+*/
+/******************************************************************************/
+// static inline angle16_t foc_speed_of_emf(accum32_t Psi_pu, ufract16_t e_mag) { return (angle16_t)fract16_div(e_mag, Psi_pu); }
 
 
 /******************************************************************************/

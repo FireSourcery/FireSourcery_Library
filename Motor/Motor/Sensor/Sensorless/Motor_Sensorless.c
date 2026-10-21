@@ -60,45 +60,6 @@ static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { ret
 static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { return NULL; }
 #endif
 
-/******************************************************************************/
-/*!
-    Push-driven entrypoint.
-*/
-/******************************************************************************/
-/*
-    One control tick of the observer, after the FOC proc: capture the period the proc's sample closes, then step on it.
-    i is the phase sample the proc took. v is the proc's command rotated back from dq at θ, the αβ it applies across the next period.
-    Motor_FOC_AngleControl runs the proc in each substate.
-*/
-static inline void Sensorless_Sensor_Proc(const Sensorless_Sensor_T * p_sensor, const Motor_Context_T * p_context)
-{
-    Stator_AlphaBeta_T * p_stator = &p_sensor->P_OBSERVER->Stator;
-    struct foc_alphabeta v = foc_inv_park(FOC_Vd(&p_context->Foc), FOC_Vq(&p_context->Foc), p_context->Foc.Sine, p_context->Foc.Cosine);
-
-    Stator_AlphaBeta_CaptureIabc(p_stator, p_context->PhaseInput.I.Values.A, p_context->PhaseInput.I.Values.B, p_context->PhaseInput.I.Values.C);
-    Stator_AlphaBeta_CaptureVOut(p_stator, fract16_sat(v.alpha), fract16_sat(v.beta));
-    FOC_Sensorless_Step(p_sensor->P_OBSERVER);
-}
-
-/* Bumpless transfer from open-loop ramp into closed-loop observer tracking. */
-static inline void Sensorless_Sensor_SeedAngle(const Sensorless_Sensor_T * p_sensor, angle16_t theta, angle16_t delta)
-{
-    FOC_Sensorless_SeedAngle(p_sensor->P_OBSERVER, theta, delta);
-}
-
-static inline const FOC_Sensorless_T * Sensorless_Sensor_GetObserver(const Sensorless_Sensor_T * p_sensor)
-{
-    return p_sensor->P_OBSERVER;
-}
-
-/*
-    Observer drive. Runs after the FOC proc, see Sensorless_Sensor_Proc.
-*/
-static void ProcObserver(Motor_T * p_motor)
-{
-    Sensorless_Sensor_Proc(GetSensorless(p_motor), p_motor->P_MOTOR);
-}
-
 
 /******************************************************************************/
 /*
@@ -124,7 +85,7 @@ static void Align_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcStartUpAlign(p_motor);
     Motor_FOC_WriteDuty(p_motor);
-    ProcObserver(p_motor);
+    Sensorless_Sensor_Proc(GetSensorless(p_motor), &p_motor->P_MOTOR->Foc);
 }
 
 static State_T * Align_Next(Motor_T * p_motor)
@@ -155,14 +116,14 @@ static void StartUp_Entry(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_StartOpenLoop(p_context);
     /* Seed the PLL at the commanded angle so it converges from the ramp rather than from 0. */
-    Sensorless_Sensor_SeedAngle(GetSensorless(p_motor), Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
+    EmfObserver_SeedAngle(GetSensorless(p_motor)->P_OBSERVER, Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
 }
 
 static void StartUp_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcOpenLoop(p_motor);
     Motor_FOC_WriteDuty(p_motor);
-    ProcObserver(p_motor);
+    Sensorless_Sensor_Proc(GetSensorless(p_motor), &p_motor->P_MOTOR->Foc);
 }
 
 

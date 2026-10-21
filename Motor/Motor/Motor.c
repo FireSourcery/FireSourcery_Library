@@ -104,7 +104,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
     p_motor->Direction = MOTOR_DIRECTION_NULL;
     FOC_SetVAntiPlugging(&p_motor->Foc, SIGN_ZERO, 0U);
 // #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-//     FOC_Sensorless_InitElectrical(p_context->SENSOR_TABLE.SENSORLESS.P_OBSERVER, Motor_Lq_PuTurn(p_electrical), p_electrical->Rs);
+//     EmfObserver_InitWinding(p_context->SENSOR_TABLE.SENSORLESS.P_OBSERVER, p_electrical->Rs, Motor_Lq_PuTurn(p_electrical));
 // #endif
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);

@@ -283,6 +283,23 @@ static void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
 
 /******************************************************************************/
 /*!
+
+*/
+/******************************************************************************/
+/*
+    Post-proc circle limit — windup correction after both PIDs run.
+    no sqrt during common case without ff
+    the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited.
+*/
+static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
+{
+    fract16_t vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
+    fract16_t vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
+    if (_FOC_ProcVCircle(p_foc, vBus, vd, vq)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
+}
+
+/******************************************************************************/
+/*!
     Inner current loop — d-q PID pair operations.
     Co-located with the d-q vectors they read from / write to.
 */
@@ -308,17 +325,6 @@ static inline void FOC_MatchIVState_Base(FOC_T * p_foc)
     PID_SetOutputState(&p_foc->PidIq, p_foc->Vq);
 }
 
-/*
-    Post-proc circle limit — windup correction after both PIDs run.
-    no sqrt during common case without ff
-    the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited.
-*/
-static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
-{
-    fract16_t vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
-    fract16_t vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
-    if (_FOC_ProcVCircle(p_foc, vBus, vd, vq)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
-}
 
 
 /******************************************************************************/

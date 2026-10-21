@@ -41,8 +41,6 @@
 #include "Sensor/RotorSensor.h"
 
 #include "Math/FOC.h"
-// #ifdef
-#include "Math/FOC_Sensorless.h"
 
 #include "Peripheral/ADC/ADC_Conversion.h"
 #include "Peripheral/ADC/Linear_ADC.h"
