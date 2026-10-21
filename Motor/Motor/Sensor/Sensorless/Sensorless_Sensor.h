@@ -48,6 +48,8 @@ typedef const struct Sensorless_Sensor
 {
     const RotorSensor_T BASE;
     FOC_Sensorless_T * P_OBSERVER;
+    Stator_AlphaBeta_T * P_STATOR;
+    // Observer_T * P_OBSERVER; // spill from Stator_AlphaBeta_T
     const FOC_SensorlessConfig_T * P_NVM_CONFIG;
 }
 Sensorless_Sensor_T;

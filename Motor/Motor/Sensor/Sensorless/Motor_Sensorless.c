@@ -48,12 +48,17 @@
 #include "../../StateMachine/Motor_OpenLoop.h"
 #include "../../Motor_FOC.h"
 
-#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+// #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 
 static const State_T SENSORLESS_ALIGN;
 static const State_T SENSORLESS_START_UP;
 
+/* Keep it compiling. */
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.SENSORLESS; }
+#else
+static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { return NULL; }
+#endif
 
 /******************************************************************************/
 /*!
@@ -205,4 +210,4 @@ void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
     Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN);
 }
 
-#endif /* MOTOR_SENSOR_SENSORLESS_ENABLE */
+// #endif /* MOTOR_SENSOR_SENSORLESS_ENABLE */

@@ -199,19 +199,19 @@ static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs)
 // static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
 {
     /* 1. The model across the period, then z against the sample. */
-    Stator_Axis_Integrate(&p_obs->SmoAlpha, &p_obs->Stator.RL, p_obs->Stator.Alpha.V, p_obs->SmoZAlpha);
-    Stator_Axis_Integrate(&p_obs->SmoBeta, &p_obs->Stator.RL, p_obs->Stator.Beta.V, p_obs->SmoZBeta);
+    Stator_Axis_Integrate(&p_obs->Stator.Winding, &p_obs->SmoAlpha, p_obs->Stator.Alpha.V, p_obs->SmoZAlpha);
+    Stator_Axis_Integrate(&p_obs->Stator.Winding, &p_obs->SmoBeta, p_obs->Stator.Beta.V, p_obs->SmoZBeta);
     p_obs->SmoZAlpha = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_obs->SmoAlpha.I, p_obs->Stator.Alpha.I));
     p_obs->SmoZBeta = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_obs->SmoBeta.I, p_obs->Stator.Beta.I));
 
-    // Stator_Axis_ISmo(&p_obs->Stator.Alpha, &p_obs->Stator.RL, p_obs->SmoZAlpha);
-    // Stator_Axis_ISmo(&p_obs->Stator.Beta, &p_obs->Stator.RL, p_obs->SmoZBeta);
+    // Stator_Axis_ISmo(&p_obs->Stator.Alpha, &p_obs->Stator.Winding, p_obs->SmoZAlpha);
+    // Stator_Axis_ISmo(&p_obs->Stator.Beta, &p_obs->Stator.Winding, p_obs->SmoZBeta);
 
-    // p_obs->Stator.Alpha.I = Stator_Axis_ISmo(&p_obs->Stator.Alpha, &p_obs->Stator.RL, p_obs->SmoZAlpha);
-    // p_obs->Stator.Beta.I = Stator_Axis_ISmo(&p_obs->Stator.Beta, &p_obs->Stator.RL, p_obs->SmoZBeta);
+    // p_obs->Stator.Alpha.I = Stator_Axis_ISmo(&p_obs->Stator.Alpha, &p_obs->Stator.Winding, p_obs->SmoZAlpha);
+    // p_obs->Stator.Beta.I = Stator_Axis_ISmo(&p_obs->Stator.Beta, &p_obs->Stator.Winding, p_obs->SmoZBeta);
 
-    // p_obs->SmoIAlpha = smo_axis_i(p_obs->G, p_obs->Stator.RL.R, p_obs->Stator.Alpha.V, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
-    // p_obs->SmoIBeta = smo_axis_i(p_obs->G, p_obs->Stator.RL.R, p_obs->Stator.Beta.V, p_obs->SmoIBeta, p_obs->SmoZBeta);
+    // p_obs->SmoIAlpha = smo_axis_i(p_obs->G, p_obs->Stator.Winding.R, p_obs->Stator.Alpha.V, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
+    // p_obs->SmoIBeta = smo_axis_i(p_obs->G, p_obs->Stator.Winding.R, p_obs->Stator.Beta.V, p_obs->SmoIBeta, p_obs->SmoZBeta);
     // p_obs->SmoZAlpha = smo_axis_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIAlpha, p_obs->Stator.Alpha.I);
     // p_obs->SmoZBeta = smo_axis_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIBeta, p_obs->Stator.Beta.I);
 
@@ -264,10 +264,10 @@ static void _FOC_Sensorless_ProcPark(FOC_Sensorless_T * p_obs)
 static void FOC_Sensorless_StepVModel(FOC_Sensorless_T * p_obs)
 {
     _FOC_Sensorless_ProcPark(p_obs);
-    accum32_t x = stator_reactance(p_obs->Stator.RL.L, Angle_Delta(&p_obs->Pll.Base));
+    accum32_t x = stator_reactance(p_obs->Stator.Winding.L, Angle_Delta(&p_obs->Pll.Base));
 
-    p_obs->EmfD = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfD, fract16_sat(foc_vemf_d(p_obs->Stator.RL.R, x, p_obs->Vd, p_obs->Id, p_obs->Iq)));
-    p_obs->EmfQ = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfQ, fract16_sat(foc_vemf_q(p_obs->Stator.RL.R, x, p_obs->Vq, p_obs->Id, p_obs->Iq)));
+    p_obs->EmfD = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfD, fract16_sat(foc_vemf_d(p_obs->Stator.Winding.R, x, p_obs->Vd, p_obs->Id, p_obs->Iq)));
+    p_obs->EmfQ = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfQ, fract16_sat(foc_vemf_q(p_obs->Stator.Winding.R, x, p_obs->Vq, p_obs->Id, p_obs->Iq)));
 
     _FOC_Sensorless_ProcPllDq(p_obs);
 }
@@ -280,11 +280,11 @@ static void FOC_Sensorless_StepVModel(FOC_Sensorless_T * p_obs)
 */
 static void _FOC_Sensorless_ProcIEstDq(FOC_Sensorless_T * p_obs)
 {
-    accum32_t x = stator_reactance(p_obs->Stator.RL.L, Angle_Delta(&p_obs->Pll.Base));
-    Stator_Axis_Integrate(&p_obs->SmoD, &p_obs->Stator.RL, p_obs->Vd - foc_vd_ff(x, p_obs->Iq), p_obs->SmoZd);
-    Stator_Axis_Integrate(&p_obs->SmoQ, &p_obs->Stator.RL, p_obs->Vq - foc_vq_ff(x, 0, p_obs->Id), p_obs->SmoZq);
-    // p_obs->SmoId = smo_eemf_i_decouple(p_obs->G, p_obs->Stator.RL.R, p_obs->Vd, foc_vd_ff(x, p_obs->Iq), p_obs->SmoId, p_obs->SmoZd);
-    // p_obs->SmoIq = smo_eemf_i_decouple(p_obs->G, p_obs->Stator.RL.R, p_obs->Vq, foc_vq_ff(x, 0, p_obs->Id), p_obs->SmoIq, p_obs->SmoZq);
+    accum32_t x = stator_reactance(p_obs->Stator.Winding.L, Angle_Delta(&p_obs->Pll.Base));
+    Stator_Axis_Integrate(&p_obs->Stator.Winding, &p_obs->SmoD, p_obs->Vd - foc_vd_ff(x, p_obs->Iq), p_obs->SmoZd);
+    Stator_Axis_Integrate(&p_obs->Stator.Winding, &p_obs->SmoQ, p_obs->Vq - foc_vq_ff(x, 0, p_obs->Id), p_obs->SmoZq);
+    // p_obs->SmoId = smo_eemf_i_decouple(p_obs->G, p_obs->Stator.Winding.R, p_obs->Vd, foc_vd_ff(x, p_obs->Iq), p_obs->SmoId, p_obs->SmoZd);
+    // p_obs->SmoIq = smo_eemf_i_decouple(p_obs->G, p_obs->Stator.Winding.R, p_obs->Vq, foc_vq_ff(x, 0, p_obs->Id), p_obs->SmoIq, p_obs->SmoZq);
 }
 
 /*
@@ -362,14 +362,14 @@ static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, const FOC_SensorlessCo
 }
 
 /*
-    The plant from the caller's model, turn base. Lq on both axes, the extended EMF [Stator_RL_T], one plant for every front end.
+    The plant from the caller's model, turn base. Lq on both axes, the extended EMF [Stator_Winding_T], one plant for every front end.
     L at the rad base, L_turn / π. G = 1 / L = Ts · V_base / (Lq · I_base) is the current model's step, derived here.
 
     Validate checks (lq_turn != 0U)
 */
 static void FOC_Sensorless_InitElectrical(FOC_Sensorless_T * p_obs, uint32_t lq_turn, accum32_t rs)
 {
-    p_obs->Stator.RL = (Stator_RL_T) { .R = rs, /* .L = accum32_mul(lq_turn, FRACT16_1_DIV_PI), */ .G = g_l_pu_turn(lq_turn) };
+    p_obs->Stator.Winding = (Stator_Winding_T) { .R = rs, .L = accum32_mul(lq_turn, FRACT16_1_DIV_PI), .G = g_l_pu_turn(lq_turn) };
 }
 
 

@@ -629,7 +629,7 @@ static void FOC_InitElectrical(FOC_T * p_foc, const FOC_Electrical_T * p_electri
 {
     p_foc->Electrical = *p_electrical;
     p_foc->LShift = fixed_bit_width(math_max(p_electrical->Ld, p_electrical->Lq) >> FRACT16_N_BITS);
-    // p_foc->Stator.RL = (Stator_RL_T) { .R = fract16_sat(p_electrical->Rs), .L = accum32_mul(p_electrical->Lq, FRACT16_1_DIV_PI) }; /* EEMF Lq, at the rad base L_turn / π */
+    // p_foc->Stator.Winding = (Stator_Winding_T) { .R = fract16_sat(p_electrical->Rs), .L = accum32_mul(p_electrical->Lq, FRACT16_1_DIV_PI) }; /* EEMF Lq, at the rad base L_turn / π */
 }
 
 static void FOC_InitFieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning_T * p_fwTuning)
