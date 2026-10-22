@@ -63,9 +63,6 @@
 /******************************************************************************/
 static inline fract16_t lpf_step(fract16_t k_lp, fract16_t y, fract16_t x) { return fract16_sat((accum32_t)y + fract16_mul(k_lp, x - y)); }
 
-
-
-
 /******************************************************************************/
 /*!
     @brief  EEMF phase-error extraction (estimated dq frame).
@@ -120,7 +117,7 @@ static inline fract16_t smo_sat(fract16_t thr, fract16_t x) { return fract16_sat
 static inline fract16_t smo_sigma(fract16_t i_est, fract16_t i_meas) { return fract16_sat((accum32_t)i_est - i_meas); }
 /* First-order law. z = K_smo · sat(σ, thr) */
 static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t sigma) { return fract16_mul(K_smo, smo_sat(thr, sigma)); }
-
+// static inline fract16_t smo_axis_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i_meas) { return smo_z(K_smo, thr, smo_sigma(i_est, i_meas)); }
 
 /******************************************************************************/
 /*!
@@ -149,19 +146,6 @@ static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t sigma) {
     @param  thr       boundary-layer width (smo_sat); typ. 0.05..0.2 of i_max
 */
 /******************************************************************************/
-// static inline fract16_t smo_axis_i(accum32_t G_pu, accum32_t Rs_pu, accum32_t v, fract16_t i_est_prev, fract16_t z_prev) { return fract16_sat(stator_i_next(Rs_pu, G_pu, i_est_prev, v, z_prev)); }
-// static inline fract16_t smo_axis_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i_meas) { return smo_z(K_smo, thr, smo_sigma(i_est, i_meas)); }
-
-// /*
-//     Discrete observer:
-//         z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
-//         î[k+1]  = î[k] + G_int · ( v[k] - Rs_pu·î[k] - z[k] )
-// */
-// static inline struct smo_axis smo_axis_step(fract16_t K_smo, fract16_t thr, accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t i_meas)
-// {
-//     fract16_t z = smo_z(K_smo, thr, i_est, i_meas);
-//     return (struct smo_axis) { .i_est = smo_i(G_pu, Rs_pu, v, i_est, z), .z = z, };
-// }
 
 
 /******************************************************************************/

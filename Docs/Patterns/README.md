@@ -9,8 +9,7 @@ with one of the three levels from *Pattern-Oriented Software Architecture* (Busc
 | Design | A component and how it works with others | Equation in a struct, Config / State / Ref |
 | Idiom | A shape the C language itself forces | Snapshot before an edge poll, cast at the function pointer |
 
-Record a pattern once it is decided and has at least one instance in code. Before adopting a new
-one, apply the adoption gate in `E:\Workspace\Project\md\references\README.md`.
+Record a pattern once it is decided and has at least one instance in code.
 
 ---
 
@@ -26,7 +25,7 @@ One file per pattern, named for what it is (`EquationStruct.md`).
 **Shape** — the minimal C form.
 **In code** — `[Name]` of each real instance, with its path.
 **Rejected** — the alternatives and why.
-**Source** — the outside precedent: an extract in `md\`, or the original in `Ref\`.
+**Source** — the published form, if any.
 ```
 
 Names follow the `CLAUDE.md` notation: `[Name]` for anything defined in the codebase,
@@ -46,12 +45,5 @@ Names follow the `CLAUDE.md` notation: `[Name]` for anything defined in the code
 ## Candidates
 
 Decided, not yet written up in this shape:
-
-- Const descriptors (architectural) — `../Conventions/DescriptorPattern.md`
-- Config / State / Ref partitions (design) — `../Conventions/Config_State_Ref.md`
-- Collaborator (design) — `../Conventions/Patterns.md`
-- Generics (design) — `../Conventions/Generics.md`
-- Cast at the table row (idiom) — `../Conventions/FunctionPointerCasting.md`
 - Snapshot the prior state before an edge poll writes it (idiom)
 - Typed callback parameters, one cast at registration (idiom)
-- Init macros, kept only when they cast, allocate, derive, or build a constant expression (idiom)

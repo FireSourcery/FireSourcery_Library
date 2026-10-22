@@ -71,3 +71,28 @@ static inline void Sensorless_Sensor_Proc(Sensorless_Sensor_T * p_sensor, const 
 {
     EmfObserver_AlphaBeta_Proc(p_sensor->P_OBSERVER, p_foc->Ialpha, p_foc->Ibeta, p_foc->Valpha, p_foc->Vbeta);
 }
+
+// static inline void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
+// {
+//     FOC_SetTheta(&p_motor->Foc, theta);
+//     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
+
+//     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
+//     FOC_ProcInvClarkePark(&p_motor->Foc);
+// }
+// static inline void Motor_FOC_C(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
+// {
+//     FOC_SetTheta(&p_motor->Foc, theta);
+//     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
+
+//     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
+//     FOC_ProcInvClarkePark(&p_motor->Foc);
+// }
+// static inline void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
+// {
+//     FOC_SetTheta(&p_motor->Foc, theta);
+//     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
+
+//     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
+//     FOC_ProcInvClarkePark(&p_motor->Foc);
+// }

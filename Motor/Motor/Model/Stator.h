@@ -109,27 +109,30 @@ static inline void Stator_Axis_Capture(Stator_Axis_T * p_axis, fract16_t i, frac
     p_axis->V = v;
 }
 
+
+
 /*
     The stator equation closes the period in place of a sample: I from v held across it, e in place of the EMF [stator_i_next].
     A model's image, run beside the sampled one.
 */
-// static inline void Stator_Axis_Integrate(const Stator_Winding_T * p_winding, Stator_Axis_T * p_axis, accum32_t v, accum32_t e)
-// {
-//     p_axis->IPrev = p_axis->I;
-//     p_axis->I = fract16_sat(stator_i_next(p_winding->R, p_winding->G, p_axis->I, v, e));
-//     p_axis->V = fract16_sat(v);
-// }
+static inline fract16_t Stator_Axis_Integrate(const Stator_Winding_T * p_winding, Stator_Axis_T * p_axis, accum32_t v, accum32_t e)
+{
+    p_axis->IPrev = p_axis->I;
+    p_axis->I = fract16_sat(stator_i_next(p_winding->R, p_winding->G, p_axis->I, v, e));
+    p_axis->V = fract16_sat(v);
+    return p_axis->I;
+}
 
 /* The equation forward across the period: V held, e in place of the EMF [stator_i_next] */
 // static inline void Stator_Axis_Integrate(const Stator_Winding_T * p_winding, Stator_Axis_T * p_axis, accum32_t e)
 // {
 //     p_axis->I = fract16_sat(stator_i_next(p_winding->R, p_winding->G, p_axis->I, p_axis->V, e));
 // }
-static inline void Stator_Axis_Integrate(const Stator_Winding_T * p_winding, Stator_Axis_T * p_axis, accum32_t v, accum32_t e)
-{
-    p_axis->I = fract16_sat(stator_i_next(p_winding->R, p_winding->G, p_axis->I, v, e));
-    p_axis->V = fract16_sat(v);
-}
+// static inline void Stator_Axis_Integrate(const Stator_Winding_T * p_winding, Stator_Axis_T * p_axis, accum32_t v, accum32_t e)
+// {
+//     p_axis->I = fract16_sat(stator_i_next(p_winding->R, p_winding->G, p_axis->I, v, e));
+//     p_axis->V = fract16_sat(v);
+// }
 
 // typedef struct Stator_Orthogonal
 // {
@@ -139,140 +142,4 @@ static inline void Stator_Axis_Integrate(const Stator_Winding_T * p_winding, Sta
 // }
 // Stator_Orthogonal_T;
 
-/******************************************************************************/
-/*
-    αβ image. No zero sequence: the neutral offset of the voltages and the common error of the current sensors drop out.
-*/
-/******************************************************************************/
-/* Stator_Stationary */
-// typedef struct Stator_AlphaBeta
-// {
-//     Stator_Winding_T Winding;
-//     Stator_Axis_T Alpha;
-//     Stator_Axis_T Beta;
-
-//     /* The view in a frame [Stator_AlphaBeta_ProcPark] */
-//     alignas(4) fract16_t Vd, Vq;    /* [V_base] applied, or the back-EMF while freewheeling */
-//     alignas(4) fract16_t Id, Iq;    /* [I_base] */
-// }
-// Stator_AlphaBeta_T;
-
-// static inline void Stator_AlphaBeta_CaptureI(Stator_AlphaBeta_T * p_stator, fract16_t i_alpha, fract16_t i_beta)
-// {
-//     Stator_Axis_CaptureI(&p_stator->Alpha, i_alpha);
-//     Stator_Axis_CaptureI(&p_stator->Beta, i_beta);
-// }
-
-// static inline void Stator_AlphaBeta_CaptureVOut(Stator_AlphaBeta_T * p_stator, fract16_t v_alpha, fract16_t v_beta)
-// {
-//     Stator_Axis_CaptureVOut(&p_stator->Alpha, v_alpha);
-//     Stator_Axis_CaptureVOut(&p_stator->Beta, v_beta);
-// }
-
-// /* Both at once, where nothing reads the image between the sample and the command [Stator_Axis_Capture] */
-// static inline void Stator_AlphaBeta_Capture(Stator_AlphaBeta_T * p_stator, fract16_t i_alpha, fract16_t i_beta, fract16_t v_alpha, fract16_t v_beta)
-// {
-//     Stator_Axis_Capture(&p_stator->Alpha, i_alpha, v_alpha);
-//     Stator_Axis_Capture(&p_stator->Beta, i_beta, v_beta);
-// }
-
-// /* The period record and its view cleared, the winding held */
-// static inline void Stator_AlphaBeta_ZeroCaptureState(Stator_AlphaBeta_T * p_stator)
-// {
-//     p_stator->Alpha = (Stator_Axis_T) { 0 };
-//     p_stator->Beta = (Stator_Axis_T) { 0 };
-//     p_stator->Vd = 0;  p_stator->Vq = 0;
-//     p_stator->Id = 0;  p_stator->Iq = 0;
-// }
-
-// /* From the phase sample, through Clarke */
-// static inline void Stator_AlphaBeta_CaptureIabc(Stator_AlphaBeta_T * p_stator, fract16_t i_a, fract16_t i_b, fract16_t i_c)
-// {
-//     struct foc_alphabeta i = foc_clarke(i_a, i_b, i_c);
-//     Stator_AlphaBeta_CaptureI(p_stator, fract16_sat(i.alpha), fract16_sat(i.beta));
-// }
-
-// /* The view in the frame at θ, turning Δθ per period [foc_park]: I sampled at θ, V held across the period at its mean angle θ − Δθ/2 */
-// static inline void Stator_AlphaBeta_ProcPark(Stator_AlphaBeta_T * p_stator, angle16_t theta, angle16_t delta)
-// {
-//     struct fract16_xy sample = fract16_vector(theta);
-//     struct fract16_xy hold = fract16_vector(theta - delta / 2);
-//     struct foc_dq i = foc_park(p_stator->Alpha.I, p_stator->Beta.I, sample.y, sample.x);
-//     struct foc_dq v = foc_park(p_stator->Alpha.V, p_stator->Beta.V, hold.y, hold.x);
-//     p_stator->Id = fract16_sat(i.d);
-//     p_stator->Iq = fract16_sat(i.q);
-//     p_stator->Vd = fract16_sat(v.d);
-//     p_stator->Vq = fract16_sat(v.q);
-// }
-
-// static inline void Stator_AlphaBeta_StepAlpha(Stator_AlphaBeta_T * p_stator, accum32_t v_alpha, accum32_t emf_alpha)
-// {
-//     Stator_Axis_Integrate(&p_stator->Winding, &p_stator->Alpha, v_alpha, emf_alpha);
-// }
-
-// static inline void Stator_AlphaBeta_StepBeta(Stator_AlphaBeta_T * p_stator, accum32_t v_beta, accum32_t emf_beta)
-// {
-//     Stator_Axis_Integrate(&p_stator->Winding, &p_stator->Beta, v_beta, emf_beta);
-// }
-
-// // caller handle
-// // static inline void Stator_AlphaBeta_Step(Stator_AlphaBeta_T * p_stator, accum32_t v_alpha, accum32_t emf_alpha, accum32_t v_beta, accum32_t emf_beta)
-// // {
-// //     Stator_AlphaBeta_StepAlpha(p_stator, v_alpha, emf_alpha);
-// //     Stator_AlphaBeta_StepBeta(p_stator, v_beta, emf_beta);
-// // }
-
-// // static inline void Stator_AlphaBeta_Step(Stator_AlphaBeta_T * p_stator)
-// // {
-// //     // Stator_Axis_Integrate
-// //     // Stator_Axis_Step(&p_stator->Winding, &p_stator->Alpha);
-// //     // Stator_Axis_Step(&p_stator->Winding, &p_stator->Beta);
-// // }
-
-// static inline ufract16_t Stator_AlphaBeta_IMagnitude(const Stator_AlphaBeta_T * p_stator) { return fract16_vector_magnitude(p_stator->Alpha.I, p_stator->Beta.I); }
-// static inline ufract16_t Stator_AlphaBeta_VMagnitude(const Stator_AlphaBeta_T * p_stator) { return fract16_vector_magnitude(p_stator->Alpha.V, p_stator->Beta.V); }
-
-// /* Power over the period, the sum over the axes */
-// static inline accum32_t Stator_AlphaBeta_Power(const Stator_AlphaBeta_T * p_stator) { return Stator_Axis_Power(&p_stator->Alpha) + Stator_Axis_Power(&p_stator->Beta); }
-// static inline accum32_t Stator_AlphaBeta_PowerEmf(const Stator_AlphaBeta_T * p_stator) { return Stator_Axis_PowerEmf(&p_stator->Winding, &p_stator->Alpha) + Stator_Axis_PowerEmf(&p_stator->Winding, &p_stator->Beta); }
-
-// /* V × ī, rotation invariant: the dq form [foc_reactive_power] */
-// static inline accum32_t Stator_AlphaBeta_ReactivePower(const Stator_AlphaBeta_T * p_stator)
-// {
-//     return foc_reactive_power(p_stator->Alpha.V, Stator_Axis_IAvg(&p_stator->Alpha), p_stator->Beta.V, Stator_Axis_IAvg(&p_stator->Beta));
-// }
-
-
-/******************************************************************************/
-/*
-    dq, a model of its own if needed. The αβ image carries the view [Stator_AlphaBeta_ProcPark].
-*/
-/******************************************************************************/
-// typedef struct Stator_Rot
-// {
-//     Stator_Winding_T Winding;
-//     fract16_t Sin, Cos;
-//     Stator_Axis_T D;
-//     Stator_Axis_T Q;
-// }
-// Stator_Rot_T;
-
-
-/*
-    An axis holds the quantities of one axis: the operand of the stator equation, stator_math.h. The image stores axes.
-    A frame struct, [foc_abc] [foc_alphabeta] [foc_dq], holds one quantity across the axes: the return of a transform, unpacked at the call.
-*/
-/******************************************************************************/
-/*
-    abc image, per phase.
-*/
-/******************************************************************************/
-// typedef struct Stator_Physical
-// {
-//     Stator_Winding_T Winding;
-//     Stator_Axis_T A;
-//     Stator_Axis_T B;
-//     Stator_Axis_T C;
-// }
-// Stator_Physical_T;
 

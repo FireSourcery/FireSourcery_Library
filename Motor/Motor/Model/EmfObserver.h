@@ -109,9 +109,8 @@ EmfObserver_Config_T;
 
 typedef struct EmfObserver_Axis
 {
-    // Stator_Axis_T Model;    /* the stator equation in place of a sample [Stator_Axis_Integrate] */
-    // Stator_Axis_T Stator;   /* the captured period [Stator_Axis_Capture], and the model's I across it [Stator_Axis_Integrate] */
-    fract16_t I;            /* the model's I: the next sample, predicted [Stator_Winding_INext] */
+    Stator_Axis_T Stator;   /* the stator equation in place of a sample [Stator_Axis_Integrate] */
+                            /* Stator.I the model's I: the next sample, predicted [Stator_Winding_INext] */
     fract16_t Z;            /* the correction in place of e, the raw EMF */
     fract16_t Emf;          /* ê */
 }
@@ -119,44 +118,16 @@ EmfObserver_Axis_T;
 
 typedef struct EmfObserver
 {
-    /* The winding, from the motor's model, and the period the caller captures */
-    // Stator_AlphaBeta_T Stator;
-
     Stator_Winding_T Winding;
     EmfObserver_Axis_T Alpha, Beta;
-
-    /* The model's axes beside the measured ones, z in place of e [Stator_Axis_Integrate]. Stationary for StepSmo; in the frame θ̂ for StepEemf, its turn in the axis voltage */
-
-    // fract16_t ZAlpha, ZBeta;            /* the correction, the raw EMF */
-    // /* ê, smoothed. αβ from StepSmo, in the frame θ̂ from the dq front ends */
-    // fract16_t EmfAlpha, EmfBeta;
-
-//     /* The view in a frame [Stator_AlphaBeta_ProcPark] */
-//     alignas(4) fract16_t Vd, Vq;    /* [V_base] applied, or the back-EMF while freewheeling */
-//     alignas(4) fract16_t Id, Iq;    /* [I_base] */
-
-
-    // Stator_Axis_T ModelD, ModelQ;
-    // fract16_t Zd, Zq;
-    // fract16_t EmfD, EmfQ;
-
+    /* union optionally */
+    /* VModel_Proc and Eemf_Proc, in the frame θ̂ */
+    EmfObserver_Axis_T D, Q;
     AnglePll_T Pll;                     /* θ̂, ω̂, |ê|, lock */
-
     EmfObserver_Config_T Config;
 }
 EmfObserver_T;
 
-
-/******************************************************************************/
-/*!
-    The period, once per control tick: the sample that closes it, and the command made on it, held across the next.
-*/
-/******************************************************************************/
-// static inline void EmfObserver_AlphaBeta_Capture(EmfObserver_T * p_obs, fract16_t i_alpha, fract16_t i_beta, fract16_t v_alpha, fract16_t v_beta)
-// {
-//     Stator_Axis_Capture(&p_obs->Alpha.Stator, i_alpha, v_alpha);
-//     Stator_Axis_Capture(&p_obs->Beta.Stator, i_beta, v_beta);
-// }
 
 /******************************************************************************/
 /*!
@@ -165,28 +136,6 @@ EmfObserver_T;
 /******************************************************************************/
 /* Rotation direction of the frame. ω̂ = 0 reads forward, so the detector never stalls at zero */
 static inline sign_t _EmfObserver_Direction(const Angle_T * p_frame) { return (Angle_Delta(p_frame) < 0) ? SIGN_NEGATIVE : SIGN_POSITIVE; }
-
-
-
-
-/******************************************************************************/
-/*!
-    Front ends. Once per control tick, after the capture; one front end per observer.
-    ê across the captured period, then θ̂ tracks its own error against the rotor vector of ê.
-*/
-/******************************************************************************/
-// static inline void EmfObserver_AlphaBeta_Capture(EmfObserver_T * p_obs, fract16_t i_alpha,  fract16_t v_alpha )
-// {
-//     Stator_AlphaBeta_Capture(&p_obs->Stator, i_alpha, i_beta, v_alpha, v_beta);
-// }
-// static inline void EmfObserver_AlphaBeta_Capture(EmfObserver_T * p_obs, ract16_t i_beta,   fract16_t v_beta)
-// {
-//     Stator_AlphaBeta_Capture(&p_obs->Stator, i_alpha, i_beta, v_alpha, v_beta);
-// }
-// static inline void EmfObserver_AlphaBeta_Capture(EmfObserver_T * p_obs, fract16_t i_alpha, fract16_t i_beta, fract16_t v_alpha, fract16_t v_beta)
-// {
-//     Stator_AlphaBeta_Capture(&p_obs->Stator, i_alpha, i_beta, v_alpha, v_beta);
-// }
 
 /******************************************************************************/
 /*!
@@ -203,20 +152,36 @@ static inline sign_t _EmfObserver_Direction(const Angle_T * p_frame) { return (A
 */
 /******************************************************************************/
 /*
-    One SMO axis, in the same call as the sample i and the command v made on it: z against the sample [smo_z],
-    then the model across the next period, v held, z in place of e [Stator_Winding_INext]; z is the raw EMF, ê its equivalent control.
+    One SMO axis, the model first: the model across the period the sample i closes, v held across it, z of the last tick in place of e [Stator_Axis_Integrate],
+    then z against the sample [smo_z]; z is the raw EMF, ê its equivalent control.
+    For a v that depends on the sample, as the frame's turn on the measured current does [EmfObserver_Eemf_Proc].
 */
-// static inline void _EmfObserver_ProcSmo(EmfObserver_T * p_obs, EmfObserver_Axis_T * p_axis)
-// {
-//     Stator_Axis_Integrate(&p_obs->Winding, &p_axis->Stator, p_axis->Z);
-//     p_axis->Z = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_axis->Stator.IEst, p_axis->Stator.I));
-//     p_axis->Emf = lpf_step(p_obs->Config.LpfCoef, p_axis->Emf, p_axis->Z);
-// }
-static inline void _EmfObserver_ProcSmo(EmfObserver_T * p_obs, EmfObserver_Axis_T * p_axis, fract16_t i, fract16_t v)
+/*
+    Before the next FOC loop,
+    î[k]  = î[k-1] + G_pu · ( v - Rs_pu·î[k-1] - z[k-1] )     z in place of e
+    z[k]  = K_smo · sat( î[k] - i_meas[k], thr )
+*/
+static inline void _EmfObserver_ProcSmo(EmfObserver_T * p_obs, EmfObserver_Axis_T * p_axis, fract16_t i, accum32_t v)
 {
-    p_axis->Z = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_axis->I, i));
-    p_axis->I = Stator_Winding_INext(&p_obs->Winding, p_axis->I, v, p_axis->Z);
+    Stator_Axis_Integrate(&p_obs->Winding, &p_axis->Stator, v, p_axis->Z);
+    p_axis->Z = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_axis->Stator.I, i));
     p_axis->Emf = lpf_step(p_obs->Config.LpfCoef, p_axis->Emf, p_axis->Z);
+}
+
+/*
+    After the FOC loop, Stator.I is previous sample
+    z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
+    î[k+1]  = î[k] + G_pu · ( v[k] - Rs_pu·î[k] - z[k] )      z in place of e
+*/
+/*
+    One SMO axis, z first: z against the sample [smo_z], then the model across the next period, v the command just made, z in place of e [Stator_Axis_Integrate].
+    The command is consumed in the call; nothing waits a tick.
+*/
+static inline void _EmfObserver_ProcSmoNext(EmfObserver_T * p_obs, EmfObserver_Axis_T * p_axis, fract16_t i, accum32_t v)
+{
+    p_axis->Z = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_axis->Stator.I, i));
+    p_axis->Emf = lpf_step(p_obs->Config.LpfCoef, p_axis->Emf, p_axis->Z);
+    Stator_Axis_Integrate(&p_obs->Winding, &p_axis->Stator, v, p_axis->Z);
 }
 
 /*
@@ -224,36 +189,35 @@ static inline void _EmfObserver_ProcSmo(EmfObserver_T * p_obs, EmfObserver_Axis_
 */
 static void EmfObserver_AlphaBeta_Proc(EmfObserver_T * p_obs, fract16_t i_alpha, fract16_t i_beta, fract16_t v_alpha, fract16_t v_beta)
 {
-    // Stator_Axis_Integrate(&p_obs->Winding, &p_obs->Alpha, p_obs->Alpha.V, p_obs->ZAlpha);
-    // Stator_Axis_Integrate(&p_obs->Winding, &p_obs->Beta, p_obs->Beta.V, p_obs->ZBeta);
-    // p_obs->ZAlpha = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_obs->ModelAlpha.I, p_obs->Alpha.I));
-    // p_obs->ZBeta = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_obs->ModelBeta.I, p_obs->Beta.I));
-    // p_obs->EmfAlpha = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfAlpha, p_obs->ZAlpha);
-    // p_obs->EmfBeta = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfBeta, p_obs->ZBeta);
-    _EmfObserver_ProcSmo(p_obs, &p_obs->Alpha, i_alpha, v_alpha);
-    _EmfObserver_ProcSmo(p_obs, &p_obs->Beta, i_beta, v_beta);
+    _EmfObserver_ProcSmoNext(p_obs, &p_obs->Alpha, i_alpha, v_alpha);
+    _EmfObserver_ProcSmoNext(p_obs, &p_obs->Beta, i_beta, v_beta);
 
     /* ê_αβ: the rotor vector, detected against θ̂ [AnglePll_ProcVector] */
     struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->Alpha.Emf, p_obs->Beta.Emf);
     AnglePll_ProcVector(&p_obs->Pll, rotor.x, rotor.y);
 }
 
-// /*
-//     Voltage model, frame θ̂ [foc_vemf_d] [foc_vemf_q]. Steady state: i_dq is DC at lock, so L·ΔI of the axes
-//     becomes X·J·i, X = ω̂·L [stator_reactance], with no difference of samples, and no LPF phase lag.
-// */
-// static void EmfObserver_VModel_Step(EmfObserver_T * p_obs)
-// {
-//     Stator_AlphaBeta_ProcPark(&p_obs->Stator, Angle_Value(&p_obs->Pll.Base), Angle_Delta(&p_obs->Pll.Base));
-//     accum32_t x = stator_reactance(p_obs->Winding.L, Angle_Delta(&p_obs->Pll.Base));
+/******************************************************************************/
+/*!
+    Front ends in the frame θ̂ [Angle_Value] of [EmfObserver_T.Pll] at the call, parked by the caller [foc_park]:
+    i the sample at θ̂, v the voltage held across the period the sample closes, at its mean angle θ̂ − Δθ̂/2.
+*/
+/******************************************************************************/
+/* ê_dq, already in the frame of θ̂: the rotor vector relative to it [AnglePll_ProcRelative] */
+/*
+    Voltage model, frame θ̂ [foc_vemf_d] [foc_vemf_q]. Steady state: i_dq is DC at lock, so L·ΔI of the axes
+    becomes X·J·i, X = ω̂·L [stator_reactance], with no difference of samples, and no LPF phase lag.
+*/
+static void EmfObserver_VModel_Proc(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q, fract16_t v_d, fract16_t v_q)
+{
+    accum32_t x = stator_reactance(p_obs->Winding.L, Angle_Delta(&p_obs->Pll.Base));
 
-//     p_obs->EmfD = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfD, fract16_sat(foc_vemf_d(p_obs->Winding.R, x, p_obs->Vd, p_obs->Id, p_obs->Iq)));
-//     p_obs->EmfQ = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfQ, fract16_sat(foc_vemf_q(p_obs->Winding.R, x, p_obs->Vq, p_obs->Id, p_obs->Iq)));
-// /* ê_dq, already in the frame of θ̂: the rotor vector relative to it [AnglePll_ProcRelative] */
+    p_obs->D.Emf = lpf_step(p_obs->Config.LpfCoef, p_obs->D.Emf, fract16_sat(foc_vemf_d(p_obs->Winding.R, x, v_d, i_d, i_q)));
+    p_obs->Q.Emf = lpf_step(p_obs->Config.LpfCoef, p_obs->Q.Emf, fract16_sat(foc_vemf_q(p_obs->Winding.R, x, v_q, i_d, i_q)));
 
-//     struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->EmfD, p_obs->EmfQ);
-//     AnglePll_ProcRelative(&p_obs->Pll, rotor.x, rotor.y);
-// }
+    struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->D.Emf, p_obs->Q.Emf);
+    AnglePll_ProcRelative(&p_obs->Pll, rotor.x, rotor.y);
+}
 
 
 /******************************************************************************/
@@ -269,29 +233,31 @@ static void EmfObserver_AlphaBeta_Proc(EmfObserver_T * p_obs, fract16_t i_alpha,
     removes it, so the detector [angle_pll_error] sees a vector along θ in either direction.
 */
 /******************************************************************************/
-// /*
-//     EEMF SMO, frame θ̂. The model across the period [Stator_Axis_Integrate]: z of the last tick in place of e,
-//     and the frame's turn X·J·i on the measured current in the axis voltage, X = ω̂·L, [foc_vd_ff] [foc_vq_ff].
-//     Each axis is then a scalar SMO. On î, the boundary layer's î − i ≈ E·thr/K would cross through X into the other axis,
-//     θ̂ lagging by atan(X·thr / (K + R·thr)).
-//     z is DC at lock, so the LPF takes the chatter without the lag it costs in the stationary frame.
-// */
-// static void EmfObserver_Eemf_Step(EmfObserver_T * p_obs)
-// {
-//     Stator_AlphaBeta_ProcPark(&p_obs->Stator, Angle_Value(&p_obs->Pll.Base), Angle_Delta(&p_obs->Pll.Base));
-//     accum32_t x = stator_reactance(p_obs->Winding.L, Angle_Delta(&p_obs->Pll.Base));
+/*
+    EEMF SMO, frame θ̂. The model across the period [_EmfObserver_ProcSmo]: z of the last tick in place of e,
+    and the frame's turn X·J·i on the measured current in the axis voltage, X = ω̂·L, [foc_vd_ff] [foc_vq_ff].
+    Each axis is then a scalar SMO. On î, the boundary layer's î − i ≈ E·thr/K would cross through X into the other axis,
+    θ̂ lagging by atan(X·thr / (K + R·thr)).
+    z is DC at lock, so the LPF takes the chatter without the lag it costs in the stationary frame.
+    The model goes first: its axis voltage takes the turn on the sample that closes the period.
+*/
+/*
+    FOC_SetTheta            θ
+    FOC_ProcClarkePark      Ialpha, Ibeta, Id, Iq ← i[k]
+    EmfObserver_Eemf_Proc   i[k], and v[k−1] still in Vd/Vq and Valpha/Vbeta
+    FOC_ProcIFeedback       Vd, Vq ← v[k]
+    FOC_ProcInvClarkePark   Valpha, Vbeta, Va..Vc ← v[k]
+*/
+static void EmfObserver_Eemf_Proc(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q, fract16_t v_d, fract16_t v_q)
+{
+    accum32_t x = stator_reactance(p_obs->Winding.L, Angle_Delta(&p_obs->Pll.Base));
 
-//     Stator_Axis_Integrate(&p_obs->Winding, &p_obs->ModelD, p_obs->Vd - foc_vd_ff(x, p_obs->Iq), p_obs->Zd);
-//     Stator_Axis_Integrate(&p_obs->Winding, &p_obs->ModelQ, p_obs->Vq - foc_vq_ff(x, 0, p_obs->Id), p_obs->Zq);
-//     p_obs->Zd = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_obs->ModelD.I, p_obs->Id));
-//     p_obs->Zq = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_obs->ModelQ.I, p_obs->Iq));
+    _EmfObserver_ProcSmo(p_obs, &p_obs->D, i_d, v_d - foc_vd_ff(x, i_q));
+    _EmfObserver_ProcSmo(p_obs, &p_obs->Q, i_q, v_q - foc_vq_ff(x, 0, i_d));
 
-//     p_obs->EmfD = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfD, p_obs->Zd);
-//     p_obs->EmfQ = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfQ, p_obs->Zq);
-
-//     struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->EmfD, p_obs->EmfQ);
-//     AnglePll_ProcRelative(&p_obs->Pll, rotor.x, rotor.y);
-// }
+    struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->D.Emf, p_obs->Q.Emf);
+    AnglePll_ProcRelative(&p_obs->Pll, rotor.x, rotor.y);
+}
 
 /* Bumpless seed: θ̂ and ω̂ from a known reference, e.g. the open-loop ramp */
 static inline void EmfObserver_SeedAngle(EmfObserver_T * p_obs, angle16_t theta, angle16_t delta) { AnglePll_Seed(&p_obs->Pll, theta, delta); }
@@ -307,13 +273,10 @@ static inline bool EmfObserver_IsLocked(const EmfObserver_T * p_obs) { return An
 /* Per-tick state cleared; Config and the winding held */
 static void EmfObserver_Reset(EmfObserver_T * p_obs)
 {
-    // Stator_AlphaBeta_ZeroCaptureState(&p_obs->Stator);
-    // p_obs->ModelAlpha = (Stator_Axis_T) { 0 };  p_obs->ModelBeta = (Stator_Axis_T) { 0 };
-    // p_obs->ModelD = (Stator_Axis_T) { 0 };  p_obs->ModelQ = (Stator_Axis_T) { 0 };
-    // p_obs->ZAlpha = 0;  p_obs->ZBeta = 0;  p_obs->Zd = 0;  p_obs->Zq = 0;
-    // p_obs->EmfAlpha = 0;  p_obs->EmfBeta = 0;  p_obs->EmfD = 0;  p_obs->EmfQ = 0;
-    p_obs->Alpha = (EmfObserver_Axis_T) { 0 };
-    p_obs->Beta = (EmfObserver_Axis_T) { 0 };
+    p_obs->Alpha = (EmfObserver_Axis_T){ 0 };
+    p_obs->Beta = (EmfObserver_Axis_T){ 0 };
+    p_obs->D = (EmfObserver_Axis_T){ 0 };
+    p_obs->Q = (EmfObserver_Axis_T){ 0 };
     AnglePll_Reset(&p_obs->Pll);
 }
 
@@ -384,3 +347,20 @@ static inline int32_t EmfObserver_Config_Get(const EmfObserver_Config_T * p_conf
     }
 }
 
+
+/*
+    Super-twisting EEMF SMO, estimated dq frame θ̂: î as StepEemf, z by [sta_axis_step]. z is continuous;
+
+    its integrator w converges to the EMF, so ê is w itself, no LPF.
+*/
+// static void FOC_Sensorless_StepEemfSta(FOC_Sensorless_T * p_obs)
+// {
+//     _FOC_Sensorless_ProcPark(p_obs);
+//     _FOC_Sensorless_ProcIEstDq(p_obs);
+//     struct sta_axis d = sta_axis_step(p_obs->Config.StaLambda, p_obs->Config.StaAlphaDt, p_obs->EmfD, p_obs->SmoId, p_obs->Id);
+//     struct sta_axis q = sta_axis_step(p_obs->Config.StaLambda, p_obs->Config.StaAlphaDt, p_obs->EmfQ, p_obs->SmoIq, p_obs->Iq);
+//     p_obs->SmoZd = d.z;  p_obs->EmfD = d.w;
+//     p_obs->SmoZq = q.z;  p_obs->EmfQ = q.w;
+
+//     _FOC_Sensorless_ProcPllDq(p_obs);
+// }
