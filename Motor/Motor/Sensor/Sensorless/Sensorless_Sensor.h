@@ -35,7 +35,7 @@
     Only the sensorless start-up substates (Motor_Sensorless.c) drive Proc; RotorSensor_CaptureAngle alone would publish a frozen θ̂.
 */
 /******************************************************************************/
-#include "EmfObserver.h"
+#include "../../Model/EmfObserver.h"
 #include "../RotorSensor.h"
 #include "../../Math/FOC.h"
 
@@ -69,6 +69,5 @@ extern const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE;
 */
 static inline void Sensorless_Sensor_Proc(Sensorless_Sensor_T * p_sensor, const FOC_T * p_foc)
 {
-    EmfObserver_Capture(p_sensor->P_OBSERVER, p_foc->Ialpha, p_foc->Ibeta, p_foc->Valpha, p_foc->Vbeta);
-    EmfObserver_StepSmo(p_sensor->P_OBSERVER);
+    EmfObserver_AlphaBeta_Proc(p_sensor->P_OBSERVER, p_foc->Ialpha, p_foc->Ibeta, p_foc->Valpha, p_foc->Vbeta);
 }

@@ -1,3 +1,5 @@
+Another form of the descriptor pattern
+
     typedef const struct RingT
     {
         Ring_Type_T TYPE;

@@ -51,10 +51,10 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-Exclude/
-**/Exclude/
-build/
+
+Build/
 *.log
+
 .Test/
 
 .vscode/*
@@ -62,6 +62,3 @@ build/
 !.vscode/settings.json
 
 .claude/
-
-Motor/Docs/.obsidian/
-Docs/.obsidian/

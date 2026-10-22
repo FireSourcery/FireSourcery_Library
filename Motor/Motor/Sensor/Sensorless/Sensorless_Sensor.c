@@ -75,7 +75,7 @@ static void Sensorless_Sensor_ZeroInitial(Sensorless_Sensor_T * p_sensor)
 static bool Sensorless_Sensor_VerifyCalibration(Sensorless_Sensor_T * p_sensor)
 {
     const EmfObserver_Config_T * p_config = &p_sensor->P_OBSERVER->Config;
-    return (p_config->K_smo != 0) && (p_config->LpfCoef != 0) && (p_sensor->P_OBSERVER->Stator.Winding.G != 0);
+    return (p_config->K_smo != 0) && (p_config->LpfCoef != 0) && (p_sensor->P_OBSERVER->Winding.G != 0);
 }
 
 /* No sensor-local unit state: the observer works entirely in the motor's per-unit

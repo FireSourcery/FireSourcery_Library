@@ -144,7 +144,7 @@ config:
     showIcons: true
 ---
 treeView-beta
-├── Docs/                                      ## conventions, datasheets, references
+├── Docs/                                      ## architecture notes and findings, index Docs/README.md
 ├── External/                                  ## vendor headers
 │   ├── CMSIS/                                 ## Cortex-M core
 │   └── S32K142/                               ## NXP S32K142 device

@@ -1,7 +1,6 @@
 # CLAUDE.md — FireSourcery_Library
 
 ## Project Overview
-
 **FireSourcery_Library** is a modular, layered embedded systems library written in **C** for motor control applications (primarily targeting **ARM Cortex-M** microcontrollers NXP S32K / Kinetis KE0x families). It implements a full motor controller stack including FOC (Field-Oriented Control), sensor feedback, protocol communication, and peripheral abstraction.
 
 ## Core Principles
@@ -12,8 +11,8 @@
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
 ### Demand Elegance
-- Consider established or published design patterns to eliminate code duplication
 - For non-trivial changes: pause and ask "is there a more elegant way?"
+- Consider established or published design patterns first to eliminate code duplication
 - If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
 - Skip this for simple, obvious fixes – don't over-engineer
 - Challenge your own work before presenting it
@@ -28,12 +27,14 @@
   - Bare CAPS — a member name (state, input, mode) once its section has named the type, e.g. INIT under `[Motor_StateId_T]`.
   - Bold — emphasis only, never code.
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
+- Architecture notes and findings live in `Docs/`: Conventions, Patterns, Decisions, Findings, Modules, References. Index: [Docs/README.md](Docs/README.md).
 
 ### Self-Improvement Loop
 - After ANY correction from the user: update `.claude/tasks/lessons.md` with the pattern
 - Write rules for yourself that prevent the same mistake
 - Ruthlessly iterate on these lessons until mistake rate drops
 - Review lessons at session start for relevant project
+- Research patterns before starting to code.
 
 ## Task Management
 1. **Plan First**: Write plan to `.claude/tasks/todo.md` with checkable items
@@ -46,7 +47,7 @@
 ## Build & Toolchain
 - **Compiler:** ARM GCC (`arm-none-eabi-gcc` 15.2.1)
 - **Target Architecture:** ARM Cortex-M4/M0+
-- **Build System:** Makefile / IDE project-based (MCUXpresso / VS Code)
+- **Build System:** Makefile / CMake
 - **C Standard:** C23
 - **No dynamic allocation** — all memory is statically allocated
 <!-- - **No standard library dependencies** beyond `<stdint.h>`, `<stdbool.h>`, `<stddef.h>`, `<string.h>` -->
@@ -82,7 +83,7 @@
 - **Function parameters order**: most "constant" first. The parameter least likely to change or is constant at call site goes first.
 - **PascalCase** for types, structs, enums, and function names: `Motor_FOC_ProcAngle()`, `MotorController_Init()`
 - **UPPER_SNAKE_CASE** for macros, enum values, and constants: `MOTOR_STATE_RUN`, `HAL_ADC_CHANNEL_COUNT`
-- **camelCase** for local variables and struct fields
+- **camelCase** for local variables
 - **snake_case** for pure functions on primitives
 - Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `UART_`, etc.
 - Files prefixed with `_` (e.g., `_Motor_Config.h`) are internal/private headers not intended for external inclusion

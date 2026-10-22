@@ -120,7 +120,7 @@ flowchart LR
     Tuning["Motor_Config_T.FieldWeakening"] --> Resolve
     ME --> Resolve["Motor_FOC_InitParams"]
     Resolve --> View["FOC_T: Electrical, FieldWeakening"]
-    Resolve -->|"EmfObserver_InitWinding"| Obs["EmfObserver_T: Stator.Winding"]
+    Resolve -->|"EmfObserver_InitWinding"| Obs["EmfObserver_T: Winding"]
 ```
 
 | Struct | Holds | Base | Persisted |
@@ -130,7 +130,7 @@ flowchart LR
 | `Motor_Config_T.FieldWeakening` [Motor_FieldWeakeningTuning_T] | IfwLimit, IfwGain | I_base | yes |
 | `FOC_T.Electrical` [FOC_Electrical_T] | Ld, Lq, Rs, ψ | turn | no, derived |
 | `FOC_T.FieldWeakening` [FOC_FieldWeakeningTuning_T] | IdLimit, IdGain | I_base | no, derived: IfwLimit within the board FW rating |
-| `EmfObserver_T.Stator.Winding` [Stator_Winding_T] | R, L = Lq, G = 1 / L | rad | no, derived: one plant for every front end |
+| `EmfObserver_T.Winding` [Stator_Winding_T] | R, L = Lq, G = 1 / L | rad | no, derived: one plant for every front end |
 
 `Motor_FOC_InitParams` derives them on `Motor_Init` and `Motor_Reinit`, after the calibration commit, and after every electrical var write. An invalid model keeps the prior view. The FOC view is at the turn base, so the decoupling input is Δθ (`Motor_GetDecouplingOmega`), and the products ω·L, ω·ψ are base-invariant. ψ_turn derives from AngleFreqPerVolt, the one copy of the motor constant. The FW limit stays as written; `Motor_Config_ValidateFw` bounds ILimitMotoring_Pu to the rated vector left beside it.
 

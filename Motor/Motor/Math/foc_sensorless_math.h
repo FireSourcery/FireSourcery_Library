@@ -86,6 +86,7 @@ static inline fract16_t lpf_step(fract16_t k_lp, fract16_t y, fract16_t x) { ret
 */
 /* The rotor vector −j·sign(ω)·e, along θ with length |ω|·ψ */
 static inline struct fract16_xy foc_rotor_of_emf(sign_t sign, fract16_t e_x, fract16_t e_y) { return (struct fract16_xy) { .x = sign * e_y, .y = -sign * e_x }; }
+
 /******************************************************************************/
 /*!
     @brief  Electrical speed estimate from EMF magnitude.
@@ -128,14 +129,14 @@ static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t sigma) {
     Plant (per axis), the current model [stator_i_next]:
         di/dt = (Ls)⁻¹ · ( v - Rs·i - e )
 
-    Discrete observer, across the period ending at the sample i_meas, v held across it:
-        î[k]  = î[k-1] + G_pu · ( v - Rs_pu·î[k-1] - z[k-1] )     z in place of e
-        z[k]  = K_smo · sat( î[k] - i_meas[k], thr )
+    Discrete observer, at the sample i_meas[k], with v[k] the command made on it, held across the next period:
+        z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
+        î[k+1]  = î[k] + G_pu · ( v[k] - Rs_pu·î[k] - z[k] )      z in place of e
 
         G_pu = dt · V_max / (Ls · I_max) = 1 / Ls_pu_rad = π / Ls_pu_turn
 
-    The recurrence of z[k] then î[k+1], bounded at the sample instead: that form takes
-    the v about to be applied, this one the v applied, so it runs on capture alone.
+    The same recurrence as î[k] then z[k], bounded at the end of the period instead: that form takes
+    the v applied, stored a tick; this one the v just commanded, so it runs in the same call as the capture.
 
 
     The switching variable z drives (î - i) → 0; its slow component

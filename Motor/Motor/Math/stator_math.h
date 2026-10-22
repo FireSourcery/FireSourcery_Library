@@ -60,6 +60,10 @@ static inline accum32_t stator_v(accum32_t r, accum32_t l, fract16_t i_prev, fra
 */
 static inline accum32_t stator_emf(accum32_t r, accum32_t l, fract16_t i_prev, fract16_t i, accum32_t v) { return v - stator_v_drop(r, l, i_prev, i); }
 
+/*
+    L·di/dt
+*/
+static inline accum32_t stator_v_l(accum32_t r, fract16_t i, accum32_t v, accum32_t e) { return v - fract16_mul(r, i) - e; }
 
 /******************************************************************************/
 /*!
@@ -67,7 +71,7 @@ static inline accum32_t stator_emf(accum32_t r, accum32_t l, fract16_t i_prev, f
         i[k+1] = i[k] + G·(v − R·i[k] − e),     G = 1 / L_rad = Ts · V_base / (L · I_base)
 */
 /******************************************************************************/
-static inline accum32_t stator_i_next(accum32_t r, accum32_t g, fract16_t i, accum32_t v, accum32_t e) { return (accum32_t)i + accum32_mul(g, v - fract16_mul(r, i) - e); }
+static inline accum32_t stator_i_next(accum32_t r, accum32_t g, fract16_t i, accum32_t v, accum32_t e) { return (accum32_t)i + accum32_mul(g, stator_v_l(r, i, v, e)); }
 
 
 /*!
@@ -77,6 +81,7 @@ static inline accum32_t stator_i_next(accum32_t r, accum32_t g, fract16_t i, acc
 // static inline accum32_t stator_vd_ff(accum32_t omega_Lq, accum32_t iq) { return -accum32_mul(omega_Lq, iq); }
 // static inline accum32_t stator_vq_ff(accum32_t omega_Ld, accum32_t omega_psi, accum32_t id) { return accum32_mul(omega_Ld, id) + omega_psi; }
 // static inline accum32_t stator_dq_axis(accum32_t Rs_pu, accum32_t v, accum32_t v_ff, accum32_t i) { return v - accum32_mul(Rs_pu, i) - v_ff; }
+
 // static inline accum32_t stator_vemf_d(accum32_t Rs_pu, accum32_t omega_Lq, accum32_t vd, accum32_t id, accum32_t iq) { return stator_dq_axis(Rs_pu, vd, foc_vd_ff(omega_Lq, iq), id); }
 // static inline accum32_t stator_vemf_q(accum32_t Rs_pu, accum32_t omega_Lq, accum32_t vq, accum32_t id, accum32_t iq) { return stator_dq_axis(Rs_pu, vq, foc_vq_ff(omega_Lq, 0, id), iq); }
 // static inline fract16_t stator_eemf_i(accum32_t Rs_pu, accum32_t G_pu, accum32_t v, accum32_t v_ff, fract16_t i_est_prev, fract16_t e) { return fract16_sat(stator_i_next(Rs_pu, G_pu, i_est_prev, v - v_ff, e)); }
