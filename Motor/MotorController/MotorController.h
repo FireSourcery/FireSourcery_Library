@@ -347,8 +347,8 @@ extern void MotorController_ResetBootDefault(MotorController_Context_T * p_mc);
 
 extern MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorController_T * p_dev);
 
-extern void MotorController_CaptureILimits(MotorController_T * p_dev);
-extern void MotorController_CaptureSpeedLimits(MotorController_T * p_dev);
+extern void MotorController_ProcILimits(MotorController_T * p_dev);
+extern void MotorController_ProcSpeedLimits(MotorController_T * p_dev);
 
 // extern bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit);
 // extern bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id);

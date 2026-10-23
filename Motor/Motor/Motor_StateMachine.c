@@ -437,7 +437,7 @@ static void Run_OnSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_CaptureVSpeed(p_context);
-    Motor_FOC_ResolveILimits(p_motor); /* Before the speed loop clamps against them */
+    Motor_FOC_ResolveILimits(p_motor);  /* Before the speed loop clamps against them */
     Motor_ResolveSpeedLimits(p_motor->P_MOTOR);
     if (p_context->FeedbackMode.Speed == 1U) { Motor_ProcSpeedControlOf(p_context, p_context->UserCmd); }
 }

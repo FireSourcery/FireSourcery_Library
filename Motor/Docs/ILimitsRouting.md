@@ -14,7 +14,7 @@ flowchart LR
 
     %% Frame conversions
     PB{{"<b>IBus operating point [Cw/Ccw]</b><br/>power balance by v_q (exact)<br/>or phase bound by motion<br/>reads FOC state"}}
-    VD{{"<b>IBus Approximate [Ratio Mot/Gen]</b><br/>UV ramp → Mot, OV ramp → Gen<br/>least accurate, cheapest, least coupled"}}
+    VD{{"<b>IBus Approximate [Cw/Ccw]</b><br/>UV ramp × Mot, OV ramp × Gen<br/>by Direction, the V half-plane<br/>least accurate, cheapest, least coupled"}}
     GET{{"<b>Motor_ResolveILimits [Cw/Ccw]</b><br/><b>Merge</b><br/>intersect of the three"}}
 
     %% Merge points
@@ -29,11 +29,12 @@ flowchart LR
     %% Limit data flow
     SYS --> ARB
     USER --> ARB
-    VB -->|V_DERATE| VD --> ARB
+    VB -->|V_DERATE| VD --> WIN
     VB -->|"POWER_BALANCE / PHASE_BOUND"| PB --> WIN
     IDC --> PB
     ARB -->|"ratio pair × Config"| PAIR
     CFG --> PAIR
+    CFG --> VD
     PRO --> DIR
     PAIR --> GET
     DIR --> GET
@@ -41,18 +42,16 @@ flowchart LR
     GET --> SLOT
 
     %% Call sites
-    C1S[["MC main 1 s<br/>MotorController_CaptureILimits<br/>→ Motor_SetILimitDerates"]]
-    CVB[["VBus thread, V_DERATE<br/>push on update"]]
-    TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, SpeedZero<br/>MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP"]]
-    MC10[["MC main ~10 ms (default)<br/>Motor_ResolveISupplyLimits"]]
+    C1S[["MC main 1 s<br/>MotorController_ProcILimits<br/>→ Motor_SetILimitDerates"]]
+    TICK[["Speed tick 1 kHz (default)<br/>Run (Current), TorqueZero, SpeedZero<br/>MOTOR_I_SUPPLY_LIMITS_ON_SPEED"]]
+    MC10[["MC main ~10 ms<br/>Motor_CaptureISupplyLimits"]]
     RES[["Motor_ResolveILimits<br/>each push, Motor_SetDirection,<br/>Run_Entry, Intervention_Entry"]]
     AL[["Motor_ResolveAlignILimits"]]
     VM[["Run_Entry, voltage mode"]]
 
     C1S -.-> ARB
-    CVB -.-> ARB
-    TICK -.->|or| PB
-    MC10 -.->|or| PB
+    TICK -.->|or| WIN
+    MC10 -.->|or| WIN
     RES -.-> GET
     AL -.->|writes| SLOT
     VM -.->|writes| SLOT
@@ -68,7 +67,7 @@ flowchart LR
     class PB,VD convert
     class ARB,PAIR,DIR,WIN,GET merge
     class SLOT clamp
-    class C1S,CVB,TICK,MC10,RES,AL,VM callsite
+    class C1S,TICK,MC10,RES,AL,VM callsite
 ```
 
 Green stadium: live limit source. Grey cylinder: stored config limit. Purple hexagon: frame conversion. Blue box: merge point. Red box: active clamp in the hot path. Amber dashed box: call site, with dotted edges meaning "invokes". Solid edges carry limit values.

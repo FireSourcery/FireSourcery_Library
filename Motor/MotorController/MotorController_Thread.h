@@ -135,7 +135,7 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
     for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { ADC_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
     ADC_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
 
-    // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
+    // for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_Heat_Thread(&p_dev->MOTORS.P_DEVS[i]); }
 }
 
 /******************************************************************************/
@@ -162,12 +162,10 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:    _MotorController_VBus_EnterFault(p_dev);    break;
         default: break;
     }
-
-#if defined(VBUS_I_LIMIT_V_DERATE)
-    /* The ramps track VBus. The only writer of the derate pair in this mode, same priority as the PWM thread */
-    MotorController_CaptureILimits(p_dev);
+#if defined(MOTOR_I_SUPPLY_LIMITS_ON_VBUS)
+    /* The supply window follows the bus and each motor's operating point. Store only, the motor resolves on its speed tick */
+    for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[i]); }
 #endif
-
     // if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotBuzzer_MonitorTrigger(MotorController_Buzzer(p_dev)); }
 
     ADC_Conversion_Mark(&p_dev->VBUS_CONVERSION);
@@ -245,9 +243,9 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
         {
-#if !defined(VBUS_I_LIMIT_V_DERATE) && !defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
+#if defined(MOTOR_I_SUPPLY_LIMITS_ON_MAIN)
             /* The supply window follows the bus and each motor's operating point. Store only, the motor resolves on its speed tick */
-            for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[iMotor]); }
+            for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[i]); }
 #endif
 
             Blinky_Proc(&p_dev->BUZZER);
@@ -268,12 +266,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
 
-#if !defined(VBUS_I_LIMIT_V_DERATE)
-            MotorController_CaptureILimits(p_dev);
-#endif
+            MotorController_ProcILimits(p_dev);
 
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
-            MotorController_CaptureSpeedLimits(p_dev);
+            MotorController_ProcSpeedLimits(p_dev);
             // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true)
 
             /* Can use low priority check, as motor is already in fault state. */
@@ -312,12 +308,12 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_dev)
     // p_fields->MicrosRef = SysTime_GetMicros();
     if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true)
     {
-        for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
+        for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { _Motor_Analog_Thread(&p_dev->MOTORS.P_DEVS[i]); }
     }
     ADC_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 
     for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { ADC_ActivateMarked(&p_dev->P_ADCS[iAdc]); }
-    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
+    for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_PWM_Thread(&p_dev->MOTORS.P_DEVS[i]); }
 
     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
     // HAL_PWM_ClearInterrupt(p_dev->HAL_PWM); /* BOARD_PWM_HAL */

@@ -36,8 +36,8 @@
     Supply limit enforcement
         VBUS_I_LIMIT_POWER_BALANCE  q-axis limit at the operating point (v_d, i_d, v_q), exact
         VBUS_I_LIMIT_PHASE_BOUND    phase-current bound keyed by the motion, conservative below full modulation
-        VBUS_I_LIMIT_V_DERATE       voltage ramps as ratios of each motor's I limits, no DC limit. Composed into the derate pair by the upper layer.
-    The first two take different inputs. The caller selects at the operating point it holds.
+        VBUS_I_LIMIT_V_DERATE       voltage ramps on each motor's I limits, keyed by the V half-plane, no DC limit
+    Each takes different inputs. The caller selects at the operating point it holds.
 */
 #if !defined(VBUS_I_LIMIT_POWER_BALANCE) && !defined(VBUS_I_LIMIT_PHASE_BOUND) && !defined(VBUS_I_LIMIT_V_DERATE)
 #define VBUS_I_LIMIT_POWER_BALANCE
@@ -82,6 +82,9 @@ static inline interval_t VBus_FOC_IqLimits(const VBus_T * p_vbus, fract16_t vd, 
 
 /* [foc_iq_phase_limits], motion as the sign of the rotor speed */
 static inline interval_t VBus_FOC_IqPhaseLimits(const VBus_T * p_vbus, sign_t motion, fract16_t id) { return foc_iq_phase_limits(VBus_ILimitInterval(p_vbus), motion, id); }
+
+/* The ramps on a motor's limits. v_q held to the draw side by the half-plane V limits: i_q along it draws, against it returns */
+static inline interval_t VBus_FOC_IqDerateLimits(const VBus_T * p_vbus, sign_t draw, uint16_t iDraw, uint16_t iReturn) { return interval_of_sign(draw, fract16_mul(VBus_GetIDerateUnderV(p_vbus), iDraw), fract16_mul(VBus_GetIDerateOverV(p_vbus), iReturn)); }
 
 
 

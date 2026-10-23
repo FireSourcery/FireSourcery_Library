@@ -47,19 +47,6 @@
 
 /******************************************************************************/
 /*!
-    Helper
-*/
-/******************************************************************************/
-static inline int16_t _Linear_SatSigned16(int32_t value16) { return ((int16_t)math_clamp(value16, INT16_MIN, INT16_MAX)); }
-static inline int16_t _Linear_SatSigned16_Abs(int32_t value16) { return _Linear_SatSigned16(math_abs(value16)); }
-static inline uint16_t _Linear_SatUnsigned16(int32_t value16) { return ((uint16_t)math_clamp(value16, 0, INT16_MAX)); }   /* Q1.15 UFract: [0, 32767] */
-static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t value16) { return _Linear_SatUnsigned16(math_abs(value16)); }
-static inline uint16_t _Linear_SatPercent16(int32_t value16) { return ((uint16_t)math_clamp(value16, 0, UINT16_MAX)); }   /* Q0.16 Percent: [0, 65535] */
-static inline uint16_t _Linear_SatPercent16_Abs(int32_t value16) { return _Linear_SatPercent16(math_abs(value16)); }
-
-
-/******************************************************************************/
-/*!
 
 */
 /******************************************************************************/
@@ -88,9 +75,9 @@ static inline int32_t Linear_Q16_InvOf(const Linear_T * p_linear, int32_t y_fixe
     Convert Qx.15
 */
 /******************************************************************************/
-static inline int32_t Linear_Q16_Accum32(const Linear_T * p_linear, int32_t x) { return Linear_Q16_Of(p_linear, x) / 2; } // { return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift + 1, p_linear->X0, x); }
-static inline int16_t Linear_Q16_Fract(const Linear_T * p_linear, int32_t x) { return _Linear_SatSigned16(Linear_Q16_Accum32(p_linear, x)); }
-static inline uint16_t Linear_Q16_UFract(const Linear_T * p_linear, int32_t x) { return _Linear_SatUnsigned16(Linear_Q16_Accum32(p_linear, x)); }
+static inline int32_t Linear_Q16_Accum32(const Linear_T * p_linear, int32_t x)  { return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift + 1, p_linear->X0, x); }
+static inline int16_t Linear_Q16_Fract(const Linear_T * p_linear, int32_t x) { return (int16_t)math_clamp(Linear_Q16_Accum32(p_linear, x), INT16_MIN, INT16_MAX); }
+static inline uint16_t Linear_Q16_UFract(const Linear_T * p_linear, int32_t x) { return (uint16_t)math_clamp(Linear_Q16_Accum32(p_linear, x), 0, INT16_MAX); }   /* Q1.15 UFract: [0, 32767] */
 
 /* Input interval units */
 static inline int32_t Linear_Q16_InvFract(const Linear_T * p_linear, int16_t y_fract16) { return Linear_Q16_InvOf(p_linear, (int32_t)y_fract16 * 2); }
@@ -101,8 +88,8 @@ static inline int32_t Linear_Q16_InvFract(const Linear_T * p_linear, int16_t y_f
 */
 /******************************************************************************/
 static inline int32_t _Linear_Q16_Percent(const Linear_T * p_linear, int32_t x) { return Linear_Q16_Of(p_linear, x); }
-static inline uint16_t Linear_Q16_Percent(const Linear_T * p_linear, int32_t x) { return _Linear_SatPercent16(Linear_Q16_Of(p_linear, x)); }
-static inline uint16_t Linear_Q16_Percent_Abs(const Linear_T * p_linear, int32_t x) { return _Linear_SatPercent16_Abs(Linear_Q16_Of(p_linear, x)); }
+static inline uint16_t Linear_Q16_Percent(const Linear_T * p_linear, int32_t x) { return (uint16_t)math_clamp(Linear_Q16_Of(p_linear, x), 0, UINT16_MAX); }
+static inline uint16_t Linear_Q16_Percent_Abs(const Linear_T * p_linear, int32_t x) { return (uint16_t)math_clamp(math_abs(Linear_Q16_Of(p_linear, x)), 0, UINT16_MAX); }
 
 /* Input interval units */
 static inline int32_t Linear_Q16_InvPercent(const Linear_T * p_linear, uint16_t y_percent16) { return Linear_Q16_InvOf(p_linear, y_percent16); }
@@ -127,11 +114,7 @@ static inline int16_t Linear_Q16_General(const Linear_T * p_linear, int32_t x)
 /*!
     Q0.16 and Q1.15
     signed/unsigned 16-bit precision, using 32-bits for intermediate calculations
-
-    [x0:xRef] => [0:65536] => [y0_Units:yRef_Units]
-        direct shift back is Q16.16
-    f(x0) = y0_Fixed == 0
-    f(xRef) = 65535
+    [x0:xRef] => [0:65536]
 */
 /******************************************************************************/
 /*!

@@ -111,8 +111,13 @@ static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_T * p_cont
 
 /* Heat limit calculation */
 /* assert(p_heat->P_LIMIT_SCALAR != NULL) */
-static inline uint16_t HeatMonitor_GetScalarLimit_Percent16(const HeatMonitor_T * p_heat) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput); }
-static inline uint16_t HeatMonitor_GetDerate(const HeatMonitor_T * p_heat) { return Linear_Q16_UFract(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput); }
+static inline int32_t _HeatMonitor_LimitScalarInput(const Linear_T * p_scalar, int32_t input)
+{
+    return math_clamp(input, p_scalar->X0 - 2 * math_abs(p_scalar->XDelta), p_scalar->X0 + 2 * math_abs(p_scalar->XDelta));
+}
+
+static inline uint16_t HeatMonitor_GetScalarLimit_Percent16(const HeatMonitor_T * p_heat) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, _HeatMonitor_LimitScalarInput(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput)); }
+static inline uint16_t HeatMonitor_GetDerate(const HeatMonitor_T * p_heat) { return Linear_Q16_UFract(p_heat->P_LIMIT_SCALAR, _HeatMonitor_LimitScalarInput(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput)); }
 
 /******************************************************************************/
 /*
@@ -193,8 +198,8 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_PollCollective(const HeatMo
     Group Query Functions - Polling results
 */
 /******************************************************************************/
-static inline uint16_t HeatMonitor_Group_GetScalarLimit_Percent16(const HeatMonitor_Group_T * p_group) { return Linear_Q16_Percent(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput); }
-static inline uint16_t HeatMonitor_Group_GetDerate(const HeatMonitor_Group_T * p_group) { return Linear_Q16_UFract(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput); }
+static inline uint16_t HeatMonitor_Group_GetScalarLimit_Percent16(const HeatMonitor_Group_T * p_group) { return Linear_Q16_Percent(p_group->P_LIMIT_SCALAR, _HeatMonitor_LimitScalarInput(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput)); }
+static inline uint16_t HeatMonitor_Group_GetDerate(const HeatMonitor_Group_T * p_group) { return Linear_Q16_UFract(p_group->P_LIMIT_SCALAR, _HeatMonitor_LimitScalarInput(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput)); }
 
 static inline HeatMonitor_State_T * HeatMonitor_Group_State(const HeatMonitor_Group_T * p_group) { return (HeatMonitor_State_T *)(p_group->P_STATE); }
 

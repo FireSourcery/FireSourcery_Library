@@ -117,9 +117,8 @@ void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0,
     p_linear->InvSlope = (xRef - x0);
     p_linear->InvSlopeShift = nFractionalBits;
     p_linear->X0 = x0;
-
-    /* User reference only */
     p_linear->XDelta = xRef - x0;
+    /* User reference only */
     p_linear->Y0 = 0;
     p_linear->YDelta = (1U << nFractionalBits);
 }

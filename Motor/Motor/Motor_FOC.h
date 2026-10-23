@@ -84,14 +84,12 @@ static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_
 #elif defined(VBUS_I_LIMIT_PHASE_BOUND)
 static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqPhaseLimits(p_motor->P_VBUS, math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR)), FOC_Id(&p_motor->P_MOTOR->Foc)); }
 #elif defined(VBUS_I_LIMIT_V_DERATE)
-/* The bus ramps ride the derate pair */
-static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { (void)p_motor; return interval_symmetric(0, FRACT16_MAX); }
+/* [Motor_SetDirection] holds v_q to the Direction half-plane. Motoring draws, Generating returns */
+static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqDerateLimits(p_motor->P_VBUS, (sign_t)Motor_Direction(p_motor->P_MOTOR), p_motor->P_MOTOR->Config.ILimitMotoring_Pu, p_motor->P_MOTOR->Config.ILimitGenerating_Pu); }
 #endif
 
 /* Store only. Takes effect on the next resolve. */
 static inline void Motor_CaptureISupplyLimits(Motor_T * p_motor) { p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits(p_motor); }
-
-
 
 /*
     Decoupling-basis ω input for FOC_CaptureSpeed. Δθ [angle16/Ts], the turn-base ω_pu of [FOC_Electrical_T]. Free of the speed base.
@@ -119,7 +117,7 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
 /*
     The state running the current loop resolves the held inputs, on entry and on its speed tick.
     The supply window moves with the operating point:
-        MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP    captured by the same poll
+        MOTOR_I_SUPPLY_LIMITS_ON_SPEED    captured by the same poll
         otherwise                           captured by the upper layer, [Motor_CaptureISupplyLimits]
 */
 extern void Motor_FOC_ResolveILimits(Motor_T * p_motor);

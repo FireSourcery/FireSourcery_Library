@@ -39,22 +39,13 @@ void Motor_FOC_WriteDuty(Motor_T * p_motor)
     Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
 }
 
-/* Out of line: one copy for every state that runs the current loop */
 void Motor_FOC_ResolveILimits(Motor_T * p_motor)
 {
-#if defined(MOTOR_I_SUPPLY_LIMITS_SPEED_LOOP)
+#if defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED)
     Motor_CaptureISupplyLimits(p_motor);
 #endif
     Motor_ResolveILimits(p_motor->P_MOTOR);
 }
-
-/* Push alternative: capture and resolve from any state */
-// void Motor_ResolveISupplyLimits(Motor_T * p_motor)
-// {
-//     Motor_CaptureISupplyLimits(p_motor);
-//     Motor_ResolveILimits(p_motor->P_MOTOR);
-// }
-
 
 /******************************************************************************/
 /*!
