@@ -248,8 +248,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
         {
-
-
             Blinky_Proc(&p_dev->BUZZER);
             Blinky_Proc(&p_dev->METER);
         }
