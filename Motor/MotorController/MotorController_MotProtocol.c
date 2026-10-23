@@ -252,8 +252,10 @@ static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_dev, Packet_X
 
     Ack policy per handler:
         ACK_NONE        stateless exchange - the response is the only reply.
-        ACK_ON_REQ      ack-paced - the request is acked on arrival and the response awaits
-                        an ack, which is what drives a continuation.
+        ACK_ON_REQ      the opening exchange - the request is acked on arrival and the
+                        response awaits an ack. Continuation steps are left to the handler.
+        ACK_EVERY_STEP  ack-paced - every response awaits an ack, which is what drives a
+                        continuation.
 
     DataModeWrite is deliberately ACK_NONE: it is data-paced, so the handler's own
     ACCEPT / REJECT on each chunk is the acknowledgment and no ack round trip is inserted.
@@ -274,7 +276,7 @@ const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MO
     PROTOCOL_REQ(MOT_PACKET_MEM_READ,         &MOT_FRAME_DATA,  ReadMem_Blocking,    PROTOCOL_ACK_NONE),
     PROTOCOL_REQ(MOT_PACKET_MEM_WRITE,        &MOT_FRAME_DATA,  WriteMem_Blocking,   PROTOCOL_ACK_NONE),
 #if defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-    PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,   &MOT_FRAME_DATA,  ReadData,            PROTOCOL_ACK_ON_REQ),
+    PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,   &MOT_FRAME_DATA,  ReadData,            PROTOCOL_ACK_EVERY_STEP),
     PROTOCOL_REQ(MOT_PACKET_DATA_MODE_WRITE,  &MOT_FRAME_DATA,  WriteData_Blocking,  PROTOCOL_ACK_NONE),
 #endif
 };

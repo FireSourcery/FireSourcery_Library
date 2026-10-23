@@ -43,6 +43,17 @@
 /* approximate limit without coupling VBusNominal */
 static inline uint16_t _Motor_SpeedRatedLimit(const Motor_Config_T * p_config) { (void)p_config; return Phase_VRated_Pu(); }
 static inline uint16_t _Motor_SpeedFwLimit(const Motor_Config_T * p_config) { (void)p_config; return INT16_MAX; }
+
+/* Speed limit bound. Field weakening extends past the rated V ceiling, as [Motor_IsConfigValid] */
+static inline uint16_t _Motor_SpeedLimitCeiling(const Motor_Config_T * p_config)
+{
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    return Motor_FieldWeakening_IsEnabled(&p_config->FieldWeakening) ? _Motor_SpeedFwLimit(p_config) : _Motor_SpeedRatedLimit(p_config);
+#else
+    return _Motor_SpeedRatedLimit(p_config);
+#endif
+}
+
 static inline uint16_t _Motor_IRatedLimit() { return Phase_IRatedPeak_Pu(); }
 static inline uint16_t _Motor_VRatedLimit() { return Phase_VRated_Pu(); }
 
@@ -206,8 +217,8 @@ static inline uint16_t Motor_Config_GetILimitGenerating_Pu(const Motor_Config_T 
 /*
     Persistent Base SpeedLimit
 */
-void Motor_Config_SetSpeedLimitForward_Pu(Motor_Config_T * p_config, uint16_t forward_pu) { p_config->SpeedLimitForward_Pu = math_min(_Motor_SpeedRatedLimit(p_config), forward_pu); }
-void Motor_Config_SetSpeedLimitReverse_Pu(Motor_Config_T * p_config, uint16_t reverse_pu) { p_config->SpeedLimitReverse_Pu = math_min(_Motor_SpeedRatedLimit(p_config), reverse_pu); }
+void Motor_Config_SetSpeedLimitForward_Pu(Motor_Config_T * p_config, uint16_t forward_pu) { p_config->SpeedLimitForward_Pu = math_min(_Motor_SpeedLimitCeiling(p_config), forward_pu); }
+void Motor_Config_SetSpeedLimitReverse_Pu(Motor_Config_T * p_config, uint16_t reverse_pu) { p_config->SpeedLimitReverse_Pu = math_min(_Motor_SpeedLimitCeiling(p_config), reverse_pu); }
 
 /*
     Persistent Base ILimit

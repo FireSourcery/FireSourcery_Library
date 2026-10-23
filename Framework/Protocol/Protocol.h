@@ -381,10 +381,8 @@ static inline bool Protocol_StartRequest(Protocol_T * p_protocol, Protocol_Bindi
     }
 #endif
 
-    Protocol_AckPolicy_T policy = Protocol_ReqAckPolicy(&p_state->Req);
-
     /* Receiver-side ack: a reflex on arrival, not a state. */
-    if (policy.SEND_ACK_REQ) { Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_ACK); }
+    if (Protocol_ReqSendAck(&p_state->Req) == true) { Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_ACK); }
     return true;
 }
 
@@ -402,6 +400,8 @@ static inline Protocol_ReqCode_T Protocol_ProcRequest(Protocol_T * p_protocol, P
     Packet_Codec_T * p_codec = p_binding->P_CODEC;
 
     Protocol_AckPolicy_T policy = Protocol_ReqAckPolicy(&p_state->Req); /* PROTOCOL_REQ_DONE unbinds Req */
+    bool isAckOnArrival = Protocol_ReqSendAck(&p_state->Req);         /* Both before the handler runs - its run spends the opening */
+    bool isExpectAck = Protocol_ReqExpectAck(&p_state->Req);
 
     /* The caller's guarantee, checked rather than repeated - Protocol_ReqId returns NULL when
        unbound, so this must precede anything that dereferences it. */
@@ -438,7 +438,7 @@ static inline Protocol_ReqCode_T Protocol_ProcRequest(Protocol_T * p_protocol, P
         case PROTOCOL_REQ_DONE:
             if (Protocol_TxResponse(p_xcvr, p_codec, p_respFormat, p_protocol->P_TX_BUFFER))
             {
-                if (policy.EXPECT_ACK_RESP) { Protocol_ExpectAck(&p_state->Sync, policy, p_respFormat, timerNow); }
+                if (isExpectAck == true) { Protocol_ExpectAck(&p_state->Sync, policy, p_respFormat, timerNow); }
                 else { Protocol_ResetSync(&p_state->Sync); }
             }
             else
@@ -447,13 +447,12 @@ static inline Protocol_ReqCode_T Protocol_ProcRequest(Protocol_T * p_protocol, P
             }
             break;
 
-        /* Handler judged the frame itself, in place of the arrival reflex. */
-        case PROTOCOL_REQ_ACCEPT:   Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_ACK);   break;
+        /* Handler judged the frame itself, in place of the arrival reflex. A frame is acked once. */
+        case PROTOCOL_REQ_ACCEPT:   if (isAckOnArrival == false) { Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_ACK); } break;
         case PROTOCOL_REQ_REJECT:   Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_NACK);  break;
         case PROTOCOL_REQ_ABORT:    Protocol_ResetReqSync(p_state); break;
-        case PROTOCOL_REQ_AWAIT:
-            if (policy.SEND_ACK_REQ) { Protocol_TxControl(p_xcvr, p_codec, PACKET_CLASS_ACK); }
-            break;      /* yields, nothing goes out */
+        /* Yields, nothing goes out. A data frame was acked on arrival per its bit, and an ack resuming the exchange is not acked. */
+        case PROTOCOL_REQ_AWAIT:    break;
         default: break;
     }
 
@@ -471,12 +470,12 @@ static inline Protocol_ReqCode_T Protocol_ProcRequest(Protocol_T * p_protocol, P
 // }
 
 /*
-    (PROTOCOL_REQ_STATE_ACTIVE, PROTOCOL_SYNC_AWAIT_ACK) => Await next ACK then returns to PROTOCOL_SYNC_AWAIT_ACK
+    (PROTOCOL_REQ_STATE_STEP, PROTOCOL_SYNC_AWAIT_ACK) => Await next ACK then returns to PROTOCOL_SYNC_AWAIT_ACK
     (PROTOCOL_REQ_STATE_IDLE, PROTOCOL_SYNC_AWAIT_ACK) => Await final ACK, Req == NULL
 
     OPEN	    IDLE	Socket idle
-    OPEN	    ACTIVE	handler awaiting the next frame. Data-paced receive stream.
-    AWAIT_ACK	ACTIVE	Await next ACK then sequence continues. Ack-paced response stream.
+    OPEN	    STEP	handler awaiting the next frame. Data-paced receive stream.
+    AWAIT_ACK	STEP	Await next ACK then sequence continues. Ack-paced response stream.
     AWAIT_ACK	IDLE	Await final ACK. All stateless with ack
 */
 static inline void Protocol_Proc(Protocol_T * p_protocol, Protocol_Binding_T * p_binding, Xcvr_T * p_xcvr)

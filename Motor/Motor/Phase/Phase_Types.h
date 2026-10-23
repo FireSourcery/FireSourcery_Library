@@ -256,6 +256,7 @@ static inline Phase_Data_T Phase_Data(int16_t a, int16_t b, int16_t c, Phase_Id_
 static inline void Phase_Capture(volatile Phase_Data_T * p_data, Phase_Index_T channel, int16_t value)
 {
     p_data->Values.Values[channel] = value;
+    // p_data->Values.Values[channel] = (p_data->Values.Values[channel] + value) / 2;
     p_data->Flags.Bits |= (1U << channel);
 }
 

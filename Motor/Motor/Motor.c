@@ -271,7 +271,7 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 
     Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. FRACT16_MAX => no cap.
     I resolves within ISupplyLimits, signed already, captured at the operating point by [Motor_CaptureISupplyLimits].
-    Store only. The state running the current loop resolves on entry and on its speed tick, [Motor_FOC_ResolveILimits].
+    Store only. The state running the current loop resolves on entry, [Motor_FOC_ResolveILimits], and on its speed tick, [Motor_FOC_ProcILimits].
 */
 /******************************************************************************/
 /*

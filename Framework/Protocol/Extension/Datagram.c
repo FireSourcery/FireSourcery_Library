@@ -222,7 +222,7 @@ Protocol_ReqCode_T Datagram_Proc(Datagram_Interface_T * p_app, Packet_Xfer_T * p
 
 /******************************************************************************/
 /*
-    Pass trace - PROTOCOL_ACK_ON_REQ, ack-paced
+    Pass trace - PROTOCOL_ACK_EVERY_STEP, ack-paced
 
         CONFIG_ID frame         OPEN    mapping installed, status reply     -> RESPOND
         ack                     DATA    one datagram staged                 -> RESPOND

@@ -66,30 +66,34 @@
 /*!
     Ack Policy - configured per handler.
 
-    One pair of bits, applied to every frame of the exchange alike. The opening request and
-    its continuation steps are no longer configured separately: Protocol_CaptureReq returns
-    early once ACTIVE, so the composition has no isStep to select on. PROTOCOL_ACK_EVERY_STEP
-    is therefore an alias of PROTOCOL_ACK_ON_REQ, kept only so call sites read as intended.
-    Restoring the distinction means restoring the OPEN / STEP bit pairs below and the isStep
-    local in Protocol_ProcRequest.
+    A request's opening exchange and its continuation steps are configured separately, so a
+    handler can ack the request but not each chunk, or the reverse.
+
+        opening     the frame that binds the request, and the response to it
+        step        every later pass - a continuation frame, or an ack resuming the exchange
+
+    The request state answers which pair is in effect - Protocol_ReqSendAck / Protocol_ReqExpectAck.
+    Neither bit pair is read here.
+
+    A frame is acked once. A handler's ACCEPT adds no ack to a frame its row acked on arrival;
+    with SEND_ACK_STEP = 0 the ACCEPT is the only ack, so the remote learns the chunk was not
+    merely received but validated. REJECT still nacks, after any arrival ack.
 */
 /******************************************************************************/
 typedef struct Protocol_AckPolicy
 {
-    uint8_t SEND_ACK_REQ     : 1U;   /* Ack the request */
-    uint8_t EXPECT_ACK_RESP  : 1U;   /* Await an ack after response */
-    // uint8_t TX_ACK_OPEN     : 1U;   /* On Entry. Ack the request packet on arrival */
-    // uint8_t RX_ACK_OPEN     : 1U;   /* On Entry. Await an ack after the opening response */
-    // uint8_t TX_ACK_STEP     : 1U;   /* Ack each continuation packet on arrival */
-    // uint8_t RX_ACK_STEP     : 1U;   /* Await an ack after each continuation response */
+    uint8_t SEND_ACK_REQ     : 1U;   /* Ack the request. On Entry. Ack the request packet on arrival */
+    uint8_t EXPECT_ACK_RESP  : 1U;   /* Await an ack after response. On Entry. Await an ack after the opening response */
+    uint8_t SEND_ACK_STEP    : 1U;   /* Ack each continuation packet on arrival */
+    uint8_t EXPECT_ACK_STEP  : 1U;   /* Await an ack after each continuation response */
     uint8_t SEND_ACK_ABORT   : 1U;   /* Acknowledge a received abort */
     uint8_t RETRANSMIT_MAX   : 3U;   /* Retries before the exchange is abandoned. 0 = no retry */
 }
 Protocol_AckPolicy_T;
 
 #define PROTOCOL_ACK_NONE       { 0U }
-#define PROTOCOL_ACK_ON_REQ     { .SEND_ACK_REQ = 1U, .EXPECT_ACK_RESP = 1U, .RETRANSMIT_MAX = 3U }
-#define PROTOCOL_ACK_EVERY_STEP { .SEND_ACK_REQ = 1U, .EXPECT_ACK_RESP = 1U, .RETRANSMIT_MAX = 3U }
+#define PROTOCOL_ACK_ON_REQ     { .SEND_ACK_REQ = 1U, .EXPECT_ACK_RESP = 1U, .RETRANSMIT_MAX = 3U }     /* The opening exchange only */
+#define PROTOCOL_ACK_EVERY_STEP { .SEND_ACK_REQ = 1U, .EXPECT_ACK_RESP = 1U, .SEND_ACK_STEP = 1U, .EXPECT_ACK_STEP = 1U, .RETRANSMIT_MAX = 3U }
 
 /*!
     product of rx char, sync state, request state,
@@ -208,8 +212,8 @@ static inline void Protocol_ExpectAck(Protocol_SyncState_T * p_state, Protocol_A
         Protocol_ExpectAck      one frame outstanding, retry budget intact
         Protocol_ResetSync      nothing outstanding, budget cleared
 
-    Which one is a reading of the bound handler's RX_ACK bit, and only the caller knows
-    whether the OPEN or the STEP bit applies.
+    Which one is a reading of the bound handler's EXPECT_ACK_RESP or EXPECT_ACK_STEP bit, and
+    only the caller knows which of the two applies.
 */
 static inline void Protocol_ResetSync(Protocol_SyncState_T * p_state)
 {

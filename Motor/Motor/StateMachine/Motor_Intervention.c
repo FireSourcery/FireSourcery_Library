@@ -82,7 +82,7 @@ static void TorqueZero_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_CaptureVSpeed(p_context);
-    Motor_FOC_ResolveILimits(p_motor);
+    Motor_FOC_ProcILimits(p_motor);
 }
 
 static const State_Action_T TORQUE_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
@@ -93,8 +93,6 @@ static const State_Action_T TORQUE_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LE
 
 static State_T * TorqueZero_Next(Motor_T * p_motor)
 {
-    // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
-    // if (p_motor->P_MOTOR->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_SPEED_ZERO; }
     return NULL;
 }
 
@@ -140,6 +138,7 @@ static void SpeedZero_Proc(Motor_T * p_motor)
 static State_T * SpeedZero_Next(Motor_T * p_motor)
 {
     (void)p_motor;
+    if (Motor_IsSpeedZero(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
     // if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { return &MOTOR_STATE_PASSIVE; }
     return NULL;
 }
@@ -148,7 +147,7 @@ static void SpeedZero_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_CaptureVSpeed(p_context);
-    Motor_FOC_ResolveILimits(p_motor); /* Before the speed loop clamps against them */
+    Motor_FOC_ProcILimits(p_motor); /* Before the speed loop clamps against them */
     Motor_ProcSpeedControlOf(p_context, 0); /* drive to zero speed */
 }
 

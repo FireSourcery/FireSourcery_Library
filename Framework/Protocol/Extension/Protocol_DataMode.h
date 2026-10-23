@@ -425,7 +425,7 @@ static inline Protocol_DataMode_StateId_T _DataModeRead_StateOf(Protocol_DataMod
     Read - device streams memory to the host.
 
     Paced by the host's acks: every ack frees the floor and pulls the next chunk. Register
-    with PROTOCOL_ACK_ON_REQ so each chunk is acked and the next is pulled by that ack.
+    with PROTOCOL_ACK_EVERY_STEP so each chunk is acked and the next is pulled by that ack.
 */
 static inline Protocol_ReqCode_T Protocol_DataMode_Read(Protocol_DataMode_Interface_T * p_app, Packet_Xfer_T * p_xfer, const void * restrict p_rxPayload, void * restrict p_txPayload)
 {
@@ -492,7 +492,7 @@ static inline Protocol_ReqCode_T Protocol_DataMode_Write(Protocol_DataMode_Inter
 /*
     Pass traces
 
-    Read - PROTOCOL_ACK_ON_REQ, ack-paced
+    Read - PROTOCOL_ACK_EVERY_STEP, ack-paced
 
         READ_ID frame           OPEN    cursor set, OPEN(), status reply    -> RESPOND
         ack                     DATA    one chunk staged                    -> RESPOND

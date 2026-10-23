@@ -115,7 +115,7 @@ Protocol_ReqCode_T MotProtocol_FlashLoader_ReadData(const void * p_flash, Packet
     Read - device streams memory to the host.
 
     Paced by the host's acks: every ack frees the floor and pulls the next chunk. Register
-    with PROTOCOL_ACK_ON_REQ so each chunk is acked and the next is pulled by that ack.
+    with PROTOCOL_ACK_EVERY_STEP so each chunk is acked and the next is pulled by that ack.
 */
 Protocol_ReqCode_T MotProtocol_FlashLoader_Read(Flash_T * p_flash, Packet_Xfer_T * p_xfer, const void * restrict p_rx, void * restrict p_resp)
 {
@@ -172,7 +172,7 @@ Protocol_ReqCode_T MotProtocol_FlashLoader_WriteData(Flash_T * p_flash, Packet_X
     }
 
     p_state->Count += writeSize;
-    if (p_state->Count < p_state->Size) { return PROTOCOL_REQ_ACCEPT; } /* oe PROTOCOL_REQ_RESPOND, TxLength = 0 */
+    if (p_state->Count < p_state->Size) { return PROTOCOL_REQ_ACCEPT; } /* or PROTOCOL_REQ_RESPOND, TxLength = 0 */
     // p_state->StateId = PROTOCOL_DATA_MODE_STATE_CLOSE; return PROTOCOL_REQ_ACCEPT;
 
     /* If we reach here, the write is complete and successful. */
@@ -203,6 +203,8 @@ Protocol_ReqCode_T MotProtocol_FlashLoader_Write(Flash_T * p_flash, Packet_Xfer_
             p_xfer->p_TxMeta->Id = MOT_PACKET_DATA_MODE_WRITE;
             return MotProtocol_FlashLoader_Open(p_flash, p_xfer, p_rx, p_resp);
         case PROTOCOL_DATA_MODE_STATE_DATA:
+            /* The ack of the opening status resumes the exchange with nothing to absorb */
+            if (p_xfer->p_RxMeta->Id != MOT_PACKET_DATA_MODE_DATA) { return PROTOCOL_REQ_AWAIT; }
             return MotProtocol_FlashLoader_WriteData(p_flash, p_xfer, p_rx, p_resp);
         // case PROTOCOL_DATA_MODE_STATE_CLOSE:    return Protocol_DataMode_WriteClose(p_flash, p_xfer, p_rx, p_resp);
         default:
@@ -233,7 +235,7 @@ Protocol_ReqCode_T MotProtocol_FlashLoader_Erase_Blocking(Flash_T * p_flash, Pac
 
         static const Protocol_Req_T REQ_TABLE[] =
         {
-            PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,  &MOT_FRAME_DATA, MotProtocol_FlashLoader_Read,  PROTOCOL_ACK_ON_REQ),
+            PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,  &MOT_FRAME_DATA, MotProtocol_FlashLoader_Read,  PROTOCOL_ACK_EVERY_STEP),
             PROTOCOL_REQ(MOT_PACKET_DATA_MODE_WRITE, &MOT_FRAME_DATA, MotProtocol_FlashLoader_Write, PROTOCOL_ACK_NONE),
             PROTOCOL_REQ(MOT_PACKET_DATA_MODE_ERASE, &MOT_FRAME_DATA, MotProtocol_FlashLoader_Erase_Blocking, PROTOCOL_ACK_NONE),
         };

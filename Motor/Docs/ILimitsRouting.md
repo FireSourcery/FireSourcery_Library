@@ -43,15 +43,21 @@ flowchart LR
 
     %% Call sites
     C1S[["MC main 1 s<br/>MotorController_ProcILimits<br/>→ Motor_SetILimitDerates"]]
-    TICK[["Speed tick 1 kHz (default)<br/>Run (Current), TorqueZero, SpeedZero<br/>MOTOR_I_SUPPLY_LIMITS_ON_SPEED"]]
-    MC10[["MC main ~10 ms<br/>Motor_CaptureISupplyLimits"]]
-    RES[["Motor_ResolveILimits<br/>each push, Motor_SetDirection,<br/>Run_Entry, Intervention_Entry"]]
+    ENT[["Run_Entry, Intervention_Entry<br/>Motor_FOC_ResolveILimits"]]
+    TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, SpeedZero<br/>Motor_FOC_ProcILimits"]]
+    CVB[["VBus thread 1 ms"]]
+    MC10[["MC main ~16 ms"]]
+    RES[["Motor_ResolveILimits<br/>each push"]]
     AL[["Motor_ResolveAlignILimits"]]
     VM[["Run_Entry, voltage mode"]]
 
     C1S -.-> ARB
-    TICK -.->|or| WIN
-    MC10 -.->|or| WIN
+    ENT -.-> WIN
+    ENT -.-> GET
+    TICK -.->|"ON_SPEED (default)"| WIN
+    TICK -.-> GET
+    CVB -.->|ON_VBUS| WIN
+    MC10 -.->|ON_MAIN| WIN
     RES -.-> GET
     AL -.->|writes| SLOT
     VM -.->|writes| SLOT
@@ -67,8 +73,10 @@ flowchart LR
     class PB,VD convert
     class ARB,PAIR,DIR,WIN,GET merge
     class SLOT clamp
-    class C1S,TICK,MC10,RES,AL,VM callsite
+    class C1S,ENT,TICK,CVB,MC10,RES,AL,VM callsite
 ```
 
 Green stadium: live limit source. Grey cylinder: stored config limit. Purple hexagon: frame conversion. Blue box: merge point. Red box: active clamp in the hot path. Amber dashed box: call site, with dotted edges meaning "invokes". Solid edges carry limit values.
+
+One of [MOTOR_I_SUPPLY_LIMITS_ON_SPEED], [MOTOR_I_SUPPLY_LIMITS_ON_VBUS], [MOTOR_I_SUPPLY_LIMITS_ON_MAIN] selects the thread that captures [ISupplyLimits] periodically. Entry captures under every selection, so a state starts on a window keyed by its own Direction. With none selected nothing captures, and [ISupplyLimits] stays open from [Motor_Init].
 

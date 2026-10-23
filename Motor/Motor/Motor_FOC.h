@@ -116,11 +116,14 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
 
 /*
     The state running the current loop resolves the held inputs, on entry and on its speed tick.
-    The supply window moves with the operating point:
-        MOTOR_I_SUPPLY_LIMITS_ON_SPEED    captured by the same poll
-        otherwise                           captured by the upper layer, [Motor_CaptureISupplyLimits]
+    The supply window is captured periodically on the selected thread, and on entry under the Direction the state runs with:
+        MOTOR_I_SUPPLY_LIMITS_ON_SPEED  the speed tick, [Motor_FOC_ProcILimits]
+        MOTOR_I_SUPPLY_LIMITS_ON_VBUS   the VBus thread, 1 ms
+        MOTOR_I_SUPPLY_LIMITS_ON_MAIN   the main thread, 16 ms
+        none                            never captured, the window stays open from [Motor_Init]
 */
 extern void Motor_FOC_ResolveILimits(Motor_T * p_motor);
+extern void Motor_FOC_ProcILimits(Motor_T * p_motor);
 
 /******************************************************************************/
 /*!

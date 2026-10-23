@@ -41,6 +41,14 @@ void Motor_FOC_WriteDuty(Motor_T * p_motor)
 
 void Motor_FOC_ResolveILimits(Motor_T * p_motor)
 {
+#if defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED) || defined(MOTOR_I_SUPPLY_LIMITS_ON_VBUS) || defined(MOTOR_I_SUPPLY_LIMITS_ON_MAIN)
+    Motor_CaptureISupplyLimits(p_motor);
+#endif
+    Motor_ResolveILimits(p_motor->P_MOTOR);
+}
+
+void Motor_FOC_ProcILimits(Motor_T * p_motor)
+{
 #if defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED)
     Motor_CaptureISupplyLimits(p_motor);
 #endif

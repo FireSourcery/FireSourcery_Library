@@ -47,7 +47,7 @@ void MotorController_Init(MotorController_T * p_dev)
 
 #if defined(MOTOR_CONTROLLER_CAN_ENABLE)
     for (uint8_t iCan = 0U; iCan < p_dev->CAN_SOCKET_COUNT; iCan++) { CAN_Init(&p_dev->P_CAN_SOCKETS[iCan]); }
-    // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Cia402_Adapter_Init(&p_dev->P_CIA402_ADAPTERS[iMotor]); }
+    // for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Cia402_Adapter_Init(&p_dev->P_CIA402_ADAPTERS[i]); }
 #endif
 
     for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_dev->P_PROTOCOLS[iProtocol]); }
@@ -74,7 +74,7 @@ void MotorController_Init(MotorController_T * p_dev)
     HeatMonitor_Init(&p_dev->HEAT_PCB);
     HeatMonitor_Group_Init(&p_dev->HEAT_MOSFETS);
 
-    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Init(&p_dev->MOTORS.P_DEVS[iMotor]); }
+    for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_Init(&p_dev->MOTORS.P_DEVS[i]); }
 
     Blinky_Init(&p_dev->BUZZER);
     Blinky_Init(&p_dev->METER);
@@ -144,13 +144,13 @@ static inline ufract16_t _MotorController_SpeedDerate(MotorController_T * p_dev)
 void MotorController_ProcILimits(MotorController_T * p_dev)
 {
     ufract16_t derate = _MotorController_IDerate(p_dev);
-    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, derate, derate); }
+    for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_SetILimitDerates(p_dev->MOTORS.P_DEVS[i].P_MOTOR, derate, derate); }
 }
 
 void MotorController_ProcSpeedLimits(MotorController_T * p_dev)
 {
     ufract16_t derate = _MotorController_SpeedDerate(p_dev);
-    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_SetSpeedLimitDerate(p_dev->MOTORS.P_DEVS[iMotor].P_MOTOR, derate); }
+    for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_SetSpeedLimitDerate(p_dev->MOTORS.P_DEVS[i].P_MOTOR, derate); }
 }
 
 /*

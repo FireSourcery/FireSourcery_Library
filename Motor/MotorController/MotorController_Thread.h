@@ -163,7 +163,7 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
         default: break;
     }
 #if defined(MOTOR_I_SUPPLY_LIMITS_ON_VBUS)
-    /* The supply window follows the bus and each motor's operating point. Store only, the motor resolves on its speed tick */
+    /* Store only, each motor resolves on its speed tick. At the PWM thread's priority, the capture and the resolve never interleave */
     for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[i]); }
 #endif
     // if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotBuzzer_MonitorTrigger(MotorController_Buzzer(p_dev)); }
@@ -218,6 +218,11 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 
         // VBus_Capture(p_dev->P_VBUS, Phase_Analog_VPuOf(ADC_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternative in isr */
 
+#if defined(MOTOR_I_SUPPLY_LIMITS_ON_MAIN)
+        /* The supply window follows the bus and each motor's operating point. Store only, the motor resolves on its speed tick */
+        for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[i]); }
+#endif
+
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
     #ifdef MOTOR_CONTROLLER_CAN_ENABLE
@@ -243,10 +248,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
         {
-#if defined(MOTOR_I_SUPPLY_LIMITS_ON_MAIN)
-            /* The supply window follows the bus and each motor's operating point. Store only, the motor resolves on its speed tick */
-            for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_CaptureISupplyLimits(&p_dev->MOTORS.P_DEVS[i]); }
-#endif
+
 
             Blinky_Proc(&p_dev->BUZZER);
             Blinky_Proc(&p_dev->METER);

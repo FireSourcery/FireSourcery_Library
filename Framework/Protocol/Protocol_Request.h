@@ -42,7 +42,10 @@
     Command-table dispatch over a resumable handler.
 
         IDLE      no request bound
-        ACTIVE    a handler is mid-sequence
+        OPENING   bound by the frame being delivered - the opening exchange
+        STEP      a handler is mid-sequence - every later pass
+
+    Active is either bound state, OPENING or STEP.
 
     dispatch state and handshake state are orthogonal regions (Harel),
 
@@ -62,7 +65,7 @@ typedef enum Protocol_ReqCode
     PROTOCOL_REQ_DONE,      /* Final. Transmit any staged response, then close. */
     PROTOCOL_REQ_AWAIT,     /* No response. Wait for the next packet. Same as Tx Length 0, if Xcvr_TxN length 0 returns true. */
     PROTOCOL_REQ_RESPOND,   /* Response staged. Transmit it, the sequence continues. */
-    PROTOCOL_REQ_ACCEPT,    /* Rx validated. Ack it, no response. */
+    PROTOCOL_REQ_ACCEPT,    /* Rx validated. Ack it, unless already acked on arrival. No response. */
     PROTOCOL_REQ_REJECT,    /* Rx rejected. Nack it, no response. */
     PROTOCOL_REQ_ABORT,     /* Terminate without a response. */
 }
@@ -176,15 +179,15 @@ Protocol_Req_T;
 typedef enum Protocol_ReqStateId
 {
     PROTOCOL_REQ_STATE_IDLE,    /* WAIT_RX_ID */
-    PROTOCOL_REQ_STATE_ACTIVE,  /* WAIT_RX_NEXT */
-    /* Optionally add PROCESS_REQ_EXT for multi response */
+    PROTOCOL_REQ_STATE_OPENING, /* Bound by the frame being delivered - this pass is the opening exchange */
+    PROTOCOL_REQ_STATE_STEP,    /* WAIT_RX_NEXT. Every later pass is a step */
 }
 Protocol_ReqStateId_T;
 
 typedef struct Protocol_ReqState
 {
     Protocol_ReqStateId_T StateId;
-    Protocol_Req_T * p_ReqActive;     /* Bound by Select, retained while ACTIVE */
+    Protocol_Req_T * p_ReqActive;     /* Bound by Select, retained while active - OPENING or STEP */
 }
 Protocol_ReqState_T;
 
@@ -218,16 +221,23 @@ static inline bool Protocol_CaptureReqOfTable(Protocol_ReqState_T * p_state, Pro
     /*
         Stay on the same outer request. A continuation frame does not re-look-up: the bound row owns the exchange until the handler ends it.
     */
-    if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; }
+    if (p_state->StateId == PROTOCOL_REQ_STATE_STEP) { return true; }
 
     p_state->p_ReqActive = _Protocol_SearchReqTable(p_reqTable, tableLength, id);
-    if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
+    if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_OPENING; }
     return (p_state->p_ReqActive != NULL);
 }
 
+/*! Either bound state - OPENING or STEP. ResetReq clears the binding and the state together. */
 static inline bool Protocol_IsReqActive(const Protocol_ReqState_T * p_state)
 {
-    return (p_state->p_ReqActive != NULL); /* && (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE)   */
+    return (p_state->p_ReqActive != NULL);
+}
+
+/*! The opening exchange - the pass of the frame that bound the request. Every later pass is a step. */
+static inline bool Protocol_IsReqOpening(const Protocol_ReqState_T * p_state)
+{
+    return (p_state->StateId == PROTOCOL_REQ_STATE_OPENING);
 }
 
 /*!
@@ -264,7 +274,7 @@ static inline void Protocol_ResetReq(Protocol_ReqState_T * p_state)
 
             Identical for the opening call and every continuation -
             the handler distinguishes them by Step, which the engine only clears at Select.
-            Returns to IDLE on DONE and ABORT.
+            Returns to IDLE on DONE and ABORT. Otherwise the opening is spent, and the request moves to STEP.
 
     @param  p_xfer  handler context. Payloads arrive already offset by the caller.
 
@@ -286,12 +296,14 @@ static inline Protocol_ReqCode_T _Protocol_ProcReq(Protocol_ReqState_T * p_state
 
     switch (p_state->StateId)
     {
-        case PROTOCOL_REQ_STATE_ACTIVE:
+        case PROTOCOL_REQ_STATE_OPENING:
+        case PROTOCOL_REQ_STATE_STEP:
             reqCode = p_state->p_ReqActive->PROC(p_app, p_xfer, p_rxPayload, p_txPayload);
             if ((reqCode == PROTOCOL_REQ_DONE) || (reqCode == PROTOCOL_REQ_ABORT)) { Protocol_ResetReq(p_state); }
+            else { p_state->StateId = PROTOCOL_REQ_STATE_STEP; }
             break;
 
-        /* Bound but not ACTIVE cannot arise - ResetReq clears both together. */
+        /* Bound but IDLE cannot arise - ResetReq clears both together. */
         case PROTOCOL_REQ_STATE_IDLE:
         default:
             reqCode = PROTOCOL_REQ_DONE;
@@ -312,6 +324,25 @@ static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState
     return (p_state->p_ReqActive != NULL) ? p_state->p_ReqActive->ACK : (Protocol_AckPolicy_T)PROTOCOL_ACK_NONE;
 }
 
+/*
+    The bit pair in effect for the pass in progress - SEND_ACK_REQ / EXPECT_ACK_RESP while the
+    request is opening, SEND_ACK_STEP / EXPECT_ACK_STEP after. Read before the handler runs: its
+    run spends the opening, and DONE unbinds the request.
+*/
+/*! Ack the arriving data frame on arrival */
+static inline bool Protocol_ReqSendAck(const Protocol_ReqState_T * p_state)
+{
+    Protocol_AckPolicy_T policy = Protocol_ReqAckPolicy(p_state);
+    return ((Protocol_IsReqOpening(p_state) ? policy.SEND_ACK_REQ : policy.SEND_ACK_STEP) != 0U);
+}
+
+/*! Await an ack after the response */
+static inline bool Protocol_ReqExpectAck(const Protocol_ReqState_T * p_state)
+{
+    Protocol_AckPolicy_T policy = Protocol_ReqAckPolicy(p_state);
+    return ((Protocol_IsReqOpening(p_state) ? policy.EXPECT_ACK_RESP : policy.EXPECT_ACK_STEP) != 0U);
+}
+
 
 /*
     Alternatively 1 look up. Packet_ParseRxFrame_T would be coupled to Req Table
@@ -330,8 +361,8 @@ static inline Protocol_AckPolicy_T Protocol_ReqAckPolicy(const Protocol_ReqState
 // static inline bool Protocol_CaptureReq(Protocol_ReqState_T * p_state, const Packet_Id_T * p_packetId)
 // {
 //     assert(p_packetId != NULL);
-//     if (p_state->StateId == PROTOCOL_REQ_STATE_ACTIVE) { return true; } /* stay on the same request even if id changes */
+//     if (p_state->StateId == PROTOCOL_REQ_STATE_STEP) { return true; } /* stay on the same request even if id changes */
 //     p_state->p_ReqActive = __containerof(p_packetId, Protocol_Req_T, ID);
-//     if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_ACTIVE; }
+//     if (p_state->p_ReqActive != NULL) { p_state->StateId = PROTOCOL_REQ_STATE_OPENING; }
 //     return (p_state->p_ReqActive != NULL);
 // }

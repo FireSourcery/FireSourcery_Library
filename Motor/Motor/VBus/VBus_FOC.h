@@ -88,24 +88,3 @@ static inline interval_t VBus_FOC_IqDerateLimits(const VBus_T * p_vbus, sign_t d
 
 
 
-// /*
-//     Supply. The bus as one motor sees it: one sample of V_dc, and this motor's share of the DC window.
-//     Sampled once, so V and 1/V agree within the step. The split across motors is the upper layer's policy.
-// */
-// typedef struct Motor_Supply
-// {
-//     ufract16_t V;       /* V_dc */
-//     uint32_t VInv;      /* 1/V_dc, accum32 */
-//     interval_t I;       /* [−I_chg : I_dis] */
-// }
-// Motor_Supply_T;
-
-// /* Even split. Demand-weighted is the alternative */
-// static inline Motor_Supply_T Motor_Supply_Of(const VBus_T * p_vbus, uint8_t motorCount)
-// {
-//     interval_t window = VBus_ILimitInterval(p_vbus);
-//     return (Motor_Supply_T) { .V = VBus_Pu(p_vbus), .VInv = VBus_Inv_Pu(p_vbus), .I = { .low = window.low / motorCount, .high = window.high / motorCount, }, };
-// }
-
-// /* [foc_iq_limits] at the sample */
-// static inline interval_t Motor_Supply_IqLimits(const Motor_Supply_T * p_supply, fract16_t vd, fract16_t id, fract16_t vq) { return foc_iq_limits(p_supply->I, p_supply->V, foc_power_d(vd, id), vq); }

@@ -85,17 +85,20 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     int32_t proportional = fract16e_mul(p_pid->Kp, error); /* Includes 15 shift */
 
     /*
-        Dynamic Clamp, anchored at the accumulator.
-        [OutputMin - proportional, OutputMax - proportional] stops integration into saturation, never pushes the integral.
-        Within the output band ahead of the shift.
+        Dynamic Clamp, tracks the band.
+        [OutputMin - proportional, OutputMax - proportional] moves the integral with the band, saturation releases without unwinding.
+        PID_CaptureOutputLimits relies on it, e.g. the Vq band shrinking under field weakening. Anchored at the accumulator, the integral is left outside the band.
+        Saturated to the accumulator range ahead of the shift.
     */
-    int32_t integralMin = math_min(p_pid->IntegralAccum, math_clamp(p_pid->OutputMin - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15);
-    int32_t integralMax = math_max(p_pid->IntegralAccum, math_clamp(p_pid->OutputMax - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15);
+    // int32_t integralMin = math_min(p_pid->IntegralAccum, math_clamp(p_pid->OutputMin - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15);
+    // int32_t integralMax = math_max(p_pid->IntegralAccum, math_clamp(p_pid->OutputMax - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15);
 
     // int32_t integralMin = math_clamp(p_pid->OutputMin - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15;
     // int32_t integralMax = math_clamp(p_pid->OutputMax - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15;
     // int32_t integralMin = math_min(p_pid->OutputMin - proportional, p_pid->OutputMax) << 15;
     // int32_t integralMax = math_max(p_pid->OutputMax - proportional, p_pid->OutputMin) << 15;
+    int32_t integralMin = math_clamp(p_pid->OutputMin - proportional, INT16_MIN, p_pid->OutputMax) << 15;
+    int32_t integralMax = math_clamp(p_pid->OutputMax - proportional, p_pid->OutputMin, INT16_MAX) << 15;
 
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
