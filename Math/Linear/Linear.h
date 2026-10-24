@@ -109,7 +109,7 @@ static inline int32_t Linear_GetYMin(const Linear_T * p_linear) { return 0 - Lin
 /******************************************************************************/
 /*!
     Saturated on input - indirectly saturate output
-    bounds non linear mappings by clamping input to prevent overflow.
+    Bounds the multiply for slopes sized to 2x the interval, Map_Init.
 */
 /******************************************************************************/
 /* [X0 - XDelta:X0 + XDelta] => [-YRef:YRef] */
@@ -138,7 +138,6 @@ static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
     return linear_invf_round(p_linear->Slope, (int32_t)1 << p_linear->SlopeShift, 0, y) + p_linear->X0;
 }
 
-
 /******************************************************************************/
 /*!
     Extern
@@ -153,19 +152,20 @@ extern void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int3
 /*!
     Format inits, with the readings of each. The init sets the unit, the reading picks the side.
     The XRef side maps to [0:1.0) for either sign of XDelta, the mirrored side is negative.
+    Fixed slope does not overflow for |x - X0| < 2^16, saturate on output. Monotonic, equivalent to saturate on input.
 */
 /******************************************************************************/
 /* fract16, ufract16 */
 static inline void Linear_Fract16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef) { Linear_Fixed_Init(p_linear, 15U, x0, xRef); }
 /* [X0 - XDelta:X0 + XDelta] => [-32768:32767] */
-static inline fract16_t Linear_Fract16_Sat(const Linear_T * p_linear, int32_t x) { return Linear_Of_Sat(p_linear, x); }
+static inline fract16_t Linear_Fract16_Sat(const Linear_T * p_linear, int32_t x) { return math_clamp(Linear_Of(p_linear, x), INT16_MIN, INT16_MAX); }
 /* [X0:XRef] => [0:32767] */
-static inline ufract16_t Linear_Fract16_SatPos(const Linear_T * p_linear, int32_t x) { return math_max(Linear_Of_Sat(p_linear, x), 0); }
+static inline ufract16_t Linear_Fract16_SatPos(const Linear_T * p_linear, int32_t x) { return math_clamp(Linear_Of(p_linear, x), 0, INT16_MAX); }
 
 /* percent16 */
 static inline void Linear_Percent16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef) { Linear_Fixed_Init(p_linear, 16U, x0, xRef); }
 /* [X0:XRef] => [0:65535] */
-static inline uint16_t Linear_Percent16_Sat(const Linear_T * p_linear, int32_t x) { return math_max(Linear_Of_Sat(p_linear, x), 0); }
+static inline uint16_t Linear_Percent16_Sat(const Linear_T * p_linear, int32_t x) { return math_clamp(Linear_Of(p_linear, x), 0, UINT16_MAX); }
 
 
 #endif

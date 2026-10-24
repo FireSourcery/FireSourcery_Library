@@ -82,7 +82,7 @@ typedef const struct HeatMonitor
     // Linear_T * P_LINEAR_T_DEGREES; /* Degree units using config */
 
     /* Common across instances in a GroupContext */
-    Linear_T * P_LIMIT_SCALAR;
+    Linear_T * P_LIMIT_SCALE;
     const HeatMonitor_Config_T * P_NVM_CONFIG;
 }
 HeatMonitor_T;
@@ -96,9 +96,9 @@ HeatMonitor_T;
     Monitor_T extentions
 */
 /******************************************************************************/
-static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_Config_T * p_heat, Linear_T * p_limitScalar)
+static inline void HeatMonitor_ToLimitScale(const HeatMonitor_Config_T * p_heat, Linear_T * p_linear)
 {
-    Linear_Fract16_Init(p_limitScalar, p_heat->Fault.Setpoint, p_heat->Warning.Setpoint);
+    Linear_Fract16_Init(p_linear, p_heat->Fault.Setpoint, p_heat->Warning.Setpoint);
 }
 
 /******************************************************************************/
@@ -110,8 +110,8 @@ static inline HeatMonitor_Status_T _HeatMonitor_Poll(const HeatMonitor_T * p_con
 static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_T * p_context, int32_t input) { return _HeatMonitor_Poll(p_context, (input + p_context->P_STATE->LastInput) / 2); }
 
 /* Heat limit calculation */
-/* assert(p_heat->P_LIMIT_SCALAR != NULL) */
-static inline uint16_t HeatMonitor_GetDerate(const HeatMonitor_T * p_heat) { return Linear_Fract16_SatPos(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput); }
+/* assert(p_heat->P_LIMIT_SCALE != NULL) */
+static inline uint16_t HeatMonitor_GetDerate(const HeatMonitor_T * p_heat) { return Linear_Fract16_SatPos(p_heat->P_LIMIT_SCALE, p_heat->P_STATE->LastInput); }
 
 /******************************************************************************/
 /*
@@ -152,7 +152,7 @@ typedef const struct HeatMonitor_Group
 
     /* Collective State */
     HeatMonitor_State_T * P_STATE;
-    Linear_T * P_LIMIT_SCALAR;
+    Linear_T * P_LIMIT_SCALE;
     const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 }
 HeatMonitor_Group_T;
@@ -192,7 +192,7 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_PollCollective(const HeatMo
     Group Query Functions - Polling results
 */
 /******************************************************************************/
-static inline uint16_t HeatMonitor_Group_GetDerate(const HeatMonitor_Group_T * p_group) { return Linear_Fract16_SatPos(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput); }
+static inline uint16_t HeatMonitor_Group_GetDerate(const HeatMonitor_Group_T * p_group) { return Linear_Fract16_SatPos(p_group->P_LIMIT_SCALE, p_group->P_STATE->LastInput); }
 
 static inline HeatMonitor_State_T * HeatMonitor_Group_State(const HeatMonitor_Group_T * p_group) { return (HeatMonitor_State_T *)(p_group->P_STATE); }
 

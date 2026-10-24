@@ -29,6 +29,7 @@
     @brief  The converter's full scale, as the consumer sees it. 1 per application.
 */
 /******************************************************************************/
+#include "Math/Fixed/fract16.h"
 #include <stdint.h>
 
 typedef const struct ADC_Reference
@@ -45,3 +46,15 @@ ADC_Reference_T;
 
 /* Global static. Defined in the main App */
 extern const ADC_Reference_T ADC_REFERENCE;
+
+/*
+    Left justified, full scale as Q1.15. ADC_BITS <= 15
+    [0:ADC_MAX] => [0:32768 - 2^(15 - ADC_BITS)]
+*/
+static inline uint8_t ADC_Fract16Shift(void) { return FRACT16_N_BITS - ADC_REFERENCE.ADC_BITS; }
+
+static inline ufract16_t ADC_Fract16Of(uint16_t adcu) { return adcu << ADC_Fract16Shift(); }
+static inline uint16_t ADC_AdcuOfFract16(ufract16_t fract16) { return fract16 >> ADC_Fract16Shift(); }
+
+/* Midscale zero, [0:ADC_MAX] => [-32768:32767] */
+static inline fract16_t ADC_Fract16OfBipolar(uint16_t adcu) { return ((int32_t)ADC_Fract16Of(adcu) - FRACT16_SCALE / 2) * 2; }

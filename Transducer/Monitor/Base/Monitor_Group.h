@@ -15,7 +15,7 @@
 //     Linear_T * P_LINEAR; /* Optional for local unit conversion */
 
 //     /* Common across instances in a GroupContext */
-//     Linear_T * P_LIMIT_SCALAR;
+//     Linear_T * P_LIMIT_SCALE;
 //     const Monitor_Config_T * P_NVM_CONFIG;
 // }
 // Monitor_Context_T;
@@ -29,7 +29,7 @@
 //     Linear_T * P_LINEAR; /* Optional for local unit conversion */
 
 //     /* Common across instances in a GroupContext */
-//     Linear_T * P_LIMIT_SCALAR;
+//     Linear_T * P_LIMIT_SCALE;
 //     const Monitor_Config_T * P_NVM_CONFIG;
 // }
 // MonitorGroup_T;

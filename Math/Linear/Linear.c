@@ -70,7 +70,7 @@ void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 }
 
 /*
-    Caller bounds x, for non linear
+    Caller bounds x
 */
 // void _Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef)
 // {
@@ -80,11 +80,8 @@ void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 //     p_linear->Slope             = ((yRef - y0) << p_linear->SlopeShift) / (xRef - x0);
 // }
 
-/*
-    Allow 2x input interval (XRef-X0), over saturation before overflow
-        f([X0-2*XDelta:X0+2*XDelta]) == [-2*YRef:2*YRef]
-*/
-#define LINEAR_INT32_MAX_SHIFT (30)  // INT32_MAX/2, accum32 << 15
+/* Normalized slope mantissa, as fract16e. 16-bit input x 15-bit mantissa fits int32 */
+#define LINEAR_FIXED_MANTISSA_BITS (15U)
 
 /******************************************************************************/
 /*!
@@ -97,13 +94,16 @@ void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 /******************************************************************************/
 void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0, int32_t xRef)
 {
-    assert(nFractionalBits <= 30);  /* Prevent overflow in shifts */
-    assert(nFractionalBits > 0);    /* Must have at least 1 fractional bit */
-    assert(xRef != x0);             /* Must have non-zero interval */
+    /* |Slope| <= 2^15, Slope * (x - x0) < 2^31 for any |x - x0| < 2^16. No input bound */
+    uint8_t shift = LINEAR_FIXED_MANTISSA_BITS - 1U + fixed_bit_width(math_abs(xRef - x0));
 
-    /* 1.0 exclusive. |Slope * XDelta| < 2^30, f([x0 - XDelta:x0 + XDelta]) => [-2^n:2^n - 1], a clamp on input alone bounds the output */
-    p_linear->Slope = (((int32_t)1L << LINEAR_INT32_MAX_SHIFT) - 1) / (xRef - x0);
-    p_linear->SlopeShift = (LINEAR_INT32_MAX_SHIFT - nFractionalBits); // Adjust the shift to match the fractional bits
+    assert(nFractionalBits > 0);        /* Must have at least 1 fractional bit */
+    assert(xRef != x0);                 /* Must have non-zero interval */
+    assert(shift >= nFractionalBits);   /* |xRef - x0| >= 2 for n = 16 */
+
+    /* Rounded away from zero, |Slope| in (2^14:2^15]. f(xRef) >= 2^n, the readings saturate to 2^n - 1 */
+    p_linear->Slope = (((int32_t)1L << shift) + (int32_t)math_abs(xRef - x0) - 1) / (xRef - x0);
+    p_linear->SlopeShift = shift - nFractionalBits;
     p_linear->X0 = x0;
     p_linear->XDelta = xRef - x0;
 }
