@@ -31,7 +31,7 @@
 */
 /******************************************************************************/
 #include "UserDIn.h"
-#include "Math/Linear/Linear_Q16.h"
+#include "Math/Linear/Linear.h"
 
 #include <stdint.h>
 #include <stdbool.h>

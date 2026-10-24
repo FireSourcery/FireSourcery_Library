@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "Peripheral/ADC/ADC_Reference.h"
-#include "Peripheral/ADC/Linear_ADC.h"
+#include "Math/Linear/Linear.h"
 
 
 #include <stdint.h>

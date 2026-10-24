@@ -57,5 +57,8 @@
    sensorless build option costs nothing when unselected. */
 #define MOTOR_SENSOR_TABLE_INIT_SENSORLESS(MotorStateStruct, p_NvmConfig) SENSORLESS_SENSOR_INIT(&((MotorStateStruct).SensorState), (p_NvmConfig))
 
+/* The selected sensor's start-up chain, NULL where none */
+extern State_T * Motor_Sensor_StartUpState(Motor_T * p_motor);
+
 
 

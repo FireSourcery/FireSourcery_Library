@@ -32,9 +32,10 @@
 #include <string.h>
 
 
+/* [Min_Adcu:Max_Adcu] => [-32768:32767] */
 void SinCos_State_ResetUnits(SinCos_State_T * p_state)
 {
-    Linear_Q16_Init(&p_state->UnitsAngle, p_state->Config.Min_Adcu, p_state->Config.Max_Adcu);
+    Linear_Fract16_Init(&p_state->UnitsAngle, (p_state->Config.Min_Adcu + p_state->Config.Max_Adcu) / 2, p_state->Config.Max_Adcu);
 }
 
 void SinCos_Init(const SinCos_T * p_sincos)

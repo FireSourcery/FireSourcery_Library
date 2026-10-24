@@ -30,8 +30,7 @@
             Pure decode core; sensor adapter (RotorSensor VTable) lives in SinCos_Sensor.h.
 */
 /******************************************************************************/
-#include "Peripheral/ADC/Linear_ADC.h"
-#include "Math/Linear/Linear_Q16.h"
+#include "Math/Linear/Linear.h"
 #include "Math/Fixed/fract16.h"
 
 #include <stdbool.h>
@@ -88,8 +87,8 @@ SinCos_T;
 /* Raw atan2 decode, no offset/sign correction */
 static inline angle16_t _SinCos_DecodeAngle(const SinCos_State_T * p_state, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-    fract16_t sin = Linear_Q16_Fract(&p_state->UnitsAngle, sin_Adcu);
-    fract16_t cos = Linear_Q16_Fract(&p_state->UnitsAngle, cos_Adcu);
+    fract16_t sin = Linear_Fract16_Sat(&p_state->UnitsAngle, sin_Adcu);
+    fract16_t cos = Linear_Fract16_Sat(&p_state->UnitsAngle, cos_Adcu);
     return fract16_atan2(sin, cos);
 }
 

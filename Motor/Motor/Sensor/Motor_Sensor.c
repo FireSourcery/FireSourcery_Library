@@ -29,6 +29,9 @@
 /******************************************************************************/
 #include "Motor_Sensor.h"
 #include "../Motor_StateMachine.h"
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+#include "Sensorless/Motor_Sensorless.h"
+#endif
 
 /*
     requires [Motor] StateMachine outside of Sensor Interface
@@ -40,4 +43,19 @@
 */
 /******************************************************************************/
 // static inline RotorSensor_T * Sensor(Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->Config.SensorMode); }
+
+/*
+    The chain that acquires the angle from standstill, of the selected sensor. NULL where the sensor reads the angle directly.
+    Encoder's is [Motor_Encoder_GetStartUpState], its declaration commented in Motor_Encoder.h.
+*/
+State_T * Motor_Sensor_StartUpState(Motor_T * p_motor)
+{
+    switch (p_motor->P_MOTOR->Config.SensorMode)
+    {
+    #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+        case ROTOR_SENSOR_ID_SENSORLESS: return Motor_Sensorless_StartUpState(p_motor);
+    #endif
+        default: return NULL;
+    }
+}
 

@@ -68,6 +68,7 @@ typedef struct AnglePll_FilterTuning
     ufract16_t MagFloor;        /* |x| at or below which θ is indeterminate: the error reads 0 */
     ufract16_t LockErrTol;      /* |error| within which θ̂ tracks θ */
     uint16_t LockHoldCount;     /* consecutive ticks above the floor and within tolerance */
+    uint16_t LossHoldCount;     /* consecutive ticks at or below the floor or out of tolerance that the lock holds through. 0 releases on the first */
 }
 AnglePll_FilterTuning_T;
 
@@ -86,6 +87,7 @@ typedef struct AnglePll
     AnglePll_FilterTuning_T FilterTuning;
     ufract16_t Magnitude;       /* |x| of the last detected vector */
     uint16_t LockCount;
+    uint16_t LossCount;
 }
 AnglePll_T;
 
@@ -108,15 +110,32 @@ static inline angle16_t AnglePll_Proc(AnglePll_T * p_pll, fract16_t phaseError)
     return Angle_Integrate(&p_pll->Base, PID_ProcPI(&p_pll->LoopFilter, phaseError, 0));
 }
 
+static inline bool AnglePll_IsLocked(const AnglePll_T * p_pll) { return (p_pll->LockCount >= p_pll->FilterTuning.LockHoldCount); }
+
+// static inline void _AnglePll_ProcLock(AnglePll_T * p_pll, ufract16_t magnitude, fract16_t phaseError)
+// {
+//     bool stable = (magnitude > p_pll->FilterTuning.MagFloor) && (fract16_abs(phaseError) < p_pll->FilterTuning.LockErrTol);
+//     p_pll->Magnitude = magnitude;
+//     p_pll->LockCount = stable ? (uint16_t)math_min(p_pll->LockCount + 1, p_pll->FilterTuning.LockHoldCount) : 0;
+// }
+
 /*
-    Lock: a strong signal and a tight error, sustained.
+    Lock: a strong signal and a tight error, sustained. Held through their loss for LossHoldCount ticks.
     Only the vector entries see the signal: below the floor the error reads 0, as it does at lock.
 */
 static inline void _AnglePll_ProcLock(AnglePll_T * p_pll, ufract16_t magnitude, fract16_t phaseError)
 {
     bool stable = (magnitude > p_pll->FilterTuning.MagFloor) && (fract16_abs(phaseError) < p_pll->FilterTuning.LockErrTol);
     p_pll->Magnitude = magnitude;
-    p_pll->LockCount = stable ? (uint16_t)math_min(p_pll->LockCount + 1, p_pll->FilterTuning.LockHoldCount) : 0;
+    if (AnglePll_IsLocked(p_pll) == false)
+    {
+        p_pll->LockCount = stable ? (p_pll->LockCount + 1U) : 0U;
+    }
+    else
+    {
+        p_pll->LossCount = stable ? 0U : (p_pll->LossCount + 1U);
+        if (p_pll->LossCount > p_pll->FilterTuning.LossHoldCount) { p_pll->LockCount = 0U; p_pll->LossCount = 0U; }
+    }
 }
 
 /* The detected vector: its error normalized against the floor, the lock on both, then the loop */
@@ -139,8 +158,6 @@ static inline angle16_t AnglePll_ProcRelative(AnglePll_T * p_pll, fract16_t x, f
 {
     return _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error_relative(y));
 }
-
-static inline bool AnglePll_IsLocked(const AnglePll_T * p_pll) { return (p_pll->LockCount >= p_pll->FilterTuning.LockHoldCount); }
 
 /******************************************************************************/
 /*
@@ -166,6 +183,7 @@ static inline void AnglePll_Reset(AnglePll_T * p_pll)
     p_pll->PhaseError = 0;
     p_pll->Magnitude = 0;
     p_pll->LockCount = 0;
+    p_pll->LossCount = 0;
 }
 
 /* Loop filter SampleFreq is the Proc rate */

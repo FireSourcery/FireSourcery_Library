@@ -39,10 +39,15 @@
 // #include <stdfix.h>
 #include <assert.h>
 
-/*
-    Convention by stdfix.h
-*/
 
+/*
+    Fract16     => int16_t      as [-1:1)  in Q1.15
+    UFract16    => uint16_t     as [0:2)   in Q1.15
+    Percent16   => uint16_t     as [0:1)   in Q0.16
+    Accum32     => int32_t      as [-65536:65536) in Q17.15
+    (1/fract16) => int32_t      as [-2:2)         in Q2.30
+    Fract32     => int32_t      as [-1:1)         in Q1.31
+*/
 #define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Resolution 1/(2^15) == .000030517578125 */
 #define FRACT16_M_BITS (1)
 

@@ -43,7 +43,6 @@
 #include "Math/FOC.h"
 
 #include "Peripheral/ADC/ADC_Conversion.h"
-#include "Peripheral/ADC/Linear_ADC.h"
 
 #include "Transducer/Encoder/Encoder_MT.h"
 #include "Transducer/Encoder/Encoder_ISR.h"
@@ -448,12 +447,11 @@ static inline angle_freq_t Motor_SpeedBase(Motor_T * p_motor) { return Motor_Spe
     Applied direction. Readers go through here, so the source can move to Foc.VLimit or speed.
 */
 static inline Motor_Direction_T Motor_Direction(const Motor_Context_T * p_motor) { return (Motor_Direction_T)p_motor->Direction; }
-// static inline Motor_Direction_T Motor_DirectionV(const Motor_Context_T * p_motor) { return (Motor_Direction_T)math_sign(p_motor->Foc.Vq); }
 /* VLimit form: the lock is the half-plane. Symmetric reads NULL, no lock */
 // static inline Motor_Direction_T Motor_Direction(const Motor_Context_T * p_motor) { return (Motor_Direction_T)FOC_GetVLimitDirection(&p_motor->Foc); }
 
 /* Run arming, some v_q allowed. Equals Direction != NULL while VLimit is only ever a half-plane */
-static inline bool Motor_IsArmed(const Motor_Context_T * p_motor) { return FOC_IsVLimitOpen(&p_motor->Foc); }
+// static inline bool Motor_IsArmed(const Motor_Context_T * p_motor) { return FOC_IsVLimitOpen(&p_motor->Foc); }
 
 static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_of(Motor_Direction(p_motor->P_MOTOR) * VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
@@ -553,14 +551,7 @@ static inline fract16_t Motor_SpeedLimitCw(const Motor_Context_T * p_motor) { re
 static inline interval_t Motor_RampILimits(const Motor_Context_T * p_motor) { return (interval_t) { .low = Motor_ILimitCw(p_motor), .high = Motor_ILimitCcw(p_motor) }; }
 static inline interval_t Motor_RampSpeedLimits(const Motor_Context_T * p_motor) { return (interval_t) { .low = Motor_SpeedLimitCw(p_motor), .high = Motor_SpeedLimitCcw(p_motor) }; }
 
-// static inline interval_t Motor_ILimit_Resolve(struct Motor_ILimit * p_ilimit, sign_t directionCalibration, sign_t direction)
-// {
-//     return interval_of_sign(direction, p_ilimit->Motoring, p_ilimit->Generating);
-// }
-// return interval_intersect(interval_intersect(
-//     interval_of_sign((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)),
-//     interval_of_sign((sign_t)p_motor->Config.DirectionForward, p_motor->ILimit.Forward, p_motor->ILimit.Reverse)),
-//     p_motor->ISupplyLimits);
+
 
 /******************************************************************************/
 /*

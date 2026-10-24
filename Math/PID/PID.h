@@ -115,7 +115,7 @@ static inline uint16_t PID_GetKp_Fixed16(const PID_T * p_pid) { return PID_GetKp
 static inline uint16_t PID_GetKi_Fixed16(const PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }
 static inline uint16_t PID_GetKd_Fixed16(const PID_T * p_pid) { return PID_GetKd_Fixed32(p_pid) >> 8; }
 
-/*  */
+/* Diagnostics */
 static inline int32_t _PID_GetKp_Runtime(const PID_T * p_pid) { return accum32_of_fract16e(p_pid->Kp); }
 static inline int32_t _PID_GetKi_Runtime(const PID_T * p_pid) { return fract16e_mul(p_pid->KiPerTick, p_pid->Config.SampleFreq); }
 

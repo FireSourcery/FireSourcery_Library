@@ -73,7 +73,6 @@ than a generic matrix step.
 - **Derived coefficients sit beside their source**, the equation pre-computed for the step. Config
   holds the published form, the runtime the derived form.
   - G = 1/L beside L in [Stator_Winding_T].
-  - InvSlope beside Slope in [Linear_T], for the inverse map.
   - Kp and KiPerTick beside the Config's Kp, Ki, Kd in [PID_T].
 - **A coefficient has an update rate**: constant (the winding, the gains), per operating point
   ([FOC_CaptureSpeed], at the speed loop), or per tick ([FOC_SetTheta]).

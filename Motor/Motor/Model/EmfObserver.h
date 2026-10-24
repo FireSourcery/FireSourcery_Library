@@ -95,6 +95,7 @@ EmfObserver_Config_T;
         .MagFloor       = (ufract16_t)FRACT16(.05F * VBus / v_max), /* 5 % of VMax */                               \
         .LockErrTol     = (ufract16_t)FRACT16(.05F),                /* 5 % normalized error */                      \
         .LockHoldCount  = 200U,                                     /* 10 ms at 20 kHz */                           \
+        .LossHoldCount  = 200U,                                     /* 10 ms at 20 kHz */                           \
     },                                                                                                              \
     .Pll =                                                                                                          \
     {                                                                                                               \
@@ -152,23 +153,6 @@ static inline sign_t _EmfObserver_Direction(const Angle_T * p_frame) { return (A
 */
 /******************************************************************************/
 /*
-    One SMO axis, the model first: the model across the period the sample i closes, v held across it, z of the last tick in place of e [Stator_Axis_Integrate],
-    then z against the sample [smo_z]; z is the raw EMF, ê its equivalent control.
-    For a v that depends on the sample, as the frame's turn on the measured current does [EmfObserver_Eemf_Proc].
-*/
-/*
-    Before the next FOC loop,
-    î[k]  = î[k-1] + G_pu · ( v - Rs_pu·î[k-1] - z[k-1] )     z in place of e
-    z[k]  = K_smo · sat( î[k] - i_meas[k], thr )
-*/
-static inline void _EmfObserver_ProcSmo(EmfObserver_T * p_obs, EmfObserver_Axis_T * p_axis, fract16_t i, accum32_t v)
-{
-    Stator_Axis_Integrate(&p_obs->Winding, &p_axis->Stator, v, p_axis->Z);
-    p_axis->Z = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_axis->Stator.I, i));
-    p_axis->Emf = lpf_step(p_obs->Config.LpfCoef, p_axis->Emf, p_axis->Z);
-}
-
-/*
     After the FOC loop, Stator.I is previous sample
     z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
     î[k+1]  = î[k] + G_pu · ( v[k] - Rs_pu·î[k] - z[k] )      z in place of e
@@ -193,6 +177,37 @@ static void EmfObserver_AlphaBeta_Proc(EmfObserver_T * p_obs, fract16_t i_alpha,
     _EmfObserver_ProcSmoNext(p_obs, &p_obs->Beta, i_beta, v_beta);
 
     /* ê_αβ: the rotor vector, detected against θ̂ [AnglePll_ProcVector] */
+    struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->Alpha.Emf, p_obs->Beta.Emf);
+    AnglePll_ProcVector(&p_obs->Pll, rotor.x, rotor.y);
+}
+
+/*
+    Before the next FOC loop,
+    î[k]  = î[k-1] + G_pu · ( v - Rs_pu·î[k-1] - z[k-1] )     z in place of e
+    z[k]  = K_smo · sat( î[k] - i_meas[k], thr )
+*/
+/*
+    One SMO axis, the model first: the model across the period the sample i closes, v held across it, z of the last tick in place of e [Stator_Axis_Integrate],
+    then z against the sample [smo_z]; z is the raw EMF, ê its equivalent control.
+    For a v that depends on the sample, as the frame's turn on the measured current does [EmfObserver_Eemf_Proc].
+*/
+static inline void _EmfObserver_ProcSmo(EmfObserver_T * p_obs, EmfObserver_Axis_T * p_axis, fract16_t i, accum32_t v)
+{
+    Stator_Axis_Integrate(&p_obs->Winding, &p_axis->Stator, v, p_axis->Z);
+    p_axis->Z = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, smo_sigma(p_axis->Stator.I, i));
+    p_axis->Emf = lpf_step(p_obs->Config.LpfCoef, p_axis->Emf, p_axis->Z);
+}
+
+/*
+    SMO, stationary frame, the model first [_EmfObserver_ProcSmo]. Once per control tick, before the FOC proc:
+    the αβ sample, and the αβ voltage held across the period it closes.
+    The steps of [EmfObserver_AlphaBeta_Proc], with its integration moved to the start of the next call.
+*/
+static void EmfObserver_AlphaBeta_ProcHeld(EmfObserver_T * p_obs, fract16_t i_alpha, fract16_t i_beta, fract16_t v_alpha, fract16_t v_beta)
+{
+    _EmfObserver_ProcSmo(p_obs, &p_obs->Alpha, i_alpha, v_alpha);
+    _EmfObserver_ProcSmo(p_obs, &p_obs->Beta, i_beta, v_beta);
+
     struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->Alpha.Emf, p_obs->Beta.Emf);
     AnglePll_ProcVector(&p_obs->Pll, rotor.x, rotor.y);
 }
@@ -248,7 +263,7 @@ static void EmfObserver_VModel_Proc(EmfObserver_T * p_obs, fract16_t i_d, fract1
     FOC_ProcIFeedback       Vd, Vq ← v[k]
     FOC_ProcInvClarkePark   Valpha, Vbeta, Va..Vc ← v[k]
 */
-static void EmfObserver_Eemf_Proc(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q, fract16_t v_d, fract16_t v_q)
+static angle16_t EmfObserver_Eemf_Proc(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q, fract16_t v_d, fract16_t v_q)
 {
     accum32_t x = stator_reactance(p_obs->Winding.L, Angle_Delta(&p_obs->Pll.Base));
 
@@ -257,6 +272,7 @@ static void EmfObserver_Eemf_Proc(EmfObserver_T * p_obs, fract16_t i_d, fract16_
 
     struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->D.Emf, p_obs->Q.Emf);
     AnglePll_ProcRelative(&p_obs->Pll, rotor.x, rotor.y);
+    return Angle_Value(&p_obs->Pll.Base);
 }
 
 /* Bumpless seed: θ̂ and ω̂ from a known reference, e.g. the open-loop ramp */

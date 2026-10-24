@@ -242,7 +242,11 @@ static inline Phase_Triplet_T Phase_Aligned(Phase_Id_T id, uint16_t value)
 /******************************************************************************/
 typedef struct Phase_Data
 {
-    Phase_Triplet_T Values;
+    union
+    {
+        struct { int16_t A; int16_t B; int16_t C; };
+        Phase_Triplet_T Values;
+    };
     Phase_Bitmask_T Flags;
     uint8_t Resv; /* align to 32 bits */
 }
@@ -256,7 +260,6 @@ static inline Phase_Data_T Phase_Data(int16_t a, int16_t b, int16_t c, Phase_Id_
 static inline void Phase_Capture(volatile Phase_Data_T * p_data, Phase_Index_T channel, int16_t value)
 {
     p_data->Values.Values[channel] = value;
-    // p_data->Values.Values[channel] = (p_data->Values.Values[channel] + value) / 2;
     p_data->Flags.Bits |= (1U << channel);
 }
 

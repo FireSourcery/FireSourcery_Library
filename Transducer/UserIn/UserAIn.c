@@ -47,13 +47,13 @@ void UserAIn_InitFrom(UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
 
     /* Initialize state */
     p_dev->P_STATE->RawValue_Adcu = p_dev->P_STATE->Config.AdcZero;
-    p_dev->P_STATE->Value = Linear_Q16_Percent(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero);
+    p_dev->P_STATE->Value = Linear_Percent16_Sat(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero);
     p_dev->P_STATE->ValuePrev = p_dev->P_STATE->Value;
 }
 
 void UserAIn_Init(UserAIn_T * p_dev) { UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }
 
-void UserAIn_ReinitScale(UserAIn_T * p_dev) { Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax); }
+void UserAIn_ReinitScale(UserAIn_T * p_dev) { Linear_Percent16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax); }
 
 /*
     Resolve Config onto runtime state.
@@ -83,7 +83,7 @@ static inline void CaptureValue(UserAIn_State_T * p_state, uint16_t filter, uint
 {
     p_state->RawValue_Adcu = value_adcu;
     p_state->ValuePrev = p_state->Value;
-    p_state->Value = FilterValue(filter, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
+    p_state->Value = FilterValue(filter, p_state->Value, Linear_Percent16_Sat(&p_state->Units, value_adcu));
 }
 
 // static inline void _UserAIn_CaptureValue(UserAIn_T * p_dev, uint16_t value_adcu) { CaptureValue(p_dev->P_STATE, p_dev->FILTER_SHIFT, value_adcu); }

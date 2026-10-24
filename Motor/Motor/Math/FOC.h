@@ -443,6 +443,21 @@ static inline void FOC_MatchIVSensor(FOC_T * p_foc)
     else { FOC_MatchIVState(p_foc); } /* FOC_ProcVBemfClarkePark */
 }
 
+/*
+    The operating point the last proc left, seen from θ: the dq of its αβ sample and command.
+    On a change of the angle source, e.g. the open-loop ramp to a sensor, before [FOC_MatchIVState] seeds the loop from it.
+*/
+static inline void FOC_MatchTheta(FOC_T * p_foc, angle16_t theta)
+{
+    FOC_SetTheta(p_foc, theta);
+    struct foc_dq i = foc_park(p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
+    struct foc_dq v = foc_park(p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
+    p_foc->Id = fract16_sat(i.d);
+    p_foc->Iq = fract16_sat(i.q);
+    p_foc->Vd = fract16_sat(v.d);
+    p_foc->Vq = fract16_sat(v.q);
+}
+
 static void FOC_ClearCaptureState(FOC_T * p_foc)
 {
     p_foc->Id = 0;
@@ -617,6 +632,22 @@ static inline void FOC_MatchIdFieldWeakening(FOC_T * p_foc, ufract16_t vBus)
 // {
 //     FOC_ProcIFeedback(p_foc, vBus, direction, 0, iqReq);
 // }
+
+
+/*
+    Split for common
+*/
+static inline void FOC_ProcInput(FOC_T * p_foc, angle16_t theta, fract16_t ia, fract16_t ib, fract16_t ic)
+{
+    FOC_SetTheta(p_foc, theta);
+    FOC_ProcClarkePark(p_foc, ia, ib, ic);
+}
+
+static inline void FOC_ProcOutput(FOC_T * p_foc, ufract16_t vBus, fract16_t dReq, fract16_t qReq)
+{
+    FOC_ProcIFeedback(p_foc, vBus, dReq, qReq);
+    FOC_ProcInvClarkePark(p_foc);
+}
 
 /******************************************************************************/
 /*!

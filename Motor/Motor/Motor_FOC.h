@@ -30,8 +30,8 @@
 #ifndef MOTOR_FOC_H
 #define MOTOR_FOC_H
 
-#include "Math/FOC.h"
 #include "Motor.h"
+#include "Math/FOC.h"
 #include "Math/FOC_Ext.h"
 #include "Phase/Phase_Svpwm.h"
 
@@ -99,8 +99,10 @@ static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->Foc, Motor_GetDecouplingOmega(p_motor)); }
 
 
+
 /* Directly read register state */
 /* state machine handles write gate state */
+/* Duty register must read written value */
 static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
 {
     switch (Phase_ReadVOut(&p_dev->PHASE))
@@ -113,6 +115,8 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
         default: break;
     }
 }
+
+
 
 /*
     The state running the current loop resolves the held inputs, on entry and on its speed tick.

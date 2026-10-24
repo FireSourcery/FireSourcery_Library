@@ -36,17 +36,9 @@
 #include "Motor.h"
 
 #include "Framework/StateMachine/StateMachine_Thread.h"
+#include "Phase/Phase_Types.h"
 
 
-/******************************************************************************/
-/*
-    Motor_MarkAnalog_Thread
-*/
-/******************************************************************************/
-static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
-{
-    if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
-}
 
 /******************************************************************************/
 /*
@@ -66,15 +58,6 @@ static inline void Motor_CaptureSensor(Motor_T * p_dev)
     }
 }
 
-// static inline void Motor_CaptureIabc(Motor_T * p_motor)
-// {
-//     Motor_Context_T * p_state = p_motor->P_MOTOR;
-// //    p_state->PhaseInput.I = Phase_Analog_Batch(p_state);
-//     // Motor_Analog_CaptureIa(p_state, ADC_Conversion_GetResult(&p_motor->PHASE_ANALOG.IA));
-//     // Motor_Analog_CaptureIb(p_state, ADC_Conversion_GetResult(&p_motor->PHASE_ANALOG.IB));
-//     // Motor_Analog_CaptureIc(p_state, ADC_Conversion_GetResult(&p_motor->PHASE_ANALOG.IC));
-//     // _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
-// }
 
 /*
     ~50us
@@ -94,6 +77,30 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     // Motor_FOC_WriteDuty_Thread(p_dev);
 
     p_dev->P_MOTOR->ControlTimerBase++;
+}
+
+/******************************************************************************/
+/*
+    Motor_MarkAnalog_Thread
+*/
+/******************************************************************************/
+static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
+{
+    if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
+}
+
+static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c)
+{
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
+    Motor_Analog_CaptureIabc(p_state, a, b, c);
+    _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
+}
+
+static inline void Motor_OnIabc_Thread(Motor_T * p_motor, int32_t a, int32_t b, int32_t c)
+{
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
+    p_state->PhaseInput.I = (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits =  PHASE_ID_ABC, };
+    _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
 }
 
 /******************************************************************************/
@@ -129,16 +136,3 @@ static inline void Motor_Heat_Thread(Motor_T * p_dev)
 // static inline void Motor_DisableInterrupt(Motor_T * p_motor) { Phase_DisableInterrupt(&p_motor->PHASE); }
 // static inline void Motor_EnableInterrupt(Motor_T * p_motor) { Phase_EnableInterrupt(&p_motor->PHASE); }
 
-
-/*
-    Push the held I limit inputs to the active state, after [Motor_SetILimit*] or [Motor_CaptureISupplyLimits].
-    The state running the current loop resolves. Same lock as the async inputs.
-*/
-// void Motor_OnILimits(Motor_T * p_motor)
-// {
-//     if (_StateMachine_AcquireAsyncInput(p_motor->STATE_MACHINE.P_ACTIVE) == true)
-//     {
-//         _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_I_LIMITS);
-//         _StateMachine_ReleaseAsyncInput(p_motor->STATE_MACHINE.P_ACTIVE);
-//     }
-// }

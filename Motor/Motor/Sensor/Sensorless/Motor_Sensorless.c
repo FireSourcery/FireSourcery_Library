@@ -41,12 +41,6 @@
 */
 /******************************************************************************/
 #include "Motor_Sensorless.h"
-#include "Sensorless_Sensor.h"
-
-#include "../RotorSensor.h"
-#include "../../Motor_StateMachine.h"
-#include "../../StateMachine/Motor_OpenLoop.h"
-#include "../../Motor_FOC.h"
 
 // #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 
@@ -59,6 +53,58 @@ static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { ret
 #else
 static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { return NULL; }
 #endif
+
+
+
+// static inline void Motor_FOC_IOutput(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
+// {
+//     FOC_SetTheta(&p_motor->Foc, theta);
+//     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
+//     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
+//     FOC_ProcInvClarkePark(&p_motor->Foc);
+// }
+
+// static inline void Sensorless_Run(Motor_T * p_dev)
+// {
+//     Motor_Context_T * p_motor = (Motor_Context_T *)p_dev;
+//     FOC_T * p_foc = &p_motor->Foc;
+//     fract16_t vBus = VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS);
+
+//     _FOC_CaptureIabc(p_foc, &p_motor->PhaseInput.I.Values);     //  FOC_ProcClarkePark(p_foc, p_iabc->A, p_iabc->B, p_iabc->C);
+//     angle16_t theta = EmfObserver_Eemf_Proc(GetSensorless(p_dev)->P_OBSERVER, p_foc->Id, p_foc->Iq, p_foc->Vd, p_foc->Vq);
+
+//     FOC_SetTheta(p_foc, theta);
+//     FOC_ProcIFeedback(p_foc, vBus, 0, Ramp_ProcNextOf(&p_motor->TorqueRamp, p_motor->UserCmd));
+//     FOC_ProcInvClarkePark(p_foc);
+// }
+
+// static void Run_OnPhaseI(Motor_T * p_motor)
+// {
+//     Motor_Context_T * p_context = p_motor->P_MOTOR;
+//     // FOC_ProcInput(&p_context->Foc);
+//     // FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
+//     // _FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I.Values);
+//     FOC_ProcClarkePark(&p_context->Foc, p_context->PhaseInput.I.A, p_context->PhaseInput.I.B, p_context->PhaseInput.I.C);
+// }
+
+// static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
+// {
+//     // [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)Run_OnSpeed,
+//     [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Run_OnPhaseI,
+// };
+
+// static const State_T SENSORLESS_RUN =
+// {
+//     .PATH_ID    = { .Depth0 = MOTOR_STATE_ID_RUN }, /* sub-state id not yet allocated: reports as the root state */
+
+//     .P_TOP    = &MOTOR_STATE_RUN,
+//     .P_PARENT = &MOTOR_STATE_RUN,
+//     .DEPTH    = 1U,
+//     // .ENTRY    = (State_Action_T)Run_Entry,
+//     // .LOOP     = (State_Action_T)Run_Proc,
+//     .P_ACTION_TABLE     = &RUN_ACTION_TABLE[0U],
+// };
+
 
 
 /******************************************************************************/
@@ -169,6 +215,58 @@ void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
     if (Motor_Direction(p_motor->P_MOTOR) == MOTOR_DIRECTION_NULL) { return; }
     if (p_motor->P_MOTOR->p_ActiveSensor != &GetSensorless(p_motor)->BASE) { return; }
     Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN);
+}
+
+/* The chain that acquires the angle from standstill, for an entry from outside: a PWM request in PASSIVE, or a cmd */
+State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor) { (void)p_motor; return &SENSORLESS_ALIGN; }
+
+
+/******************************************************************************/
+/*
+    The observer before the FOC proc.
+    Called on the PWM thread before the state machine, on the phase-sample event, or as a state's ON_PHASE action.
+*/
+/******************************************************************************/
+/*
+    One control tick, before the FOC proc: the sample closes the period, with the v held across it.
+    The phase output across the period decides that v. The analog thread samples I while driven, V while floating [_Motor_Analog_Thread].
+    Valid only while the sensorless adapter is the selected sensor.
+*/
+void Motor_Sensorless_CaptureStator(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    const volatile Phase_Triplet_T * p_iabc = &p_context->PhaseInput.I.Values;
+    const volatile Phase_Triplet_T * p_vabc = &p_context->PhaseInput.V.Values;
+    struct foc_alphabeta i = { 0 };
+    struct foc_alphabeta v = { 0 };
+
+    switch (Phase_ReadVOut(&p_motor->PHASE))
+    {
+        case PHASE_VOUT_PWM:    /* the last command */
+            i = foc_clarke(p_iabc->A, p_iabc->B, p_iabc->C);
+            v = (struct foc_alphabeta){ .alpha = p_context->Foc.Valpha, .beta = p_context->Foc.Vbeta };
+            break;
+        case PHASE_VOUT_0:      /* shorted: the EMF drives i through the winding */
+            i = foc_clarke(p_iabc->A, p_iabc->B, p_iabc->C);
+            break;
+        case PHASE_VOUT_Z:      /* floating: no current, the terminals read the EMF */
+            v = foc_clarke(p_vabc->A, p_vabc->B, p_vabc->C);
+            break;
+        default: break;
+    }
+
+    Sensorless_Sensor_ProcEemf(GetSensorless(p_motor), fract16_sat(i.alpha), fract16_sat(i.beta), fract16_sat(v.alpha), fract16_sat(v.beta));
+    // EmfObserver_AlphaBeta_ProcHeld(GetSensorless(p_motor)->P_OBSERVER, fract16_sat(i.alpha), fract16_sat(i.beta), fract16_sat(v.alpha), fract16_sat(v.beta));
+}
+
+/*
+    The observer's plant, from the model on the same view as FOC's [Motor_FOC_InitParams]: Lq on both axes, the extended EMF.
+    Re-resolve with it, on a change of the model. An invalid model keeps the prior winding, as it keeps FOC's view.
+*/
+void Motor_Sensorless_InitWinding(Motor_T * p_motor)
+{
+    const Motor_Electrical_T * p_electrical = &p_motor->P_MOTOR->Config.Electrical;
+    if (Motor_Electrical_IsValid(p_electrical) == true) { EmfObserver_InitWinding(GetSensorless(p_motor)->P_OBSERVER, p_electrical->Rs, Motor_Lq_PuTurn(p_electrical)); }
 }
 
 // #endif /* MOTOR_SENSOR_SENSORLESS_ENABLE */

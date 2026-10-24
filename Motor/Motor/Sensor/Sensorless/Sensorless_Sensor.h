@@ -33,6 +33,9 @@
     CAPTURE_ANGLE/CAPTURE_SPEED publish the observer's θ̂, ω̂ into RotorSensor_State idempotently.
 
     Only the sensorless start-up substates (Motor_Sensorless.c) drive Proc; RotorSensor_CaptureAngle alone would publish a frozen θ̂.
+
+    Or before the FOC proc, from the phase image and the voltage held across the period: Sensorless_Sensor_ProcEemf,
+    by [Motor_Sensorless_CaptureStator]. CAPTURE_ANGLE then publishes the prediction the last step made for this sample.
 */
 /******************************************************************************/
 #include "../../Model/EmfObserver.h"
@@ -72,27 +75,16 @@ static inline void Sensorless_Sensor_Proc(Sensorless_Sensor_T * p_sensor, const 
     EmfObserver_AlphaBeta_Proc(p_sensor->P_OBSERVER, p_foc->Ialpha, p_foc->Ibeta, p_foc->Valpha, p_foc->Vbeta);
 }
 
-// static inline void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
-// {
-//     FOC_SetTheta(&p_motor->Foc, theta);
-//     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
-
-//     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-//     FOC_ProcInvClarkePark(&p_motor->Foc);
-// }
-// static inline void Motor_FOC_C(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
-// {
-//     FOC_SetTheta(&p_motor->Foc, theta);
-//     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
-
-//     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-//     FOC_ProcInvClarkePark(&p_motor->Foc);
-// }
-// static inline void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
-// {
-//     FOC_SetTheta(&p_motor->Foc, theta);
-//     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
-
-//     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-//     FOC_ProcInvClarkePark(&p_motor->Foc);
-// }
+/*
+    One control tick, before the FOC proc: the αβ sample, and the αβ voltage held across the period it closes.
+    The EEMF front end in the frame θ̂ the tracker holds at the call [EmfObserver_Eemf_Proc]: i at θ̂, v at the period's mean angle θ̂ − Δθ̂/2.
+*/
+static inline void Sensorless_Sensor_ProcEemf(Sensorless_Sensor_T * p_sensor, fract16_t i_alpha, fract16_t i_beta, fract16_t v_alpha, fract16_t v_beta)
+{
+    EmfObserver_T * p_obs = p_sensor->P_OBSERVER;
+    struct fract16_xy frame = Angle_UnitVector(&p_obs->Pll.Base);
+    struct fract16_xy hold = fract16_vector((angle16_t)(Angle_Value(&p_obs->Pll.Base) - Angle_Delta(&p_obs->Pll.Base) / 2));
+    struct foc_dq i = foc_park(i_alpha, i_beta, frame.y, frame.x);
+    struct foc_dq v = foc_park(v_alpha, v_beta, hold.y, hold.x);
+    EmfObserver_Eemf_Proc(p_obs, fract16_sat(i.d), fract16_sat(i.q), fract16_sat(v.d), fract16_sat(v.q));
+}

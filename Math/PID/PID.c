@@ -55,23 +55,6 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
 
 /* passing limits for internal state */
 // int16_t PID_ProcAntiWindupPI(PID_T * p_pid, int16_t limitLow, int16_t limitHigh, int16_t error)
-// {
-//     int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
-
-//     /* Dynamic Clamp */
-//     int32_t integralMin = limitLow - proportional;
-//     int32_t integralMax = limitHigh - proportional;
-
-//     int32_t integralAccum = p_pid->IntegralAccum + (((int32_t)p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
-//     p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
-//     int32_t integral = p_pid->IntegralAccum >> 15;
-
-//     p_pid->ErrorPrev = error;
-
-//     /* Optionally output limits as persistent saturation limits */
-//     p_pid->Output = math_clamp(proportional + integral, p_pid->OutputMin, p_pid->OutputMax);
-//     return p_pid->Output;
-// }
 
 /*!
     Conventional parallel PID calculation
@@ -90,9 +73,6 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
         PID_CaptureOutputLimits relies on it, e.g. the Vq band shrinking under field weakening. Anchored at the accumulator, the integral is left outside the band.
         Within the output band ahead of the shift, a proportional term wider than the band stops the integral at the opposite limit.
     */
-    // int32_t integralMin = math_min(p_pid->IntegralAccum, math_clamp(p_pid->OutputMin - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15);
-    // int32_t integralMax = math_max(p_pid->IntegralAccum, math_clamp(p_pid->OutputMax - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15);
-
     int32_t integralMin = math_clamp(p_pid->OutputMin - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15;
     int32_t integralMax = math_clamp(p_pid->OutputMax - proportional, p_pid->OutputMin, p_pid->OutputMax) << 15;
 

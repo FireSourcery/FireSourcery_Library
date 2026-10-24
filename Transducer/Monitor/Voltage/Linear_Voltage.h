@@ -25,7 +25,7 @@
     @file   Linear_Voltage.h
     @author FireSourcery
     @brief     ADC to Voltage values conversion using voltage divider.
-            Flexible V units with precision over Linear_ADC.
+            Flexible V units.
 
 */
 /******************************************************************************/
@@ -50,12 +50,8 @@
 {                                                                                                                       \
     .Slope              = _LINEAR_V_PER_ADCU(r1, r2, adcVRef, adcBits, 1),                                              \
     .SlopeShift         = LINEAR_VOLTAGE_SHIFT,                                                                         \
-    .InvSlope           = _LINEAR_ADCU_PER_V(r1, r2, adcVRef, adcBits, 1),                                              \
-    .InvSlopeShift      = LINEAR_VOLTAGE_SHIFT - adcBits,                                                               \
-    .Y0                 = 0U,                                                                                           \
     .X0                 = 0U,                                                                                           \
     .XDelta             = 1UL << adcBits,                                                                               \
-    .YDelta             = (int32_t)(_LINEAR_V_PER_ADCU(r1, r2, adcVRef, adcBits) * (1UL << adcBits)),                   \
 }
 
 
@@ -86,6 +82,7 @@ static inline int32_t Linear_Voltage_MilliV(const Linear_T * p_linear, uint16_t 
 /******************************************************************************/
 static inline uint16_t Linear_Voltage_AdcuOfV(const Linear_T * p_linear, uint16_t volts) { return (uint16_t)Linear_InvOf(p_linear, volts); }
 
+/* Overflow milliV > 65535 */
 static inline uint16_t Linear_Voltage_AdcuOfMilliV(const Linear_T * p_linear, uint32_t milliV) { return (uint16_t)(Linear_InvOf(p_linear, milliV) / 1000U); }
 
 // static inline uint16_t Linear_Voltage_AdcuOfScalarV(const Linear_T * p_linear, uint16_t scalarV, uint16_t scalar) { return (uint16_t)Linear_InvOf_Scalar(p_linear, scalarV, scalar); }
@@ -93,6 +90,7 @@ static inline uint16_t Linear_Voltage_AdcuOfMilliV(const Linear_T * p_linear, ui
 /* round up .5 volts */
 static inline uint16_t Linear_Voltage_AdcuOfV_Input(const Linear_T * p_linear, uint16_t volts) { return Linear_InvOf_Round(p_linear, volts); }
 
+/* Overflow milliV > 65535 */
 static inline uint16_t Linear_Voltage_AdcuOfMilliV_Input(const Linear_T * p_linear, uint32_t milliV) { return Linear_InvOf_Round(p_linear, milliV) / 1000U; }
 
 

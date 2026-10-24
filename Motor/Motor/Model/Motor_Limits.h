@@ -58,3 +58,11 @@ static inline interval_t Motor_ILimit_Resolve(Motor_ILimit_T limit, sign_t forwa
 {
     return interval_intersect(interval_of_sign(motoring, limit.Motoring, limit.Generating), interval_of_sign(forward, limit.Forward, limit.Reverse));
 }
+// static inline interval_t Motor_ILimit_Resolve(struct Motor_ILimit * p_ilimit, sign_t directionCalibration, sign_t direction)
+// {
+//     return interval_of_sign(direction, p_ilimit->Motoring, p_ilimit->Generating);
+// }
+// return interval_intersect(interval_intersect(
+//     interval_of_sign((sign_t)Motor_Direction(p_motor), Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)),
+//     interval_of_sign((sign_t)p_motor->Config.DirectionForward, p_motor->ILimit.Forward, p_motor->ILimit.Reverse)),
+//     p_motor->ISupplyLimits);

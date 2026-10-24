@@ -77,6 +77,12 @@ static inline void _Motor_Analog_ByPhase_Thread(Motor_T * p_dev)
     (void)p_dev;
 }
 
+// directly from board
+// static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c)
+
+
+
+
 /*
 */
 extern void Motor_Analog_Calibrate(Motor_T * p_motor);
