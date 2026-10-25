@@ -164,7 +164,7 @@ static inline struct svpwm_abc svpwm_midclamp_ceiling(fract16_t vA, fract16_t vB
     @param[in] radius - |v| normalized to VBus as 1.0F, [0:1/sqrt3]
     @return [1/2:1]
 */
-static inline ufract16_t svpwm_midclamp_duty_peak(ufract16_t radius) { return SVPWM_MIDCLAMP_DUTY_PEAK(radius); }
+static inline ufract16_t svpwm_midclamp_duty_peak(ufract16_t radius)  { return FRACT16_1_DIV_2 + fract16_mul(radius, FRACT16_SQRT3_DIV_2); }
 
 /*!
     The largest radius at which midclamp's highest duty stays at or under dutyPeak, the inverse of [svpwm_midclamp_duty_peak]: (2·dutyPeak − 1) / √3.
@@ -185,9 +185,10 @@ static inline ufract16_t svpwm_midclamp_radius(ufract16_t dutyPeak) { return SVP
     @param[in] dutyCeiling - [0:32767]
     @return [0:1/sqrt3]
 */
-static inline ufract16_t svpwm_midclamp_ceiling_radius(ufract16_t dutyPeak, ufract16_t dutyCeiling) { return SVPWM_MIDCLAMP_CEILING_RADIUS(dutyPeak, dutyCeiling); }
-
-
+static inline ufract16_t svpwm_midclamp_ceiling_radius(ufract16_t dutyPeak, ufract16_t dutyCeiling)
+{
+    return fract16_mul((dutyPeak < dutyCeiling) ? (2 * (int32_t)dutyPeak - FRACT16_SCALE) : dutyPeak, FRACT16_1_DIV_SQRT3);
+}
 
 
 /*
