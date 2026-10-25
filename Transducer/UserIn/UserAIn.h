@@ -82,7 +82,6 @@ typedef const struct UserAIn
 }
 UserAIn_T;
 
-#define USER_AIN_STATE_ALLOC() (&(UserAIn_State_T){0})
 
 /* Handle P_EDGE_PIN->P_HAL_PIN == NULL as empty opject */
 

@@ -23,13 +23,13 @@ One file per pattern, named for what it is (`EquationStruct.md`).
 **Level** — architectural, design or idiom.
 **Force** — what varies, what must stay still.
 **Shape** — the minimal C form.
-**In code** — `[Name]` of each real instance, with its path.
+**In code** — `Name` of each real instance, with its path.
 **Rejected** — the alternatives and why.
 **Source** — the published form, if any.
 ```
 
-Names follow the `CLAUDE.md` notation: `[Name]` for anything defined in the codebase,
-`` `code` `` for literal code. A mermaid diagram where the structure is not obvious from the shape.
+Names follow the `CLAUDE.md` notation: backticks for anything that exists in code. A mermaid
+diagram where the structure is not obvious from the shape.
 
 ---
 

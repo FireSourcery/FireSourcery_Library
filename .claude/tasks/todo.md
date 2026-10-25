@@ -11,3 +11,8 @@
     - Reference, debug motor (Kv 150, 4 pole pairs, Ld 85 µH): ψ = 7.96 mWb, I_sc ≈ 94 A peak, under the 226 A rated peak.
 - [ ] Ls as the per-phase inductance: the phase-to-neutral winding self-inductance in the abc frame
     - `Motor_Electrical_LsTick` is the αβ average (Ld + Lq) / 2 for now, read by the observer gain (`FOC_Sensorless_InitG`).
+- [ ] Current-loop sequencing: run the current loop on the most recent sample, Parked at its angle. Sketch and wiring list: `Kelly_KMC/Docs/CurrentLoopSequencing.md`
+    - [ ] Step 1, capture at completion. `Phase_TakeComplete`, `Motor_FOC_CaptureI` and `_Motor_OnIabc_Thread` are in the tree, not called. To wire: `Motor_FOC_AngleControl` takes the token, `Motor_FOC_ProcAngleFeedforwardV` and `Motor_FOC_ProcAngleV` drop their capture, both boards' completion ISRs call in, and S32 DMA0 moves to priority 2.
+        - KE06 moves to group capture from the ADC channel results buffer (`P_CHANNEL_RESULTS`, through `Board_ADC0_ResultOf`) instead of individual channel callbacks (`BOARD_ADC0_CHANNELS`), as S32's DMA ISR does. Under 2 of 3, the set is the marked pair, and the capture solves the skipped phase.
+    - [ ] Step 2, delay compensation in `Motor_FOC_CaptureI`, after the hold's τ is measured.
+    - [ ] Step 3, the PI in a shared ON_PHASE handler, state by state, once `ControlLoopProfile` shows KE makes the bottom load point.

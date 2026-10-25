@@ -21,10 +21,9 @@
 - Keep comments concise. Comments are reserved for points that the code cannot express, not what the code is doing.
 - Rather than describing what the code is doing using comments, use visualizations i.e mermaid diagrams in a separate markdown file.
 - When referring to a concept that is already modeled by a type or struct in code, refer to that type.
-- Markdown symbol notation:
-  - `[Name]` — anything defined in this codebase, spelled exactly as in code: `[Motor_StateId_T]`, `[Motor_Enable]`, `[MOTOR_STATE_INIT]`.
-  - `` `code` `` — literal code that is not one of our names: expressions, calls with arguments, keywords, standard-library names, paths, commands.
-  - Bare CAPS — a member name (state, input, mode) once its section has named the type, e.g. INIT under `[Motor_StateId_T]`.
+- Symbol notation for an entity that exists in code:
+  - Markdown — backticks, so the preview highlights it: `TypeName_T`, `MOTOR_STATE_INIT`, even a bare member `INIT`.
+  - C comments — brackets, `[TypeName_T]`, which the `.vscode/comment-reference` grammar highlights.
   - Bold — emphasis only, never code.
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
 - Architecture notes and findings live in `Docs/`: Conventions, Patterns, Decisions, Findings, Modules, References. Index: [Docs/README.md](Docs/README.md).

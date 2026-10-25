@@ -60,6 +60,16 @@ static inline void Motor_Analog_CaptureVabc(Motor_Context_T * p_motor, adc_resul
 static inline void Motor_Analog_MarkVabc(Motor_T * p_motor) { Phase_Analog_MarkVabc(&p_motor->PHASE_ANALOG); }
 static inline void Motor_Analog_MarkIabc(Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
 
+/*
+    The driven I sample. Before the PWM thread writes this cycle's duties: the duty registers hold those of the window being sampled.
+    Low-side sensing leaves out the highest duty, the shortest window. The capture solves it [_Phase_Analog_SolveI].
+*/
+#if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
+static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Phase_Analog_MarkI(&p_motor->PHASE_ANALOG, Phase_Bitmask(Phase_Inverse(Phase_ReadDutyMax(&p_motor->PHASE)))); }
+#else
+static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Motor_Analog_MarkIabc(p_motor); }
+#endif
+
 
 static inline bool Motor_IsAnalogCycle(Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
 
@@ -68,7 +78,7 @@ static inline void _Motor_Analog_Thread(Motor_T * p_dev)
 {
     // RotorSensor_MarkAnalog(&p_dev->Sensor);
     /* foc return on first 1. alternatively handle per phase */
-    if (!Phase_IsFloat(&p_dev->PHASE)) { Motor_Analog_MarkIabc(p_dev); }
+    if (!Phase_IsFloat(&p_dev->PHASE)) { Motor_Analog_MarkI(p_dev); }
     else { Motor_Analog_MarkVabc(p_dev); }
 }
 

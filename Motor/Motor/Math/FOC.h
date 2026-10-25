@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "foc_math.h"
+#include "svpwm_math.h" /* FOC_V_CIRCLE_PER_V_BUS may be set from the modulator's duty limit */
 #include "../Model/Stator.h"
 #include "Math/Fixed/fract16.h"
 #include "Math/PID/PID.h"
@@ -173,6 +174,20 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
 // static inline void FOC_SetVd(FOC_T * p_foc, fract16_t vd) { p_foc->Vd = vd; }
 // static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 
+/*
+    The v_dq circle radius per V_bus, the current loop's modulation limit. SVPWM is linear to 1/√3.
+    Low-side current sensing reads a phase in its low-side window, (1 − d)·T. Under midclamp at radius r the highest duty is
+    ½ + (√3/2)·r [svpwm_midclamp_duty_peak], the middle ½ + (3/4)·r. At 1/2 that is 93.3 %, leaving the read 3.35 µs at 20 kHz. The window holds to:
+        1/2     midclamp, the 3 phases read
+        0.539   the ceiling √3/2 [svpwm_midclamp_ceiling], the 3 phases read [svpwm_midclamp_ceiling_radius]
+        1/√3    the 2 longest windows read [PHASE_ANALOG_I_SENSOR_LOW_SIDE], the linear limit first
+*/
+#if !defined(FOC_V_CIRCLE_PER_V_BUS)
+#define FOC_V_CIRCLE_PER_V_BUS FRACT16_1_DIV_2
+#endif
+
+static inline ufract16_t _FOC_VCircle(ufract16_t vBus) { return fract16_mul(vBus, FOC_V_CIRCLE_PER_V_BUS); }
+
 /* vPhaseLimit as modulation [0:1/sqrt3] */
 static inline bool _FOC_ProcVCircle(FOC_T * p_foc, ufract16_t vCircle, int32_t vdReq, int32_t vqReq)
 {
@@ -187,10 +202,6 @@ static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vCir
     return foc_q_circle_limit(vCircle, p_foc->Vd);
 }
 
-static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
-{
-    return _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
-}
 
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 {
@@ -209,18 +220,6 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 //     p_foc->Va = fract16_sat(v.a);
 //     p_foc->Vb = fract16_sat(v.b);
 //     p_foc->Vc = fract16_sat(v.c);
-// }
-
-/*
-    Stationary image, rotated back from the dq captured and commanded at θ: the proc itself carries no αβ.
-    Once per tick, after the proc. CaptureI closes the period the last VOut was applied across.
-*/
-// static inline void FOC_CaptureStator(FOC_T * p_foc)
-// {
-//     struct foc_alphabeta i = foc_inv_park(p_foc->Id, p_foc->Iq, p_foc->Sine, p_foc->Cosine);
-//     struct foc_alphabeta v = foc_inv_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-//     Stator_AlphaBeta_CaptureI(&p_foc->Stator, fract16_sat(i.alpha), fract16_sat(i.beta));
-//     Stator_AlphaBeta_CaptureVOut(&p_foc->Stator, fract16_sat(v.alpha), fract16_sat(v.beta));
 // }
 
 /******************************************************************************/
@@ -295,7 +294,8 @@ static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, i
 {
     fract16_t vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
     fract16_t vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
-    if (_FOC_ProcVCircle(p_foc, vBus, vd, vq)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
+    // immediately snaps integral, todo get prop using ErrorPrev
+    if (_FOC_ProcVCircle(p_foc, _FOC_VCircle(vBus), vd, vq)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }
 }
 
 /******************************************************************************/
@@ -309,7 +309,7 @@ static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, i
 */
 static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
 {
-    ufract16_t vCircle = fract16_mul(vBus, FRACT16_1_DIV_2);
+    ufract16_t vCircle = _FOC_VCircle(vBus);
     PID_CaptureOutputLimits(&p_foc->PidId, -(int32_t)vCircle, vCircle);  /* Vd inside the circle it is measured against, else no vq budget remains */
     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
 
@@ -373,7 +373,7 @@ static inline interval_t FOC_VqBand(const FOC_T * p_foc, ufract16_t vqCircleLimi
 */
 static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
 {
-    fract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_2);
+    fract16_t vPhaseLimit = _FOC_VCircle(vBus);
     accum32_t vd_ff = FOC_VdFeedforward(p_foc);
     accum32_t vq_ff = FOC_VqFeedforward(p_foc);
 
@@ -396,7 +396,7 @@ static inline void FOC_MatchIVState_Decouple(FOC_T * p_foc)
 
 /******************************************************************************/
 /*!
-
+    Primary path using FOC_DECOUPLE_ENABLE
 */
 /******************************************************************************/
 static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
@@ -496,6 +496,13 @@ static void FOC_ResetFeedbackState(FOC_T * p_foc)
     Mostly static base, update on direction change
     set VLimit directly
 */
+static inline void _FOC_SetVBand(FOC_T * p_foc, int16_t low, int16_t high)
+{
+    p_foc->VLimit =  (interval_t){ .low = low, .high = high };
+    PID_SetOutputLimits(&p_foc->PidIq, p_foc->VLimit.low, p_foc->VLimit.high);  /* overwritten on loop */
+}
+
+
 /* Symmetric */
 static inline void FOC_SetVSymmetric(FOC_T * p_foc, uint16_t vq) { p_foc->VLimit = interval_symmetric(0, vq); }
 
@@ -591,11 +598,11 @@ static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_pu) { r
     headroom that lets saturation register as a negative error.
 */
 #if !defined(FOC_FIELD_WEAKENING_V_MARGIN)
-#define FOC_FIELD_WEAKENING_V_MARGIN FRACT16(0.95F) /* fraction of the circle radius the FW loop regulates to */
+#define FOC_FIELD_WEAKENING_V_MARGIN    FRACT16(0.95F) /* fraction of the circle radius the FW loop regulates to */
 #endif
 
 /* Vfw — the magnitude the FW loop regulates √(Vd² + Vq²) to */
-static inline ufract16_t _FOC_VFieldWeakening(ufract16_t vBus) { return fract16_mul(fract16_mul(vBus, FRACT16_1_DIV_2), FOC_FIELD_WEAKENING_V_MARGIN); }
+static inline ufract16_t _FOC_VFieldWeakening(ufract16_t vBus) { return fract16_mul(_FOC_VCircle(vBus), FOC_FIELD_WEAKENING_V_MARGIN); }
 
 /* Advance on the V held from the previous FOC_ProcIFeedback, and return this cycle's request. */
 static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, ufract16_t vBus)

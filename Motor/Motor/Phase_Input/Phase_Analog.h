@@ -62,6 +62,12 @@
 #endif
 #endif
 
+/*
+    PHASE_ANALOG_I_SENSOR_LOW_SIDE
+    The I sensor reads a phase only while its low-side switch conducts: a low-side shunt, or the switch's R_DS(on).
+    The analog thread converts the 2 phases of the longest low-side windows [Motor_Analog_MarkI], the capture solves the third.
+*/
+
 static inline fract16_t Phase_Analog_VPuOf(uint16_t adcu) { return adcu * PHASE_ANALOG_V_PU_PER_ADCU; }
 static inline fract16_t Phase_Analog_IPuOf(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_PU_PER_ADCU * PHASE_ANALOG_I_POLARITY); }
 
@@ -127,6 +133,13 @@ static void Phase_Analog_MarkIabc(Phase_Analog_T * p_analog)
     ADC_Conversion_Mark(&p_analog->IC);
 }
 
+static inline void Phase_Analog_MarkI(Phase_Analog_T * p_analog, Phase_Bitmask_T phases)
+{
+    if (phases.A) { ADC_Conversion_Mark(&p_analog->IA); }
+    if (phases.B) { ADC_Conversion_Mark(&p_analog->IB); }
+    if (phases.C) { ADC_Conversion_Mark(&p_analog->IC); }
+}
+
 /*
     alternatively, directly on register state
 */
@@ -136,6 +149,12 @@ static void Phase_Analog_Mark(const Phase_Analog_T * p_analog, Phase_Bitmask_T s
     ADC_Conversion_Mark((state.B) ? &p_analog->IB : &p_analog->VB);
     ADC_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
 }
+
+// #if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
+// static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Phase_Analog_MarkI(&p_motor->PHASE_ANALOG, Phase_Bitmask(Phase_Inverse(Phase_ReadDutyMax(&p_motor->PHASE)))); }
+// #else
+// static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Motor_Analog_MarkIabc(p_motor); }
+// #endif
 
 
 /*
@@ -154,10 +173,30 @@ static inline void Phase_Analog_CaptureVb(volatile Phase_Input_T * p_phase, adc_
 static inline void Phase_Analog_CaptureVc(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_Analog_CaptureV(p_phase, PHASE_INDEX_C, adcu); }
 
 
+/*
+    A three-wire load carries i_a + i_b + i_c = 0, so 2 phases determine the third.
+    Completes the capture on its second phase. A third conversion, where marked, replaces the solved value with its own.
+    Out of line: each channel's capture calls it.
+*/
+__attribute__((noinline)) static void _Phase_Analog_SolveI(volatile Phase_Data_T * p_i)
+{
+    switch (p_i->Flags.Bits)
+    {
+        case PHASE_ID_INV_A: p_i->Values.A = fract16_sat(0 - ((int32_t)p_i->Values.B + p_i->Values.C)); break;
+        case PHASE_ID_INV_B: p_i->Values.B = fract16_sat(0 - ((int32_t)p_i->Values.C + p_i->Values.A)); break;
+        case PHASE_ID_INV_C: p_i->Values.C = fract16_sat(0 - ((int32_t)p_i->Values.A + p_i->Values.B)); break;
+        default: return;
+    }
+    p_i->Flags.Bits = PHASE_ID_ABC;
+}
+
 static inline void Phase_Analog_CaptureI(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, Phase_Index_T channel, adc_result_t adcu)
 {
     // assert(adcu <= PHASE_ANALOG_I_MAX_ADCU);
     Phase_Capture(&p_phase->I, channel, Phase_Analog_IPuOf(p_zeros->Values[channel], adcu));
+#if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
+    _Phase_Analog_SolveI(&p_phase->I);
+#endif
 }
 
 static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeros, PHASE_INDEX_A, adcu); }

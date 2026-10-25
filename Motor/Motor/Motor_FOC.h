@@ -98,6 +98,12 @@ static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 
 static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->Foc, Motor_GetDecouplingOmega(p_motor)); }
 
+/*
+    In the completion ISR. Parks at the angle [FOC_T] holds, the last the PWM ISR set: near the sample's, not the next tick's.
+    The flags stay set, the token the current loop takes [Phase_TakeComplete].
+*/
+static inline void Motor_FOC_CaptureI(Motor_Context_T * p_motor) { _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values); }
+
 
 
 /* Directly read register state */

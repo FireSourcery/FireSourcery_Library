@@ -228,6 +228,12 @@ static inline Phase_Triplet_T _Phase_ReadDuty(Phase_VOut_T * p_phase)
     return (Phase_Triplet_T) { .A = PWM_ReadDuty(&p_phase->PWM_A), .B = PWM_ReadDuty(&p_phase->PWM_B), .C = PWM_ReadDuty(&p_phase->PWM_C), };
 }
 
+/* Without the division, for comparison within the period */
+static inline Phase_Triplet_T _Phase_ReadDutyTicks(Phase_VOut_T * p_phase)
+{
+    return (Phase_Triplet_T) { .A = PWM_ReadDuty_Ticks(&p_phase->PWM_A), .B = PWM_ReadDuty_Ticks(&p_phase->PWM_B), .C = PWM_ReadDuty_Ticks(&p_phase->PWM_C), };
+}
+
 /* Voltage/Output State */
 static inline Phase_Bitmask_T _Phase_ReadDutyAlign(Phase_VOut_T * p_phase)
 {
@@ -251,6 +257,9 @@ static inline bool Phase_IsV0(Phase_VOut_T * p_phase) { return (!Phase_IsFloat(p
 
 /* 3 phase only */
 static inline bool Phase_IsVabc(Phase_VOut_T * p_phase) { return (_Phase_ReadGates(p_phase).Bits == PHASE_ID_ABC); }
+
+/* The phase driven high the longest, the shortest low-side window. The duties written last, until the next write */
+static inline Phase_Id_T Phase_ReadDutyMax(Phase_VOut_T * p_phase) { return Phase_IdOfMax(_Phase_ReadDutyTicks(p_phase)); }
 
 /******************************************************************************/
 /*  */

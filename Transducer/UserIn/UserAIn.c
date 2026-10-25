@@ -92,7 +92,7 @@ void UserAIn_CaptureValue(UserAIn_T * p_dev, uint16_t value_adcu)
 {
     if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Modal_PollEdgeValue(p_dev->P_EDGE_PIN); }
 
-    /* Analog capture stops when pin gate selects disable. filerted value persists... */
+    /* Analog capture stops when pin gate selects disable. filterted value persists... */
     /* Note: When edge pin blocks, analog value persists (not cleared to 0) */
     /* This preserves the last valid reading for when pin is re-enabled */
     /* Gating is handled in the getter functions instead */

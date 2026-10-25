@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include <stdint.h>
+#include <stdbool.h>
 #include <assert.h>
 #include <sys/types.h>
 
@@ -209,6 +210,13 @@ static inline Phase_Bitmask_T Phase_BitmaskOfThreshold(Phase_Triplet_T values, i
     return (Phase_Bitmask_T) { .A = (values.A > threshold), .B = (values.B > threshold), .C = (values.C > threshold) };
 }
 
+/* The phase of the highest value. A tie takes the earlier phase */
+static inline Phase_Id_T Phase_IdOfMax(Phase_Triplet_T values)
+{
+    if ((values.A >= values.B) && (values.A >= values.C)) { return PHASE_ID_A; }
+    return (values.B >= values.C) ? PHASE_ID_B : PHASE_ID_C;
+}
+
 /* -(int32_t)bool apply  */
 static inline Phase_Triplet_T _Phase_Mask(Phase_Bitmask_T bits, uint16_t value)
 {
@@ -266,6 +274,14 @@ static inline void Phase_Capture(volatile Phase_Data_T * p_data, Phase_Index_T c
 static inline void Phase_CaptureA(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_A, value); }
 static inline void Phase_CaptureB(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_B, value); }
 static inline void Phase_CaptureC(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_C, value); }
+
+/* The set captured since the last take. Taking clears the flags, so it is an edge */
+// static inline bool Phase_TakeComplete(volatile Phase_Data_T * p_data)
+// {
+//     if (p_data->Flags.Bits != PHASE_ID_ABC) { return false; }
+//     p_data->Flags.Bits = PHASE_ID_0;
+//     return true;
+// }
 
 
 

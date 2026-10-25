@@ -69,16 +69,6 @@ void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 
 }
 
-/*
-    Caller bounds x
-*/
-// void _Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef)
-// {
-//     p_linear->X0                = x0;
-//     p_linear->XDelta            = xRef - x0;
-//     p_linear->SlopeShift        = fixed_lshift_max_signed(2 * (yRef - y0));
-//     p_linear->Slope             = ((yRef - y0) << p_linear->SlopeShift) / (xRef - x0);
-// }
 
 /* Normalized slope mantissa, as fract16e. 16-bit input x 15-bit mantissa fits int32 */
 #define LINEAR_FIXED_MANTISSA_BITS (15U)
@@ -86,8 +76,7 @@ void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 /******************************************************************************/
 /*!
     Linear Fixed
-    f(x) = q16
-    f([x0:xRef]) = [0:65536)
+    f([x0:xRef]) = [0:2^n)
 
     Equalvalent to Linear_Map_Init(p_linear, x0, xRef, 0, (1 << nFractionalBits));
 */

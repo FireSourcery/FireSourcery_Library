@@ -89,18 +89,26 @@ static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
     if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
 }
 
+/*
+    The I set's completion, the set already captured, e.g. by per-channel pushes. From the ADC or DMA ISR.
+    Run at the PWM ISR's priority, so the active state is not mid-transition. ON_PHASE reaches the active leaf state only.
+*/
+static inline void _Motor_OnIabc_Thread(Motor_T * p_motor)
+{
+    Motor_FOC_CaptureI(p_motor->P_MOTOR);
+    _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
+}
+
 static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c)
 {
-    Motor_Context_T * p_state = p_motor->P_MOTOR;
-    Motor_Analog_CaptureIabc(p_state, a, b, c);
-    _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
+    Motor_Analog_CaptureIabc(p_motor->P_MOTOR, a, b, c);
+    _Motor_OnIabc_Thread(p_motor);
 }
 
 static inline void Motor_OnIabc_Thread(Motor_T * p_motor, int32_t a, int32_t b, int32_t c)
 {
-    Motor_Context_T * p_state = p_motor->P_MOTOR;
-    p_state->PhaseInput.I = (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits =  PHASE_ID_ABC, };
-    _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
+    p_motor->P_MOTOR->PhaseInput.I = (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits = PHASE_ID_ABC, };
+    _Motor_OnIabc_Thread(p_motor);
 }
 
 /******************************************************************************/

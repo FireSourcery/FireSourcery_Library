@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -64,10 +65,13 @@ plt.plot(time, dutyB, label="Duty B", color="green")
 plt.plot(time, dutyC, label="Duty C", color="blue") 
 plt.plot(time, vA, label="Scalar A", color="red", alpha=.1)
 plt.plot(time, vB, label="Scalar B", color="green", alpha=.1)
-plt.plot(time, vC, label="Scalar C", color="blue", alpha=.1) 
+plt.plot(time, vC, label="Scalar C", color="blue", alpha=.1)
+plt.plot(time, vZero, label="vZero", color="black")
 plt.title("SVPWM Midclamp Duty Cycles")
 plt.xlabel("Time (normalized to one electrical cycle)")
 plt.ylabel("Duty Cycle")
-plt.legend()
+plt.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
 plt.grid()
+plt.tight_layout()
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_VZero.png"), dpi=100)
 plt.show()

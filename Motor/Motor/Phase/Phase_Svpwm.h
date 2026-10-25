@@ -34,16 +34,46 @@
 #include "Math/Fixed/fract16.h"
 #include "../Math/svpwm_math.h"
 
+/*
+    Zero-sequence placement
+        PHASE_SVPWM_MIDCLAMP            [svpwm_midclamp], the nulls shared equally. Default
+        PHASE_SVPWM_MIDCLAMP_CEILING    [svpwm_midclamp_ceiling], the highest duty held to PHASE_SVPWM_DUTY_CEILING, for a low-side current sense
+        PHASE_SVPWM_CLAMP               [svpwm_clamp], PHASE_SVPWM_CLAMP_K of the null time at O111: 0 the bottom clamp, 1/2 midclamp, 1 the top clamp
+*/
+#if !defined(PHASE_SVPWM_MIDCLAMP) && !defined(PHASE_SVPWM_MIDCLAMP_CEILING) && !defined(PHASE_SVPWM_CLAMP)
+#define PHASE_SVPWM_MIDCLAMP
+#endif
+
+#if !defined(PHASE_SVPWM_DUTY_CEILING)
+#define PHASE_SVPWM_DUTY_CEILING FRACT16_SQRT3_DIV_2
+#endif
+
+#if !defined(PHASE_SVPWM_CLAMP_K)
+#define PHASE_SVPWM_CLAMP_K (0U)
+#endif
+
 
 static inline Phase_Data_T Phase_SvpwmVOut(uint32_t vBusInv_pu, fract16_t vA, fract16_t vB, fract16_t vC)
 {
+#if defined(PHASE_SVPWM_MIDCLAMP_CEILING)
+    struct svpwm_abc duty = svpwm_midclamp_ceiling(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC), PHASE_SVPWM_DUTY_CEILING);
+#elif defined(PHASE_SVPWM_CLAMP)
+    struct svpwm_abc duty = svpwm_clamp(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC), PHASE_SVPWM_CLAMP_K);
+#else
     struct svpwm_abc duty = svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC));
+#endif
     return (Phase_Data_T){ .Values.A = duty.a, .Values.B = duty.b, .Values.C = duty.c, .Flags.Bits = PHASE_ID_ABC };
 }
 
 static inline void Phase_WriteSvpwm(Phase_VOut_T * p_phase, uint32_t vBusInv_pu, fract16_t vA, fract16_t vB, fract16_t vC)
 {
+#if defined(PHASE_SVPWM_MIDCLAMP_CEILING)
+    struct svpwm_abc duty = svpwm_midclamp_ceiling(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC), PHASE_SVPWM_DUTY_CEILING);
+#elif defined(PHASE_SVPWM_CLAMP)
+    struct svpwm_abc duty = svpwm_clamp(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC), PHASE_SVPWM_CLAMP_K);
+#else
     struct svpwm_abc duty = svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC));
+#endif
 
     Phase_WriteDuty(p_phase, duty.a, duty.b, duty.c);
 }
