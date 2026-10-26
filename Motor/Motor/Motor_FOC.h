@@ -114,16 +114,6 @@ static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_Capt
 */
 static inline void Motor_FOC_CaptureI(Motor_Context_T * p_motor) { _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values); }
 
-/* The sample the current loop runs on, once. Parked at its completion, or here at the loop's angle */
-static inline bool Motor_FOC_TakeI(Motor_Context_T * p_motor)
-{
-#if defined(MOTOR_I_CAPTURE_ON_PHASE)
-    return Phase_TakeComplete(&p_motor->PhaseInput.I);
-#else
-    return FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I);
-#endif
-}
-
 
 
 /* Directly read register state */

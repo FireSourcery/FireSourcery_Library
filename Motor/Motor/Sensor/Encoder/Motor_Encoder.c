@@ -305,8 +305,14 @@ static void ValidateClosedLoopEntry(Motor_T * p_motor)
 
 static void ProcAngleControl(Motor_T * p_motor)
 {
+#if defined(MOTOR_I_FEEDBACK_FIRST)
+    Motor_FOC_ProcTorqueHeld(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
+    Motor_FOC_StepTorqueReq(p_motor, p_motor->P_MOTOR->UserCmd);
+#else
     Motor_FOC_ProcAngleControl(p_motor);
     Motor_FOC_WriteDuty(p_motor);
+#endif
 }
 
 static State_T * ValidateClosedLoopTransition(Motor_T * p_motor)

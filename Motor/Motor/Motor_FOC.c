@@ -61,6 +61,16 @@ void Motor_FOC_ProcILimits(Motor_T * p_motor)
 */
 /******************************************************************************/
 /*
+    The sample the current loop runs on, once. Parked at its completion [MOTOR_I_CAPTURE_ON_PHASE], or here at the loop's angle.
+    Here, out of line: every current-mode proc takes it, and inline each would carry its own Clarke and Park.
+*/
+#if defined(MOTOR_I_CAPTURE_ON_PHASE)
+static inline bool Motor_FOC_TakeI(Motor_Context_T * p_motor) { return Phase_TakeComplete(&p_motor->PhaseInput.I); }
+#else
+__attribute__((noinline)) static bool Motor_FOC_TakeI(Motor_Context_T * p_motor) { return FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); }
+#endif
+
+/*
     Current-mode angle control. Req Id/Iq to Vabc.
 */
 void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)

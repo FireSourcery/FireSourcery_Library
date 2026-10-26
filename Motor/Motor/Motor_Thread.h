@@ -48,14 +48,19 @@
 /*
     Capture State
 */
-static inline void Motor_CaptureSensor(Motor_T * p_dev)
+static inline void Motor_PollSpeed(Motor_T * p_dev)
 {
-    RotorSensor_CaptureAngle(p_dev->P_MOTOR->p_ActiveSensor);
     if (TimerT_Periodic_Poll(&p_dev->SPEED_TIMER) == true)
     {
         RotorSensor_CaptureSpeed(p_dev->P_MOTOR->p_ActiveSensor);
         _StateMachine_ActionInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MOTOR_STATE_INPUT_ON_SPEED); /* No critical section. Same thread as ISR */
     }
+}
+
+static inline void Motor_CaptureSensor(Motor_T * p_dev)
+{
+    RotorSensor_CaptureAngle(p_dev->P_MOTOR->p_ActiveSensor);
+    Motor_PollSpeed(p_dev);
 }
 
 
@@ -69,9 +74,16 @@ static inline void Motor_CaptureSensor(Motor_T * p_dev)
 */
 static inline void Motor_PWM_Thread(Motor_T * p_dev)
 {
+#if defined(MOTOR_I_FEEDBACK_FIRST)
+    /* The speed tick's requests after the LOOP's write, so the write still makes the bottom */
+    RotorSensor_CaptureAngle(p_dev->P_MOTOR->p_ActiveSensor);
+    _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
+    Motor_PollSpeed(p_dev);
+#else
     Motor_CaptureSensor(p_dev);
 
     _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
+#endif
     // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
     // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
     // Motor_FOC_WriteDuty_Thread(p_dev);

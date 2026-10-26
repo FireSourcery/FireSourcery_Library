@@ -74,8 +74,14 @@ static void TorqueZero_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     /* Filter the (Entry-seeded or user-updated) Target: pass generating-side magnitude only */
+#if defined(MOTOR_I_FEEDBACK_FIRST)
+    Motor_FOC_ProcTorqueHeld(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
+    Motor_FOC_StepTorqueReq(p_motor, _Motor_GeneratingOnly(p_context, Motor_GetUserICmd(p_context)));
+#else
     Motor_FOC_ProcTorqueReq(p_motor, _Motor_GeneratingOnly(p_context, Motor_GetUserICmd(p_context)));
     Motor_FOC_WriteDuty(p_motor);
+#endif
 }
 
 static void TorqueZero_CaptureSpeed(Motor_T * p_motor)
@@ -133,8 +139,14 @@ static void SpeedZero_Entry(Motor_T * p_motor)
 static void SpeedZero_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
+#if defined(MOTOR_I_FEEDBACK_FIRST)
+    Motor_FOC_ProcTorqueHeld(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
+    Motor_FOC_StepTorqueReq(p_motor, PID_GetOutput(&p_context->PidSpeed));
+#else
     Motor_FOC_ProcTorqueReq(p_motor, PID_GetOutput(&p_context->PidSpeed));
     Motor_FOC_WriteDuty(p_motor);
+#endif
 }
 
 static State_T * SpeedZero_Next(Motor_T * p_motor)

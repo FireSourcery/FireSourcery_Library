@@ -422,12 +422,18 @@ static void Run_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     // if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcAngleV(p_motor); }
+#if defined(MOTOR_I_FEEDBACK_FIRST)
+    Motor_FOC_ProcTorqueHeld(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
+    Motor_FOC_StepTorqueReq(p_motor, (p_context->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_context->PidSpeed) : p_context->UserCmd);
+#else
     Motor_FOC_ProcTorqueReq(p_motor, (p_context->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_context->PidSpeed) : p_context->UserCmd);
     // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     //     Motor_ExternControl(p_motor);
     // #endif
 
     Motor_FOC_WriteDuty(p_motor);
+#endif
 }
 
 /*
