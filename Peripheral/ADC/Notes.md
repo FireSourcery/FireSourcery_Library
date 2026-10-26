@@ -439,7 +439,7 @@ where the set's channels clear, which also removes the need for the edge test.
 
 ## 8. The S32K1 board: sequence alone
 
-`KAC_N_S32` needs no batch. All the channels a set needs are on one ADC, and the DMA delivers them:
+`S32` needs no batch. All the channels a set needs are on one ADC, and the DMA delivers them:
 
 - **ADC1** — 8 slots, FTM0 → TRGMUX → PDB1 → pre-triggers, eDMA copies all 8 into `Adc1Results` on
   completion. In injected mode 2 groups of 4 alternate, selected by the PDB channel enable mask.

@@ -218,6 +218,18 @@ static inline Phase_Data_T Phase_Iabc_PuOfAdcu(const Phase_Triplet_T * p_zeros, 
     };
 }
 
+/*
+    One batch's I set: [Phase_Data_T] of ADCU, Flags the phases converted, the others' values stale.
+    Low-side sensing converts 2 of 3 [Motor_Analog_MarkI], and the third is solved.
+*/
+static inline void Phase_Analog_CaptureIBatch(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, Phase_Data_T adcu)
+{
+    p_phase->I = Phase_Data(Phase_Analog_IPuOf(p_zeros->A, adcu.A), Phase_Analog_IPuOf(p_zeros->B, adcu.B), Phase_Analog_IPuOf(p_zeros->C, adcu.C), Phase_IdOf(adcu.Flags));
+#if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
+    _Phase_Analog_SolveI(&p_phase->I);
+#endif
+}
+
 static inline Phase_Data_T Phase_Vabc_PuOfAdcu(adc_result_t a, adc_result_t b, adc_result_t c)
 {
     return (Phase_Data_T)

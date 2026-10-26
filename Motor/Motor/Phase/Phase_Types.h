@@ -276,12 +276,12 @@ static inline void Phase_CaptureB(volatile Phase_Data_T * p_data, int16_t value)
 static inline void Phase_CaptureC(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_C, value); }
 
 /* The set captured since the last take. Taking clears the flags, so it is an edge */
-// static inline bool Phase_TakeComplete(volatile Phase_Data_T * p_data)
-// {
-//     if (p_data->Flags.Bits != PHASE_ID_ABC) { return false; }
-//     p_data->Flags.Bits = PHASE_ID_0;
-//     return true;
-// }
+static inline bool Phase_TakeComplete(volatile Phase_Data_T * p_data)
+{
+    if (p_data->Flags.Bits != PHASE_ID_ABC) { return false; }
+    p_data->Flags.Bits = PHASE_ID_0;
+    return true;
+}
 
 
 

@@ -11,8 +11,11 @@
     - Reference, debug motor (Kv 150, 4 pole pairs, Ld 85 µH): ψ = 7.96 mWb, I_sc ≈ 94 A peak, under the 226 A rated peak.
 - [ ] Ls as the per-phase inductance: the phase-to-neutral winding self-inductance in the abc frame
     - `Motor_Electrical_LsTick` is the αβ average (Ld + Lq) / 2 for now, read by the observer gain (`FOC_Sensorless_InitG`).
-- [ ] Current-loop sequencing: run the current loop on the most recent sample, Parked at its angle. Sketch and wiring list: `Kelly_KMC/Docs/CurrentLoopSequencing.md`
-    - [ ] Step 1, capture at completion. `Phase_TakeComplete`, `Motor_FOC_CaptureI` and `_Motor_OnIabc_Thread` are in the tree, not called. To wire: `Motor_FOC_AngleControl` takes the token, `Motor_FOC_ProcAngleFeedforwardV` and `Motor_FOC_ProcAngleV` drop their capture, both boards' completion ISRs call in, and S32 DMA0 moves to priority 2.
-        - KE06 moves to group capture from the ADC channel results buffer (`P_CHANNEL_RESULTS`, through `Board_ADC0_ResultOf`) instead of individual channel callbacks (`BOARD_ADC0_CHANNELS`), as S32's DMA ISR does. Under 2 of 3, the set is the marked pair, and the capture solves the skipped phase.
-    - [ ] Step 2, delay compensation in `Motor_FOC_CaptureI`, after the hold's τ is measured.
-    - [ ] Step 3, the PI in a shared ON_PHASE handler, state by state, once `ControlLoopProfile` shows KE makes the bottom load point.
+- [ ] Current-loop sequencing: run the current loop on the most recent sample, Parked at its angle. `Kelly_KMC/Docs/CurrentLoopSequencing.md`
+    - [x] Step 1, capture at completion, `MOTOR_I_CAPTURE_ON_PHASE`. KE06 wired and on (2026-10-25): group capture from the results buffer in the board-handled ISR, `Motor_ADC_OnIabc_Thread`, 2 of 3 included.
+        - [ ] Hardware check on KE06.
+        - [ ] S32: `BOARD_ADC1_DMA_ISR` calls `Motor_ADC_OnIabc_Thread`, `Board_OnGroupI` likewise, DMA0 to priority 2, then lift the `#error` in its `Board_ADC.h`.
+    - [x] Step 3, the PI at completion, `MOTOR_I_FEEDBACK_ON_PHASE`, off. `Motor_FOC_ProcTorqueFeedback` in Run, Torque Zero, Speed Zero (and Safe Stop).
+        - [ ] Measure on KE06 whether the PWM ISR plus the ADC ISR finish within 25 µs of the top, then choose the default.
+    - [x] Step 2, delay compensation, `FOC_I_SAMPLE_DELAY`, off.
+        - [ ] Set the value once the hold's τ is measured.

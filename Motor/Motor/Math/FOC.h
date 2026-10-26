@@ -45,6 +45,11 @@
 #endif
 
 /*
+    FOC_I_SAMPLE_DELAY [Ts, accum32]: how far the current an I sample represents trails the angle its Park holds.
+    Defined: the I Park takes θ − ω·delay, ω the Δθ per Ts of [FOC_CaptureSpeed]. Undefined: θ.
+*/
+
+/*
     Runtime
 */
 typedef struct
@@ -52,6 +57,9 @@ typedef struct
     accum32_t OmegaLd;
     accum32_t OmegaLq;
     accum32_t OmegaPsi; /* May be bound to fract16 pending PU scaling */
+#if defined(FOC_I_SAMPLE_DELAY)
+    fract16_t ParkOffsetCosine, ParkOffsetSine; /* −ω·FOC_I_SAMPLE_DELAY, the I Park's offset from the held angle */
+#endif
 }
 FOC_ElectricalSpeed_T;
 
@@ -144,14 +152,23 @@ static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta)
 /*
     InputI
 */
+/* The current's dq: a Park by the held angle, then by the sample delay's offset [FOC_I_SAMPLE_DELAY] */
+static inline void _FOC_ParkI(FOC_T * p_foc, accum32_t alpha, accum32_t beta)
+{
+    struct foc_dq idq = foc_park(alpha, beta, p_foc->Sine, p_foc->Cosine);
+#if defined(FOC_I_SAMPLE_DELAY)
+    idq = foc_park(idq.d, idq.q, p_foc->ElectricalSpeed.ParkOffsetSine, p_foc->ElectricalSpeed.ParkOffsetCosine);
+#endif
+    p_foc->Id = fract16_sat(idq.d);
+    p_foc->Iq = fract16_sat(idq.q);
+}
+
 static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
 {
     struct foc_alphabeta iab = foc_clarke(ia, ib, ic);
-    struct foc_dq idq = foc_park(iab.alpha, iab.beta, p_foc->Sine, p_foc->Cosine);
     p_foc->Ialpha = fract16_sat(iab.alpha);
     p_foc->Ibeta = fract16_sat(iab.beta);
-    p_foc->Id = fract16_sat(idq.d);
-    p_foc->Iq = fract16_sat(idq.q);
+    _FOC_ParkI(p_foc, iab.alpha, iab.beta);
 }
 
 // static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
@@ -341,6 +358,11 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, angle16_t delta)
     p_foc->ElectricalSpeed.OmegaLd = accum32_mul(p_foc->Electrical.Ld, delta);
     p_foc->ElectricalSpeed.OmegaLq = accum32_mul(p_foc->Electrical.Lq, delta);
     p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Electrical.Psi, delta);
+#if defined(FOC_I_SAMPLE_DELAY)
+    struct fract16_xy offset = fract16_vector((angle16_t)(0 - accum32_mul(FOC_I_SAMPLE_DELAY, delta)));
+    p_foc->ElectricalSpeed.ParkOffsetCosine = offset.x;
+    p_foc->ElectricalSpeed.ParkOffsetSine = offset.y;
+#endif
 }
 
 /*
@@ -450,10 +472,8 @@ static inline void FOC_MatchIVSensor(FOC_T * p_foc)
 static inline void FOC_MatchTheta(FOC_T * p_foc, angle16_t theta)
 {
     FOC_SetTheta(p_foc, theta);
-    struct foc_dq i = foc_park(p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
+    _FOC_ParkI(p_foc, p_foc->Ialpha, p_foc->Ibeta);
     struct foc_dq v = foc_park(p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
-    p_foc->Id = fract16_sat(i.d);
-    p_foc->Iq = fract16_sat(i.q);
     p_foc->Vd = fract16_sat(v.d);
     p_foc->Vq = fract16_sat(v.q);
 }
@@ -485,6 +505,10 @@ static void FOC_ResetFeedbackState(FOC_T * p_foc)
     p_foc->ElectricalSpeed.OmegaLd = 0;
     p_foc->ElectricalSpeed.OmegaLq = 0;
     p_foc->ElectricalSpeed.OmegaPsi = 0;
+#if defined(FOC_I_SAMPLE_DELAY)
+    p_foc->ElectricalSpeed.ParkOffsetCosine = FRACT16_MAX;
+    p_foc->ElectricalSpeed.ParkOffsetSine = 0;
+#endif
 }
 
 /******************************************************************************/
@@ -540,6 +564,7 @@ static inline fract16_t FOC_Id(const FOC_T * p_foc) { return p_foc->Id; }
 static inline fract16_t FOC_Iq(const FOC_T * p_foc) { return p_foc->Iq; }
 static inline fract16_t FOC_Vd(const FOC_T * p_foc) { return p_foc->Vd; }
 static inline fract16_t FOC_Vq(const FOC_T * p_foc) { return p_foc->Vq; }
+static inline fract16_t FOC_IdFw(const FOC_T * p_foc) { return p_foc->IdFw; } /* the request [FOC_ProcIdFieldWeakening] last returned */
 
 /* VBemf Common */
 static inline fract16_t FOC_Va(const FOC_T * p_foc) { return p_foc->Va; }

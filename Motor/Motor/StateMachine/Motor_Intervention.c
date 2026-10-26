@@ -88,7 +88,9 @@ static void TorqueZero_CaptureSpeed(Motor_T * p_motor)
 static const State_Action_T TORQUE_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)TorqueZero_CaptureSpeed,
-    [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
+#if defined(MOTOR_I_FEEDBACK_ON_PHASE)
+    [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Motor_FOC_ProcTorqueFeedback,
+#endif
 };
 
 static State_T * TorqueZero_Next(Motor_T * p_motor)
@@ -155,7 +157,9 @@ static void SpeedZero_CaptureSpeed(Motor_T * p_motor)
 static const State_Action_T SPEED_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)SpeedZero_CaptureSpeed,
-    [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
+#if defined(MOTOR_I_FEEDBACK_ON_PHASE)
+    [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Motor_FOC_ProcTorqueFeedback,
+#endif
 };
 
 static const State_Input_T SPEED_ZERO_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =

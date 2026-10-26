@@ -446,7 +446,9 @@ static void Run_OnSpeed(Motor_T * p_motor)
 static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)Run_OnSpeed,
-    // [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Run_OnPhaseI,
+#if defined(MOTOR_I_FEEDBACK_ON_PHASE)
+    [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Motor_FOC_ProcTorqueFeedback,
+#endif
 };
 
 /*

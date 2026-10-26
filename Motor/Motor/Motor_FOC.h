@@ -99,10 +99,30 @@ static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->Foc, Motor_GetDecouplingOmega(p_motor)); }
 
 /*
+    Where the I sample is Parked, and where the current loop runs on it. Both need the board's completion ISR to call [_Motor_OnIabc_Thread].
+        MOTOR_I_CAPTURE_ON_PHASE    the completion Parks, at the angle of the PWM ISR that started the conversion. Else the loop does, at its own
+        MOTOR_I_FEEDBACK_ON_PHASE   the completion also runs the current loop, in the states that take ON_PHASE [Motor_FOC_ProcTorqueFeedback].
+                                    Else the next PWM ISR's LOOP runs it
+*/
+#if defined(MOTOR_I_FEEDBACK_ON_PHASE) && !defined(MOTOR_I_CAPTURE_ON_PHASE)
+#error "MOTOR_I_FEEDBACK_ON_PHASE runs on the sample its completion Parks: define MOTOR_I_CAPTURE_ON_PHASE"
+#endif
+
+/*
     In the completion ISR. Parks at the angle [FOC_T] holds, the last the PWM ISR set: near the sample's, not the next tick's.
     The flags stay set, the token the current loop takes [Phase_TakeComplete].
 */
 static inline void Motor_FOC_CaptureI(Motor_Context_T * p_motor) { _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values); }
+
+/* The sample the current loop runs on, once. Parked at its completion, or here at the loop's angle */
+static inline bool Motor_FOC_TakeI(Motor_Context_T * p_motor)
+{
+#if defined(MOTOR_I_CAPTURE_ON_PHASE)
+    return Phase_TakeComplete(&p_motor->PhaseInput.I);
+#else
+    return FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I);
+#endif
+}
 
 
 
@@ -146,6 +166,7 @@ extern void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t
 // extern void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq);
 extern void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idReq);
 extern void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t qReq);
+extern void Motor_FOC_ProcTorqueFeedback(Motor_T * p_motor);
 
 extern void Motor_FOC_ProcAngleV(Motor_T * p_motor);
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);

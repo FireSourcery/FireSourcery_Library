@@ -99,9 +99,10 @@ static inline void _Motor_OnIabc_Thread(Motor_T * p_motor)
     _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
 }
 
-static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c)
+/* One batch's I set, [Phase_Data_T] of ADCU, Flags the phases converted [Phase_Analog_CaptureIBatch] */
+static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, Phase_Data_T adcu)
 {
-    Motor_Analog_CaptureIabc(p_motor->P_MOTOR, a, b, c);
+    Motor_Analog_CaptureIBatch(p_motor->P_MOTOR, adcu);
     _Motor_OnIabc_Thread(p_motor);
 }
 

@@ -61,4 +61,6 @@
 extern State_T * Motor_Sensor_StartUpState(Motor_T * p_motor);
 
 
-
+#if defined(MOTOR_SENSOR_HALL_ENABLE)
+// #define MOTOR_SENSOR_TABLE_OPTION_HALL(MotorStateStruct, HallStruct, TimerStruct, PollingFreq) .HALL = HALL_ROTOR_SENSOR_INIT(HallStruct, TimerStruct, PollingFreq, &((MotorStateStruct).SensorState)),
+#endif

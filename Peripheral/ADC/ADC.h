@@ -124,7 +124,6 @@ typedef struct ADC_State
 }
 ADC_State_T;
 
-#define ADC_STATE_ALLOC() (&(ADC_State_T){})
 
 /******************************************************************************/
 /*
