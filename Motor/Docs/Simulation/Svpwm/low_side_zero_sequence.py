@@ -27,12 +27,12 @@ import numpy as np
 
 F_PWM = 20000
 T_US = 1e6 / F_PWM
-EDGE_US = 1.0  # IR2104 turn-on, 680 ns typ incl. 520 ns dead time, then the FET
+EDGE_US = 1.0  # gate driver turn-on, 680 ns typ incl. 520 ns dead time, then the FET
 LAG_DEG = 30.0
 PHASES = (0.0, 2 * math.pi / 3, 4 * math.pi / 3)
 CASES = ((100, 5.0), (100, 10.0), (300, 5.0), (300, 10.0), (500, 5.0), (500, 10.0))
 
-V_BUS = 25098  # VBus_Pu, 72 V of 94 V
+V_BUS = 25098  # VBus_Pu, 0.766 of full scale
 FRACT16_SCALE = 32768
 FRACT16_MAX = 32767
 FRACT16_1_DIV_2 = 0x4000

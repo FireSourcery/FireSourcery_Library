@@ -1,7 +1,7 @@
 import numpy as np
-from svpwm_3phase_ceiling import INK
-from svpwm_3phase_ceiling_analysis import share_beyond
-from svpwm_3phase_blend import BLENDS, INFLECTIONS, SPREAD_START, FW_RADIUS, simulate, regime_of, VZERO, VZERO_MIDCLAMP, K, PHASE_V, DUTY
+from svpwm_ceiling import INK
+from svpwm_ceiling_analysis import share_beyond
+from svpwm_blend import BLENDS, INFLECTIONS, SPREAD_START, FW_RADIUS, simulate, regime_of, VZERO, VZERO_MIDCLAMP, K, PHASE_V, DUTY
 
 T_US = 50.0  # 20 kHz PWM period, for the low-side window (1 - duty) * T
 

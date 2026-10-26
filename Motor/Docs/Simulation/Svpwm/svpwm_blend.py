@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-from svpwm_3phase_ceiling import DUTY_CEILING, phase_voltages, REGIME_COLORS, finish
+from svpwm_ceiling import DUTY_CEILING, phase_voltages, REGIME_COLORS, finish
 
 """
 Two blends from midclamp to the bottom clamp, both svpwm_clamp fed a k: 1/2 up to a start, falling linearly to 0 at an end.
@@ -152,6 +152,6 @@ if __name__ == "__main__":
                   f" lowest down to {duties[:, 0].min():.3f}; vZero above midclamp's by {shift.min():.3f} to {shift.max():.3f};"
                   f" cycle on midclamp {share[0]:.0%}, ramp {share[1]:.0%}, bottom clamp {share[2]:.0%}")
 
-    plot_cycles("|v| blend", "SVPWM_3Phase_Blend_Magnitude.png")
-    plot_cycles("duty-max blend", "SVPWM_3Phase_Blend_DutyMax.png")
+    plot_cycles("|v| blend", "SVPWM_Blend_Magnitude.png")
+    plot_cycles("duty-max blend", "SVPWM_Blend_DutyMax.png")
     plt.show()

@@ -1,9 +1,9 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from svpwm_3phase_ceiling import finish
-from svpwm_3phase_blend import MAGNITUDE, DUTY_MAX, CEILING, k_of_spread_ceiling
-from svpwm_3phase_blend_analysis import radii, magnitude, dutyMax, K_MIN, K_MAX, mark_inflections
+from svpwm_ceiling import finish
+from svpwm_blend import MAGNITUDE, DUTY_MAX, CEILING, k_of_spread_ceiling
+from svpwm_blend_analysis import radii, magnitude, dutyMax, K_MIN, K_MAX, mark_inflections
 
 # k over a cycle: one value for the |v| blend, a range for the per-vector placements. Each is lowest at a line-to-line peak, spread sqrt3*r,
 # and highest at a phase's peak, spread 1.5*r
@@ -21,5 +21,5 @@ ax.set_ylim(-0.02, 0.6)
 ax.legend(loc="lower left", fontsize=8)
 finish(ax, "k over a cycle: the same at each line-to-line peak, apart between", "Voltage vector magnitude r (per VBus)", "k, the share of the null time at O111")
 
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_Blend_K.png"), dpi=100)
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_Blend_K.png"), dpi=100)
 plt.show()

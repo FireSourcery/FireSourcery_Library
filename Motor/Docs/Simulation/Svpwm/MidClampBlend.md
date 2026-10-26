@@ -26,11 +26,11 @@ Per vector, every placement splits the null time n = 1 − spread between the lo
   - The ceiling is the least shift that holds the top duty to D. Any per-vector schedule that also holds it lowers the zero sequence at least as far.
 - None of them jumps: the largest duty step between angles 0.01° apart is 0.018 % or less. The ceiling and the duty-max blends add slope corners in the zero sequence, up to 30 a turn, where their ramp starts inside the turn; the |v| blend keeps midclamp's 6.
 - The motor doesn't see any of this. Its windings, a star with the neutral floating, see only the line-to-line voltages, which are the same for every placement; the zero sequence moves only the neutral point. A placement changes things per phase: the low-side windows, the ripple, which phases switch, and the pulse widths.
-- Any k that falls continuously to 0 passes through a band where the lowest duty, b, stays under 1 µs. The IR2104's 520 ns dead time doesn't turn the high side on for a pulse that short.
+- Any k that falls continuously to 0 passes through a band where the lowest duty, b, stays under 1 µs. The gate driver's 520 ns dead time doesn't turn the high side on for a pulse that short.
   - Per turn, the band is a band of |v| and covers most of the turn there. The |v| blend's band sits where field weakening holds |v| on a Vbus/√3 circle, 0.95/√3 = 0.548·Vbus: 240° of the turn, and 360° at 0.56.
   - Per vector, the band is a band of spread, so at any one radius it covers part of the turn. The ceiling's is near Vbus/2: 148° at 0.50. At 0.548 the ceiling clamps a phase at 0 % for 291° of the turn and has narrow pulses for 34°.
   - The 93.3–100 % duty-max blend's b falls to 0 as n², so its band is wide: from 93° at 0.54 to 265° at Vbus/√3.
-- No dead-time compensation is configured. The FTM dead time is 0; the IR2104 inserts its own. Each switching phase already carries an error of about ±DT/T, ±1 % of Vbus, set by the current's direction. A pulse the driver swallows stays inside that band; for one current direction it shrinks the error to the pulse width. Narrow pulses therefore cost switching events for little voltage and add no new distortion. A clamped phase has neither.
+- No dead-time compensation is configured. The FTM dead time is 0; the gate driver inserts its own. Each switching phase already carries an error of about ±DT/T, ±1 % of Vbus, set by the current's direction. A pulse the driver swallows stays inside that band; for one current direction it shrinks the error to the pulse width. Narrow pulses therefore cost switching events for little voltage and add no new distortion. A clamped phase has neither.
 - Outcome: the duty max can drive the shift, and the ceiling already takes it from there, as `vMax − D`. What a blend adds, one k per turn and so a shift at the sector boundary for 2 of 3, needs |v|: either 2/3·Σv² from the three phases, or |v_dq| from FOC, which `FOC_ProcIdFieldWeakening` already computes each cycle.
 
 ![Ceiling against blends on |v| and on the duty max](LowSideZeroSequenceBlend.png)
@@ -39,11 +39,11 @@ From [low_side_zero_sequence_blend.py](low_side_zero_sequence_blend.py).
 
 #### The two blends in detail
 
-The model is [svpwm_3phase_blend.py](svpwm_3phase_blend.py): `svpwm_clamp` fed each blend's k. It draws each blend's duties, zero sequence and k over one cycle at six radii: [SVPWM_3Phase_Blend_Magnitude.png](SVPWM_3Phase_Blend_Magnitude.png) and [SVPWM_3Phase_Blend_DutyMax.png](SVPWM_3Phase_Blend_DutyMax.png). The sweep over the radius is in [svpwm_3phase_blend_analysis.py](svpwm_3phase_blend_analysis.py). It prints these checks: the two k agree at each line-to-line peak, so the 3-phases-read window is the same; the duty-max blend's 2-of-3 window is midclamp's; and its lowest duty is min(n/2, (2 + √3)·n²). Each figure below comes from its own `svpwm_3phase_blend_<plot>.py`:
+The model is [svpwm_blend.py](svpwm_blend.py): `svpwm_clamp` fed each blend's k. It draws each blend's duties, zero sequence and k over one cycle at six radii: [SVPWM_Blend_Magnitude.png](SVPWM_Blend_Magnitude.png) and [SVPWM_Blend_DutyMax.png](SVPWM_Blend_DutyMax.png). The sweep over the radius is in [svpwm_blend_analysis.py](svpwm_blend_analysis.py). It prints these checks: the two k agree at each line-to-line peak, so the 3-phases-read window is the same; the duty-max blend's 2-of-3 window is midclamp's; and its lowest duty is min(n/2, (2 + √3)·n²). Each figure below comes from its own `svpwm_blend_<plot>.py`:
 
-- k against the radius: one value over the cycle for the |v| blend, a range for the duty-max blend and the ceiling. [SVPWM_3Phase_Blend_K.png](SVPWM_3Phase_Blend_K.png)
-- Where in a sector each blend lowers the zero sequence: the |v| blend most at the phase peaks, the duty-max blend only around the line-to-line peak. [SVPWM_3Phase_Blend_Shift.png](SVPWM_3Phase_Blend_Shift.png)
-- Each duty's range over a cycle against the radius, with midclamp's peaks. [SVPWM_3Phase_Blend_Duty.png](SVPWM_3Phase_Blend_Duty.png)
-- k, the top window and the lowest phase's on time per vector, against the spread. Each per-vector placement is a curve; the |v| blend at one radius is a segment from a phase's peak to a line-to-line peak, and the duty-max blend passes through each segment's line-to-line end. [SVPWM_3Phase_Blend_Schedule.png](SVPWM_3Phase_Blend_Schedule.png)
+- k against the radius: one value over the cycle for the |v| blend, a range for the duty-max blend and the ceiling. [SVPWM_Blend_K.png](SVPWM_Blend_K.png)
+- Where in a sector each blend lowers the zero sequence: the |v| blend most at the phase peaks, the duty-max blend only around the line-to-line peak. [SVPWM_Blend_Shift.png](SVPWM_Blend_Shift.png)
+- Each duty's range over a cycle against the radius, with midclamp's peaks. [SVPWM_Blend_Duty.png](SVPWM_Blend_Duty.png)
+- k, the top window and the lowest phase's on time per vector, against the spread. Each per-vector placement is a curve; the |v| blend at one radius is a segment from a phase's peak to a line-to-line peak, and the duty-max blend passes through each segment's line-to-line end. [SVPWM_Blend_Schedule.png](SVPWM_Blend_Schedule.png)
 
-![k, window and on time against the spread](SVPWM_3Phase_Blend_Schedule.png)
+![k, window and on time against the spread](SVPWM_Blend_Schedule.png)

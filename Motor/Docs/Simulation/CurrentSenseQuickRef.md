@@ -20,7 +20,7 @@ Under midclamp SVPWM at radius r, the highest phase duty reaches ½ + (√3/2)·
 - **Reading 3 phases, current mode is erratic on hardware at Vbus/√3.** The top phase's window stays at or under 3.35 µs for the 120° it is on top and drops under 1 µs for ±16° around each line-to-line peak, so its hold goes stale while its current moves.
 - Voltage mode (`Motor_FOC_ProcAngleV`) runs at Vbus/√3. It doesn't feed the current back; the reading reaches only the overcurrent check.
 
-![Low-side window per radius](../../FireSourcery_Library/.Test/LowSideWindow.png)
+![Low-side window per radius](Svpwm/LowSideWindow.png)
 
 ## The largest radius for today's window
 
@@ -34,7 +34,7 @@ Under midclamp SVPWM at radius r, the highest phase duty reaches ½ + (√3/2)·
 
 ## Firmware options
 
-Set per board in `Source/HAL/Board/<board>/Precompile.h`. The three switches are off by default, and the radius defaults to Vbus/2.
+Set per board, in its `Precompile.h`. The three switches are off by default, and the radius defaults to Vbus/2.
 
 | Option | What it does | Boards |
 |---|---|---|
@@ -66,12 +66,12 @@ Set per board in `Source/HAL/Board/<board>/Precompile.h`. The three switches are
 
 Phase A's duty, ripple, the shortest window against the radius, and the modelled tracking error for each placement:
 
-![Zero-sequence placement](../../FireSourcery_Library/.Test/LowSideZeroSequence.png)
+![Zero-sequence placement](Svpwm/LowSideZeroSequence.png)
 
 ## Capture path
 
-- **KE.** One ADC with an 8-deep FIFO, converting in channel order. The ADC ISR and the PWM ISR are both priority 2, so a capture never lands inside the PWM thread. `ADC_Channel_OnComplete_ISR` pushes each channel to its handler. The `BOARD_ADC_BOARD_HANDLED` path, which is off, calls `Motor_Analog_CaptureIBatch`, which isn't defined.
-- **S32.** DMA. The DMA0 ISR, priority 1, preempts the PWM ISR, priority 2, and captures IA, IB and IC as a batch through `Motor_Analog_CaptureIabc`. `BOARD_ADC_SCAN_INJECTED` takes the per-channel path.
+- **KE.** One ADC with an 8-deep FIFO, converting in channel order. The ADC ISR and the PWM ISR are both priority 2, so a capture never lands inside the PWM thread. `ADC_Channel_OnComplete_ISR` pushes each channel to its handler. The board-handled completion path, which is off, calls `Motor_Analog_CaptureIBatch`, which isn't defined.
+- **S32.** DMA. The DMA0 ISR, priority 1, preempts the PWM ISR, priority 2, and captures IA, IB and IC as a batch through `Motor_Analog_CaptureIabc`. The injected scan takes the per-channel path.
 
 ## Not measured
 

@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
-from svpwm_3phase_ceiling import DUTY_CEILING, finish
-from svpwm_3phase_ceiling_analysis import radii, ceiling, HIGHEST_MIN, HIGHEST_MAX, LOWEST_MIN, LOWEST_MAX, T_US, CEILING, mark_inflections
+from svpwm_ceiling import DUTY_CEILING, finish
+from svpwm_ceiling_analysis import radii, ceiling, HIGHEST_MIN, HIGHEST_MAX, LOWEST_MIN, LOWEST_MAX, T_US, CEILING, mark_inflections
 
 # What it does to the duties: each duty's range over a cycle
 fig, ax = plt.subplots(figsize=(16, 6), layout="constrained")
@@ -18,5 +18,5 @@ ax.set_ylim(-0.02, 1.2)
 ax.legend(loc="upper left", ncol=3, fontsize=9)
 finish(ax, "What it does to the duties: each duty's range over a cycle, svpwm_midclamp_ceiling", "Voltage vector magnitude r (per VBus)", "Duty Cycle")
 
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_Ceiling_Duty.png"), dpi=100)
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_Ceiling_Duty.png"), dpi=100)
 plt.show()

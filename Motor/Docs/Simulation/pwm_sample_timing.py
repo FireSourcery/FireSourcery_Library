@@ -1,17 +1,17 @@
 """
-One PWM perKE: FTM2 counter, phase PWM, conducting switch, sample switch, and what each ADC start reads.
+One PWM per KE: FTM2 counter, phase PWM, conducting switch, sample switch, and what each ADC start reads.
 
 Hardware chain, per phase:
     FTM2 CPWM, high-true (ELSnB:ELSnA = 1:0): output high for d*T, centered on CNTIN (counter bottom)
-    PWMx high -> IR2104 IN high -> HO: high side conducts; sample switch open: holds
+    PWMx high -> driver IN high -> HO: high side conducts; sample switch open: holds
     PWMx low  -> LO, after the turn-on delay: low side conducts; sample switch closed: tracks -i*R_DS(on)
     TOF at MOD -> MOD-1 (counter top): the center of every low-side window, the O000 zero vector
     Init trigger and the duty load point at CNTIN (counter bottom): the center of every high pulse, O111
 
 ADC starts:
-    top      today: software start in the TOF ISR [BOARD_PWM_ISR]; VSOURCE, IA, IB, IC in channel order
+    top      today: software start in the TOF ISR; VSOURCE, IA, IB, IC in channel order
     bottom   the option: the FTM2 init trigger at CNTIN, SIM_SOPT0[ADHWT] = 010, DELAY = 0
-Each conversion samples in its first 3.5 ADCK. ADCK 10 MHz (Board.c), first conversion 23 ADCK + 5 bus cycles,
+Each conversion samples in its first 3.5 ADCK. ADCK 10 MHz, first conversion 23 ADCK + 5 bus cycles,
 later ones 20 ADCK. The ISR's entry code before the start is not measured and not included.
 
 The read is the hold's state: the current at the sample if the switch is closed, else at the trailing edge of the
@@ -28,8 +28,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 T_US = 50.0  # 20 kHz
-MOD = 1250  # BOARD_PWM_PERIOD_TICKS, the counter's top
-EDGE_US = 0.68  # IR2104 turn-on, typ, incl. 520 ns dead time
+MOD = 1250  # the counter's top
+EDGE_US = 0.68  # gate driver turn-on, typ, incl. 520 ns dead time
 ADCK_MHZ, BUS_MHZ = 10.0, 25.0
 FIRST_US, NEXT_US = 23 / ADCK_MHZ + 5 / BUS_MHZ, 20 / ADCK_MHZ
 ORDER = ("VSOURCE", "IA", "IB", "IC")

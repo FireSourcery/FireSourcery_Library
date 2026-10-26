@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from svpwm_3phase_ceiling import INK, finish
-from svpwm_3phase_blend import BLENDS, RADIUS_END, DUTY_START, FW_RADIUS, simulate, VZERO, VZERO_MIDCLAMP, K
+from svpwm_ceiling import INK, finish
+from svpwm_blend import BLENDS, RADIUS_END, DUTY_START, FW_RADIUS, simulate, VZERO, VZERO_MIDCLAMP, K
 
 # Where in the cycle each blend lowers the zero sequence: one sector, 0 to 60 degrees, repeats over the cycle
 RADII = (0.52, FW_RADIUS, 0.56, RADIUS_END)
@@ -27,5 +27,5 @@ for ax, (name, k_of) in zip(axes, BLENDS.items()):
 axes[1].tick_params(labelleft=True)
 fig.supxlabel("The shortest window over the sector: 3 phases read at 30°; 2 of 3 read at 60°, where A and B tie at the top", fontsize=10, color=INK)
 
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_Blend_Shift.png"), dpi=100)
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_Blend_Shift.png"), dpi=100)
 plt.show()

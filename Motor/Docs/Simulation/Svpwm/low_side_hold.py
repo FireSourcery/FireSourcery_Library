@@ -1,5 +1,5 @@
 """
-Track-and-hold model of a low-side phase current sense: KE R_DS(on) sense, Q5x/Q6x switch closed on PWM low, C40x 1 uF hold.
+Track-and-hold model of a low-side phase current sense: KE R_DS(on) sense, sample switch closed on PWM low, 1 uF hold.
 Per PWM period each phase's hold moves toward its true current by 1 - exp(-max(0, window - edge) / tau), window = (1 - d)*T,
 and holds otherwise. Duties from midclamp SVPWM at circle radius r per V_bus. Current lags the voltage vector by LAG_DEG.
 
@@ -18,7 +18,7 @@ import numpy as np
 
 F_PWM = 20000
 T_US = 1e6 / F_PWM
-EDGE_US = 1.0  # IR2104 turn-on, 680 ns typ incl. 520 ns dead time, then the FET
+EDGE_US = 1.0  # gate driver turn-on, 680 ns typ incl. 520 ns dead time, then the FET
 LAG_DEG = 30.0
 PHASES = (0.0, 2 * math.pi / 3, 4 * math.pi / 3)
 

@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
-from svpwm_3phase_ceiling import DUTY_CEILING, finish
-from svpwm_3phase_ceiling_analysis import radii, ceiling, midclamp, HIGHEST_MAX, MIDDLE_MAX, T_US, MIDCLAMP, CEILING, mark_inflections
+from svpwm_ceiling import DUTY_CEILING, finish
+from svpwm_ceiling_analysis import radii, ceiling, midclamp, HIGHEST_MAX, MIDDLE_MAX, T_US, MIDCLAMP, CEILING, mark_inflections
 
 # Against midclamp: the peaks that set the read window
 fig, ax = plt.subplots(figsize=(16, 6), layout="constrained")
@@ -16,5 +16,5 @@ ax.legend(loc="upper left", ncol=3, fontsize=9)
 finish(ax, "Against midclamp: the peak duty over a cycle, the highest for 3 phases read, the middle for 2 of 3",
        "Voltage vector magnitude r (per VBus)", "Duty Cycle")
 
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_Ceiling_Compare.png"), dpi=100)
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_Ceiling_Compare.png"), dpi=100)
 plt.show()

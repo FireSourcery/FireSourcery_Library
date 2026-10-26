@@ -129,5 +129,5 @@ if __name__ == "__main__":
     labels += [f"Strip: {name}" for name in REGIMES]
     fig.legend(handles, labels, loc="outside upper center", ncol=6, fontsize=9)
 
-    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_Ceiling.png"), dpi=100)
+    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_Ceiling.png"), dpi=100)
     plt.show()

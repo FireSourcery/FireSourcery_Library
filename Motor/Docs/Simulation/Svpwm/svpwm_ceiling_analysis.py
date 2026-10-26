@@ -1,5 +1,5 @@
 import numpy as np
-from svpwm_3phase_ceiling import DUTY_CEILING, simulate, regime_of, SPREAD_CEILING, SPREAD_BOTTOM, INFLECTIONS, REGIME_COLORS, INK
+from svpwm_ceiling import DUTY_CEILING, simulate, regime_of, SPREAD_CEILING, SPREAD_BOTTOM, INFLECTIONS, REGIME_COLORS, INK
 
 T_US = 50.0                                     # 20 kHz PWM period, for the low-side window (1 - duty) * T
 MIDCLAMP, CEILING = REGIME_COLORS[0], "#6250d6" # by algorithm: svpwm_midclamp, the midclamp branch's; svpwm_midclamp_ceiling

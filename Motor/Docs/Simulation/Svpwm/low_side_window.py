@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 T_US = 50.0  # 20 kHz PWM
-V_BUS = 25098  # VBus_Pu, 72 V of 94 V
-EDGE_US = 1.0  # IR2104 turn-on, 680 ns typ incl. 520 ns dead time, then the FET
+V_BUS = 25098  # VBus_Pu, 0.766 of full scale
+EDGE_US = 1.0  # gate driver turn-on, 680 ns typ incl. 520 ns dead time, then the FET
 
 FRACT16_SCALE = 32768
 FRACT16_MAX = 32767

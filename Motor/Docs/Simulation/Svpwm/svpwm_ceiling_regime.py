@@ -1,9 +1,9 @@
 import os
 import matplotlib.pyplot as plt
-from svpwm_3phase_ceiling import REGIMES, REGIME_COLORS, finish
-from svpwm_3phase_ceiling_analysis import radii, share, mark_inflections
+from svpwm_ceiling import REGIMES, REGIME_COLORS, finish
+from svpwm_ceiling_analysis import radii, share, mark_inflections
 
-# Where in the cycle: the share of each branch, exact; the sampled shares match it to the sample (svpwm_3phase_ceiling_analysis.py check)
+# Where in the cycle: the share of each branch, exact; the sampled shares match it to the sample (svpwm_ceiling_analysis.py check)
 fig, ax = plt.subplots(figsize=(8, 5.5), layout="constrained")
 ax.stackplot(radii, share.T, colors=REGIME_COLORS, labels=REGIMES)
 mark_inflections(ax, color="white")
@@ -13,5 +13,5 @@ ax.set_xlim(0.36, 0.585)
 ax.set_ylim(0, 1)
 finish(ax, "Where in the cycle: the share of the cycle on each branch", "Voltage vector magnitude r (per VBus)", "Share of the cycle")
 
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_Ceiling_Regime.png"), dpi=100)
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_Ceiling_Regime.png"), dpi=100)
 plt.show()

@@ -13,7 +13,7 @@ All are the general clamp, duty = v - v_zero, v_zero = k*(v_max - 1) + (1 - k)*v
 Per placement and circle radius r (per Vbus):
     continuity: the largest duty step between neighbouring angles 0.01 deg apart, and the corners in v_zero per turn
     the shortest low-side window: the highest duty (3 phases read), the middle duty (2 of 3 read)
-    narrow pulses: angle per turn with a high or a low time under 1 us, which the IR2104 may swallow (520 ns dead time, 680 ns turn-on)
+    narrow pulses: angle per turn with a high or a low time under 1 us, which the gate driver may swallow (520 ns dead time, 680 ns turn-on)
     clamped: angle per turn with a phase at 0 % (no switching, its low side on throughout)
     the PWM ripple current, RMS over the turn relative to midclamp's
     the track-and-hold current-vector error, the model of low_side_hold.py
@@ -27,7 +27,7 @@ import numpy as np
 
 F_PWM = 20000
 T_US = 1e6 / F_PWM
-EDGE_US = 1.0  # IR2104 turn-on, 680 ns typ incl. 520 ns dead time, then the FET
+EDGE_US = 1.0  # gate driver turn-on, 680 ns typ incl. 520 ns dead time, then the FET
 LAG_DEG = 30.0
 PHASES = (0.0, 2 * math.pi / 3, 4 * math.pi / 3)
 R_SQRT3 = 1 / math.sqrt(3)
@@ -264,7 +264,7 @@ for name in PLACEMENTS:
     ax_pulse.plot(r_sweep, [m["clamped"] for m in sweep[name]], color=COLORS[name], linewidth=1.5, linestyle="--", label=f"{name}: a phase clamped at 0 %")
 mark_fw(ax_pulse, labels=False)
 ax_pulse.legend(loc="upper left", fontsize=7)
-finish(ax_pulse, "Pulses under 1 µs (IR2104 dead time 520 ns), and phases clamped at 0 %", "Circle radius r (per Vbus)", "Angle per turn (degrees)")
+finish(ax_pulse, "Pulses under 1 µs (gate driver dead time 520 ns), and phases clamped at 0 %", "Circle radius r (per Vbus)", "Angle per turn (degrees)")
 mark_fw(ax_win)
 
 width = 0.8 / len(PLACEMENTS)

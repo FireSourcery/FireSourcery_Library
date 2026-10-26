@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from svpwm_3phase_ceiling import SPREAD_CEILING, SPREAD_BOTTOM, INFLECTIONS, REGIME_COLORS, INK, finish
-from svpwm_3phase_ceiling_analysis import radii, ceiling, SPREAD_MIN, SPREAD_MAX
+from svpwm_ceiling import SPREAD_CEILING, SPREAD_BOTTOM, INFLECTIONS, REGIME_COLORS, INK, finish
+from svpwm_ceiling_analysis import radii, ceiling, SPREAD_MIN, SPREAD_MAX
 
 # Why the inflections fall where they do: the spread band crosses the 2 thresholds
 fig, ax = plt.subplots(figsize=(8, 5.5), layout="constrained")
@@ -26,5 +26,5 @@ ax.set_xlim(0.36, 0.585)
 ax.set_ylim(0.5, 1.02)
 finish(ax, "Why there: the spread vMax − vMin over a cycle crosses 2D − 1, then D", "Voltage vector magnitude r (per VBus)", "Spread (per VBus)")
 
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_Ceiling_Spread.png"), dpi=100)
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_Ceiling_Spread.png"), dpi=100)
 plt.show()

@@ -1,8 +1,8 @@
 import os
 import matplotlib.pyplot as plt
-from svpwm_3phase_ceiling import finish
-from svpwm_3phase_blend import MAGNITUDE, DUTY_MAX, DUTY_START
-from svpwm_3phase_blend_analysis import radii, magnitude, dutyMax, midclamp, HIGHEST_MIN, HIGHEST_MAX, MIDDLE_MAX, LOWEST_MIN, LOWEST_MAX, T_US, mark_inflections
+from svpwm_ceiling import finish
+from svpwm_blend import MAGNITUDE, DUTY_MAX, DUTY_START
+from svpwm_blend_analysis import radii, magnitude, dutyMax, midclamp, HIGHEST_MIN, HIGHEST_MAX, MIDDLE_MAX, LOWEST_MIN, LOWEST_MAX, T_US, mark_inflections
 
 # What each blend does to the duties: each duty's range over a cycle, midclamp's peaks for reference
 fig, axes = plt.subplots(1, 2, figsize=(16, 6.5), sharey=True, layout="constrained")
@@ -23,5 +23,5 @@ for ax, (name, run, color) in zip(axes, (("|v| blend", magnitude, MAGNITUDE), ("
     finish(ax, f"{name}: each duty's range over a cycle", "Voltage vector magnitude r (per VBus)", "Duty Cycle")
 axes[1].tick_params(labelleft=True)
 
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_3Phase_Blend_Duty.png"), dpi=100)
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "SVPWM_Blend_Duty.png"), dpi=100)
 plt.show()
