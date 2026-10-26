@@ -3,7 +3,7 @@
 One `MSM_MACHINE` per motor, on the engine in [Framework/StateMachine](../../Framework/StateMachine/Architecture.md).
 States run on the PWM thread; inputs arrive from the main thread. The machine knows nothing of `STANDBY`,
 `NEUTRAL`, `DRIVE` or the other motors. [MotorController_StateMachine.md](MotorController_StateMachine.md) covers
-the layers above; [.StateMachine.md](.StateMachine.md) has the overview and the design decisions.
+the layers above; [StateMachineOverview.md](StateMachineOverview.md) has the overview and the design decisions.
 
 Phase output values, `Phase_VOutMode_T`, are written by their suffix: `Z` floats every phase, `0` turns every low
 side on (V0), `PWM` drives the bridge. T0 is 50 % duty on every phase (`Phase_ActivateT0`).
@@ -22,7 +22,9 @@ side on (V0), `PWM` drives the bridge. T0 is 50 % duty on every phase (`Phase_Ac
   `MOTOR_I_FEEDBACK_FIRST` the speed tick runs after the state machine, so the `LOOP`'s duty write still makes the
   load point. Each period then counts one tick of `ControlTimerBase`; states reset it on entry and time against it.
 - Under `STATE_MACHINE_ASYNC_CRITICAL` an input masks IRQs for its handler and transition, so the PWM ISR never
-  runs between the old state's exit and the new state's entry. Without a lock define the engine is lock-free.
+  runs between the old state's exit and the new state's entry. Without a lock define the engine is lock-free, and
+  `Motor_StateMachine.h` stops the build: the engine runs the new entry before it moves the leaf, so a PWM ISR in
+  between would run the old `LOOP` once more, and a `RUN` duty write would overwrite a `FAULT` entry's V0.
 - Actions reach the active leaf only. `ON_PHASE` is mapped only with `MOTOR_I_FEEDBACK_ON_PHASE`.
 
 ## States
@@ -52,7 +54,6 @@ stateDiagram-v2
     MOTOR_STATE_OPEN_LOOP --> MOTOR_STATE_PASSIVE: PHASE_OUTPUT Z / 0, OPEN_LOOP exit, DIRECTION NULL
 
     MOTOR_STATE_FAULT --> MOTOR_STATE_DEACTIVATED: FaultFlags cleared
-    MOTOR_STATE_FAULT --> MOTOR_STATE_CALIBRATION: CALIBRATION
     note right of MOTOR_STATE_FAULT
         FaultSet from every state
         but INIT and FAULT
@@ -78,8 +79,8 @@ encoder procedures, and encoder start-up, enter `FAULT` from their sub-states. A
   `InitCheck`, `RotorSensor_VerifyCalibration` failing sets `PositionSensor`, and `Motor_PollFaultFlags` refreshes
   the rest. Any flag goes to `FAULT`, else `DEACTIVATED`. `INIT` takes no input.
 - `DEACTIVATED` is the quiescent gateway: phases off, direction `NULL`, nothing runs until an explicit transition.
-  It is reached from `INIT`, from `FAULT` once cleared, and from `PASSIVE` by `Motor_Disable`. It is the door to
-  `CALIBRATION` from normal operation; `FAULT` is the other.
+  It is reached from `INIT`, from `FAULT` once cleared, and from `PASSIVE` by `Motor_Disable`. It is the only door
+  to `CALIBRATION`.
 - `PASSIVE` is freewheel or hold. `Z` floats only within the freewheel limit; above it V0 stays. `0` applies V0 at
   any speed. `PWM` starts `RUN` when a direction is set and the active sensor reports feedback
   (`RotorSensor_IsFeedbackAvailable`); otherwise it is ignored.
@@ -113,14 +114,14 @@ they take their root's handlers.
 | State | `FAULT` | `PHASE_OUTPUT` | `FEEDBACK_MODE` | `DIRECTION` | `OPEN_LOOP` | `CALIBRATION` | `INTERVENTION` |
 |---|---|---|---|---|---|---|---|
 | `INIT` | — | — | — | — | — | — | — |
-| `DEACTIVATED` | set → `FAULT` | — | stored | stored | — | → `CALIBRATION` at zero speed | — |
-| `PASSIVE` | set → `FAULT` | `PWM` → `RUN`; `Z`, `0` set the output | stored | stored at zero speed | → branch at zero speed | — | — |
+| `DEACTIVATED` | set → `FAULT` | — | stored | stored | — | → `CALIBRATION` at zero speed; `NULL` ignored | — |
+| `PASSIVE` | set → `FAULT` | `PWM` → `RUN`; `Z`, `0` set the output | stored | stored at zero speed | → branch at zero speed; `NULL` ignored | — | — |
 | `RUN` | set → `FAULT` | `Z`, `0` release | stored, re-enters `RUN` | — | — | — | → target |
 | `TORQUE_ZERO`, `SPEED_ZERO` | set → `FAULT` | `Z`, `0` release; `PWM` → `RUN` | stored | — | — | — | → target |
 | `SAFE_STOP` | set → `FAULT` | `Z`, `0` → `PASSIVE` at zero speed; `PWM` refused | stored | — | — | — | refused |
 | `OPEN_LOOP` | set → `FAULT` | `Z`, `0` → `PASSIVE` | stored | at zero speed: `NULL` → `PASSIVE`, else stored | branch; `NULL` → `PASSIVE` | — | — |
 | `CALIBRATION` | set → `FAULT` | `Z` floats → `PASSIVE`; `0`, `PWM` hold V0 | — | stored at zero speed | — | branch; `NULL` → `PASSIVE` | — |
-| `FAULT` | set accumulates; clear → `DEACTIVATED` once none remain | — | — | — | — | → `CALIBRATION` | — |
+| `FAULT` | set accumulates; clear → `DEACTIVATED` once none remain | — | — | — | — | — | — |
 
 - Release: `Z` or `0` goes to `PASSIVE` within the freewheel limit, else to `INTERVENTION_STATE_SPEED_ZERO`. In
   `SPEED_ZERO` a release above the limit re-enters `SPEED_ZERO`, which re-seeds its speed loop.
@@ -131,14 +132,14 @@ they take their root's handlers.
   [Direction](#direction).
 - Branch entry (`OPEN_LOOP`, `CALIBRATION`, `INTERVENTION`): the value is a `State_T *`. A pointer whose `P_TOP` is
   the branch's root enters that sub-state directly, running the root's entry first.
-- Inside `OPEN_LOOP` or `CALIBRATION`, its own input with `NULL` leaves for `PASSIVE`, the root's pointer re-enters
-  the bare root, and any other pointer leaves for `PASSIVE`.
-- `PASSIVE` takes `OPEN_LOOP` with anything but an `OPEN_LOOP` leaf, `NULL` included, as an entry to the bare
-  `OPEN_LOOP`.
-- `CALIBRATION` in `DEACTIVATED` (zero speed) and in `FAULT` ignores the value and enters the bare `CALIBRATION`. A
-  sub-state pointer does not reach the sub-state from there, and `NULL` enters instead of leaving.
-- `INTERVENTION` takes only a pointer into its own branch; others are ignored, and `NULL` is not checked for. A
-  target already on the active branch is a no-op, so repeated requests hold without re-entry.
+- `NULL` is the exit (`Motor_OpenLoop_Exit`, `Motor_Calibration_Exit`). Inside `OPEN_LOOP` or `CALIBRATION`, its
+  own input with `NULL` leaves for `PASSIVE`, the root's pointer re-enters the bare root, and any other pointer leaves
+  for `PASSIVE`. Every state outside the branch ignores `NULL`.
+- `PASSIVE` takes `OPEN_LOOP` with any other pointer than an `OPEN_LOOP` leaf as an entry to the bare `OPEN_LOOP`.
+- `CALIBRATION` in `DEACTIVATED` (zero speed) ignores which pointer it carries and enters the bare `CALIBRATION`; a
+  sub-state pointer does not reach the sub-state from there.
+- `INTERVENTION` takes only a pointer into its own branch; others are ignored. A target already on the active branch
+  is a no-op, so repeated requests hold without re-entry.
 - `FAULT` carries a `Motor_FaultCmd_T`: set and clear deltas in one value. Outside `FAULT` only the set half applies.
 
 ### Transition commands
@@ -215,6 +216,7 @@ own safe state. `DEACTIVATED` resets it to `NULL`.
 | `PositionSensor` | `INIT`, sensor calibration not verified. Hall table invalid, encoder homing out of travel, encoder start-up validation: each also enters `FAULT`. SinCos verify after its calibration: flag only |
 | `InitCheck` | `INIT`, config invalid |
 | `RequestV0` | the controller on overvoltage. Non-latching, held by the requester; the controller's clear removes it |
+| `SafeStopTimeout` | `SAFE_STOP`'s watchdog, with its transition to `FAULT`. After `RequestV0`, so the earlier bits keep their place |
 
 - Set: every state but `INIT` and `FAULT` ORs the set delta and enters `FAULT` if any flag is set. In `FAULT` a set
   accumulates.
@@ -222,8 +224,8 @@ own safe state. `DEACTIVATED` resets it to `NULL`.
   `DEACTIVATED` once no flag remains.
 - Flags alone are inert outside `INIT`: the transition into `FAULT` is what stops the motor. A procedure that finds
   a fault sets the flag and returns `FAULT` itself.
-- `SAFE_STOP`'s watchdog enters `FAULT` with no flag set; the first clear leaves.
-- `FAULT` accepts `CALIBRATION` with its flags still set.
+- `FAULT` refuses `CALIBRATION`: entering it would leave `FAULT` with the flags still set. Calibration commands are
+  admitted in the controller's `LOCK` only, which is reached after a clear.
 
 ## Intervention
 
@@ -258,14 +260,14 @@ stateDiagram-v2
 |---|---|---|---|---|
 | `TORQUE_ZERO` (ZTC) | timer reset | `UserCmd` in current mode, 0 in any other mode, generating side only (`_Motor_GeneratingOnly`) | never on its own | resumes `RUN` |
 | `SPEED_ZERO` | speed loop seeded from the torque ramp, for a bumpless start; timer reset | speed loop toward zero | `PASSIVE` at zero speed | resumes `RUN` |
-| `SAFE_STOP` (SS1), child of `SPEED_ZERO` | timer reset | `SPEED_ZERO`'s loop, which runs under it | `PASSIVE` at zero speed; `FAULT` after `MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG` (200 000 ticks, 10 s) | refused |
+| `SAFE_STOP` (SS1), child of `SPEED_ZERO` | timer reset | `SPEED_ZERO`'s loop, which runs under it | `PASSIVE` at zero speed; `FAULT` with `SafeStopTimeout` after `MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG` (200 000 ticks, 10 s) | refused |
 
 - `SAFE_STOP` entered from `RUN` runs `SPEED_ZERO`'s entry first; entered from `SPEED_ZERO` it continues the ramp in
   progress. It refuses every `INTERVENTION` target, since re-entry would restart the watchdog, and accepts a
   release only at zero speed.
 - `TORQUE_ZERO` and `SPEED_ZERO` swap on `Motor_ApplyTorqueZero` / `Motor_ApplySpeedZero`, and either goes to
   `SAFE_STOP` on `Motor_ApplySafeStop`.
-- `MOTOR_INTERVENTION_COAST_TIMEOUT` (60 000 ticks, 3 s) is defined but unused: `TORQUE_ZERO` does not escalate.
+- `TORQUE_ZERO` does not escalate to `SPEED_ZERO`; that would change what Traction's `IZERO` release does.
 - Callers: Traction's brake hold (`SPEED_ZERO`), Traction's release in `ZeroMode` `IZERO` (`TORQUE_ZERO`), the
   controller on serial Rx loss (`SAFE_STOP`).
 
@@ -315,11 +317,6 @@ id yet.
 
 ## Behaviors to know
 
-- `Motor_Calibration_Exit` leaves only from `CALIBRATION`. `DEACTIVATED` at zero speed and `FAULT` take any
-  `CALIBRATION` input as an entry, so the same call enters `CALIBRATION` and applies V0. The controller sends it on
-  its `FAULT` entry and on lock exits; see [MotorController_StateMachine.md](MotorController_StateMachine.md#behaviors-to-know).
-  `Motor_OpenLoop_Exit` has the same shape: from `PASSIVE` at zero speed it enters `OPEN_LOOP`. It has no caller
-  today.
 - Standstill tests are exact: `Motor_IsSpeedZero` is speed `== 0`.
 - A release and a new `PWM` in one main-thread sequence, such as a packet with throttle 0 then a brake value, may
   run no `PASSIVE` tick. `RUN` then enters from float against the last back-EMF capture, which is empty if none

@@ -2,8 +2,8 @@
 
 One `MCSM_MACHINE` holds the controller's root states, the sub-states the controller defines itself, and the app's
 sub-states under `MC_STATE_MAIN`. Each motor runs its own machine, detailed in
-[Motor_StateMachine.md](Motor_StateMachine.md). [.StateMachine.md](.StateMachine.md) has the overview, the layer map
-and the design decisions.
+[Motor_StateMachine.md](Motor_StateMachine.md). [StateMachineOverview.md](StateMachineOverview.md) has the overview,
+the layer map and the design decisions.
 
 ## Threads
 
@@ -49,7 +49,7 @@ stateDiagram-v2
 
     MC_STATE_MOTOR_TUNING --> MC_STATE_STANDBY: STOP_MAIN / E_STOP
     MC_STATE_MOTOR_TUNING --> MC_STATE_MOTOR_TUNING: MOTOR_TUNING_RESET
-    MC_STATE_MOTOR_TUNING --> MC_STATE_LOCK: LOCK_ENTER
+    MC_STATE_MOTOR_TUNING --> MC_STATE_LOCK: LOCK_ENTER, motors stopped
 
     MC_STATE_FAULT --> MC_STATE_STANDBY: FaultFlags cleared
     note right of MC_STATE_FAULT
@@ -58,9 +58,10 @@ stateDiagram-v2
     end note
 ```
 
-- `STOP_MAIN` / `E_STOP` leave `MAIN` and `MOTOR_TUNING` only once every motor is `DEACTIVATED`, or `PASSIVE` at
-  zero speed. Otherwise the park-error buzzer sounds and the state holds. `E_STOP` is the same as `STOP_MAIN` for
-  now.
+- Leaving for a stationary state needs every motor `DEACTIVATED`, or `PASSIVE` at zero speed
+  (`Common_IsStandbyReady`): `STOP_MAIN` / `E_STOP` from `MAIN` and `MOTOR_TUNING`, `LOCK_ENTER` from `STANDBY` and
+  `MOTOR_TUNING`. A refused `STOP_MAIN` sounds the standby-error buzzer; a refused `LOCK_ENTER` returns `ERROR`. The
+  entry's `Motor_Disable` takes a `PASSIVE` motor on to `DEACTIVATED`. `E_STOP` is the same as `STOP_MAIN` for now.
 - `LOCK` commands are accepted at the bare `LOCK` only, not from a sub-state. `MOTOR_CMD_MODE` lands on
   `MC_STATE_MAIN_MOTOR_CMD`.
 - `LOCK_EXIT` and fault clear always land in `STANDBY`, never live `MAIN`.
@@ -75,7 +76,7 @@ Each state bounds the motor states it allows.
 | `MAIN_MOTOR_CMD` | `0` (V0) | as `MAIN` | Direct motor commands, without an app |
 | `MOTOR_TUNING` | `_Motor_ResetTuning` every motor: the PID gains reload from NVM | `PASSIVE`, `RUN` | Live PID tuning |
 | `LOCK` | `Motor_Disable`, then `Motor_Calibration_Enter`, every motor; status OK; short beep | `CALIBRATION`; `DEACTIVATED` if moving at entry | Calibration, NVM save, reboot |
-| `FAULT` | on overvoltage, `RequestV0` to every motor; else `Z`, then `Motor_Calibration_Exit`, to every motor; periodic buzzer | `FAULT` | Error handling. Buzzer until cleared |
+| `FAULT` | on overvoltage, `RequestV0` to every motor; else `Z` to every motor; periodic buzzer | `FAULT` for a motor fault; else released: `DEACTIVATED`, `PASSIVE`, `SPEED_ZERO` until stopped | Error handling. Buzzer until cleared |
 
 ### `INIT`
 
@@ -93,8 +94,8 @@ Each state bounds the motor states it allows.
   (`Traction_Input_T`), and the app reads them when `MAIN` is entered.
 - `START_MAIN` asks the app's `ENTER_MAIN` for the sub-state, from the buffered input. It may answer `NULL`, and
   `STANDBY` holds.
-- `STOP_MAIN` / `E_STOP` re-enter `STANDBY`; its entry runs again.
-- `LOCK_ENTER` goes to `LOCK` when every motor is `DEACTIVATED`; it does not check speed.
+- `STOP_MAIN` / `E_STOP` re-enter `STANDBY` and latch `MANUAL`; its entry runs again.
+- `LOCK_ENTER` goes to `LOCK` under the motor guard above. A motor `DEACTIVATED` passes at any speed.
 
 The exit policy is `StandbyExitMode`, resolved at init by `MotorController_ResolveStandbyExitMode` from the input
 topology. It is runtime-only and not persisted.
@@ -102,11 +103,11 @@ topology. It is runtime-only and not persisted.
 | Input topology | `StandbyExitMode` | `STANDBY` is left by |
 |---|---|---|
 | serial or CAN | `MANUAL` | `START_MAIN` from the master |
-| analog, with a Park input | `MANUAL` | the Park input: falling edge `START_MAIN`, rising edge `STOP_MAIN` |
-| analog, no Park input | `AUTO` | `NEXT`, once no fault flag is set and every motor is at zero speed |
+| analog, with a Standby input | `MANUAL` | the Standby input (`MOTOR_CONTROLLER_OPT_DIN_STANDBY`): falling edge `START_MAIN`, rising edge `STOP_MAIN` |
+| analog, no Standby input | `AUTO` | `NEXT`, once no fault flag is set and every motor is at zero speed |
 
-- An accepted park from `MAIN` or `MOTOR_TUNING` latches `MANUAL`, so a host that parked holds `STANDBY`, for
-  `LOCK` access for example. Reboot restores the resolved mode. `STOP_MAIN` received in `STANDBY` does not latch.
+- An accepted `STOP_MAIN` / `E_STOP`, from `MAIN`, `MOTOR_TUNING` or `STANDBY` itself, latches `MANUAL`, so a host that
+  sent it holds `STANDBY`, for `LOCK` access for example. Reboot restores the resolved mode.
 
 ### `MAIN`
 
@@ -127,7 +128,7 @@ topology. It is runtime-only and not persisted.
 
 | Lock id in `MOTOR_TUNING` | Effect | Status |
 |---|---|---|
-| `LOCK_ENTER` | to `LOCK`; the live gains stay in RAM for an NVM save | OK |
+| `LOCK_ENTER` | to `LOCK` under the motor guard; the live gains stay in RAM for an NVM save | OK; ERROR if refused |
 | `MOTOR_TUNING_MODE` | none: the mode is idempotent, a repeat keeps the session | OK |
 | `MOTOR_TUNING_RESET` | re-enters `MOTOR_TUNING`, reloading the gains from NVM | OK |
 | others | none | ERROR |
@@ -142,8 +143,8 @@ topology. It is runtime-only and not persisted.
 | Id | Effect | Status | Next |
 |---|---|---|---|
 | `LOCK_ENTER` | none | OK | — |
-| `LOCK_EXIT`, every motor `CALIBRATION` or every motor `DEACTIVATED` | `Motor_Calibration_Exit` to every motor | OK | `STANDBY` |
-| `LOCK_EXIT`, motors in mixed states | none | ERROR | `FAULT`, no flag set |
+| `LOCK_EXIT`, every motor `DEACTIVATED` or `CALIBRATION`, in any mix | `Motor_Calibration_Exit` to every motor | OK | `STANDBY` |
+| `LOCK_EXIT`, a motor in any other state | `Motors` set | ERROR | `FAULT` |
 | `NVM_SAVE_CONFIG` | VBus monitor paused; `MotNvm_SaveConfigAll_Blocking`, which blocks with IRQs disabled; monitor resumed; `Motor_Reinit` every motor | OK, the save's result in `NvmStatus` | — |
 | `NVM_RESTORE_CONFIG` | not implemented | ERROR | — |
 | `CALIBRATE_ADC` | `Motor_Analog_Calibrate` every motor: the phase-current zeros, 2000 ms | OK | `MC_STATE_LOCK_CALIBRATE_ADC` |
@@ -162,7 +163,8 @@ topology. It is runtime-only and not persisted.
 ### `FAULT`
 
 - Entry on overvoltage sets `RequestV0` on every motor, so each enters `FAULT` and holds V0. Otherwise every motor
-  gets `Z`, then `Motor_Calibration_Exit`. The buzzer sounds periodically.
+  gets `Z`, which also takes `CALIBRATION` to `PASSIVE`; a motor in `FAULT` keeps its own output. The buzzer sounds
+  periodically.
 - `LOOP` stops the buzzer once no flag remains.
 - A set ORs the flags and stays.
 - A clear (`MotorController_ClearFault`) removes its flags and stops the buzzer. If none remain:
@@ -194,7 +196,7 @@ monitors. `RxLost` is the exception: it follows the socket.
 | `VBusLimit` | VBus over or under voltage; the `INIT` VBus checks | 1 ms timer |
 | `PcbOverheat`, `MosfetsOverheat` | the heat monitors | main, 1 s |
 | `VAccsLimit`, `VAnalogLimit` | the accessory and analog supply monitors | main, 1 s |
-| `Motors` | any motor in `FAULT`; `INIT` with a motor not `DEACTIVATED`; a clear that leaves a motor in `FAULT` | main, 1 s |
+| `Motors` | any motor in `FAULT`; `INIT` with a motor not `DEACTIVATED`; a clear that leaves a motor in `FAULT`; `LOCK_EXIT` with a motor out of `DEACTIVATED` / `CALIBRATION` | main, 1 s |
 | `RxLost` | serial input mode: written every 1 ms from the main socket's Rx-lost status; while set, every motor gets `Motor_ApplySafeStop` | main, 1 ms |
 | `InitCheck` | the `INIT` checks; an invalid board again on a clear | main |
 
@@ -228,22 +230,17 @@ state ([0001](../../Docs/Decisions/0001_ParameterWriteAdmission.md)).
 
 - Queries: `MotorController_GetStateId`; `MotorController_GetPathId`, the unambiguous form, since a sub-state id is
   unique only among its siblings; `MotorController_GetMainSubstateId`, `MotorController_GetLockSubstateId`;
-  `MotorController_IsPark` (`STANDBY`), `MotorController_IsFault`, `MotorController_IsLock`,
+  `MotorController_IsStandby` (`STANDBY`), `MotorController_IsFault`, `MotorController_IsLock`,
   `MotorController_IsConfig` (`LOCK` or `FAULT`), `MotorController_IsTuning`, `MotorController_IsMotorCmdState`,
   `MotorController_IsMotorCmdAccess`, `MotorController_IsLockOpComplete`.
 
 ## Behaviors to know
 
-- `FAULT` entry sends `Motor_Calibration_Exit` to every motor. A motor already in `FAULT`, or `DEACTIVATED` at zero
-  speed, takes it as an entry to `CALIBRATION`: it holds V0 with its flags still set. The first clear then returns
-  it to `FAULT`, since a motor applies a clear only in `FAULT`, and leaves `Motors` set; a second clear exits.
-- `LOCK_EXIT` with motors in mixed states enters `FAULT` with no flag set; the first clear exits.
-- `MOTOR_TUNING` → `LOCK` has no motor guard. A motor running in `MOTOR_TUNING` stays in `RUN` under `LOCK`:
-  `Motor_Disable` acts from `PASSIVE` only, and `RUN` ignores `CALIBRATION`. Lock operations are then accepted with
-  the motor running, `NVM_SAVE_CONFIG` included.
-- A motor still `DEACTIVATED` in `LOCK`, because it was moving at entry, takes `Motor_Calibration_Exit` as an entry
-  to `CALIBRATION`. After `LOCK_EXIT` the `STANDBY` entry brings it back to `DEACTIVATED`; after `MOTOR_CMD_MODE` it
-  stays in `CALIBRATION` under `MAIN`.
+- A motor moving at `LOCK` entry stays `DEACTIVATED` while the others enter `CALIBRATION`. Calibration commands are
+  transition commands on `CALIBRATION`, so they skip it, and `CALIBRATE_ADC` still reports `OK`. After
+  `MOTOR_CMD_MODE` the `MAIN` entry enables it; after `MOTOR_TUNING_MODE` it stays `DEACTIVATED` under `MOTOR_TUNING`.
+- In Traction, `ZeroMode` `ZERO` in speed mode keeps the motors in `RUN` at zero speed, energized, unlike the brake
+  hold, which hands over to `PASSIVE` at zero.
 
 ## App sub-states: Traction
 
@@ -328,8 +325,8 @@ change of command is an edge and sends `DRIVE_CMD`, which starts a mode; values 
 
 | Edge | `DRIVE` | `NEUTRAL` |
 |---|---|---|
-| `THROTTLE` | the feedback mode by `Traction_ThrottleMode_T`, then `PWM`: `PASSIVE` → `RUN` | ignored |
-| `BRAKE` | the feedback mode by `Traction_BrakeMode_T`, then `PWM` | as `DRIVE` |
+| `THROTTLE` | the feedback mode by `Traction_ThrottleMode_T`, then `PWM`: `PASSIVE` → `RUN`; `Z` for a mode with no command | ignored |
+| `BRAKE` | the feedback mode by `Traction_BrakeMode_T`, then `PWM`; `Z` for a mode with no command | as `DRIVE` |
 | `RELEASE` | by `Traction_ZeroMode_T` | `Z` |
 
 | Value | Command to every motor |
@@ -346,19 +343,20 @@ change of command is an edge and sends `DRIVE_CMD`, which starts a mode; values 
 |---|---|
 | `SPEED` | `MOTOR_FEEDBACK_MODE_SPEED_CURRENT` |
 | `TORQUE` | `MOTOR_FEEDBACK_MODE_CURRENT` |
-| `VOLTAGE` | not implemented: the edge still sends `PWM`, and no value is written |
+| `VOLTAGE` | not implemented: the edge releases (`Z`), so the throttle does not drive |
 
 | `Traction_BrakeMode_T` | Brake |
 |---|---|
 | `TORQUE` | current mode, an opposing current command, the brake hold |
-| `PASSIVE`, `VOLTAGE` | not implemented: the edge still sends `PWM`, and no value is written |
+| `PASSIVE` | the edge releases (`Z`): the motors stay released, braking is mechanical |
+| `VOLTAGE` | not implemented: as `PASSIVE` |
 
 | `Traction_ZeroMode_T` | Release in `DRIVE` |
 |---|---|
 | `FLOAT` | `Z`: `RUN` → `PASSIVE` within the freewheel limit, else `INTERVENTION` `SPEED_ZERO` |
 | `IZERO` | `Motor_ApplyTorqueZero`: `RUN` → `INTERVENTION` `TORQUE_ZERO` |
-| `REGEN` | not implemented |
-| `ZERO` | nothing: no state change and no value written, so the last throttle value stays the command |
+| `REGEN` | not implemented: as `FLOAT` |
+| `ZERO` | 0 through the throttle's setter, in the present feedback mode: in speed mode `RUN` brakes to standstill and holds it, in current mode zero current |
 
 | `Traction_LeverMode_T` | Lever read against | Behavior |
 |---|---|---|

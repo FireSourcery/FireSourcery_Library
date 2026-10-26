@@ -66,11 +66,12 @@ flowchart TB
 | A direction changes only at zero speed | Traction (`NEUTRAL`, lever engage), then the motor again (`PASSIVE`, `OPEN_LOOP`, `CALIBRATION`); `RUN` and `INTERVENTION` ignore it |
 | Asking for the opposite direction while moving keeps `NEUTRAL` and blinks the buzzer | Traction |
 | A release above the freewheel limit decelerates instead of floating | motor, `RUN` and `INTERVENTION` |
-| Leaving `MAIN` or `MOTOR_TUNING` needs every motor `DEACTIVATED`, or `PASSIVE` at zero speed | controller |
-| `LOCK` from `STANDBY` needs every motor `DEACTIVATED`; `CALIBRATION` needs zero speed | controller, motor |
+| Leaving `MAIN` or `MOTOR_TUNING`, and entering `LOCK`, needs every motor `DEACTIVATED`, or `PASSIVE` at zero speed | controller |
+| `CALIBRATION` is entered from `DEACTIVATED` at zero speed only, never from `FAULT` | motor |
 | `LOCK` exit and fault clear land in `STANDBY`, never live `MAIN` | controller |
 | Boot faults if any motor is not `DEACTIVATED` once its init is done | controller, `INIT` |
 | A throttle held while `DRIVE` is entered does not start the motor | Traction |
+| A throttle, brake or release mode with no command releases the motors instead of starting the bridge | Traction |
 | Serial input loss safe-stops every motor, then faults | controller |
 | A motor fault stops that motor at once; the controller follows within 1 s | motor, controller |
 
@@ -97,7 +98,9 @@ From [Architecture.md](../../Framework/StateMachine/Architecture.md):
 ### State design rules
 
 - A new state is justified by a different safety envelope, not a different purpose.
-- One-shot automated procedures get a state; interactive parameter adjustment does not.
+- One-shot automated procedures get a state; interactive parameter adjustment does not, unless it changes the
+  safety envelope: `MOTOR_TUNING` admits PID writes with the motors running, and its exits keep or reload the live
+  gains.
 - Orthogonal concerns get orthogonal mechanisms: what control structure is running is a separate concern from
   what input source is connected. So the feedback mode is data (`Motor_FeedbackMode_T`), not a state, and so are the
   input source (`Config.InputMode`) and the `STANDBY` exit policy (`StandbyExitMode`).
@@ -167,7 +170,8 @@ From [Architecture.md](../../Framework/StateMachine/Architecture.md):
   carries a `State_T *` (`OPEN_LOOP`, `CALIBRATION`, `INTERVENTION`). The tree does the acceptance: sources that
   share a parent take the parent's handler, which checks `P_TOP`, and an exception overrides at the child
   (`SAFE_STOP` refuses). A target already on the active branch is a no-op, so repeated requests hold without
-  re-entry; the brake hold sends `Motor_ApplySpeedZero` with every brake value. Rejected:
+  re-entry; the brake hold sends `Motor_ApplySpeedZero` with every brake value. `NULL` is the branch's exit, taken
+  inside the branch only; every handler outside it refuses `NULL`. Rejected:
   - engine-iterated source lists of `StateMachine_TransitionCmd_T`: acceptance moves out of the states, exclusions
     must be listed, and every handler needs a repeat guard;
   - a request enum: it only renames the sub-states. Inside the firmware the pointer is the id; enums belong at the
@@ -180,9 +184,10 @@ From [Architecture.md](../../Framework/StateMachine/Architecture.md):
   procedure started from inside its branch use one.
 - **The controller's inputs run on its proc thread**, so they need no lock. The motor's inputs cross from the main
   thread to the PWM thread, so they apply under the engine's lock: `STATE_MACHINE_ASYNC_CRITICAL` masks IRQs for
-  the handler and the transition, and the PWM ISR never runs between an exit and an entry. A fault set from the
-  controller's 1 ms timer thread can be lost to a transition it interrupted; the 1 s re-send of the latched flags
-  covers it.
+  the handler and the transition, and the PWM ISR never runs between an exit and an entry. `Motor_StateMachine.h`
+  refuses a lock-free build: the engine runs the new entry before it moves the leaf, so the old `LOOP` could run once
+  more and overwrite a `FAULT` entry's V0 with the last `RUN` duty. A fault set from the controller's 1 ms timer
+  thread can be lost to a transition it interrupted; the 1 s re-send of the latched flags covers it.
 - **Motors are polled, not notified.** A motor stops on its own fault at once; the controller's poll only moves the
   system state.
 

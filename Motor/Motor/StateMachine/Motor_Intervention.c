@@ -32,13 +32,8 @@
 /******************************************************************************/
 /*
     Intervention timeout - ticks at PWM frequency (20kHz)
-    Coast timeout before escalation to active deceleration
 */
 /******************************************************************************/
-#ifndef MOTOR_INTERVENTION_COAST_TIMEOUT
-#define MOTOR_INTERVENTION_COAST_TIMEOUT (60000U) /* 3 seconds at 20kHz */
-#endif
-
 /* Safe stop watchdog - escalate to fault if not stopped within this many ticks */
 #ifndef MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG
 #define MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG (200000U) /* 10 seconds at 20kHz */
@@ -210,7 +205,7 @@ static State_T * SafeStop_Next(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     if (Motor_IsSpeedZero(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
-    if (p_context->ControlTimerBase > MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG) { return &MOTOR_STATE_FAULT; }
+    if (p_context->ControlTimerBase > MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG) { p_context->FaultFlags.SafeStopTimeout = 1U; return &MOTOR_STATE_FAULT; }
     return NULL;
 }
 

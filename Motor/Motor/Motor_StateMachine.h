@@ -39,6 +39,11 @@
 #include "System/Critical/Critical.h"
 #include "System/SysTime/SysTime.h"
 
+/* Inputs arrive on the main thread, the machine runs in the PWM ISR */
+#if !defined(STATE_MACHINE_ASYNC_LOCK_FREE) && !defined(STATE_MACHINE_ASYNC_CRITICAL) && !defined(STATE_MACHINE_ASYNC_SIGNAL)
+#define STATE_MACHINE_ASYNC_CRITICAL
+#endif
+
 
 /******************************************************************************/
 /*

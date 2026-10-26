@@ -36,7 +36,7 @@
 
 /******************************************************************************/
 /*!
-    @brief State diagram and design rules: Motor/Docs/MotorController_StateMachine.md
+    @brief State diagram: Motor/Docs/MotorController_StateMachine.md. Design rules: Motor/Docs/StateMachineOverview.md
 */
 /******************************************************************************/
 
@@ -79,27 +79,31 @@ static State_T * TransitionFault(MotorController_T * p_dev, state_value_t faultC
 
 
 /*
-    Entry guard for Standby
-    Note: Motor_OpenLoop exits on VOut 0/Z
-    Motor_Calibration needs Calibration_Exit
+    Motors' side of entering a stationary state, STANDBY or LOCK.
+    Every motor DEACTIVATED, or PASSIVE at zero speed - the entry's Disable takes PASSIVE on to DEACTIVATED.
+    Guard applies for both Async and Sync Motor handling transitions.
 */
+static bool Common_IsStandbyReady(MotorController_T * p_dev)
+{
+    return Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)
+        || (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS));
+}
+
+/*
+    Explicit input command latches MANUAL — a host/operator that commanded STANDBY holds it (e.g. for LOCK access), rather than auto-advancing back to Main.
+    Runtime-only; reboot restores the resolved policy.
+*/
+static State_T * Common_EnterStandby(MotorController_T * p_dev)
+{
+    p_dev->P_MC->StandbyExitMode = MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL;
+    return &MC_STATE_STANDBY;
+}
+
+/* Entry guard for Standby. Motor OpenLoop and Calibration exit on VOut Z, applied by Standby_Entry */
 static State_T * Common_InputStandby(MotorController_T * p_dev)
 {
-    State_T * p_nextState = NULL;
-    // Motor_Table_DisableAll(&p_dev->MOTORS); /* simplifies caller side, when Motor set to Async transition */
-    /* Guard applies for both Async and Sync Motor handling transitions */
-    if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)) { p_nextState = &MC_STATE_STANDBY; }
-    /* If Motor configured for sync/buffered input. Caller includes knowedge of whether callee is in an accepting state. */
-    /* Applies Disable on enter */
-    else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS)) { p_nextState = &MC_STATE_STANDBY; }
-    else { MotBuzzer_ParkError(MotorController_Buzzer(p_dev)); }
-
-    /*
-        Explicit input command latches MANUAL — a host/operator that commanded STANDBY holds it (e.g. for LOCK access), rather than auto-advancing back to Main.
-        Runtime-only; reboot restores the resolved policy.
-    */
-    if (p_nextState == &MC_STATE_STANDBY) { p_dev->P_MC->StandbyExitMode = MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
-    return p_nextState;
+    if (Common_IsStandbyReady(p_dev) == false) { MotBuzzer_StandbyError(MotorController_Buzzer(p_dev)); return NULL; }
+    return Common_EnterStandby(p_dev);
 }
 
 
@@ -211,8 +215,8 @@ static bool Standby_IsStartReady(MotorController_T * p_dev)
 
 /*
     Automatic exit from STANDBY per StandbyExitMode — a runtime policy resolved at init
-    (MotorController_ResolveStandbyExitMode), keeping InputMode / Park topology out of the state machine.
-    An explicit park (Common_InputStandby) latches MANUAL, so a host can hold STANDBY for LOCK access.
+    (MotorController_ResolveStandbyExitMode), keeping InputMode / Standby pin topology out of the state machine.
+    An explicit STOP_MAIN / E_STOP (Common_EnterStandby) latches MANUAL, so a host can hold STANDBY for LOCK access.
 */
 static State_T * Standby_Next(MotorController_T * p_dev)
 {
@@ -232,8 +236,8 @@ static State_T * Standby_InputStateCmd(MotorController_T * p_dev, state_value_t 
 {
     switch ((MotorController_StateCmd_T)cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:         return &MC_STATE_STANDBY;
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      return &MC_STATE_STANDBY;
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:         return Common_EnterStandby(p_dev);
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      return Common_EnterStandby(p_dev);
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     return MotorController_App_EnterMain(p_dev); /* App resolves initial sub-state, reads buffered direction */
         default: return NULL;
     }
@@ -244,7 +248,7 @@ static State_T * Standby_InputLock(MotorController_T * p_dev, state_value_t lock
 {
     if ((MotorController_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER)
     {
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED) == true) { return &MC_STATE_LOCK; }
+        if (Common_IsStandbyReady(p_dev) == true) { return &MC_STATE_LOCK; }
     }
     return NULL;
 }
@@ -413,7 +417,9 @@ static State_T * MotorTuning_InputTuning(MotorController_T * p_dev, state_value_
 
     switch ((MotorController_LockId_T)lockId)
     {
-        case MOTOR_CONTROLLER_LOCK_ENTER:               p_nextState = &MC_STATE_LOCK;           break; /* live gains retained in RAM Config for Nvm save */
+        case MOTOR_CONTROLLER_LOCK_ENTER: /* live gains retained in RAM Config for Nvm save */
+            if (Common_IsStandbyReady(p_dev) == true) { p_nextState = &MC_STATE_LOCK; } else { opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR; }
+            break;
         case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE:                                           break; /* already in mode. no re-entry */
         case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_RESET:  p_nextState = &MC_STATE_MOTOR_TUNING;   break; /* re-entry reloads Pids from Nvm */
         // case MOTOR_CONTROLLER_LOCK_EXIT: return
@@ -483,6 +489,9 @@ static void Lock_Proc(MotorController_T * p_dev)
     (void)p_dev;
 }
 
+/* A motor moving at Lock_Entry stays DEACTIVATED while the others enter CALIBRATION */
+static bool Lock_IsMotorHeld(Motor_T * p_motor) { return Motor_IsState(p_motor, &MOTOR_STATE_DEACTIVATED) || Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION); }
+
 /* Lock SubState/Cmd by passed value */
 /* alternatively StateMachine_TransitionCmd_T replace lockId */
 static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_value_t lockId)
@@ -502,7 +511,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 break;
 
             case MOTOR_CONTROLLER_LOCK_EXIT:
-                if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION) || Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED))
+                if (Motor_Table_IsEvery(&p_dev->MOTORS, Lock_IsMotorHeld) == true)
                 {
                     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
@@ -511,6 +520,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 }
                 else
                 {
+                    p_mc->FaultFlags.Motors = 1U;
                     p_nextState = &MC_STATE_FAULT;
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
                 }
@@ -605,8 +615,7 @@ static void Fault_Entry(MotorController_T * p_dev)
     }
     else
     {
-        Motor_Table_ForEach(&p_dev->MOTORS, Motor_ReleaseVZ);  /* Motor may apply V0 */
-        Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit); /* exit on fault and exit lock. or implement input id */
+        Motor_Table_ForEach(&p_dev->MOTORS, Motor_ReleaseVZ);  /* Motor may apply V0. Also exits Calibration */
         // Motor_ApplySafeStop
     }
 

@@ -77,6 +77,7 @@ static State_T * TransitionFault(Motor_T * p_motor, state_value_t faultCmd)
 static State_T * TransitionIntervention(Motor_T * p_motor, state_value_t statePtr)
 {
     State_T * p_state = (State_T *)statePtr;
+    if (p_state == NULL) { return NULL; }
     if (p_state->P_TOP != &MOTOR_STATE_INTERVENTION) { return NULL; }
     return StateMachine_IsActiveBranch(p_motor->STATE_MACHINE.P_ACTIVE, p_state) ? NULL : p_state;
 }
@@ -219,7 +220,7 @@ static State_T * Deactivated_InputOpenLoop(Motor_T * p_motor, state_value_t stat
 /* Calibration go directly to SubState */
 static State_T * Deactivated_InputCalibration(Motor_T * p_motor, state_value_t statePtr)
 {
-    (void)statePtr;
+    if ((State_T *)statePtr == NULL) { return NULL; }
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_CALIBRATION; } else { return NULL; }
 }
 
@@ -350,8 +351,9 @@ static State_T * Passive_InputOpenLoop(Motor_T * p_motor, state_value_t statePtr
 {
     State_T * p_state = (State_T *)statePtr;
 
+    if (p_state == NULL) { return NULL; } /* Exit request, not on this branch */
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) != 0U) { return NULL; }
-    if ((p_state != NULL) && (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP)) { return p_state; }
+    if (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP) { return p_state; }
     // if (p_state == NULL) { return &MOTOR_STATE_OPEN_LOOP; }
     // if (p_state == &MOTOR_STATE_OPEN_LOOP) { return &MOTOR_STATE_OPEN_LOOP; }
     // if (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP) { return p_state; }
@@ -786,23 +788,14 @@ static State_T * Fault_InputFault(Motor_T * p_motor, state_value_t faultCmd)
     return (p_motor->P_MOTOR->FaultFlags.Value == 0U) ? &MOTOR_STATE_DEACTIVATED : NULL;
 }
 
-static State_T * Fault_InputCalibration(Motor_T * p_motor, state_value_t state)
-{
-    (void)state;
-    State_T * p_nextState = NULL;
-//   Motor_PollFaultFlags(p_motor);
-//     if (p_motor->P_MOTOR->FaultFlags.Value == 0U)
-    // {
-        p_nextState = &MOTOR_STATE_CALIBRATION;
-    // }
-
-    return p_nextState;
-}
-
+/*
+    No CALIBRATION from FAULT: entering it would leave FAULT with the flags still set, past the clear.
+    Calibration commands are admitted in [MC_STATE_LOCK] only, reached after a clear.
+*/
 static const State_Input_T FAULT_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_FAULT]       = (State_Input_T)Fault_InputFault,
-    [MOTOR_STATE_INPUT_CALIBRATION] = (State_Input_T)Fault_InputCalibration,
+    [MOTOR_STATE_INPUT_CALIBRATION] = NULL,
     [MOTOR_STATE_INPUT_DIRECTION]   = NULL,
 };
 

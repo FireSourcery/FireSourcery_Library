@@ -40,7 +40,7 @@ typedef enum MotorController_OptDinMode
     MOTOR_CONTROLLER_OPT_DIN_DISABLE,
     MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT,
     MOTOR_CONTROLLER_OPT_DIN_I_LIMIT,
-    MOTOR_CONTROLLER_OPT_DIN_PARK,
+    MOTOR_CONTROLLER_OPT_DIN_STANDBY,
     MOTOR_CONTROLLER_OPT_DIN_FORWARD,
     MOTOR_CONTROLLER_OPT_DIN_REVERSE,
     MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE,
@@ -137,7 +137,7 @@ typedef enum OptDin_ConfigId
     OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16,
     OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16,
     OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR,
-    OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP,
+    OPT_DIN_CONFIG_ID_AUTO_STANDBY_ON_STOP,
 }
 OptDin_ConfigId_T;
 
@@ -150,7 +150,7 @@ static inline int OptDin_ConfigId_Get(const OptDin_Config_T * p_config, OptDin_C
         case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     value = p_config->SpeedLimit;  break;
         case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    value = p_config->TorqueLimit; break;
         case OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR:     value = p_config->SwitchBrakeFloor_Percent16;   break;
-        // case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       value = p_config->AutoParkOnStop;      break;
+        // case OPT_DIN_CONFIG_ID_AUTO_STANDBY_ON_STOP:       value = p_config->AutoStandbyOnStop;      break;
         default: break;
     }
     return value;
@@ -164,7 +164,7 @@ static inline void OptDin_ConfigId_Set(OptDin_Config_T * p_config, OptDin_Config
         case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     p_config->SpeedLimit  = value; break;
         case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    p_config->TorqueLimit = value; break;
         case OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR:     p_config->SwitchBrakeFloor_Percent16   = value; break;
-        // case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       p_config->AutoParkOnStop      = value; break;
+        // case OPT_DIN_CONFIG_ID_AUTO_STANDBY_ON_STOP:       p_config->AutoStandbyOnStop      = value; break;
         default: break;
     }
 }

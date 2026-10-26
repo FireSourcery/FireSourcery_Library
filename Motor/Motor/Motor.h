@@ -190,7 +190,7 @@ typedef union Motor_FaultFlags
         uint16_t InitCheck      : 1U;
 
         uint16_t RequestV0      : 1U;   /* Non-latching, held by the requester */
-        // uint16_t       : 1U;
+        uint16_t SafeStopTimeout : 1U;  /* [INTERVENTION_STATE_SAFE_STOP] did not reach zero speed in time. After RequestV0, to keep its bit */
     };
     uint16_t Value;
 }

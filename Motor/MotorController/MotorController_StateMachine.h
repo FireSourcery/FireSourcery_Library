@@ -100,7 +100,7 @@ typedef enum MotorController_StateInput
 {
     MC_STATE_INPUT_FAULT,           /* System fault handling */
     MC_STATE_INPUT_LOCK,            /* Enter locked/calibration operations */
-    MC_STATE_INPUT_STATE_CMD,       /* System state commands (Park/Stop/Start) with per State Mapping */
+    MC_STATE_INPUT_STATE_CMD,       /* System state commands (Standby/Stop/Start) with per State Mapping */
     MC_STATE_INPUT_MOTOR_CMD,       /* User Control vars or analog */
     MC_STATE_INPUT_APP_USER,        /* specialized inputs. no top state handler, substates overload and call from within different handlers */
     MC_TRANSITION_TABLE_LENGTH,
@@ -145,7 +145,7 @@ static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const M
 /******************************************************************************/
 // static inline bool MotorController_IsState(MotorController_T * p_dev, State_T * p_state) { return StateMachine_IsState(p_dev->STATE_MACHINE.P_ACTIVE, p_state); }
 
-static inline bool MotorController_IsPark(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_STANDBY); }
+static inline bool MotorController_IsStandby(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_STANDBY); }
 static inline bool MotorController_IsFault(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_FAULT); }
 static inline bool MotorController_IsLock(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 

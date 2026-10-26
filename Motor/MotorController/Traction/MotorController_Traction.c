@@ -46,10 +46,10 @@ static const State_T STATE_NEUTRAL; /* setting MOTOR_DIRECTION_NULL remaps to Ne
 
 static inline Traction_T * TractionAdapter(MotorController_T * p_mc) { return ((Traction_T *)(p_mc->P_APP_STATE)); }
 
-/* From Park */
-static State_T * EnterMain(MotorController_T * p_mc, state_value_t fromPark)
+/* From Standby */
+static State_T * EnterMain(MotorController_T * p_mc, state_value_t fromStandby)
 {
-    (void)fromPark;
+    (void)fromStandby;
     if (!Motor_Table_IsEverySpeedZero(&p_mc->MOTORS)) { return &STATE_NEUTRAL; }
 
     switch (TractionAdapter(p_mc)->Input.Direction)
@@ -57,7 +57,7 @@ static State_T * EnterMain(MotorController_T * p_mc, state_value_t fromPark)
         case MOTOR_DIRECTION_NULL:       return &STATE_NEUTRAL;
         case MOTOR_DIRECTION_FORWARD:    return &STATE_DRIVE;
         case MOTOR_DIRECTION_REVERSE:    return &STATE_DRIVE;
-        default:                         return NULL; /* Stays in Park */
+        default:                         return NULL; /* Stays in Standby */
     }
 }
 
@@ -86,7 +86,7 @@ void Traction_StartThrottleMode(const Traction_T * p_vehicle, Motor_Table_T * p_
     {
         case TRACTION_THROTTLE_MODE_SPEED:  Motor_Table_ApplyFeedbackMode(p_motors, MOTOR_FEEDBACK_MODE_SPEED_CURRENT);     break;
         case TRACTION_THROTTLE_MODE_TORQUE: Motor_Table_ApplyFeedbackMode(p_motors, MOTOR_FEEDBACK_MODE_CURRENT);           break;
-        default: break;
+        default: Motor_Table_ApplyControl(p_motors, PHASE_VOUT_Z); return; /* VOLTAGE: no cmd path. Release, never drive the last cmd */
     }
 
     /* alternatively from Release only */
@@ -130,11 +130,14 @@ void Traction_StartBrakeMode(const Traction_T * p_vehicle, Motor_Table_T * p_mot
 {
     switch (p_vehicle->Config.BrakeMode)
     {
-        case TRACTION_BRAKE_MODE_TORQUE:  Motor_Table_ApplyFeedbackMode(p_motors, MOTOR_FEEDBACK_MODE_CURRENT);  break;
+        case TRACTION_BRAKE_MODE_TORQUE:
+            Motor_Table_ApplyFeedbackMode(p_motors, MOTOR_FEEDBACK_MODE_CURRENT);
+            Motor_Table_ApplyControl(p_motors, PHASE_VOUT_PWM);     /* alternatively from Release only */
+            break;
             // case TRACTION_BRAKE_MODE_VOLTAGE: Motor_Table_ApplyFeedbackMode(p_motors, MOTOR_FEEDBACK_MODE_VOLTAGE);  break;
-        default: break;
+        case TRACTION_BRAKE_MODE_PASSIVE: /* Motors stay released */
+        default: Motor_Table_ApplyControl(p_motors, PHASE_VOUT_Z); break; /* VOLTAGE: no cmd path. Release, never drive the last cmd */
     }
-    Motor_Table_ApplyControl(p_motors, PHASE_VOUT_PWM);     /* alternatively from Release only */
 }
 
 /*
@@ -178,10 +181,11 @@ void Traction_StartDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_mot
 {
     switch (p_vehicle->Config.ZeroMode)
     {
-        case TRACTION_ZERO_MODE_FLOAT:   Motor_Table_ApplyControl(p_motors, PHASE_VOUT_Z);         break;
         case TRACTION_ZERO_MODE_IZERO:   Motor_Table_ForEach(p_motors, Motor_ApplyTorqueZero);     break;
-        case TRACTION_ZERO_MODE_REGEN:       /* Traction_SetRegenMotorAll(p_this); */           break;
-        default: break;
+        case TRACTION_ZERO_MODE_ZERO:    Traction_ApplyThrottleValue(p_vehicle, p_motors, 0U);     break; /* The release edge carries no value */
+        case TRACTION_ZERO_MODE_REGEN:   /* Traction_SetRegenMotorAll(p_this); not implemented, float */
+        case TRACTION_ZERO_MODE_FLOAT:
+        default: Motor_Table_ApplyControl(p_motors, PHASE_VOUT_Z); break;
     }
 }
 
@@ -207,7 +211,7 @@ void Traction_ProcRelease(const Traction_T * p_vehicle, Motor_Table_T * p_motors
     SubStates: Fwd/Rev,
 
     neutral and drive share stop via motor stop state.
-    DriveZero must release control, to transition into Park State
+    DriveZero must release control, to transition into Standby State
 */
 /******************************************************************************/
 static void Drive_Entry(MotorController_T * p_mc)

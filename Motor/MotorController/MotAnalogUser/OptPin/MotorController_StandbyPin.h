@@ -24,7 +24,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorController_ParkPin.h
+    @file   MotorController_StandbyPin.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
@@ -32,7 +32,7 @@
 #include "../../MotorController_StateMachine.h"
 
 
-static inline void MotorController_CallParkPin(MotorController_T * p_dev, UserDIn_Edge_T edge)
+static inline void MotorController_CallStandbyPin(MotorController_T * p_dev, UserDIn_Edge_T edge)
 {
     switch (edge)
     {
@@ -44,29 +44,29 @@ static inline void MotorController_CallParkPin(MotorController_T * p_dev, UserDI
 
 
 /* Compile time defined availability */
-#if defined(MOTOR_CONTROLLER_OPT_DIN_PARK_ID)
-static inline UserDIn_T * _MotorController_ParkPin(MotorController_T * p_dev) { return &p_dev->DINS[MOTOR_CONTROLLER_OPT_DIN_PARK_ID]; }
+#if defined(MOTOR_CONTROLLER_OPT_DIN_STANDBY_ID)
+static inline UserDIn_T * _MotorController_StandbyPin(MotorController_T * p_dev) { return &p_dev->DINS[MOTOR_CONTROLLER_OPT_DIN_STANDBY_ID]; }
 
-static inline void MotorController_ProcParkPin(MotorController_T * p_dev)
+static inline void MotorController_ProcStandbyPin(MotorController_T * p_dev)
 {
-    MotorController_CallParkPin(p_dev, UserDIn_PollEdge(_MotorController_ParkPin(p_dev)));
+    MotorController_CallStandbyPin(p_dev, UserDIn_PollEdge(_MotorController_StandbyPin(p_dev)));
 }
 #else
 /* optionally search, callback set on config */
-// static inline UserDIn_T * _MotorController_ParkPin(MotorController_T * p_dev) { return }
-static inline void MotorController_ProcParkPin(MotorController_T * p_dev) { (void)p_dev; }
+// static inline UserDIn_T * _MotorController_StandbyPin(MotorController_T * p_dev) { return }
+static inline void MotorController_ProcStandbyPin(MotorController_T * p_dev) { (void)p_dev; }
 
 #endif
 
 /*
-    Runtime availability — a Park input is any DIN configured with CmdId == MOTOR_CONTROLLER_OPT_DIN_PARK
+    Runtime availability — a Standby input is any DIN configured with CmdId == MOTOR_CONTROLLER_OPT_DIN_STANDBY
     Used to arm headless-analog auto-start out of STANDBY.
 */
-static inline bool MotorController_IsParkPinMapped(MotorController_T * p_dev)
+static inline bool MotorController_IsStandbyPinMapped(MotorController_T * p_dev)
 {
     for (uint8_t iDin = 0U; iDin < MOT_USER_DIN_COUNT; iDin++)
     {
-        if (p_dev->DINS[iDin].P_STATE->Config.CmdId == MOTOR_CONTROLLER_OPT_DIN_PARK) { return true; }
+        if (p_dev->DINS[iDin].P_STATE->Config.CmdId == MOTOR_CONTROLLER_OPT_DIN_STANDBY) { return true; }
     }
     return false;
 }

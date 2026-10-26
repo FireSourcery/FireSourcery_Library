@@ -112,13 +112,13 @@ void MotorController_ResetBootDefault(MotorController_Context_T * p_mc)
     Resolve the initial Standby exit policy from configuration — the single place mapping input topology to
     behavior. Seeds the runtime Context.StandbyExitMode at init (pure of state; may be overridden at runtime).
       - non-ANALOG (serial/CAN)  -> MANUAL: the master issues START_MAIN
-      - ANALOG with a Park DIN    -> MANUAL: the Park edge issues START_MAIN
-      - ANALOG, headless (no Park) -> AUTO:   the throttle is the only enable interface
+      - ANALOG with a Standby DIN -> MANUAL: the Standby edge issues START_MAIN
+      - ANALOG, headless (no Standby DIN) -> AUTO:   the throttle is the only enable interface
 */
 MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorController_T * p_dev)
 {
     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
-    if (MotorController_IsParkPinMapped(p_dev)) { return MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
+    if (MotorController_IsStandbyPinMapped(p_dev)) { return MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
     return MOTOR_CONTROLLER_STANDBY_EXIT_AUTO;
 }
 

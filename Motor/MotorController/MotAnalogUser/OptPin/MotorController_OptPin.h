@@ -31,7 +31,7 @@
 /******************************************************************************/
 #include "../../MotorController.h"
 #include "../../MotorController_User.h"
-#include "MotorController_ParkPin.h"
+#include "MotorController_StandbyPin.h"
 #include "MotorController_SwitchBrake.h"
 #include "Transducer/UserIn/UserDIn_Cmd.h"
 
@@ -42,7 +42,7 @@ static inline UserDIn_Fn_T _MotorController_OptDinFn(MotorController_OptDinMode_
         [MOTOR_CONTROLLER_OPT_DIN_DISABLE]      = (UserDIn_Fn_T)UserDIn_CmdNull,
         [MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT]  = (UserDIn_Fn_T)UserDIn_CmdNull, /* Polled by MotorController_SpeedDerate */
         [MOTOR_CONTROLLER_OPT_DIN_I_LIMIT]      = (UserDIn_Fn_T)UserDIn_CmdNull, /* Polled by MotorController_IDerate */
-        [MOTOR_CONTROLLER_OPT_DIN_PARK]         = (UserDIn_Fn_T)MotorController_CallParkPin,
+        [MOTOR_CONTROLLER_OPT_DIN_STANDBY]      = (UserDIn_Fn_T)MotorController_CallStandbyPin,
         [MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE] = (UserDIn_Fn_T)UserDIn_CmdNull,
         // [MOTOR_CONTROLLER_OPT_DIN_FORWARD]      = (UserDIn_Fn_T)UserDIn_CmdNull,
         // [MOTOR_CONTROLLER_OPT_DIN_REVERSE]      = (UserDIn_Fn_T)UserDIn_CmdNull,
