@@ -98,6 +98,24 @@ static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal) { p_hal->SC2 &= ~
 static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal) { p_hal->SC1 &= ~ADC_SC1_ADCO_MASK; }
 static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
 
+#if defined(HAL_ADC_HW_TRIGGER_FIFO)
+static inline bool HAL_ADC_ReadIsHwTrigger(const HAL_ADC_T * p_hal) { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADTRG_MASK) != 0U); }
+
+/*
+    [HTRGME] 1 Hw trigger converts the whole fifo, else 1 conversion per trigger (KE06 RM Rev. 4 pp. 341, 351).
+    A software start converts the whole fifo either way, so the walk's HAL_ADC_WriteFifoCount may clear it.
+*/
+static inline void HAL_ADC_WriteFifoCountPerTrigger(HAL_ADC_T * p_hal, uint32_t count) { p_hal->SC4 = ADC_SC4_AFDEP(count - 1U) | ADC_SC4_HTRGME_MASK; }
+
+/*
+    The trigger's route, SIM_SOPT0. Chip wide: KE06 has 1 ADC.
+    FTM2's init trigger, at CNTIN, through the 8-bit one-shot delay (pp. 54, 182).
+    [ticks] of the delay's clock: the bus clock, divided by SIM_SOPT0[BUSREF], per p. 54. Its Figure 3-1 draws ICSCLK instead.
+*/
+static inline void HAL_ADC_SelectHwTriggerFtm2Init(HAL_ADC_T * p_hal) { (void)p_hal; SIM->SOPT0 = (SIM->SOPT0 & ~SIM_SOPT0_ADHWT_MASK) | SIM_SOPT0_ADHWT(2U); }
+static inline void HAL_ADC_WriteHwTriggerDelay(HAL_ADC_T * p_hal, uint8_t ticks) { (void)p_hal; SIM->SOPT0 = (SIM->SOPT0 & ~SIM_SOPT0_DELAY_MASK) | SIM_SOPT0_DELAY(ticks); }
+#endif
+
 /*
     Reference Manual pg 326
     The total conversion time depends on the sample time (as determined by

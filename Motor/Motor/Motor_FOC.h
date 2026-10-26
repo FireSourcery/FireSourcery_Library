@@ -167,6 +167,10 @@ extern void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t
 extern void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idReq);
 extern void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t qReq);
 extern void Motor_FOC_ProcTorqueFeedback(Motor_T * p_motor);
+#if defined(MOTOR_I_FEEDBACK_FIRST)
+extern void Motor_FOC_ProcTorqueHeld(Motor_T * p_motor);
+extern void Motor_FOC_StepTorqueReq(Motor_T * p_motor, fract16_t qReq);
+#endif
 
 extern void Motor_FOC_ProcAngleV(Motor_T * p_motor);
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);

@@ -95,7 +95,9 @@ static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
 */
 static inline void _Motor_OnIabc_Thread(Motor_T * p_motor)
 {
-    Motor_FOC_CaptureI(p_motor->P_MOTOR);
+#if defined(MOTOR_I_CAPTURE_ON_PHASE)
+    Motor_FOC_CaptureI(p_motor->P_MOTOR); /* Else the LOOP's take Parks it, at its own angle */
+#endif
     _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
 }
 

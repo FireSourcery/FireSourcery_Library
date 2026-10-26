@@ -74,6 +74,16 @@ static inline void _ADC_ActivateFrom(HAL_ADC_T * p_hal, const adc_pin_t * p_pins
     if (count > 0U) { HAL_ADC_ActivateEach(p_hal, pins, count); }
 }
 
+#if ADC_HW_TRIGGER_ENABLE
+/* As _ADC_ActivateFrom, onto the Hw trigger. The caller's set is not empty */
+static inline void _ADC_ArmFrom(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, const adc_channel_t * p_channels, uint8_t count)
+{
+    adc_pin_t pins[ADC_FIFO_LENGTH_MAX];
+    for (uint8_t index = 0U; index < count; index++) { pins[index] = p_pins[p_channels[index]]; }
+    HAL_ADC_ArmEach(p_hal, pins, count);
+}
+#endif
+
 /*
     The captured channels clear their markers and set their flags, so the 2 words hold the whole
     conversion state: what is left to convert, and what has landed unconsumed.
@@ -87,6 +97,13 @@ static inline void _ADC_Activate(ADC_T * p_adc)
 {
     _ADC_ActivateFrom(p_adc->P_HAL_ADC, p_adc->P_CHANNEL_PINS, &p_adc->P_STATE->ActiveChannels[0U], p_adc->P_STATE->ActiveChannelCount);
 }
+
+#if ADC_HW_TRIGGER_ENABLE
+static inline void _ADC_Arm(ADC_T * p_adc)
+{
+    _ADC_ArmFrom(p_adc->P_HAL_ADC, p_adc->P_CHANNEL_PINS, &p_adc->P_STATE->ActiveChannels[0U], p_adc->P_STATE->ActiveChannelCount);
+}
+#endif
 
 /******************************************************************************/
 /*

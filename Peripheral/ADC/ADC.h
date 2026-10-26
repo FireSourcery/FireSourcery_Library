@@ -60,10 +60,18 @@
         Hw sequenced    - ADC_HW_SEQUENCER_ENABLE. A trigger converts the slot range, a transfer
                           fills the results, and the Board's ISR flags the set it armed.
         Software        - Channels are marked, the ISR walks them, fifo depth at a time.
+        Hw triggered    - ADC_HW_TRIGGER_ENABLE. Software, except 1 fifo of marked channels is armed
+                          ahead and converts on the Hw trigger. Its completion returns the ADC to
+                          software start, and the walk continues. ADC_ArmMarked, ADC_Thread.h.
 */
 /******************************************************************************/
 #ifndef ADC_HW_SEQUENCER_ENABLE
 #define ADC_HW_SEQUENCER_ENABLE false
+#endif
+
+/* The platform supplies HAL_ADC_ArmEach, HAL_ADC_HW_TRIGGER_FIFO */
+#ifndef ADC_HW_TRIGGER_ENABLE
+#define ADC_HW_TRIGGER_ENABLE false
 #endif
 
 #ifdef HAL_ADC_FIFO_LENGTH_MAX
@@ -121,6 +129,9 @@ typedef struct ADC_State
     uint32_t IncompleteCycles;
     uint32_t FifoMismatch;
 #endif
+#if ADC_HW_TRIGGER_ENABLE
+    uint32_t MissedTriggers;    /* Armed sets disarmed at the next arm, no trigger having come. Outside NDEBUG: KE06 builds define it */
+#endif
 }
 ADC_State_T;
 
@@ -157,6 +168,11 @@ ADC_T;
 */
 static inline bool ADC_ReadIsActive(ADC_T * p_adc) { return HAL_ADC_ReadConversionActiveFlag(p_adc->P_HAL_ADC); }
 static inline void ADC_Deactivate(ADC_T * p_adc) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
+
+#if ADC_HW_TRIGGER_ENABLE
+/* A fifo armed on the Hw trigger, not yet complete. The completion clears it, so the register is the state */
+static inline bool ADC_ReadIsArmed(ADC_T * p_adc) { return HAL_ADC_ReadIsHwTrigger(p_adc->P_HAL_ADC); }
+#endif
 
 /******************************************************************************/
 /*
@@ -203,7 +219,7 @@ static inline bool ADC_PollComplete(ADC_T * p_adc, adc_mask_t mask)
 }
 
 /* Greedy. Takes whatever of [mask] has landed */
-static inline adc_mask_t ADC_TakeFlags(ADC_T * p_adc, adc_mask_t mask)
+static inline adc_mask_t ADC_ClearComplete(ADC_T * p_adc, adc_mask_t mask)
 {
     adc_mask_t taken = p_adc->P_STATE->CompleteFlags & mask;
     p_adc->P_STATE->CompleteFlags &= ~taken;

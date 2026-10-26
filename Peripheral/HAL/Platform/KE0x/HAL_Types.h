@@ -44,3 +44,7 @@ typedef FTMRE_Type HAL_Flash_T;
 #elif defined(KE02Z4_SERIES)
 typedef FTMRH_Type HAL_Flash_T;
 #endif
+
+#if defined(KE06Z4_SERIES)
+#define HAL_ADC_HW_TRIGGER_FIFO /* 1 Hw trigger converts the whole fifo, ADC_SC4[HTRGME]. HAL_ADC.h supplies HAL_ADC_ArmEach */
+#endif

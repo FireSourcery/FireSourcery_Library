@@ -101,7 +101,7 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
     _Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR, VBus_Pu(p_motor->P_VBUS), req);
 }
 
-#if defined(MOTOR_I_FEEDBACK_ON_PHASE)
+#if defined(MOTOR_I_FEEDBACK_ON_PHASE) || defined(MOTOR_I_FEEDBACK_FIRST)
 /* The torque path's i_d request as the LOOP last stepped it */
 static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
 {
@@ -111,6 +111,32 @@ static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
     (void)p_context; return 0;
 #endif
 }
+#endif
+
+#if defined(MOTOR_I_FEEDBACK_FIRST)
+/*
+    FOC first [MOTOR_I_FEEDBACK_FIRST]. The current loop at this tick's angle, on the requests the torque path holds,
+    so the LOOP's write lands before it steps them for the next tick [Motor_FOC_StepTorqueReq]. The PI takes them 1 tick old.
+        Motor_FOC_ProcTorqueHeld(p_motor); Motor_FOC_WriteDuty(p_motor); Motor_FOC_StepTorqueReq(p_motor, req);
+*/
+void Motor_FOC_ProcTorqueHeld(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    Motor_FOC_AngleControl(p_context, VBus_Pu(p_motor->P_VBUS), Angle_Value(&p_context->SensorState.AngleSpeed), Motor_FOC_IdTorqueReq(p_context), Ramp_GetOutput(&p_context->TorqueRamp));
+}
+
+/* Field weakening advances on the V the current loop just applied: the same 1 tick of V to i_d request as [_Motor_FOC_ProcTorqueReq] */
+void Motor_FOC_StepTorqueReq(Motor_T * p_motor, fract16_t req)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    (void)FOC_ProcIdFieldWeakening(&p_context->Foc, VBus_Pu(p_motor->P_VBUS));
+#endif
+    (void)Ramp_ProcNextOf(&p_context->TorqueRamp, req);
+}
+#endif
+
+#if defined(MOTOR_I_FEEDBACK_ON_PHASE)
 
 /*
     The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.

@@ -131,5 +131,5 @@ static inline void ADC_Channel_CaptureEach(ADC_Channel_T * p_channels, adc_mask_
 static inline void ADC_Channel_OnComplete_ISR(ADC_T * p_adc, ADC_Channel_T * p_channels)
 {
     ADC_OnComplete_ISR(p_adc);
-    ADC_Channel_CaptureEach(p_channels, ADC_TakeFlags(p_adc, ADC_MASK_ALL));
+    ADC_Channel_CaptureEach(p_channels, ADC_ClearComplete(p_adc, ADC_MASK_ALL));
 }
