@@ -1,14 +1,11 @@
 """
-Zero-sequence placement: the duty ceiling against a blend, scheduled on the voltage magnitude or on the duty max.
+Zero-sequence placement: the duty ceiling against a blend scheduled on the voltage magnitude.
 All are the general clamp, duty = v - v_zero, v_zero = k*(v_max - 1) + (1 - k)*v_min, k the share of the null time at O111.
     midclamp            k = 1/2                                                         [svpwm_midclamp]
     ceiling sqrt3/2     k per vector: the highest duty held to sqrt3/2, k in [0, 1/2]   [svpwm_midclamp_ceiling]
                         k moves within the turn: midclamp away from each line-to-line peak, the ceiling about it
-    |v| blend           k per magnitude: 1/2 up to |v| = sqrt3/2 of the linear limit (Vbus/2), falling linearly to 0 at the limit
-                        one k for the whole turn: [svpwm_clamp] fed k(|v|)
-    duty-max blend      k per vector, on midclamp's highest duty u = 1/2 + spread/2: 1/2 up to u0, falling linearly to 0 at u1
-                        93.3 % to 100 %: the |v| blend's ends, since midclamp's highest duty over a turn is 1/2 + (sqrt3/2)*|v|
-                        sqrt3/2 to 93.3 %: the ceiling's ends, spread 2*sqrt3/2 - 1 to sqrt3/2
+    |v| blend           k per magnitude: 1/2 up to |v| = Vbus/2, falling linearly to 0 at 0.539, the bottom clamp's radius for the window
+                        midclamp leaves at Vbus/2 [SVPWM_CLAMP_RADIUS_OF_WINDOW]. One k for the whole turn: [svpwm_clamp] fed k(|v|)
 
 Per placement and circle radius r (per Vbus):
     continuity: the largest duty step between neighbouring angles 0.01 deg apart, and the corners in v_zero per turn
@@ -34,17 +31,12 @@ R_SQRT3 = 1 / math.sqrt(3)
 D = math.sqrt(3) / 2  # PHASE_SVPWM_DUTY_CEILING default
 R_BLEND = 0.5         # |v| = sqrt3/2 of the linear limit
 U_TODAY = 0.5 + D / 2  # midclamp's highest duty at Vbus/2, 93.3 %: the window that works today
-R_CEILING = U_TODAY / math.sqrt(3)  # 0.539, the ceiling's radius for that window [svpwm_midclamp_ceiling_radius]
+R_WINDOW = U_TODAY / math.sqrt(3)  # 0.539, the bottom clamp's radius for that window [SVPWM_CLAMP_RADIUS_OF_WINDOW], and the ceiling's [svpwm_midclamp_ceiling_radius]
 
 
 def magnitude(v):
     """|v| per Vbus from the three phase voltages, a zero-sum set: sqrt(2/3 * sum v^2)"""
     return math.sqrt(2.0 / 3.0 * sum(x * x for x in v))
-
-
-def duty_max(v):
-    """midclamp's highest duty at this vector, 1/2 + spread/2"""
-    return 0.5 + (max(v) - min(v)) / 2
 
 
 def zero_k(v, k):
@@ -65,25 +57,20 @@ def k_ramp(x, x0, x1):
 
 
 def k_blend(r):
-    return k_ramp(r, R_BLEND, R_SQRT3)
+    return k_ramp(r, R_BLEND, R_WINDOW)
 
 
 def zero_blend(v):
     return zero_k(v, k_blend(magnitude(v)))
 
 
-def zero_duty_blend(u0, u1):
-    return lambda v: zero_k(v, k_ramp(duty_max(v), u0, u1))
-
-
+BLEND =f"|v| blend, Vbus/2–{R_WINDOW:.3f}"
 PLACEMENTS = {
     "midclamp": zero_midclamp,
     "ceiling √3/2": zero_ceiling,
-    "|v| blend, Vbus/2–Vbus/√3": zero_blend,
-    "duty-max blend, 93.3–100 %": zero_duty_blend(U_TODAY, 1.0),
-    "duty-max blend, √3/2–93.3 %": zero_duty_blend(D, U_TODAY),
+    BLEND: zero_blend,
 }
-ASCII = dict(zip(PLACEMENTS, ("midclamp", "ceiling sqrt3/2", "|v| blend", "duty-max 93.3-100", "duty-max .866-.933")))
+ASCII = dict(zip(PLACEMENTS, ("midclamp", "ceiling sqrt3/2", "|v| blend")))
 
 
 def phase_voltages(r, theta):
@@ -168,8 +155,8 @@ def metrics(r, zero):
 
 
 FW_MARGIN = 0.95  # FOC_FIELD_WEAKENING_V_MARGIN: field weakening holds |v| at this fraction of the circle
-R_FW = {"Vbus/2": FW_MARGIN * 0.5, "Vbus/√3": FW_MARGIN * R_SQRT3}
-RADII = (0.40, 0.45, R_FW["Vbus/2"], 0.50, 0.52, 0.54, R_FW["Vbus/√3"], 0.56, R_SQRT3)
+R_FW = {"Vbus/2": FW_MARGIN * 0.5, "0.539": FW_MARGIN * R_WINDOW, "Vbus/√3": FW_MARGIN * R_SQRT3}
+RADII = (0.40, 0.45, R_FW["Vbus/2"], 0.50, R_FW["0.539"], 0.52, R_WINDOW, R_FW["Vbus/√3"], 0.56, R_SQRT3)
 print("per radius: largest duty step 0.01 deg apart (%), corners in v_zero per turn, shortest window us (3 phases / 2 of 3),")
 print("angle per turn with a pulse under 1 us, angle per turn with a phase clamped at 0 %, ripple / midclamp's")
 print(f"  {'placement':20s} {'r':>6s} {'k':>5s} {'step %':>7s} {'corners':>7s} {'top us':>7s} {'mid us':>7s} {'narrow':>7s} {'clamped':>8s} {'ripple':>7s}")
@@ -180,12 +167,12 @@ for r in RADII:
         m = metrics(r, zero)
         m["ripple"] = ripple_rms(r, zero) / base
         table[(name, r)] = m
-        k = {"midclamp": "1/2", "|v| blend, Vbus/2–Vbus/√3": f"{k_blend(r):.2f}"}.get(name, "var")
+        k = {"midclamp": "1/2", BLEND: f"{k_blend(r):.2f}"}.get(name, "var")
         print(f"  {ASCII[name]:20s} {r:6.3f} {k:>5s} {100 * m['jump']:7.3f} {m['corners']:7d} {m['top']:7.2f} {m['middle']:7.2f}"
               f" {m['narrow']:6.1f}d {m['clamped']:7.1f}d {m['ripple']:7.3f}")
 
 CASES = ((300, 10.0), (500, 10.0))
-HOLD = (("3 phases", 0.50, False), ("3 phases", R_CEILING, False), ("2 of 3", 0.54, True), ("2 of 3", R_SQRT3, True))
+HOLD = (("3 phases", 0.50, False), ("3 phases", R_WINDOW, False), ("2 of 3", 0.54, True), ("2 of 3", R_SQRT3, True))
 print(f"\ncurrent-vector error / I_peak, max / rms; current lags V by {LAG_DEG:.0f} deg, {EDGE_US} us lost per window")
 print(f"  {'read, radius':18s} {'placement':20s}" + "".join(f"{f'{f} Hz {t:.0f}us':>15s}" for f, t in CASES))
 errors = {}
@@ -199,7 +186,7 @@ for read, r, two in HOLD:
         print(f"  {read + f', {r:.3f}':18s} {ASCII[name]:20s}" + "".join(f"{c:>15s}" for c in row))
 
 # Plot: color is the placement
-COLORS = dict(zip(PLACEMENTS, ("#eb6834", "#2a78d6", "#1baf7a", "#eda100", "#e87ba4")))
+COLORS = dict(zip(PLACEMENTS, ("#eb6834", "#2a78d6", "#1baf7a")))
 INK, GRID = "#6b6b6b", "#e4e4e4"
 
 
@@ -212,9 +199,9 @@ def finish(ax, title, xlabel, ylabel):
 
 
 def mark_fw(ax, labels=True):
-    """Dotted: the |v| field weakening holds at a Vbus/2 and a Vbus/sqrt3 circle"""
+    """Dotted: the |v| field weakening holds at a Vbus/2, a 0.539 and a Vbus/sqrt3 circle"""
     for j, (name, r) in enumerate(R_FW.items()):
-        ax.axvline(r, color=INK, linestyle=":", linewidth=1, label=None if labels or j else "field weakening's |v|, Vbus/2 and Vbus/√3 circles")
+        ax.axvline(r, color=INK, linestyle=":", linewidth=1, label=None if labels or j else "field weakening's |v|, Vbus/2, 0.539 and Vbus/√3 circles")
         if labels:
             ax.annotate(f"FW |v|, {name} circle", (r, 1.0), xycoords=("data", "axes fraction"), xytext=(-3, -4), textcoords="offset points",
                         rotation=90, ha="right", va="top", fontsize=7, color=INK)
@@ -233,11 +220,11 @@ ax_duty.set_ylim(-0.02, 1.02)
 ax_duty.legend(loc="upper center", fontsize=8)
 finish(ax_duty, f"Phase A duty over one turn, r = {R_TURN}·Vbus", "Voltage vector angle (electrical degrees)", "Duty")
 
-R_SHIFT = R_FW["Vbus/√3"]
+R_SHIFT = R_FW["0.539"]
 _, _, z_mid = turn(R_SHIFT, zero_midclamp, n=3600)
 for name, zero in list(PLACEMENTS.items())[1:]:
     theta, _, z = turn(R_SHIFT, zero, n=3600)
-    ax_shift.plot(np.degrees(theta), z - z_mid, color=COLORS[name], linewidth=2, label=name, zorder=3 if name.startswith("ceiling") else 2)  # the ceiling over the bottom clamp it shares with √3/2–93.3 %
+    ax_shift.plot(np.degrees(theta), z - z_mid, color=COLORS[name], linewidth=2, label=name)
 ax_shift.set_xticks(range(0, 361, 60))
 ax_shift.legend(loc="upper right", fontsize=8)
 finish(ax_shift, f"Zero sequence below midclamp's, r = {R_SHIFT:.3f}·Vbus: every duty drops by it", "Voltage vector angle (electrical degrees)", "Shift (duty)")
