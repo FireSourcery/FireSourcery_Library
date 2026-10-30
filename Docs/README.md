@@ -20,5 +20,5 @@ is the map of the code; this folder holds the reasoning behind it.
 
 ---
 
-Conventions decided but not yet written up: enum mode over boolean on/off state; time as ticks of
-a named clock.
+Time as ticks of a named clock, the per-unit suffixes and SI units at the boundary are in
+`Motor/Docs/FixedPoint.md`, which moves to `Conventions/`.

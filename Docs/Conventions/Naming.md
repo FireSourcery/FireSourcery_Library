@@ -43,6 +43,13 @@ GetSpeed_Rpm
 Naming by what it is not qualifiers.
 organizes by concept axis, consistent with OOP
 
+Semantic names:
+- Asymmetric operations get asymmetric names: what triggers each, whether it answers a request, what goes in and comes out. Not a direction pair.
+  Tx/Rx and Producer/Consumer were rejected for the CAN handlers (2026-09-27): the Rx handler is request → optional response on a peer's frame, the Tx builder is node state → frame on the node's own clock, unsolicited.
+  Check the library's vocabulary first (`Protocol_Req_T`, `Protocol_ProcReqResp_T`), then standard terms (J1939-21 Request / Command / Broadcast-Response; OSI confirmed vs unconfirmed services).
+- A quantity is named by what it physically is: `_pu_turn`, `_pu_rad`, the angle per Ts at ω_pu = 1.0 (2026-10-15).
+  Rejected: `_pu_nyquist`, a qualifier; `_pu_tick`, which names time for an angle base.
+
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
@@ -58,6 +65,7 @@ typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
     `struct snake_case`, no typedef: a pure function's multiple returns, e.g. `struct foc_dq`, `struct sta_axis`.
         - Returned by value from a snake_case function, unpacked into the caller's fields at the call.
         - Never a field of a `CamelCase_T`, never a parameter or return of a `Module_Verb` function.
+        - Known exception: `Angle_UnitVector` (Angle.h) returns `struct fract16_xy` to `AnglePll_ProcVector`.
 
     `CamelCase_T`: Aggregate types, > 64 bits, OR has associated behavioral functions.
         - Passed by pointer: Module_Verb(Module_T * p_module)

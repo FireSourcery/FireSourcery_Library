@@ -25,6 +25,7 @@
   - Markdown — backticks, so the preview highlights it: `TypeName_T`, `MOTOR_STATE_INIT`, even a bare member `INIT`.
   - C comments — brackets, `[TypeName_T]`, which the `.vscode/comment-reference` grammar highlights.
   - Bold — emphasis only, never code.
+  - Older docs still use `[Name]` in markdown; convert them only when asked.
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
 - Architecture notes and findings live in `Docs/`: Conventions, Patterns, Decisions, Findings, Modules, References. Index: [Docs/README.md](Docs/README.md).
 
@@ -95,6 +96,8 @@
   - **Full-forwarder facade** — only when peer types must be hidden from callers (rare).
 - Types earn themselves by holding state or enforcing invariants, not by re-exporting another type's API.
 - For value-embedded members (`Outer_T { Inner_T Base; }`), forwarders are acceptable to keep inner layout private. Never return a mutable pointer to a value-embedded member.
+- **Interface tables point straight at regular-signature functions.** Give the function the table's shape (context first) and cast once at the row (`(OD_GetInfoFn_T)PDO_OdGetInfo`); no static adapter wrappers. A check that needs data the call chain doesn't own goes where that data is used, not threaded through every intermediate signature.
+- Architecture notes behind these rules: `Docs/` Principles, Conventions, Patterns, Decisions.
 
 ## API Scoping
 - **Parameters declare dependencies.** A function takes the narrowest struct that contains every field it reads or writes. `f(Input_T *)` states "reads only config."

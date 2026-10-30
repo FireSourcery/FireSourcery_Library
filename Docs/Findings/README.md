@@ -23,4 +23,6 @@ finding may supersede an earlier one; say so in both.
 
 ## Records
 
-None yet.
+| Record | About |
+|---|---|
+| [2026-10-14_CorruptLooseBlobs.md](2026-10-14_CorruptLooseBlobs.md) | Three corrupt loose blobs break history searches; refetch fix |

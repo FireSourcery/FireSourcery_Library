@@ -32,6 +32,7 @@ void VBus_Reinit(VBus_T *);                                  /* derive from both
 - Config functions take one `Config_T` and do not re-derive. The caller re-derives (`VBus_Reinit`).
 - An invariant across partitions is on the runtime holding both: `VBus_Config_Set(VBus_T *, id, value)` re-anchors the monitor thresholds when VSupplyNominal is written, after `VBus_ConfigId_Set(VBus_Config_T *, ...)`.
 - Validity is per partition: `VBus_Config_IsValid`, `VBus_MonitorConfig_IsValid`.
+- A runtime never holds a pointer to its Config. One layer doing the NVM mapping is enough; decomposing collaborators further to avoid a copy (splitting the `Hysteresis_T` thresholds) was rejected as unwieldy layers.
 - Derivations across partitions make the Init order matter. The VBus derate slopes divide by monitor threshold spans, so the monitor partition loads first.
 - Used by: VBus, VMonitor, HeatMonitor, Hall, Encoder.
 

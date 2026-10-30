@@ -74,6 +74,11 @@ than a generic matrix step.
   holds the published form, the runtime the derived form.
   - G = 1/L beside L in [Stator_Winding_T].
   - Kp and KiPerTick beside the Config's Kp, Ki, Kd in [PID_T].
+  - Only what the step uses is stored. An operation outside the step, such as the inverse,
+    derives on demand. The init sets the output unit; the step is never evaluated through views
+    that change its stored equation. `Linear_T` holds the forward coefficients `{Slope,
+    SlopeShift, X0, XDelta}`: the inverse slope and the Y side went, and the shift-offset format
+    views collapsed into `Linear_Fract16_Init` / `Linear_Percent16_Init` (2026-10-23).
 - **A coefficient has an update rate**: constant (the winding, the gains), per operating point
   ([FOC_CaptureSpeed], at the speed loop), or per tick ([FOC_SetTheta]).
   - Store a per-tick coefficient that two operations share: Park and inverse Park share Sine and

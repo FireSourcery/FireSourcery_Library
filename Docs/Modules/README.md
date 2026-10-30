@@ -10,6 +10,10 @@ folder.
 
 ---
 
+## Written
+
+- [Motor/LimitPhysics.md](Motor/LimitPhysics.md): which current and supply bound binds where, stall, bus energy
+
 ## Not moved yet
 
 - `Motor/Docs/*.md` (except `FixedPoint.md`, which goes to `../Conventions/`)

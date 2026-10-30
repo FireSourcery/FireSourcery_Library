@@ -39,11 +39,12 @@ diagram where the structure is not obvious from the shape.
 |---|---|---|
 | [EquationStruct.md](EquationStruct.md) | Design | A module computes a published equation every tick: where its coefficients, state, inputs and outputs go |
 | [Facets.md](Facets.md) | Architectural | One object serves several kinds of client: one header per concern, each a complete view |
+| [ProtocolStack.md](ProtocolStack.md) | Architectural | A wire protocol with a spec-fixed profile and a device integration: generic engine, opaque-context table |
+| [EdgePollSnapshot.md](EdgePollSnapshot.md) | Idiom | An edge detector wraps a poll that writes what it compares: snapshot the prior value first |
 
 ---
 
 ## Candidates
 
 Decided, not yet written up in this shape:
-- Snapshot the prior state before an edge poll writes it (idiom)
-- Typed callback parameters, one cast at registration (idiom)
+- Typed callback parameters, one cast at registration (idiom): notes in [FunctionPointerCasting.md](FunctionPointerCasting.md)
