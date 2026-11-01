@@ -37,9 +37,13 @@ diagram where the structure is not obvious from the shape.
 
 | File | Level | Use when |
 |---|---|---|
+| [Descriptor.md](Descriptor.md) | Architectural | What is fixed for the image is a `const` struct the compiler folds at each inlined call; its two forms follow |
+| [DescriptorPattern.md](DescriptorPattern.md) | Architectural | A hardware-bound module: descriptor in FLASH, state in RAM, config in NVM, one handle |
+| [DescriptorTemplate.md](DescriptorTemplate.md) | Idiom | A generic primitive over many shapes: the descriptor is the template argument, the state passed beside it |
 | [EquationStruct.md](EquationStruct.md) | Design | A module computes a published equation every tick: where its coefficients, state, inputs and outputs go |
 | [Facets.md](Facets.md) | Architectural | One object serves several kinds of client: one header per concern, each a complete view |
 | [ProtocolStack.md](ProtocolStack.md) | Architectural | A wire protocol with a spec-fixed profile and a device integration: generic engine, opaque-context table |
+| [WrapperSurface.md](WrapperSurface.md) | Design | An outer module exposes an inner one, or couples two peers: adapt, get or forward, and when a wrapper type earns itself |
 | [EdgePollSnapshot.md](EdgePollSnapshot.md) | Idiom | An edge detector wraps a poll that writes what it compares: snapshot the prior value first |
 
 ---
