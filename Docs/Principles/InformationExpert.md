@@ -7,15 +7,21 @@ answered once, at one layer, rather than re-derived in every module that meets i
 answer has one home. A module that answers a question it has no unique knowledge of duplicates the
 reasoning of every other module that meets the same question. Parameter writes are the example:
 whether a write is safe while the system runs is a property of writing into any running system, not
-of motor physics. Even PolePairs is generic in that sense.
+of motor physics. Even PolePairs is generic in that sense. The test is to swap the domain noun for
+one from another domain: "PolePairs must not change under the running control loop" reads the same
+with EncoderTicksPerRev, a timer prescaler or a baud rate, any value consumed by a running ISR. A
+domain check that survives the swap is generic reasoning dressed in domain vocabulary.
 
 **Implications**
 
 - The motor layer answers motor-domain questions: physics, electrical safety, struct consistency,
-  and the schema of its parameters.
+  and the schema of its parameters. What a write recomputes is its alone: only the motor module
+  knows which derived fields depend on PolePairs.
 - A parameter service at the controller layer answers system questions: sessions, lifecycle, write admission, and which
   parameters need which window. See [0001_ParameterWriteAdmission.md](../Decisions/0001_ParameterWriteAdmission.md).
 - A domain-specific hazard stays with its domain: gating the phase outputs on motor state is motor
-  logic.
+  logic. The two gates compose and neither consults the other: the motor state machine decides
+  what voltages reach the phases, write admission decides when the numbers it computes them from
+  may change.
 
 **Source** — Information Expert, GRASP (Larman, *Applying UML and Patterns*).

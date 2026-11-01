@@ -84,3 +84,20 @@ Notes:
 - Replace the `vqBand` lines in `FOC_ProcIFeedback_Base` and `FOC_ProcIFeedback_Decouple` with [FOC_VqBand], or [_foc_vdynamicband] when a dynamic side is in use. The side needs i_q's request and ω·ψ, both available there.
 - Hold the motion key's previous sign for [hysteresis_sign].
 - Readers of Direction that aren't about the lock move first. The list is in the Direction end-state note: arming, Mot/Gen key, TorqueZero filter, readbacks, [Motor_IsSpeedAligned], and the motoring command frame.
+
+
+## PID
+
+```mermaid
+flowchart LR
+    CAP["ω capture, 1 ms"] --> FF["vd_ff = −ω·Lq·iq<br/>vq_ff = ω·Ld·id + ω·ψ"]
+    BUS["vPhaseLimit = vBus / 2"] --> BD["PidId band<br/>±vPhaseLimit − vd_ff"]
+    FF --> BD
+    BD --> PD["PidId: P + I, anchored"] --> VD["Vd = PI + vd_ff"]
+    VD --> CIRC["Vq budget<br/>√(vPhaseLimit² − Vd²)"]
+    CIRC --> BAND["vqBand = ±budget ∩ VLimit"]
+    POL["VLimit policy"] --> BAND
+    BAND --> BQ["PidIq band<br/>vqBand − vq_ff"]
+    FF --> BQ
+    BQ --> PQ["PidIq: P + I, anchored"] --> VQ["Vq = PI + vq_ff"]
+```

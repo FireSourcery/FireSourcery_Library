@@ -28,6 +28,8 @@
   - Older docs still use `[Name]` in markdown; convert them only when asked.
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
 - Architecture notes and findings live in `Docs/`: Conventions, Patterns, Decisions, Findings, Modules, References. Index: [Docs/README.md](Docs/README.md).
+- A doc leads with a reference sheet of what is the case: facts, rules, options and their defaults, limits, and what is not measured. Derivations, each experiment, and verification logs go in files of their own. Split an existing doc only when asked.
+- Simulations go in `Motor/Docs/Simulation/<topic>/` with their plots; conventions in its [README.md](Motor/Docs/Simulation/README.md).
 
 ### Self-Improvement Loop
 - After ANY correction from the user: update `.claude/tasks/lessons.md` with the pattern

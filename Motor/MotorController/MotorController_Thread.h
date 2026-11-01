@@ -250,6 +250,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         {
             Blinky_Proc(&p_dev->BUZZER);
             Blinky_Proc(&p_dev->METER);
+
+            for (uint8_t i = 0; i < MOT_USER_DIN_COUNT; i++) { _UserDIn_Modal_PollEdgeCmd(&p_dev->DINS[i], (void *)p_dev); } /* Poll with Cmd */
         }
 
         // if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_25) == true)
@@ -261,8 +263,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_1000) == true)
         {
-            for (uint8_t iDin = 0; iDin < MOT_USER_DIN_COUNT; iDin++) { _UserDIn_Modal_PollEdgeCmd(&p_dev->DINS[iDin], (void *)p_dev); } /* Poll with Cmd */
-
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
 
@@ -270,7 +270,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
             MotorController_ProcSpeedLimits(p_dev);
-            // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true)
 
             /* Can use low priority check, as motor is already in fault state. */
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, &MOTOR_STATE_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
@@ -279,7 +278,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
             if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, p_mc->FaultFlags); }
 
             /* In case of UART Rx Overflow Timeout */
-            for (uint8_t iUart = 0U; iUart < p_dev->UART_COUNT; iUart++) { UART_PollRestartRxIsr(&p_dev->P_UARTS[iUart]); }
+            for (uint8_t i = 0U; i < p_dev->UART_COUNT; i++) { UART_PollRestartRxIsr(&p_dev->P_UARTS[i]); }
         }
     }
 

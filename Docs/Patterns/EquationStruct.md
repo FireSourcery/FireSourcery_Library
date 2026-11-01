@@ -2,7 +2,7 @@
 
 A stateful math module is one published equation, with its coefficients and its state bound into a
 struct. Inputs come in as arguments; outputs that other blocks read are stored. The struct is not a
-model of a physical part: [Stator_Orthogonal_T] is the stator equation on two orthogonal axes, the
+model of a physical part: `Stator_Orthogonal_T` is the stator equation on two orthogonal axes, the
 virtual α/β of the stationary frame or the d/q of an estimated one, with the extended-EMF L = Lq.
 
 **Level** — design.
@@ -39,8 +39,8 @@ static inline accumulator_io_t Accumulator_Step(Accumulator_T * p_accum, accumul
 }
 ```
 
-A struct that binds only coefficients is a Ref: [Stator_Winding_T] binds the R and L of
-`stator_emf(r, l, i_prev, i, v)`, and [Stator_Axis_T] carries the period record after them.
+A struct that binds only coefficients is a Ref: `Stator_Winding_T` binds the R and L of
+`stator_emf(r, l, i_prev, i, v)`, and `Stator_Axis_T` carries the period record after them.
 
 ### Roles
 
@@ -53,8 +53,8 @@ Set by who writes a field and who reads it.
 | Input | another block | the step | argument |
 | Output | the step | other blocks | field, stored |
 
-An integrator's output is its state: Accumulator in [Accumulator_T], Output in [MovAvg_T], the
-angle in [Angle_T].
+An integrator's output is its state: Accumulator in `Accumulator_T`, Output in `MovAvg_T`, the
+angle in `Angle_T`.
 
 ### Coefficients
 
@@ -64,26 +64,26 @@ are the free entries, named in the published notation. The names make it a speci
 than a generic matrix step.
 
 - **Zero entries are absent, tied entries are one field.**
-  - The Park rotation `[[c, s], [−s, c]]` is Sine and Cosine in [FOC_T].
+  - The Park rotation `[[c, s], [−s, c]]` is Sine and Cosine in `FOC_T`.
   - The dq coupling `ω·[[0, −Lq], [Ld, 0]]`, with the offset `ω·ψ`, is OmegaLd, OmegaLq and
-    OmegaPsi in [FOC_ElectricalSpeed_T].
-  - Clarke has no free entries, so [foc_clarke] is a pure function with constants and no struct.
+    OmegaPsi in `FOC_ElectricalSpeed_T`.
+  - Clarke has no free entries, so `foc_clarke` is a pure function with constants and no struct.
 - **Each coefficient keeps its own unit, base and fixed-point format.** R is `accum32_t` because it
   exceeds 1 pu. KiPerTick is a mantissa and a shift.
 - **Derived coefficients sit beside their source**, the equation pre-computed for the step. Config
   holds the published form, the runtime the derived form.
-  - G = 1/L beside L in [Stator_Winding_T].
-  - Kp and KiPerTick beside the Config's Kp, Ki, Kd in [PID_T].
+  - G = 1/L beside L in `Stator_Winding_T`.
+  - Kp and KiPerTick beside the Config's Kp, Ki, Kd in `PID_T`.
   - Only what the step uses is stored. An operation outside the step, such as the inverse,
     derives on demand. The init sets the output unit; the step is never evaluated through views
     that change its stored equation. `Linear_T` holds the forward coefficients `{Slope,
     SlopeShift, X0, XDelta}`: the inverse slope and the Y side went, and the shift-offset format
     views collapsed into `Linear_Fract16_Init` / `Linear_Percent16_Init` (2026-10-23).
 - **A coefficient has an update rate**: constant (the winding, the gains), per operating point
-  ([FOC_CaptureSpeed], at the speed loop), or per tick ([FOC_SetTheta]).
+  (`FOC_CaptureSpeed`, at the speed loop), or per tick (`FOC_SetTheta`).
   - Store a per-tick coefficient that two operations share: Park and inverse Park share Sine and
     Cosine.
-  - Pass one that a single operation uses as an argument: θ and Δθ of [Stator_Orthogonal_ProcPark].
+  - Pass one that a single operation uses as an argument: θ and Δθ of `Stator_Orthogonal_ProcPark`.
 
 ### Rules
 
@@ -91,13 +91,13 @@ than a generic matrix step.
   nor output.
 - **A new type per coefficient structure, not per physical part.** The αβ stator (scalar R and L on
   uncoupled axes) and a dq stator (R, Ld, Lq and the ω coupling) are different matrices, so different
-  types. The dq stator's coefficients already live in [FOC_Electrical_T] and [FOC_ElectricalSpeed_T].
+  types. The dq stator's coefficients already live in `FOC_Electrical_T` and `FOC_ElectricalSpeed_T`.
 - **Composition is the block diagram.** Nested structs are blocks, and stored outputs are the wires
   between them.
 - **A type or a pure function earns its place by naming an established, published concept**:
   physical, mathematical, control or DSP. Being physics is not the test.
 - **Outputs other blocks read are stored.** Whether the stateful layer also returns them is open;
-  [FOC_GetVOut] is the candidate.
+  `FOC_GetVOut` is the candidate.
 
 The sensorless angle sensor, as blocks and the stored outputs between them:
 
@@ -120,15 +120,15 @@ flowchart LR
 
 **In code**
 
-- [Accumulator_T] — `Math/Accumulator/Accumulator.h`, over [accumulator]
-- [MovAvg_T] — `Math/Filter/MovAvg.h`, over [mov_avg]
-- [Linear_T] — `Math/Linear/Linear.h`, over `linear_math.h`
-- [Hysteresis_T] — `Math/Hysteresis/Hysteresis.h`
-- [PID_T] — `Math/PID/PID.h`
-- [AnglePll_T] — `Math/Angle/AnglePll.h`, a PI into an integrator
-- [Stator_Winding_T], [Stator_Axis_T], [Stator_Orthogonal_T] — `Motor/Motor/Model/Stator.h`, over `stator_math.h`
-- [FOC_T] — `Motor/Motor/Math/FOC.h`
-- [EmfObserver_T] — `Motor/Motor/Model/EmfObserver.h`, a composition: the stator equation in two frames, the filters on its error ([smo_z], [lpf_step]), and the tracker
+- `Accumulator_T` — `Math/Accumulator/Accumulator.h`, over `accumulator`
+- `MovAvg_T` — `Math/Filter/MovAvg.h`, over `mov_avg`
+- `Linear_T` — `Math/Linear/Linear.h`, over `linear_math.h`
+- `Hysteresis_T` — `Math/Hysteresis/Hysteresis.h`
+- `PID_T` — `Math/PID/PID.h`
+- `AnglePll_T` — `Math/Angle/AnglePll.h`, a PI into an integrator
+- `Stator_Winding_T`, `Stator_Axis_T`, `Stator_Orthogonal_T` — `Motor/Motor/Model/Stator.h`, over `stator_math.h`
+- `FOC_T` — `Motor/Motor/Math/FOC.h`
+- `EmfObserver_T` — `Motor/Motor/Model/EmfObserver.h`, a composition: the stator equation in two frames, the filters on its error (`smo_z`, `lpf_step`), and the tracker
 
 **Related**
 - Module struct caches output, similar other async object that `Proc` runs to completion. In the equation case, the output is further required to feed into the next input.

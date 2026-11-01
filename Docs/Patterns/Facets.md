@@ -4,7 +4,7 @@
 Each facet is a complete view of the object along one axis. They don't replace each other; they coexist. A reader who needs the parameter view goes to *_Var.h and gets a complete answer for that axis. A document is classified by multiple orthogonal axes — subject, format, time, place, audience — rather than a single hierarchical category. This is the literal origin of the term "facet."
 
 
-**Level** — architectural: every top-level object, [Motor_T] and [MotorController_T], is split this
+**Level** — architectural: every top-level object, `Motor_T` and `MotorController_T`, is split this
 way.
 
 **Force** — One object serves several kinds of client: the user's commands, the variable system, the
@@ -26,8 +26,8 @@ coexist; none replaces another.
 
 **In code**
 
-- [Motor_T] — `Motor/Motor/`: `Motor_User.h`, `Motor_Var.h`, `Motor_FOC.h`, `Motor_StateMachine.h`
-- [MotorController_T] — `Motor/MotorController/`: `MotorController_User.h`, `MotorController_Var.h`, `MotorController_StateMachine.h`
+- `Motor_T` — `Motor/Motor/`: `Motor_User.h`, `Motor_Var.h`, `Motor_FOC.h`, `Motor_StateMachine.h`
+- `MotorController_T` — `Motor/MotorController/`: `MotorController_User.h`, `MotorController_Var.h`, `MotorController_StateMachine.h`
 
 **Rejected**
 

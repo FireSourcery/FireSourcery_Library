@@ -2,7 +2,7 @@
 KE current-loop sequences: where the I sample is captured, Parked and run through the PI, and when its output loads.
 
 One timeline per sequence (PwmSampleSequence_<n>_<name>.png), and a summary across a CPU speed factor (PwmSampleSequenceSummary.png).
-CurrentLoopSequencing.md and PwmConvention.md describe the hardware and the code paths.
+CurrentLoopSequencing.md and CurrentSampling.md describe the hardware and the code paths.
 
 Model
     FTM2 center-aligned, T = 50 us. Counter top (TOF, PWM ISR) at t = 0, 50, ...; bottom at 25 + 50n.
