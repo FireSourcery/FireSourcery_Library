@@ -78,19 +78,6 @@ static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (
 
 */
 /******************************************************************************/
-/* Supply current limits at this motor's operating point, [Cw:Ccw] */
-#if defined(VBUS_I_LIMIT_POWER_BALANCE)
-static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqLimits(p_motor->P_VBUS, FOC_Vd(&p_motor->P_MOTOR->Foc), FOC_Id(&p_motor->P_MOTOR->Foc), FOC_Vq(&p_motor->P_MOTOR->Foc)); }
-#elif defined(VBUS_I_LIMIT_PHASE_BOUND)
-static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqPhaseLimits(p_motor->P_VBUS, math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR)), FOC_Id(&p_motor->P_MOTOR->Foc)); }
-#elif defined(VBUS_I_LIMIT_V_DERATE)
-/* [Motor_SetDirection] holds v_q to the Direction half-plane. Motoring draws, Generating returns */
-static inline interval_t Motor_VBusILimits(Motor_T * p_motor) { return VBus_FOC_IqDerateLimits(p_motor->P_VBUS, (sign_t)Motor_Direction(p_motor->P_MOTOR), p_motor->P_MOTOR->Config.ILimitMotoring_Pu, p_motor->P_MOTOR->Config.ILimitGenerating_Pu); }
-#endif
-
-/* Store only. Takes effect on the next resolve. */
-static inline void Motor_CaptureISupplyLimits(Motor_T * p_motor) { p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits(p_motor); }
-
 /*
     Decoupling-basis ω input for FOC_CaptureSpeed. Δθ [angle16/Ts], the turn-base ω_pu of [FOC_Electrical_T]. Free of the speed base.
 */
@@ -104,11 +91,7 @@ static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_Capt
     A state that Parks it earlier, e.g. in its ON_PHASE action, at the angle [FOC_T] holds there, pairs the two below.
 */
 /* Parks at the held angle. The flags stay set */
-static inline void Motor_FOC_CaptureI(Motor_Context_T * p_motor) { _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values); }
-
-/* The token of a set [Motor_FOC_CaptureI] Parked, without Parking it again */
-static inline bool Motor_FOC_TakeCapturedI(Motor_Context_T * p_motor) { return Phase_TakeComplete(&p_motor->PhaseInput.I); }
-
+// static inline void Motor_FOC_CaptureI(Motor_Context_T * p_motor) { _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values); }
 
 
 /* Directly read register state */
@@ -130,15 +113,36 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
 
 
 /*
+    Supply window [ISupplyLimits], from the operating point and VBus, by the build's [VBUS_I_LIMIT_*] law.
+    Store only. Takes effect on the next [Motor_ResolveILimits].
+*/
+extern void Motor_FOC_ResolveISupplyLimits(Motor_T * p_motor);
+
+/*
     The state running the current loop resolves the held inputs, on entry and on its speed tick.
-    The supply window is captured periodically on the selected thread, and on entry under the Direction the state runs with:
-        MOTOR_I_SUPPLY_LIMITS_ON_SPEED  the speed tick, [Motor_FOC_ProcILimits]
+    The supply window is resolved periodically on the selected thread, and on entry under the Direction the state runs with:
+        MOTOR_I_SUPPLY_LIMITS_ON_SPEED  the speed tick, [Motor_FOC_ProcISupplyLimitsOnSpeed]
         MOTOR_I_SUPPLY_LIMITS_ON_VBUS   the VBus thread, 1 ms
         MOTOR_I_SUPPLY_LIMITS_ON_MAIN   the main thread, 16 ms
-        none                            never captured, the window stays open from [Motor_Init]
+        none                            never resolved, the window stays open from [Motor_Init]
 */
-extern void Motor_FOC_ResolveILimits(Motor_T * p_motor);
-extern void Motor_FOC_ProcILimits(Motor_T * p_motor);
+static inline void Motor_FOC_ResolveISupplyLimitsOnEntry(Motor_T * p_motor)
+{
+#if defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED) || defined(MOTOR_I_SUPPLY_LIMITS_ON_VBUS) || defined(MOTOR_I_SUPPLY_LIMITS_ON_MAIN)
+    Motor_FOC_ResolveISupplyLimits(p_motor);
+#else
+    (void)p_motor;
+#endif
+}
+
+static inline void Motor_FOC_ProcISupplyLimitsOnSpeed(Motor_T * p_motor)
+{
+#if defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED)
+    Motor_FOC_ResolveISupplyLimits(p_motor);
+#else
+    (void)p_motor;
+#endif
+}
 
 /******************************************************************************/
 /*!

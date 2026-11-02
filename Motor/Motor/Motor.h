@@ -517,19 +517,9 @@ static inline void _Motor_ApplySpeedLimits(Motor_Context_T * p_motor, interval_t
     Ramp_SetLimits(&p_motor->SpeedRamp, sLimits.low, sLimits.high);
 }
 
-/*
-    Materialize — the write point into the hot path. Ccw/Cw signed interval is what Ramp/PID consume.
-    Resolve = [Pushed, Config, Direction, Supply] → write Ccw/Cw → flush PID/Ramp.
-    Poll or alternatively caller track input channels for clear
 
-    Idempotent; call after any input change. Cold path.
-
-    Limits as state messages, resolve via polling, unifies handling.
-    Eliminate state check by caller.
-*/
 static inline void Motor_CaptureILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu) { p_motor->ILimit.Motoring = motoring_pu; p_motor->ILimit.Generating = generating_pu; }
-static inline void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, _Motor_ResolveILimits(p_motor)); }
-static inline void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, _Motor_ResolveSpeedLimits(p_motor)); }
+
 
 
 /******************************************************************************/
@@ -700,6 +690,9 @@ extern void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value);
 /*
     Active Limits — push interface. Unsigned PU in, direction-resolved Ramp limits out.
 */
+extern void Motor_ResolveILimits(Motor_Context_T * p_motor);
+extern void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor);
+
 extern void Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu);
 extern void Motor_SetILimitMotoring(Motor_Context_T * p_motor, uint16_t motoring_pu);
 extern void Motor_SetILimitGenerating(Motor_Context_T * p_motor, uint16_t generating_pu);

@@ -270,13 +270,27 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
         limit = min(Stored, Config)  => Motor_Resolve*Limits => Ramp/PID
 
     Unsigned magnitude in, direction-resolved signed [Cw:Ccw] out. FRACT16_MAX => no cap.
-    I resolves within ISupplyLimits, signed already, captured at the operating point by [Motor_CaptureISupplyLimits].
-    Store only. The state running the current loop resolves on entry, [Motor_FOC_ResolveILimits], and on its speed tick, [Motor_FOC_ProcILimits].
+    I resolves within ISupplyLimits, signed already, resolved at the operating point by [Motor_FOC_ResolveISupplyLimits].
+    Store only. The state running the current loop resolves on entry and on its speed tick, [Motor_ResolveILimits].
 */
 /******************************************************************************/
 /*
     I Limits. Motoring aligns with Direction, Generating opposes.
 */
+
+/*
+    Materialize — the write point into the hot path. Ccw/Cw signed interval is what Ramp/PID consume.
+    Resolve = [Pushed, Config, Direction, Supply] → write Ccw/Cw → flush PID/Ramp.
+    Poll or alternatively caller track input channels for clear
+
+    Idempotent; call after any input change. Cold path.
+
+    Limits as state messages, resolve via polling, unifies handling.
+    Eliminate state check by caller.
+*/
+/* Out of line: one copy for every entry, speed tick and push */
+void Motor_ResolveILimits(Motor_Context_T * p_motor) { _Motor_ApplyILimits(p_motor, _Motor_ResolveILimits(p_motor)); }
+
 /* Push alternative: store and resolve from any state */
 void _Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu)
 {
@@ -314,6 +328,8 @@ void Motor_ResetILimit(Motor_Context_T * p_motor)
 /*
 */
 /******************************************************************************/
+void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor) { _Motor_ApplySpeedLimits(p_motor, _Motor_ResolveSpeedLimits(p_motor)); }
+
 /*
     Speed Limits. Forward aligns with Config.DirectionForward, Reverse opposes.
     Keyed by user direction — no resync on Direction change.

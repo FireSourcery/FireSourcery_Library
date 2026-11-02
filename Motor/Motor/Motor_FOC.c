@@ -39,21 +39,8 @@ void Motor_FOC_WriteDuty(Motor_T * p_motor)
     Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Pu(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
 }
 
-void Motor_FOC_ResolveILimits(Motor_T * p_motor)
-{
-#if defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED) || defined(MOTOR_I_SUPPLY_LIMITS_ON_VBUS) || defined(MOTOR_I_SUPPLY_LIMITS_ON_MAIN)
-    Motor_CaptureISupplyLimits(p_motor);
-#endif
-    Motor_ResolveILimits(p_motor->P_MOTOR);
-}
 
-void Motor_FOC_ProcILimits(Motor_T * p_motor)
-{
-#if defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED)
-    Motor_CaptureISupplyLimits(p_motor);
-#endif
-    Motor_ResolveILimits(p_motor->P_MOTOR);
-}
+
 
 /******************************************************************************/
 /*!
@@ -65,6 +52,38 @@ void Motor_FOC_ProcILimits(Motor_T * p_motor)
     Out of line: every current-mode proc takes it, and inline each would carry its own Clarke and Park.
 */
 __attribute__((noinline)) static bool Motor_FOC_TakeI(Motor_Context_T * p_motor) { return FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); }
+
+
+// __attribute__((noinline)) static bool Motor_FOC_ClarkePark(Motor_Context_T * p_motor) { return _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); }
+
+
+/* The torque path's i_d request as the LOOP last stepped it */
+static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
+{
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    return FOC_IdFw(&p_context->Foc);
+#else
+    (void)p_context; return 0;
+#endif
+}
+
+/*
+    The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
+    The LOOP steps them [_Motor_FOC_ProcTorqueReq] at the tick their slopes and gains are scaled for, and the state entries match them.
+    The take Parks at the angle the LOOP last set, the sample's tick.
+    ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
+*/
+void Motor_FOC_ProcTorqueFeedback(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    if (Motor_FOC_TakeI(p_context) == true)
+    {
+        FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), Motor_FOC_IdTorqueReq(p_context), Ramp_GetOutput(&p_context->TorqueRamp));
+        FOC_ProcInvClarkePark(&p_context->Foc);
+        Motor_FOC_WriteDuty(p_motor);
+    }
+}
+
 
 /*
     Current-mode angle control. Req Id/Iq to Vabc.
@@ -105,33 +124,6 @@ void _Motor_FOC_ProcTorqueReq(Motor_Context_T * p_context, ufract16_t vbus, frac
 void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 {
     _Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR, VBus_Pu(p_motor->P_VBUS), req);
-}
-
-/* The torque path's i_d request as the LOOP last stepped it */
-static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
-{
-#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    return FOC_IdFw(&p_context->Foc);
-#else
-    (void)p_context; return 0;
-#endif
-}
-
-/*
-    The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
-    The LOOP steps them [_Motor_FOC_ProcTorqueReq] at the tick their slopes and gains are scaled for, and the state entries match them.
-    The take Parks at the angle the LOOP last set, the sample's tick.
-    ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
-*/
-void Motor_FOC_ProcTorqueFeedback(Motor_T * p_motor)
-{
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
-    if (Motor_FOC_TakeI(p_context) == true)
-    {
-        FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), Motor_FOC_IdTorqueReq(p_context), Ramp_GetOutput(&p_context->TorqueRamp));
-        FOC_ProcInvClarkePark(&p_context->Foc);
-        Motor_FOC_WriteDuty(p_motor);
-    }
 }
 
 /* Common state machine call for align */
@@ -212,7 +204,7 @@ void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 
 
 /*
-    Voltage-mode on a seperate path
+    Voltage-mode on a separate path
 */
 void Motor_FOC_ProcAngleV(Motor_T * p_motor)
 {
@@ -268,11 +260,40 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor)
     FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
 }
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
     Motor_SetDirection(p_dev, direction);
     // FOC_SetVAntiPlugging(p_foc, direction, vPhaseLimit);
     FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS));
+}
+
+/*
+    Supply current limits at this motor's operating point, [Cw:Ccw]. One law per [VBUS_I_LIMIT_*].
+*/
+static inline interval_t Motor_VBusILimits_PowerBalance(Motor_T * p_motor) { return VBus_FOC_IqLimits(p_motor->P_VBUS, FOC_Vd(&p_motor->P_MOTOR->Foc), FOC_Id(&p_motor->P_MOTOR->Foc), FOC_Vq(&p_motor->P_MOTOR->Foc)); }
+
+static inline interval_t Motor_VBusILimits_PhaseBound(Motor_T * p_motor) { return VBus_FOC_IqPhaseLimits(p_motor->P_VBUS, math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR)), FOC_Id(&p_motor->P_MOTOR->Foc)); }
+
+/* [Motor_SetDirection] holds v_q to the Direction half-plane. Motoring draws, Generating returns */
+static inline interval_t Motor_VBusILimits_VDerate(Motor_T * p_motor) { return VBus_FOC_IqDerateLimits(p_motor->P_VBUS, (sign_t)Motor_Direction(p_motor->P_MOTOR), p_motor->P_MOTOR->Config.ILimitMotoring_Pu, p_motor->P_MOTOR->Config.ILimitGenerating_Pu); }
+
+/*
+    Out of line: one copy for every entry, speed tick and periodic thread.
+*/
+void Motor_FOC_ResolveISupplyLimits(Motor_T * p_motor)
+{
+#if defined(VBUS_I_LIMIT_POWER_BALANCE)
+    p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits_PowerBalance(p_motor);
+#elif defined(VBUS_I_LIMIT_PHASE_BOUND)
+    p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits_PhaseBound(p_motor);
+#elif defined(VBUS_I_LIMIT_V_DERATE)
+    p_motor->P_MOTOR->ISupplyLimits = Motor_VBusILimits_VDerate(p_motor);
+#endif
 }
 
 /******************************************************************************/

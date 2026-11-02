@@ -446,7 +446,7 @@ where the set's channels clear, which also removes the need for the edge test.
 - **ADC0** — 6 slots, free-running on its own PDB, no ISR, results polled by the 1 ms thread.
 
 A group *is* a sequence, and the platform hook is the PDB channel write the board already has:
-`HAL_PDB_ConfigChannel(p_pdb, channel, offset, count)` and
+`S32_PDB_ConfigChannel(p_pdb, channel, offset, count)` and
 `HAL_ADC_ActivateSequence(p_hal, channelStart, count)` are the same function.
 
 | Board, by hand | Through the module |

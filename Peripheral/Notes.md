@@ -7,6 +7,12 @@ Wrapper module -> Minimal const configuration or state for operation. `[Pin_T]` 
 
 Composites that need more than one register op (`HAL_ADC_ActivateEach`, `HAL_CAN_WriteTxMessage`) stay in `Peripheral/<Module>/HAL_<Module>.h` and compose the platform's primitives, so a platform writes primitives only.
 
+## Platform functions
+
+A platform's HAL file also holds functions the Peripheral layer never calls: init and routing that only the Board uses. They take the platform prefix instead of `HAL_`, as `S32_PDB_ConfigChannel`, `S32_DMA_ConfigAdcTransferAt` and `KE0x_ADC_InitHwTriggerFtm2` do. They stay in the HAL file for convenience, beside the registers they write. The prefix marks them as outside the interface, so another platform does not have to define them.
+
+When one proves general enough that a wrapper module needs it, rename it `HAL_<Module>_*`, add its prototype to `Peripheral/<Module>/HAL_<Module>.h`, and call it from the module that needs the abstraction. `HAL_ADC_SelectDmaSequence` is that case on S32: it wraps the PDB channel write, and `ADC_Thread.h` calls it under `HAL_ADC_DMA_ENABLE`.
+
 ## Binding: direct include
 
 No function pointer virtualization. Directly include inline definitions.

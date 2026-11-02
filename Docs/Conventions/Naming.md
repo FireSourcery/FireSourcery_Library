@@ -88,6 +88,7 @@ effect and names what it returns:
 | `_ISR` | An interrupt handler | `ADC_OnComplete_ISR` |
 | `On` plus an event | Called when the event occurs | `ADC_OnComplete_ISR` |
 | `HAL_` | Hardware abstraction layer | `HAL_Pin_ToggleOutput` |
+| Platform name | A platform function outside the HAL interface, called by the Board; becomes `HAL_` when a Peripheral module needs it ([Notes.md](../../Peripheral/Notes.md)) | `S32_PDB_ConfigChannel`, `KE0x_ADC_InitHwTriggerFtm2` |
 
 ### Verbs on the module's own data
 
@@ -95,7 +96,7 @@ effect and names what it returns:
 |---|---|---|
 | Get | Read a value; no change | `PID_GetOutput` |
 | Set | Write a value from the caller, keeping the struct's invariants | `PID_SetOutputLimits` |
-| Capture | Take in data produced on another clock, for the next step / proc | `Stator_Axis_CaptureI`, `FOC_CaptureIabc` |
+| Capture | Store a value as it becomes available, for later processing: data produced on another clock, for the next step / proc | `Stator_Axis_CaptureI`, `FOC_CaptureIabc` |
 | Init | Set every field; no allocation. InitFrom takes a config, Init plus a part sets one part | `Motor_Init`, `PID_InitFrom`, `AnglePll_InitPid` |
 | Reset | Clear runtime state; keep the config | `PID_Reset`, `AnglePll_Reset` |
 | Zero | Set one quantity to zero | `Angle_ZeroAngle` |
@@ -103,8 +104,14 @@ effect and names what it returns:
 | Poll | A Proc that may do nothing; returns whether it did | `TimerT_Periodic_Poll`, `Hysteresis_Poll` |
 | Step | Advance an equation by one tick | `Accumulator_Step` |
 | Start, Stop | Begin or end what a Proc or Poll runs | `Motor_FOC_StartOpenLoop`, `Blinky_Stop` |
-| Resolve | Derive a value from several sources | `Angle_ResolveSpeed_Pu`, `Motor_ResolveILimits` |
+| Resolve | Derive further state from known state, usually from several sources; the result may be stored for later processing | `Angle_ResolveSpeed_Pu`, `Motor_ResolveILimits`, `Motor_FOC_ResolveISupplyLimits` |
 | Validate, IsValid | Bring a config into range; check it | `Motor_Config_Validate`, `Motor_Config_IsValid` |
+
+**Resolve or Capture.** Both can store state that later processing needs, so either can fit. Capture
+says the value is taken as it becomes available: `FOC_CaptureIabc` takes the I set at its completion.
+Resolve says the value is derived from state already held: `Motor_FOC_ResolveISupplyLimits` derives
+ISupplyLimits from the FOC operating point and VBus on whichever thread the build selects, and stores
+it for `Motor_ResolveILimits`. Name the one the call depends on: the arrival, or the derivation.
 
 ### Verbs on hardware or external data
 

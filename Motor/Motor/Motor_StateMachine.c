@@ -393,7 +393,8 @@ static void Run_Entry(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
 
     /* Takes the slots before matching, which clamps against them */
-    Motor_FOC_ResolveILimits(p_motor);
+    Motor_FOC_ResolveISupplyLimitsOnEntry(p_motor);
+    Motor_ResolveILimits(p_motor->P_MOTOR);
     Motor_ResolveSpeedLimits(p_motor->P_MOTOR);
     // Motor_ResolveFeedbackLimits(p_motor->P_MOTOR);
 
@@ -439,7 +440,8 @@ static void Run_OnSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_CaptureVSpeed(p_context);
-    Motor_FOC_ProcILimits(p_motor); /* Before the speed loop clamps against them */
+    Motor_FOC_ProcISupplyLimitsOnSpeed(p_motor);
+    Motor_ResolveILimits(p_motor->P_MOTOR); /* Before the speed loop clamps against them */
     Motor_ResolveSpeedLimits(p_motor->P_MOTOR);
     if (p_context->FeedbackMode.Speed == 1U) { Motor_ProcSpeedControlOf(p_context, p_context->UserCmd); }
 }
@@ -520,7 +522,8 @@ const State_T MOTOR_STATE_RUN =
 static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    Motor_FOC_ResolveILimits(p_motor); /* Current control regardless of FeedbackMode. SpeedPid output is I. */
+    Motor_FOC_ResolveISupplyLimitsOnEntry(p_motor);
+    Motor_ResolveILimits(p_context); /* Current control regardless of FeedbackMode. SpeedPid output is I. */
     Motor_FOC_MatchTorqueIState(p_context);
     Motor_FOC_MatchVOutput(p_context);
 }

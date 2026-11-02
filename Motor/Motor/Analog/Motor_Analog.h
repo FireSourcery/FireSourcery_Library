@@ -37,6 +37,7 @@
 /* 0 -> 1x, 1 -> 2x, 2 -> 4x, 3 -> 8x */
 #ifndef PHASE_ANALOG_DIVIDER_MASK
 #define PHASE_ANALOG_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
+/* PHASE_I_SAMPLE_DIVIDER_MASK */
 #endif
 
 static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
@@ -54,6 +55,7 @@ static inline void Motor_Analog_CaptureIb(Motor_Context_T * p_motor, adc_result_
 static inline void Motor_Analog_CaptureIc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 
 static inline void Motor_Analog_CaptureIabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.I = Phase_Iabc_PuOfAdcu(&p_motor->Config.IabcZeroRef_Adcu, a, b, c);}
+// static inline void Motor_Analog_CaptureI2Of3(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_Analog_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
 static inline void Motor_Analog_CaptureIBatch(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_Analog_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
 static inline void Motor_Analog_CaptureVabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.V = Phase_Vabc_PuOfAdcu(a, b, c);}
 

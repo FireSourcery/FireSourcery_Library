@@ -57,7 +57,7 @@
 ## Key Conventions
 
 ### Architecture Patterns
-- **HAL abstraction**: Hardware access through `HAL_*.h` headers with platform-specific implementations
+- **HAL abstraction**: Hardware access through `HAL_*.h` headers with platform-specific implementations. A platform function the Peripheral layer does not call, used by the Board only, takes the platform prefix (`S32_`, `KE0x_`), and becomes `HAL_` when a Peripheral module needs it. [Peripheral/Notes.md](Peripheral/Notes.md)
 - HAL functions must have focused signatures, few and focused parameters. Split logic into granular blocks.
 - **Thread/ISR separation**: `_Thread.h` files define periodic processing functions; ISR-safe boundaries are explicit
 - **State machines**: Hierarchical state machine framework in `Framework/StateMachine/` used extensively for motor control states

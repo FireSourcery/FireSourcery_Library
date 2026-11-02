@@ -43,8 +43,8 @@ flowchart LR
 
     %% Call sites
     C1S[["MC main 1 s<br/>MotorController_ProcILimits<br/>→ Motor_SetILimitDerates"]]
-    ENT[["Run_Entry, Intervention_Entry<br/>Motor_FOC_ResolveILimits"]]
-    TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, SpeedZero<br/>Motor_FOC_ProcILimits"]]
+    ENT[["Run_Entry, Intervention_Entry<br/>Motor_FOC_ResolveISupplyLimitsOnEntry<br/>then Motor_ResolveILimits"]]
+    TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, SpeedZero<br/>Motor_FOC_ProcISupplyLimitsOnSpeed<br/>then Motor_ResolveILimits"]]
     CVB[["VBus thread 1 ms"]]
     MC10[["MC main ~16 ms"]]
     RES[["Motor_ResolveILimits<br/>each push"]]
@@ -78,5 +78,5 @@ flowchart LR
 
 Green stadium: live limit source. Grey cylinder: stored config limit. Purple hexagon: frame conversion. Blue box: merge point. Red box: active clamp in the hot path. Amber dashed box: call site, with dotted edges meaning "invokes". Solid edges carry limit values.
 
-One of [MOTOR_I_SUPPLY_LIMITS_ON_SPEED], [MOTOR_I_SUPPLY_LIMITS_ON_VBUS], [MOTOR_I_SUPPLY_LIMITS_ON_MAIN] selects the thread that captures [ISupplyLimits] periodically. Entry captures under every selection, so a state starts on a window keyed by its own Direction. With none selected nothing captures, and [ISupplyLimits] stays open from [Motor_Init].
+One of [MOTOR_I_SUPPLY_LIMITS_ON_SPEED], [MOTOR_I_SUPPLY_LIMITS_ON_VBUS], [MOTOR_I_SUPPLY_LIMITS_ON_MAIN] selects the thread that resolves [ISupplyLimits] periodically, with [Motor_FOC_ResolveISupplyLimits]. Entry resolves it under every selection, so a state starts on a window keyed by its own Direction. With none selected nothing resolves it, and [ISupplyLimits] stays open from [Motor_Init].
 

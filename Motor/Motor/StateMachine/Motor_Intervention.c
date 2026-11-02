@@ -77,7 +77,8 @@ static void TorqueZero_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_CaptureVSpeed(p_context);
-    Motor_FOC_ProcILimits(p_motor);
+    Motor_FOC_ProcISupplyLimitsOnSpeed(p_motor);
+    Motor_ResolveILimits(p_context);
 }
 
 static const State_Action_T TORQUE_ZERO_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
@@ -144,7 +145,8 @@ static void SpeedZero_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_CaptureVSpeed(p_context);
-    Motor_FOC_ProcILimits(p_motor); /* Before the speed loop clamps against them */
+    Motor_FOC_ProcISupplyLimitsOnSpeed(p_motor);
+    Motor_ResolveILimits(p_context); /* Before the speed loop clamps against them */
     Motor_ProcSpeedControlOf(p_context, 0); /* drive to zero speed */
 }
 
