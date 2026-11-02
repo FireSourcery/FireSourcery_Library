@@ -155,6 +155,30 @@ static inline adc_mask_t _ADC_SetStateFrom_Branch(ADC_State_T * p_state, adc_mas
     return markers ^ sourceMarkers; /* return processed markers */
 }
 
+/*
+    Append [sourceMarkers] in channel order after the channels [ActiveChannels] holds, up to [limit] in all. Returns the appended.
+    Its caller sets the order of a fifo by sets. Same critical section as _ADC_SetStateFrom.
+*/
+static inline adc_mask_t _ADC_AppendStateFrom(ADC_State_T * p_state, adc_mask_t sourceMarkers, uint8_t limit)
+{
+    adc_mask_t markers = sourceMarkers;
+    uint8_t count = p_state->ActiveChannelCount;
+
+    for (adc_channel_t channel = 0U; (markers != 0UL) && (count < limit); channel++)
+    {
+        if ((markers & ADC_MaskOf(channel)) != 0UL)
+        {
+            p_state->ActiveChannels[count] = channel;
+            markers &= ~ADC_MaskOf(channel);
+            count++;
+        }
+    }
+
+    p_state->ActiveChannelCount = count;
+
+    return markers ^ sourceMarkers;
+}
+
 /* Armv6-M has no CLZ. __builtin_ctz is a libgcc call there, ~25 cycles per channel */
 static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, adc_mask_t sourceMarkers)
 {

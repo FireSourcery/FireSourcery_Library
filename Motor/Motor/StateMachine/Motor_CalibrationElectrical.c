@@ -272,7 +272,7 @@ static void Electrical_Entry(Motor_T * p_motor)
     ElectricalCalibration_T * p_params = ElectricalCalibrationBuffer(p_context);
 
     Phase_ActivateV0(&p_motor->PHASE);
-    p_context->ControlTimerBase = 0U;
+    Motor_ResetControlTimer(p_context);
     Motor_FOC_ClearFeedbackState(p_context);
     // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);

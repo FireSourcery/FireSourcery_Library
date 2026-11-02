@@ -233,7 +233,7 @@ typedef struct Motor_Config
         Pu per tick with additional ACCUMULATOR_SHIFT.
     */
     uint32_t SpeedRampSlope_PuPerTick;
-    uint32_t TorqueRampSlope_PuPerTick;
+    uint32_t TorqueRampSlope_PuPerTick;     /* Per I loop cycle, MOTOR_I_LOOP_FREQ: the requests step on the analog cycle */
 
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
@@ -378,6 +378,13 @@ typedef struct Motor_Context
     volatile uint32_t DebugBuffer[16];
 }
 Motor_Context_T;
+
+/*
+    Restart the state counter. The bits under the I loop's divider stay: they are the analog cycle [_Motor_IsAnalogCycle], which the
+    controller arms on its own PWM cycle count. Both count the PWM ISRs from 0, so a reset that kept nothing could flip the parity
+    against the arming. A state's timing starts within 1 cycle.
+*/
+static inline void Motor_ResetControlTimer(Motor_Context_T * p_context) { p_context->ControlTimerBase &= (MOTOR_I_LOOP_DIVIDER - 1U); }
 
 
 /*!

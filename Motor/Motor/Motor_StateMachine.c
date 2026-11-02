@@ -182,7 +182,7 @@ static void Deactivated_Entry(Motor_T * p_motor)
     Phase_WriteDuty(&p_motor->PHASE, PWM_DUTY_MAX / 2U, PWM_DUTY_MAX / 2U, PWM_DUTY_MAX / 2U);/* clear the duties for resume cycle. */
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
     Motor_SetDirection(p_motor, MOTOR_DIRECTION_NULL);
-    p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */
+    Motor_ResetControlTimer(p_motor->P_MOTOR); /* ok to reset timer */
 }
 
 static void Deactivated_Proc(Motor_T * p_motor)
@@ -259,7 +259,7 @@ static void Passive_Entry(Motor_T * p_motor)
     // if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_ActivateT0(&p_motor->PHASE); }
     else { Phase_ActivateV0(&p_motor->PHASE); }
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
-    p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */
+    Motor_ResetControlTimer(p_motor->P_MOTOR); /* ok to reset timer */
  //optionally set backup vspeed
 }
 
@@ -672,7 +672,7 @@ static void Calibration_Entry(Motor_T * p_motor)
     Phase_ActivateV0(&p_motor->PHASE); /* Transition from Deactivated or Substates */
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
     // Motor_SetDirection(p_motor, Motor_GetDirectionForward(p_motor->P_MOTOR)); /* reset direction limits */
-    p_motor->P_MOTOR->ControlTimerBase = 0U;
+    Motor_ResetControlTimer(p_motor->P_MOTOR);
 }
 
 static void Calibration_Proc(Motor_T * p_motor)

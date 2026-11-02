@@ -99,7 +99,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
 
     PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
     PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
-    p_motor->ControlTimerBase = 0U;
+    Motor_ResetControlTimer(p_motor);
 
     p_motor->Direction = MOTOR_DIRECTION_NULL;
     FOC_SetVAntiPlugging(&p_motor->Foc, SIGN_ZERO, 0U);

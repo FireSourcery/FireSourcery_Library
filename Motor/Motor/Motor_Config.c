@@ -256,13 +256,13 @@ void Motor_Config_SetTorqueRampTime_Millis(Motor_Config_T * p_config, uint16_t m
     Interface in Physical Units (display/readout)
 */
 static inline uint32_t Motor_Config_GetSpeedRampSlope_RpmPerS(const Motor_Config_T * p_config) { return Motor_Speed_RpmOfPu(&p_config->Electrical, (int64_t)p_config->SpeedRampSlope_PuPerTick * MOTOR_SPEED_LOOP_FREQ / ACCUMULATOR_SCALE); }
-static inline uint32_t Motor_Config_GetTorqueRampSlope_AmpPerS(const Motor_Config_T * p_config) { return Phase_I_AmpsOfPu((int64_t)p_config->TorqueRampSlope_PuPerTick * MOTOR_CONTROL_FREQ / ACCUMULATOR_SCALE); }
+static inline uint32_t Motor_Config_GetTorqueRampSlope_AmpPerS(const Motor_Config_T * p_config) { return Phase_I_AmpsOfPu((int64_t)p_config->TorqueRampSlope_PuPerTick * MOTOR_I_LOOP_FREQ / ACCUMULATOR_SCALE); }
 
 /*
     Ticks Time coversion first to prevent overflow
 */
 void Motor_Config_SetSpeedRampSlope_RpmPerS(Motor_Config_T * p_config, uint32_t rpm) { p_config->SpeedRampSlope_PuPerTick = Motor_Speed_PuOfRpm(&p_config->Electrical, rpm * ACCUMULATOR_SCALE / MOTOR_SPEED_LOOP_FREQ); }
-void Motor_Config_SetTorqueRampSlope_AmpPerS(Motor_Config_T * p_config, uint32_t amps) { p_config->TorqueRampSlope_PuPerTick = Phase_I_PuOfAmps(amps * ACCUMULATOR_SCALE / MOTOR_CONTROL_FREQ); }
+void Motor_Config_SetTorqueRampSlope_AmpPerS(Motor_Config_T * p_config, uint32_t amps) { p_config->TorqueRampSlope_PuPerTick = Phase_I_PuOfAmps(amps * ACCUMULATOR_SCALE / MOTOR_I_LOOP_FREQ); }
 
 /*
     Interface in Fract16

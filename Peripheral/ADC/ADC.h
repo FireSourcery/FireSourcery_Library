@@ -63,6 +63,8 @@
         Hw triggered    - ADC_HW_TRIGGER_ENABLE. Software, except 1 fifo of marked channels is armed
                           ahead and converts on the Hw trigger. Its completion returns the ADC to
                           software start, and the walk continues. ADC_ArmMarked, ADC_Thread.h.
+                          Or every marked channel on the trigger, a full fifo per trigger and no walk:
+                          ADC_ArmMarkedAll with ADC_OnCompleteArmed_ISR.
 */
 /******************************************************************************/
 #ifndef ADC_HW_SEQUENCER_ENABLE

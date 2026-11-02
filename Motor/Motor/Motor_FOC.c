@@ -29,6 +29,7 @@
 */
 /******************************************************************************/
 #include "Motor_FOC.h"
+#include "Analog/Motor_Analog.h"
 
 
 /*
@@ -69,7 +70,7 @@ static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
 
 /*
     The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
-    The LOOP steps them [_Motor_FOC_ProcTorqueReq] at the tick their slopes and gains are scaled for, and the state entries match them.
+    The LOOP steps them [_Motor_FOC_ProcTorqueReq] on the I Sample Cycle, the rate their slopes and gains are scaled to, and the state entries match them.
     The take Parks at the angle the LOOP last set, the sample's tick.
     ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
 */
@@ -87,8 +88,9 @@ void Motor_FOC_ProcTorqueFeedback(Motor_T * p_motor)
 
 /*
     Current-mode angle control. Req Id/Iq to Vabc.
+    Out of line: one copy for every current-mode proc. -O3 otherwise inlines it into each align proc, 364 B each on KE.
 */
-void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
+__attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 {
     FOC_SetTheta(&p_motor->Foc, theta);
 #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ) /* update angle only for voutput, until divider from adc is set */
@@ -110,15 +112,20 @@ void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_
     only a one-tick perturbation because FOC_MatchIdFieldWeakening has already seeded IdFw
     from that same capture; without the seed this ordering ramps from 0 over the settling
     cycles instead.
+
+    The requests step on the I Sample Cycle, at MOTOR_I_LOOP_FREQ, and hold on the others [Motor_IsAnalogCycle]. Under the hardware
+    trigger the I Feedback Cycle is the next one, so nothing runs between its top and its take.
 */
 void _Motor_FOC_ProcTorqueReq(Motor_Context_T * p_context, ufract16_t vbus, fract16_t req)
 {
+    bool step = _Motor_IsAnalogCycle(p_context->ControlTimerBase);
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    fract16_t id = FOC_ProcIdFieldWeakening(&p_context->Foc, vbus);
+    fract16_t id = step ? FOC_ProcIdFieldWeakening(&p_context->Foc, vbus) : FOC_IdFw(&p_context->Foc);
 #else
     fract16_t id = 0;
 #endif
-    Motor_FOC_AngleControl(p_context, vbus, Angle_Value(&p_context->SensorState.AngleSpeed), id, Ramp_ProcNextOf(&p_context->TorqueRamp, req));
+    fract16_t iq = step ? Ramp_ProcNextOf(&p_context->TorqueRamp, req) : Ramp_GetOutput(&p_context->TorqueRamp);
+    Motor_FOC_AngleControl(p_context, vbus, Angle_Value(&p_context->SensorState.AngleSpeed), id, iq);
 }
 
 void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
@@ -129,9 +136,11 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 /* Common state machine call for align */
 /* id limits update with FOC_DECOUPLE_ENABLE. id limits set at direction only when FOC_DECOUPLE disabled */
 /* idReq input is userReq or preset IAlign. */
+/* TorqueRamp steps on the I Sample Cycle, as in the torque path, whose slope it shares */
 void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t angle, fract16_t idReq)
 {
-    Motor_FOC_AngleControl(p_motor, vBus, angle, _Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))), 0);
+    fract16_t id = _Motor_IsAnalogCycle(p_motor->ControlTimerBase) ? _Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))) : Ramp_GetOutput(&p_motor->TorqueRamp);
+    Motor_FOC_AngleControl(p_motor, vBus, angle, id, 0);
 }
 
 void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idReq)
@@ -209,7 +218,7 @@ void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 void Motor_FOC_ProcAngleV(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    fract16_t vReq = _Ramp_ProcNextOf(&p_context->TorqueRamp, p_context->UserCmd); /* inner loop clips with VLimit */
+    fract16_t vReq = _Motor_IsAnalogCycle(p_context->ControlTimerBase) ? _Ramp_ProcNextOf(&p_context->TorqueRamp, p_context->UserCmd) : Ramp_GetOutput(&p_context->TorqueRamp); /* inner loop clips with VLimit. The I Sample Cycle, as the torque path */
     FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
     (void)Motor_FOC_TakeI(p_context); /* Still capture I for overcurrent */
     FOC_ProcVControl(&p_context->Foc, fract16_mul(VBus_Pu(p_motor->P_VBUS), FRACT16_1_DIV_SQRT3), 0, vReq);

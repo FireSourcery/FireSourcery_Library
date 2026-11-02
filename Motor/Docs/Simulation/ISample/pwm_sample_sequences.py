@@ -7,8 +7,12 @@ Three thread placements, each with its variants:
        The LOOP skips its out on the I Sample Cycle, a duplicate of the ADC ISR's. The code doesn't support that yet: its LOOP writes every cycle.
     3. Hardware Triggered: the trigger starts the I set to complete before the PWM ISR, whose LOOP takes it and runs the PI.
        Two cycle forms: 3A alternating, an I Feedback Cycle every 2nd PWM cycle and the requests on the off cycle; 3B the PI every cycle.
-       Variations: -r the requests every cycle (3A-r is built), -w the take waits for the capture, -v VBus on the main thread
-       [VBUS_CAPTURE_ON_MAIN]. The start is calibrated to the take, or for 3A-v to the bottom: the latest start whose write makes it.
+       Built on KE06 since 2026-11-02: 3A started 15 us before the top. 3A-r, the requests every cycle, was built 2026-10-25 to 2026-11-02.
+       3A-n, built as an option: no software walk, 4 other channels ahead of the set in the trigger's fifo, the start 9.2 us earlier.
+       Variations: -r the requests every cycle, -w the take waits for the capture, -v VBus on the main thread [VBUS_CAPTURE_ON_MAIN].
+       Each variant runs at the start its load point allows [latest_lead]: the latest start whose I Feedback Cycle write makes that load point.
+       The bottom: nothing before the take but the angle, 3A; the ADC ISR's end limits the start. The next top: the requests before the
+       take, 3A-r; the take limits the start. An earlier start buys margin on slower code at the bottom, on faster code at the take.
 Terms: the I Sample Cycle marks the set and starts or arms it; the I Feedback Cycle takes it and runs the PI; an off cycle is not an
 I Feedback Cycle. Before 2026-11-02: analog tick, take tick, off tick; 3a, 3b, 3c for 3A, 3A-r, 3B.
 One timeline per variant (PwmSampleSequence_<variant>_<name>.png), and a summary across a CPU speed factor (PwmSampleSequenceSummary.png).
@@ -59,6 +63,7 @@ BASE = dict(
     icapture=2.0,    # the I set from the results buffer
     dispatch=0.3,    # ON_PHASE action dispatch
     adc_exit=0.5,
+    slot_read=0.3,   # 1 more fifo result in the ADC ISR's capture: the no-walk fifo's slots
 )
 CONV = (("VSOURCE", 0.0, 2.5), ("IA", 2.5, 2.0), ("IB", 4.5, 2.0), ("IC", 6.5, 2.0))
 CONV_DONE = 8.5
@@ -66,13 +71,35 @@ SAMPLE_OFFSET = 4.5  # IB, the middle of the set
 AGE_US, HOLD_HALF_US = 96.0, 50.0  # CurrentSenseFilter.md, hold tau 10 us, 300 Hz; the 10 kHz loop's half hold
 HW_LEAD = CONV_DONE + BASE["adc_entry"] + BASE["vsource"] + BASE["icapture"] + BASE["adc_exit"] + 0.5  # path 3: done before the top
 
-KIND_COLOR = {"shell": "#d9d9d9", "theta": "#81c784", "req": "#b39ddb", "capture": "#64b5f6", "pi": "#e57373", "out": "#ffb74d", "spin": "#f5f5f5"}
+KIND_COLOR = {"shell": "#d9d9d9", "theta": "#81c784", "req": "#b39ddb", "capture": "#64b5f6", "pi": "#e57373", "out": "#ffb74d", "spin": "#f5f5f5",
+              "walk": "#a1887f"}
 KIND_LABEL = {"shell": "entry, dispatch, exit", "theta": "angle: sensor, SetTheta", "req": "requests: ramp, field weakening",
-              "capture": "VSOURCE, I capture, Park", "pi": "PI", "out": "inverse Park, SVPWM, write", "spin": "spin, waiting for the ADC"}
+              "capture": "VSOURCE, I capture, Park", "pi": "PI", "out": "inverse Park, SVPWM, write", "spin": "spin, waiting for the ADC",
+              "walk": "the walk's completion: main-loop channels"}
+WALK_COLOR = "#d7ccc8"
+
+
+def walk_conv(n):
+    """A software-started FIFO of n channels: the first conversion 2.5 us, each later one 2 us"""
+    return 2.5 + 2.0 * (n - 1)
+
+
+def conv_of(slots):
+    """The armed fifo: [slots] other channels ahead, then VSOURCE, IA, IB, IC. Returns the conversions, the completion and IB's sample"""
+    conv, t = [], 0.0
+    for i, name in enumerate([f"S{n + 1}" for n in range(slots)] + ["VSOURCE", "IA", "IB", "IC"]):
+        width = 2.5 if i == 0 else 2.0
+        conv.append((name, t, width))
+        t += width
+    return tuple(conv), t, next(start for name, start, width in conv if name == "IB")
+
+
+def conv_color(name):
+    return "#cfd8dc" if name == "VSOURCE" else (WALK_COLOR if name.startswith("S") else "#90a4ae")
 
 
 class Seq:
-    def __init__(self, key, title, file, adc_prio, adc_isr, park_in, pi_in, order, trigger, notes, vbus="adc", lead=None, requests="every", divider=2):
+    def __init__(self, key, title, file, adc_prio, adc_isr, park_in, pi_in, order, trigger, notes, vbus="adc", lead=None, requests="every", divider=2, walk=0, slots=0):
         self.key, self.title, self.file = key, title, file
         self.adc_prio, self.adc_isr = adc_prio, adc_isr      # the ADC ISR handles the I set
         self.park_in, self.pi_in = park_in, pi_in            # 'adc' / 'loop' ; 'loop' / 'adc' / 'wait'
@@ -82,6 +109,8 @@ class Seq:
         self.lead = HW_LEAD if lead is None else lead        # 'hw': the set's start before the top
         self.requests = requests                             # 'every': the ramp and field weakening every cycle; 'off': on the off cycle only
         self.divider = divider                               # PWM ticks per I set: 2 on KE (10 kHz), 1 for the PI every cycle
+        self.walk = walk                                     # main-loop channels marked with batch 0's set: its completion walks them by software
+        self.slots = slots                                   # no walk: other channels armed ahead of the set in its fifo, 4 of KE's 8
 
 
 SEQS = [
@@ -95,23 +124,21 @@ SEQS = [
     Seq("1c", "PI in the PWM ISR, the LOOP waits at the take. The ADC ISR preempts and captures", "1c_TakeWait", PRIO_HIGH, True, "loop", "wait", "default", "sw",
         ["The LOOP spins at its take until the ADC ISR, above it, has captured the set. It never misses.",
          "Spins only if the LOOP reaches the take before the set lands. One duty writer."]),
-    Seq("2a", "PI in the ADC ISR, at the PWM ISR's priority (MOTOR_I_FEEDBACK_ON_PHASE)", "2a_OnPhaseEqualPriority", PRIO_PWM, True, "adc", "adc", "default", "sw",
+    Seq("2a", "PI in the ADC ISR, at the PWM ISR's priority (MOTOR_I_FEEDBACK_ON_PHASE)", "2a_AdcCallback", PRIO_PWM, True, "adc", "adc", "default", "sw",
         ["The ADC ISR runs after the PWM ISR returns, so the PI waits for the whole PWM ISR.",
          "The PWM ISR and the PI land in the same period: the I Sample Cycle's load.",
          "The 1 ms SysTick thread (priority 2, exception 15) also runs first when it is pending.",
          "The LOOP skips its out on the I Sample Cycle, a duplicate of the ADC ISR's: not supported in the code yet."]),
-    Seq("2b", "PI in the ADC ISR, above the PWM ISR", "2b_OnPhasePreempt", PRIO_HIGH, True, "adc", "adc", "default", "sw",
+    Seq("2b", "PI in the ADC ISR, above the PWM ISR", "2b_Preempt", PRIO_HIGH, True, "adc", "adc", "default", "sw",
         ["The ADC ISR preempts the PWM ISR wherever it is. Hazards:",
          "- the Park takes the held angle: the previous tick's if the LOOP has not reached SetTheta,",
          "- a state transition in progress in the PWM ISR: ON_PHASE dispatches to a half-entered state.",
          "The LOOP skips its out on the I Sample Cycle, so it can't overwrite the ADC ISR's duty: not supported in the code yet."]),
-    Seq("3A", "Hardware Triggered, alternating: the requests on the off cycle only", "3A_Alternating", PRIO_HIGH, True, "loop", "loop", "default", "hw",
-        [], requests="off"),  # lead and notes: calibrated below, once Sim is defined
-    Seq("3A-r", "Hardware Triggered, alternating, the requests every cycle (built)", "3A_RequestsEveryCycle", PRIO_HIGH, True, "loop", "loop", "default", "hw",
-        [f"FTM2 starts the ADC {HW_LEAD:.1f} us before the top (init trigger + SIM_SOPT0[DELAY], or a match trigger),",
-         "so the batch and its capture finish in idle time before the PWM ISR, and the take never misses.",
-         "The requests run before the take every cycle, so the write misses the bottom; FOC first made it (ORDERS below).",
-         "ADTRG is ADC-wide: the other channels need the trigger too."]),
+    # 3A: loads at the bottom, started 15 us before the top, as built on KE06. Notes below, once Sim is defined
+    Seq("3A", "Hardware Triggered, alternating: the requests on the off cycle, started 15.0 us before the top. Loads at the bottom; built on KE06",
+        "3A_AlternatingLoadBottom", PRIO_HIGH, True, "loop", "loop", "default", "hw", [], requests="off", lead=15.0),
+    # 3A-r: loads at the next top, started at the latest the take finds the set [latest_lead], set below. No timeline of its own
+    Seq("3A-r", "Hardware Triggered, alternating, the requests every cycle: loads at the next top", None, PRIO_HIGH, True, "loop", "loop", "default", "hw", []),
 ]
 
 
@@ -119,6 +146,7 @@ class Sim:
     def __init__(self, seq, k, t0=-200.0, t1=200.0):
         self.seq, self.k = seq, k
         self.d = {name: value * k for name, value in BASE.items()}
+        self.conv, self.conv_done, self.sample_offset = conv_of(seq.slots)
         self.t, self.t1 = t0, t1
         self.jobs, self.running = [], None
         self.events, self.order = [], itertools.count()
@@ -130,6 +158,7 @@ class Sim:
         self.writes = []                         # (time, batch of the Vdq written)
         self.pwm_delay = {}                      # tick -> PWM ISR start - TOF
         self.take_at = {}                        # tick -> the time the LOOP reaches its take
+        self.walks = []                          # (start, channels): the software walk after a set's completion
         for n in range(int(math.floor(t0 / T)), int(math.ceil(t1 / T)) + 1):
             tick = n * T
             analog = (n % seq.divider == 0)
@@ -145,9 +174,20 @@ class Sim:
         self.jobs.append(dict(lane=lane, prio=prio, irq=irq, gen=gen, seg=None, release=self.t, tag=tag, started=None))
 
     def start_adc(self, time, tick):
-        self.batches[tick] = dict(start=time, done=time + CONV_DONE)
+        self.batches[tick] = dict(start=time, done=time + self.conv_done, walk=(self.seq.walk if tick == 0.0 else 0))
         if self.seq.adc_isr:
-            self.at(time + CONV_DONE, lambda tick=tick: self.release("ADC ISR", self.seq.adc_prio, IRQ_ADC, self.adc_isr(tick), tick))
+            self.at(time + self.conv_done, lambda tick=tick: self.release("ADC ISR", self.seq.adc_prio, IRQ_ADC, self.adc_isr(tick), tick))
+
+    def start_walk(self, tick):
+        """ADC_OnComplete_ISR continues the walk after reading the set's FIFO: the marked main-loop channels, one software-started FIFO"""
+        n = self.batches[tick].get("walk", 0)
+        if n:
+            self.batches[tick]["walk"] = 0
+            self.walks.append((self.t, n))
+            self.at(self.t + walk_conv(n), lambda tick=tick: self.release("ADC ISR", self.seq.adc_prio, IRQ_ADC, self.walk_isr(), tick))
+
+    def walk_isr(self):
+        yield self.seg("walk", "walk", self.d["adc_entry"] + self.d["adc_exit"])
 
     def landed(self, tick):
         return tick in self.batches and self.t >= self.batches[tick]["done"] - 1e-9
@@ -216,7 +256,7 @@ class Sim:
 
     def adc_isr(self, tick):
         s, d = self.seq, self.d
-        yield self.seg("entry", "shell", d["adc_entry"])
+        yield self.seg("entry", "shell", d["adc_entry"] + s.slots * d["slot_read"], lambda: self.start_walk(tick))
         if s.vbus == "adc":
             yield self.seg("VSOURCE", "capture", d["vsource"])
         yield self.seg("I", "capture", d["icapture"], lambda: self.capture(tick))
@@ -281,7 +321,7 @@ class Sim:
     # Results
     def result(self, tick=0.0):
         b = self.batches.get(tick, {})
-        sample = b.get("start", math.nan) + SAMPLE_OFFSET
+        sample = b.get("start", math.nan) + self.sample_offset
         write = next((w for w, wb in self.writes if wb == tick and w >= b.get("pi_end", math.inf) - 1e-9), math.nan)
         load = (math.floor(write / LOAD + 1e-9) + 1) * LOAD if not math.isnan(write) else math.nan
         busy = [sum(max(0.0, min(r[4], lo + T) - max(r[3], lo)) for r in self.trace) for lo in (tick, tick + T)]
@@ -306,30 +346,15 @@ def at_start(seq, k, lead):
     return Sim(variant(seq, lead=lead), k, t0=-100.0, t1=150.0).run().result()
 
 
-def calibrated_lead(seq, k):
-    """The latest start, as the lead before the top, whose set the take finds on its own tick at k, so no wait. 1 us scan, then 0.1 us."""
-    coarse = [25.0 - i for i in range(41)]  # the init trigger's bottom, 25 us ahead, to 15 us after the top
-    last = coarse[0]
-    for lead in coarse:
-        if not at_start(seq, k, lead)["hit"]:
-            break
-        last = lead
-    for i in range(1, 10):
-        lead = last - 0.1 * i
-        if not at_start(seq, k, lead)["hit"]:
-            break
-        last = lead
-    return round(last, 1)
-
-
-def bottom_lead(seq, k):
-    """The latest start, as the lead before the top, whose I Feedback Cycle writes before the bottom at k: the load at 25 us. 1 us scan, then 0.1 us."""
+def latest_lead(seq, k, load):
+    """The latest start, as the lead before the top (negative: after it), whose I Feedback Cycle takes its set and writes in time for
+    [load] at k: the bottom, 25 us, or the next top, 50. Scanned from the bottom, 25 us ahead, to 25 us after the top: 1 us, then 0.1 us."""
     def makes(lead):
         r = at_start(seq, k, lead)
-        return r["hit"] and r["load"] == LOAD
-    coarse = [25.0 - i for i in range(26)]  # the init trigger's bottom, 25 us ahead, to the top
+        return r["hit"] and r["load"] <= load + 1e-9
     last = None
-    for lead in coarse:
+    for i in range(51):
+        lead = 25.0 - i
         if not makes(lead):
             break
         last = lead
@@ -343,45 +368,87 @@ def bottom_lead(seq, k):
     return round(last, 1)
 
 
-def bottom_until(seq):
-    """The largest k, by 0.01 from 1, at which the I Feedback Cycle's write still makes the bottom."""
-    k = 1.0
-    while Sim(seq, k + 0.01, t0=-100.0, t1=150.0).run().result()["load"] == LOAD:
-        k += 0.01
-    return round(k, 2)
+def k_range(seq, kf=1.0):
+    """The k, by 0.01 within 0.5 to 1.5, over which [seq] keeps its load point at k 1 and its take finds the set. [kf] scales k: 3B's 0.5"""
+    def keeps(k, load):
+        r = Sim(seq, k * kf, t0=-100.0, t1=150.0).run().result()
+        return r["hit"] and abs(r["load"] - load) < 1e-6
+    load = Sim(seq, kf, t0=-100.0, t1=150.0).run().result()["load"]
+    lo = hi = 1.0
+    while lo > 0.5 and keeps(round(lo - 0.01, 2), load):
+        lo = round(lo - 0.01, 2)
+    while hi < 1.5 and keeps(round(hi + 0.01, 2), load):
+        hi = round(hi + 0.01, 2)
+    return lo, hi
+
+
+def delay_clock(lead):
+    """SIM_SOPT0[BUSREF]: the least divider of the 25 MHz bus clock whose 8-bit DELAY, counted from the bottom, reaches the start"""
+    for div in (1, 2, 4, 8, 16):
+        if (25.0 - lead) * 25.0 / div <= 255.0 + 1e-9:
+            return "bus" if div == 1 else f"bus / {div}"
+    return "past bus / 16"
 
 
 def start_text(lead):
     return f"{abs(lead):.1f} us {'before' if lead >= 0 else 'after'} the top"
 
 
+# Each variant at the start its load point allows
 SEQ_3A = next(s for s in SEQS if s.key == "3A")
-SEQ_3A.lead = calibrated_lead(SEQ_3A, 1.0)
-SEQ_3A.notes = [f"FTM2 starts the ADC {start_text(SEQ_3A.lead)}: the latest start whose set the take finds without waiting, at k = 1.",
-                "The I Feedback Cycle runs no requests. The off cycle steps the ramp and field weakening, at 10 kHz, then the inverse Park and the write.",
-                "A faster cycle reaches the take first: the miss. The off cycle takes the set. No busy wait (3A-w waits)."]
+SEQ_3AR = next(s for s in SEQS if s.key == "3A-r")
+LEAD_3A_KE = SEQ_3A.lead                        # built: 250 ticks after the bottom at the bus clock
+LEAD_3A_BOTTOM = latest_lead(SEQ_3A, 1.0, LOAD)  # the latest whose write makes the bottom, 265 ticks: past the bus clock's 255
+LEAD_3A_CLEAR = 16.5                            # the ADC ISR ends before the top
+SEQ_3AR.lead = latest_lead(SEQ_3AR, 1.0, T)      # the latest the take finds: the next top
+SEQ_3ARW = variant(SEQ_3AR, key="3A-rw", pi_in="wait")
+LEAD_3AR_FAST = latest_lead(SEQ_3AR, 0.8, T)     # the take finds the set on a cycle 20 % faster
+LEAD_3AR_REACH = 25.0 - 255 / 25.0               # the latest the 8-bit delay reaches at the bus clock, 14.8 us before the top
 
-# 3A-v: VBus on the main thread [VBUS_CAPTURE_ON_MAIN], the ADC ISR without VSOURCE's capture and divide, and the start earlier, so the
-# I Feedback Cycle's write makes the bottom. 3A's own bottom start, VBus in the ADC ISR, for comparison
-LEAD_3A_BOTTOM = bottom_lead(SEQ_3A, 1.0)
-SEQ_3AV = variant(SEQ_3A, key="3A-v", title="Hardware Triggered, alternating, VBus on the main thread (VBUS_CAPTURE_ON_MAIN): the write makes the bottom",
+_r3a = Sim(SEQ_3A, 1.0).run().result()
+SEQ_3A.notes = [f"FTM2 starts the ADC {start_text(LEAD_3A_KE)}: the init trigger at the bottom, delayed 250 ticks of the 25 MHz bus clock.",
+                f"The latest start whose write makes the bottom, {start_text(LEAD_3A_BOTTOM)}, is past the 8-bit delay's reach, {start_text(LEAD_3AR_REACH)}.",
+                f"The ADC ISR, VSOURCE's divide included, runs {_r3a['pwm_delay']:.1f} us past the top. The I Feedback Cycle runs no requests,",
+                f"so its write lands {_r3a['write']:.1f} us after the top, {LOAD - _r3a['write']:.1f} us before the bottom. The off cycle steps the requests at 10 kHz.",
+                f"Slower than k {k_range(SEQ_3A)[1]:.2f}, or on a cycle whose completion walks main-loop channels, it loads at the next top:"
+                f" {Sim(SEQ_3A, 1.1).run().result()['sample_to_load']:.1f} us."]
+
+# 3A-v: VBus on the main thread [VBUS_CAPTURE_ON_MAIN], the ADC ISR without VSOURCE's capture and divide: the latest start for the bottom moves later
+SEQ_3AV = variant(SEQ_3A, key="3A-v", title="Hardware Triggered, alternating, VBus on the main thread (VBUS_CAPTURE_ON_MAIN): loads at the bottom",
                   file="3A_VBusOnMain", vbus="main")
-SEQ_3AV.lead = bottom_lead(SEQ_3AV, 1.0)
-SEQ_3AV.notes = [f"FTM2 starts the ADC {start_text(SEQ_3AV.lead)}: the latest start whose I Feedback Cycle writes before the bottom, at k = 1.",
+SEQ_3AV.lead = latest_lead(SEQ_3AV, 1.0, LOAD)
+SEQ_3AV.notes = [f"FTM2 starts the ADC {start_text(SEQ_3AV.lead)}: the latest start whose I Feedback Cycle writes before the bottom, at k = 1."
+                 f" The delay at {delay_clock(SEQ_3AV.lead)}.",
                  f"VSOURCE still converts, but the main thread captures it and divides: the ADC ISR is {BASE['vsource']:.1f} us shorter.",
                  f"With VBus in the ADC ISR, 3A's latest start for the bottom is {start_text(LEAD_3A_BOTTOM)}.",
                  f"The I Feedback Cycle runs no requests: its PWM ISR writes {sum(BASE[n] for n in ('entry', 'sensor', 'sm', 'theta', 'park', 'pi', 'out')):.1f} us in,"
                  " and the ADC ISR can overrun the top by the rest of the 25.",
-                 f"A slower cycle, from k {bottom_until(SEQ_3AV) + 0.01:.2f}, misses the bottom: the cliff to the next top. A faster one finds the set sooner."]
+                 f"A slower cycle, from k {k_range(SEQ_3AV)[1] + 0.01:.2f}, misses the bottom: the cliff to the next top. A faster one finds the set sooner."]
 
-# 3B: the PI every cycle. S32's form; its durations are unmeasured, so it runs at half KE's (k 0.5), on KE's ADC timing
+# 3A-n: no software walk. Every marked channel converts on the trigger: 4 slots ahead of the set fill KE's 8-deep fifo, padded where fewer
+# are marked, so the set lands a fixed time after the start, at the fifo's end. The start moves back by the slots and their reads
+LEAD_3AN = 24.2
+SEQ_3AN = variant(SEQ_3A, key="3A-n", title=f"Hardware Triggered, alternating, no software walk (BOARD_ADC_TRIGGER_ALL): 4 slots ahead of the set, started {start_text(LEAD_3AN)}",
+                  file="3A_NoWalk", slots=4, lead=LEAD_3AN)
+LEAD_3AN_LATEST = latest_lead(SEQ_3AN, 1.0, LOAD)
+_r3an = Sim(SEQ_3AN, 1.0).run().result()
+SEQ_3AN.notes = [f"FTM2 starts the ADC {start_text(LEAD_3AN)}, 20 ticks after the bottom: 9.2 us before 3A's start, the slots' 8 us of conversions",
+                 f"and the ADC ISR's 4 more results, {4 * BASE['slot_read']:.1f} us. The set converts last, so its samples keep their place before the completion.",
+                 f"The ISR ends {_r3an['pwm_delay']:.1f} us past the top, the write lands {_r3an['write']:.1f} us in: the bottom, to k {k_range(SEQ_3AN)[1]:.2f}.",
+                 "Nothing walks, so no completion falls inside the I Feedback Cycle. Channels past the 4 slots wait for the next arm, 100 us.",
+                 f"The latest start for the bottom is {start_text(LEAD_3AN_LATEST)}. At delay 0, 25 us, {Sim(variant(SEQ_3AN, lead=25.0), 1.0).run().result()['sample_to_load']:.1f} us"
+                 f" to k {k_range(variant(SEQ_3AN, lead=25.0))[1]:.2f}."]
+
+# 3B: the PI every cycle. S32's form; its durations are unmeasured, so it runs at half KE's (k 0.5), on KE's ADC timing. Loads at the bottom
 K_3B = 0.5
-SEQ_3B = Seq("3B", "Hardware Triggered, the PI every cycle", "3B_PiEveryCycle", PRIO_HIGH, True, "loop", "loop", "default", "hw", [], divider=1)
-SEQ_3B.lead = calibrated_lead(SEQ_3B, K_3B)
+SEQ_3B = Seq("3B", "Hardware Triggered, the PI every cycle: loads at the bottom", "3B_PiEveryCycle", PRIO_HIGH, True, "loop", "loop", "default", "hw", [], divider=1)
+SEQ_3B.lead = latest_lead(SEQ_3B, K_3B, LOAD)
+SEQ_3BW = variant(SEQ_3B, key="3B-w", pi_in="wait")
+LEAD_3BW = latest_lead(SEQ_3BW, K_3B, LOAD)
 SEQ_3B.notes = [f"At half KE's durations (k = {K_3B}), a stand-in for S32's, unmeasured, on KE's ADC timing.",
-                f"FTM2 starts the ADC {start_text(SEQ_3B.lead)}: the latest start whose set the take finds without waiting, at that k.",
-                "Every PWM cycle is an I Feedback Cycle, and an I Sample Cycle for the next: the requests, the take, the PI,",
-                "and the write before the bottom. No busy wait (3B-w waits)."]
+                f"FTM2 starts the ADC {start_text(SEQ_3B.lead)}: the latest start whose set the take finds, at that k. The write makes the bottom with time to spare,",
+                "so the take, not the write, sets the start. Every PWM cycle is an I Feedback Cycle, and an I Sample Cycle for the next.",
+                f"No busy wait. 3B-w waits, and its latest start for the bottom is {start_text(LEAD_3BW)}."]
 
 
 def plot_sequence(seq, sim, path, k=1.0):
@@ -408,14 +475,17 @@ def plot_sequence(seq, sim, path, k=1.0):
 
     # Lanes
     lanes = {"ADC": 3.0, "ADC ISR": 2.0, "PWM ISR": 1.0}
-    for name, start, width in CONV:
+    for name, start, width in sim.conv:
         for tick, b in sim.batches.items():
             x = b["start"] + start
             if t_lo <= x <= t_hi:
-                ax_l.broken_barh([(x, width)], (lanes["ADC"] - 0.3, 0.6), facecolors="#cfd8dc" if name == "VSOURCE" else "#90a4ae", edgecolor="white")
+                ax_l.broken_barh([(x, width)], (lanes["ADC"] - 0.3, 0.6), facecolors=conv_color(name), edgecolor="white")
                 ax_l.text(x + width / 2, lanes["ADC"], {"VSOURCE": "VS"}.get(name, name) if tick == 0 else "", ha="center", va="center", fontsize=6)
                 if name == "IB":
                     ax_l.plot(x, lanes["ADC"] + 0.42, marker="v", color="black", markersize=5)
+    for x, n in sim.walks:
+        ax_l.broken_barh([(x, walk_conv(n))], (lanes["ADC"] - 0.3, 0.6), facecolors=WALK_COLOR, edgecolor="white")
+        ax_l.text(x + walk_conv(n) / 2, lanes["ADC"], f"walk {n}", ha="center", va="center", fontsize=6)
     for lane, label, kind, a, b, tag in sim.trace:
         if b < t_lo or a > t_hi:
             continue
@@ -473,6 +543,7 @@ for s in SEQS:
         plot_sequence(s, nominal[s.key], os.path.join(here, f"PwmSampleSequence_{s.file}.png"))
 plot_sequence(SEQ_3AV, Sim(SEQ_3AV, 1.0).run(), os.path.join(here, f"PwmSampleSequence_{SEQ_3AV.file}.png"))
 plot_sequence(SEQ_3B, Sim(SEQ_3B, K_3B).run(), os.path.join(here, f"PwmSampleSequence_{SEQ_3B.file}.png"), k=K_3B)
+plot_sequence(SEQ_3AN, Sim(SEQ_3AN, 1.0).run(), os.path.join(here, f"PwmSampleSequence_{SEQ_3AN.file}.png"))
 
 # Sweep the speed factor
 ks = [0.4 + 0.02 * i for i in range(61)]
@@ -498,7 +569,9 @@ VBUS_MAIN = [
 order_ks = (0.6, 0.8, 1.0, 1.2, 1.4)
 print("\nsample -> load (us) by LOOP order; the write at k = 1")
 print(f"{'':22s}" + " ".join(f"k {k:<4}" for k in order_ks) + "  write")
-for name, s in [(f"{s.key}, default", s) for s in SEQS if s.key in ("1a", "1c", "3A", "3A-r")] + ORDERS + VBUS_MAIN:
+_defaults = [(f"{s.key}, default", s) for s in SEQS if s.key in ("1a", "1c")] + [(f"3A, {LEAD_3A_KE:.1f} us, built", SEQ_3A),
+             ("3A-r, 16.5 us, until 11-02", variant(SEQ_3AR, lead=HW_LEAD))]
+for name, s in _defaults + ORDERS + VBUS_MAIN:
     print(f"{name:22s}" + " ".join(f"{Sim(s, k).run().result()['sample_to_load']:6.1f}" for k in order_ks) + f"  {Sim(s, 1.0).run().result()['write']:5.1f}")
 
 
@@ -526,12 +599,15 @@ def plot_order_compare(pairs, path, title="Hardware Triggered, the set timed ahe
         sim = Sim(seq, k).run()
         r = sim.result()
         for tick, b in sim.batches.items():
-            for name, start, width in CONV:
+            for name, start, width in sim.conv:
                 x = b["start"] + start
                 if t_lo <= x <= t_hi:
-                    ax.broken_barh([(x, width)], (lanes["ADC"] - 0.3, 0.6), facecolors="#cfd8dc" if name == "VSOURCE" else "#90a4ae", edgecolor="white")
+                    ax.broken_barh([(x, width)], (lanes["ADC"] - 0.3, 0.6), facecolors=conv_color(name), edgecolor="white")
                     if tick == 0.0:
                         ax.text(x + width / 2, lanes["ADC"], {"VSOURCE": "VS"}.get(name, name), ha="center", va="center", fontsize=6)
+        for x, n in sim.walks:
+            ax.broken_barh([(x, walk_conv(n))], (lanes["ADC"] - 0.3, 0.6), facecolors=WALK_COLOR, edgecolor="white")
+            ax.text(x + walk_conv(n) / 2, lanes["ADC"], f"walk {n}", ha="center", va="center", fontsize=6)
         for lane, seg_label, kind, a, e, tag in sim.trace:
             if e < t_lo or a > t_hi:
                 continue
@@ -564,71 +640,100 @@ def plot_order_compare(pairs, path, title="Hardware Triggered, the set timed ahe
     plt.close(fig)
 
 
-# Hardware Triggered's cycle forms and variations. 3B, the PI every cycle, is S32's: its durations are unmeasured, so it runs at half KE's (k 0.5), on KE's ADC timing
-SEQ_3AR = next(s for s in SEQS if s.key == "3A-r")
-LEAD_3AR = calibrated_lead(SEQ_3AR, 1.0)
-print(f"\ncalibrated starts, the latest the take finds in its I Feedback Cycle: 3A {start_text(SEQ_3A.lead)} at k 1,"
-      f" 3A-r {start_text(LEAD_3AR)} at k 1, 3B {start_text(SEQ_3B.lead)} at k {K_3B}")
-print(f"the latest starts whose write makes the bottom at k 1: 3A {start_text(LEAD_3A_BOTTOM)} (to k {bottom_until(variant(SEQ_3A, lead=LEAD_3A_BOTTOM))}),"
-      f" 3A-v {start_text(SEQ_3AV.lead)} (to k {bottom_until(SEQ_3AV)}); 3A-v 15.0 us before the top to k {bottom_until(variant(SEQ_3AV, lead=15.0))},"
-      f" 3A 15.0 us before the top to k {bottom_until(variant(SEQ_3A, lead=15.0))}")
+# Hardware Triggered, each variant at the start its load point allows
+LEAD_3ARW = latest_lead(SEQ_3ARW, 1.0, T)
+print(f"\nthe latest starts at k 1. The bottom: 3A {start_text(LEAD_3A_BOTTOM)}, 3A-v {start_text(SEQ_3AV.lead)}, 3A-n {start_text(LEAD_3AN_LATEST)},"
+      f" 3B {start_text(SEQ_3B.lead)} and 3B-w {start_text(LEAD_3BW)} at k {K_3B}."
+      f" The next top: 3A-r {start_text(SEQ_3AR.lead)}, {start_text(LEAD_3AR_FAST)} at k 0.8; 3A-rw {start_text(LEAD_3ARW)}")
 
-plot_order_compare([(f"3A, alternating: the requests on the off cycle only, started {start_text(SEQ_3A.lead)}, calibrated: the latest the take finds without waiting", SEQ_3A),
-                    ("3A, the same start, a cycle 20 % faster (k 0.8): the take misses, and the off cycle takes the set", SEQ_3A, 0.8),
-                    ("3A-w, the take waits: the same start and the same faster cycle, no miss", variant(SEQ_3A, pi_in="wait"), 0.8),
-                    (f"3A-v, VBus on the main thread: started {start_text(SEQ_3AV.lead)}, the latest whose write makes the bottom", SEQ_3AV),
-                    (f"3A-r as built: the requests every cycle, the set started {start_text(SEQ_3AR.lead)}", SEQ_3AR),
-                    (f"3A-r calibrated: started {start_text(LEAD_3AR)}", variant(SEQ_3AR, lead=LEAD_3AR)),
-                    (f"3B: the PI every cycle, at half KE's durations (S32's, unmeasured) on KE's ADC timing, started {start_text(SEQ_3B.lead)}", SEQ_3B, K_3B)],
-                   os.path.join(here, "PwmSampleSequence_3_Options.png"), title="Hardware Triggered: the cycle forms and their variations, the start calibrated to the take", t_hi=110.0)
+_r = {s: Sim(s, 1.0).run().result() for s in (SEQ_3A, variant(SEQ_3A, lead=LEAD_3A_CLEAR), SEQ_3AV, SEQ_3AN)}
+plot_order_compare([(f"3A, built: the requests on the off cycle, started {start_text(LEAD_3A_KE)}, in the bus clock's reach."
+                     f" The ADC ISR ends {_r[SEQ_3A]['pwm_delay']:.1f} us past the top; the write makes the bottom to k {k_range(SEQ_3A)[1]:.2f}", SEQ_3A),
+                    (f"3A, started {start_text(LEAD_3A_CLEAR)}: the ADC ISR ends before the top. 1.5 us older, to k {k_range(variant(SEQ_3A, lead=LEAD_3A_CLEAR))[1]:.2f}",
+                     variant(SEQ_3A, lead=LEAD_3A_CLEAR)),
+                    (f"3A-v, VBus on the main thread, the ADC ISR {BASE['vsource']:.1f} us shorter: started {start_text(SEQ_3AV.lead)}, the latest for the bottom"
+                     f" (the delay at {delay_clock(SEQ_3AV.lead)}), to k {k_range(SEQ_3AV)[1]:.2f}", SEQ_3AV),
+                    (f"3A-n, no walk: 4 slots ahead of the set, started {start_text(LEAD_3AN)}. The write makes the bottom on every cycle, to k {k_range(SEQ_3AN)[1]:.2f}",
+                     SEQ_3AN)],
+                   os.path.join(here, "PwmSampleSequence_3A_LoadBeforeBottom.png"),
+                   title="Hardware Triggered, loads at the bottom: the requests on the off cycle, the start set by the ADC ISR's end", t_hi=110.0)
+
+plot_order_compare([(f"3A-r: the requests every cycle, started {start_text(SEQ_3AR.lead)}, the latest the take finds at k 1 (the delay at {delay_clock(SEQ_3AR.lead)})."
+                     " The write misses the bottom at any start", SEQ_3AR),
+                    ("3A-r, the same start, a cycle 20 % faster (k 0.8): the take misses, and the off cycle takes the set", SEQ_3AR, 0.8),
+                    ("3A-rw, the same start and k 0.8: the take waits, no miss", SEQ_3ARW, 0.8),
+                    (f"3A-r, started {start_text(LEAD_3AR_FAST)}: the latest the take finds at k 0.8, without a wait (the delay at {delay_clock(LEAD_3AR_FAST)})",
+                     variant(SEQ_3AR, lead=LEAD_3AR_FAST)),
+                    (f"3A-r, started {start_text(LEAD_3AR_REACH)}: the latest the 8-bit delay reaches at the bus clock", variant(SEQ_3AR, lead=LEAD_3AR_REACH))],
+                   os.path.join(here, "PwmSampleSequence_3A_LoadNextTop.png"),
+                   title="Hardware Triggered, loads at the next top: the requests every cycle, the start set by the take", t_hi=110.0)
+
+# No software walk: the built walk, against every marked channel on the trigger
+plot_order_compare([(f"3A, built: the set alone on the trigger, started {start_text(LEAD_3A_KE)}. Its completion walks what else is marked", SEQ_3A),
+                    ("3A, a cycle whose completion walks the throttle and brake: the walk's completion delays the write past the bottom", variant(SEQ_3A, walk=2)),
+                    (f"3A-n: 4 slots ahead of the set, started {start_text(LEAD_3AN)}. No walk: the write makes the bottom every cycle", SEQ_3AN),
+                    ("3A-n, started at the bottom, delay 0: the most margin", variant(SEQ_3AN, lead=25.0))],
+                   os.path.join(here, "PwmSampleSequence_3A_NoWalk_Compare.png"),
+                   title="Hardware Triggered on KE06: the software walk, and every marked channel on the trigger", t_hi=110.0)
 
 
-# Hardware Triggered: the cycle forms and their variations, sample -> load by k. * the take missed; a later cycle took the set
+# Hardware Triggered by load point, sample -> load by k. * the take missed; a later cycle took the set
 HT_KS = (0.8, 0.9, 1.0, 1.1, 1.2)
 HT_ROWS = [
-    (f"3A, {start_text(SEQ_3A.lead)}, calibrated", SEQ_3A, 1.0),
-    ("3A-w, the take waits, the same start", variant(SEQ_3A, pi_in="wait"), 1.0),
-    ("3A-w, started at the top", variant(SEQ_3A, pi_in="wait", lead=0.0), 1.0),
-    ("3A, 15.0 us before the top", variant(SEQ_3A, lead=15.0), 1.0),
-    (f"3A-v, {start_text(SEQ_3AV.lead)}, for the bottom", SEQ_3AV, 1.0),
-    ("3A-v, 15.0 us before the top", variant(SEQ_3AV, lead=15.0), 1.0),
-    (f"3A-r, {start_text(SEQ_3AR.lead)}, built", SEQ_3AR, 1.0),
-    (f"3A-r, {start_text(LEAD_3AR)}, calibrated", variant(SEQ_3AR, lead=LEAD_3AR), 1.0),
-    ("3A-rw, the take waits, the same start", variant(SEQ_3AR, lead=LEAD_3AR, pi_in="wait"), 1.0),
-    (f"3B, {start_text(SEQ_3B.lead)}, calibrated", SEQ_3B, K_3B),
-    ("3B-w, the take waits, the same start", variant(SEQ_3B, pi_in="wait"), K_3B),
+    ("the bottom", f"3A, {start_text(LEAD_3A_BOTTOM)}, the latest", variant(SEQ_3A, lead=LEAD_3A_BOTTOM), 1.0),
+    ("the bottom", f"3A, {start_text(LEAD_3A_KE)}, built", SEQ_3A, 1.0),
+    ("the bottom", "3A, the same, the throttle and brake walked", variant(SEQ_3A, walk=2), 1.0),
+    ("the bottom", f"3A, {start_text(LEAD_3A_CLEAR)}, the ISR before the top", variant(SEQ_3A, lead=LEAD_3A_CLEAR), 1.0),
+    ("the bottom", f"3A-v, {start_text(SEQ_3AV.lead)}, the latest", SEQ_3AV, 1.0),
+    ("the bottom", f"3A-v, {start_text(LEAD_3A_KE)}", variant(SEQ_3AV, lead=LEAD_3A_KE), 1.0),
+    ("the bottom", f"3A-n, {start_text(LEAD_3AN_LATEST)}, the latest", variant(SEQ_3AN, lead=LEAD_3AN_LATEST), 1.0),
+    ("the bottom", f"3A-n, {start_text(LEAD_3AN)}, built", SEQ_3AN, 1.0),
+    ("the bottom", "3A-n, 25.0 us before the top, delay 0", variant(SEQ_3AN, lead=25.0), 1.0),
+    ("the bottom", f"3B, {start_text(SEQ_3B.lead)}, the latest", SEQ_3B, K_3B),
+    ("the bottom", "3B-w, the same start", variant(SEQ_3BW, lead=SEQ_3B.lead), K_3B),
+    ("the bottom", f"3B-w, {start_text(LEAD_3BW)}, the latest", variant(SEQ_3BW, lead=LEAD_3BW), K_3B),
+    ("the next top", f"3A-r, {start_text(SEQ_3AR.lead)}, the latest", SEQ_3AR, 1.0),
+    ("the next top", "3A-rw, the same start", SEQ_3ARW, 1.0),
+    ("the next top", f"3A-r, {start_text(LEAD_3AR_FAST)}, the latest at k 0.8", variant(SEQ_3AR, lead=LEAD_3AR_FAST), 1.0),
+    ("the next top", f"3A-r, {start_text(LEAD_3AR_REACH)}, the bus clock's reach", variant(SEQ_3AR, lead=LEAD_3AR_REACH), 1.0),
+    ("the next top", f"3A-rw, {start_text(LEAD_3ARW)}, the latest", variant(SEQ_3ARW, lead=LEAD_3ARW), 1.0),
 ]
-print(f"\nHardware Triggered: sample -> load (us) by k; * the take missed. 3B runs at k x {K_3B}, a stand-in for S32")
-print(f"{'':46s}" + " ".join(f"k {k:<5}" for k in HT_KS) + "  write  CPU, I Feedback / next cycle")
-for name, s, kf in HT_ROWS:
+print(f"\nHardware Triggered by load point: sample -> load (us) by k; * the take missed. 3B runs at k x {K_3B}, a stand-in for S32")
+print(f"{'':54s}{'delay':>10s} " + " ".join(f"k {k:<5}" for k in HT_KS) + "  holds, k     write  CPU, I Feedback / next cycle")
+_group = None
+for group, name, s, kf in HT_ROWS:
+    if group != _group:
+        print(f"loads at {group}")
+        _group = group
     cells = []
     for k in HT_KS:
         r = Sim(s, k * kf).run().result()
         cells.append(f"{r['sample_to_load']:6.1f}{' ' if r['hit'] else '*'}")
     r1 = Sim(s, kf).run().result()
-    print(f"{name:46s}" + " ".join(cells) + f"  {r1['write']:5.1f}  {r1['busy_analog']:4.1f} / {r1['busy_off']:4.1f}")
+    lo, hi = k_range(s, kf)
+    print(f"  {name:52s}{('S32, PDB' if s.divider == 1 else delay_clock(s.lead)):>10s} " + " ".join(cells) + f"  {lo:.2f}-{hi:.2f}  {r1['write']:5.1f}  {r1['busy_analog']:4.1f} / {r1['busy_off']:4.1f}")
 
 
 def plot_start_calibration(path):
-    """The wait the take would need, and sample -> load without it, by the set's start. The code takes the latest start with no wait."""
+    """The wait the take would need, and sample -> load without it, by the set's start. Each variant's latest start for its load point marked."""
     starts = [-25.0 + i for i in range(41)]  # from the init trigger at the bottom, delay 0, to 15 us after the top
-    cases = [("3A, requests on the off cycle", SEQ_3A, "tab:blue"), ("3A-r, requests every cycle", SEQ_3AR, "tab:brown")]
+    cases = [("3A, requests on the off cycle", SEQ_3A, "tab:blue", LEAD_3A_BOTTOM, "the latest for the bottom"),
+             ("3A-r, requests every cycle", SEQ_3AR, "tab:brown", SEQ_3AR.lead, "the latest the take finds, the next top")]
     k_styles = ((0.8, ":"), (1.0, "-"), (1.2, "--"))
     fig, (ax_w, ax_l) = plt.subplots(2, 1, figsize=(11, 8.5), sharex=True)
-    for name, seq, color in cases:
+    for name, seq, color, cal, cal_text in cases:
         for k, ls in k_styles:
             results = [at_start(seq, k, -x) for x in starts]
             waits = [r["wait"] for r in results]
             loads = [r["sample_to_load"] for r in results]
             ax_w.plot(starts, waits, color=color, linestyle=ls, label=f"{name}, k {k}")
             ax_l.step(starts, loads, where="mid", color=color, linestyle=ls, label=f"{name}, k {k}")
-        cal = SEQ_3A.lead if seq is SEQ_3A else LEAD_3AR
         for ax in (ax_w, ax_l):
             ax.axvline(-cal, color=color, linewidth=1.2, alpha=0.6)
-        ax_w.text(-cal + 0.3, 1.0 if seq is SEQ_3A else 2.0, f"calibrated at k 1: {-cal:+.1f} us", color=color, fontsize=8)
+        ax_w.text(-cal + 0.3, 1.0 if seq is SEQ_3A else 2.0, f"{cal_text} at k 1: {-cal:+.1f} us", color=color, fontsize=8)
     for ax in (ax_w, ax_l):
         ax.axvline(0.0, color="black", linewidth=0.6, linestyle=":")
-        ax.axvline(-HW_LEAD, color="gray", linewidth=0.8, linestyle="-.")
+        ax.axvline(-LEAD_3A_KE, color="gray", linewidth=0.8, linestyle="-.")
         ax.axvspan(-25.0, -25.0 + 10.2, color="#e8f5e9", zorder=0)   # SIM_SOPT0[DELAY], 255 ticks at the 25 MHz bus clock
         ax.axvspan(-25.0 + 10.2, -25.0 + 20.4, color="#fff8e1", zorder=0)  # BUSREF / 2
         ax.axvspan(-25.0 + 20.4, 15.0, color="#fbe9e7", zorder=0)    # BUSREF / 4 and beyond
@@ -636,9 +741,9 @@ def plot_start_calibration(path):
     ax_w.text(-24.5, ax_w.get_ylim()[1] * 0.9, "the delay at the bus clock", fontsize=7, color="green")
     ax_w.text(-14.3, ax_w.get_ylim()[1] * 0.9, "BUSREF / 2", fontsize=7, color="#b8860b")
     ax_w.text(-4.1, ax_w.get_ylim()[1] * 0.9, "BUSREF / 4", fontsize=7, color="#bf360c")
-    ax_w.text(-HW_LEAD + 0.3, ax_w.get_ylim()[1] * 0.75, f"built, {-HW_LEAD:.1f} us", fontsize=7, color="gray")
+    ax_w.text(-LEAD_3A_KE + 0.3, ax_w.get_ylim()[1] * 0.75, f"built, {-LEAD_3A_KE:.1f} us", fontsize=7, color="gray")
     ax_w.set_ylabel("Wait the take would need (us)\nthe -w variations spin it")
-    ax_w.set_title("Hardware Triggered: calibrating the start. The latest start with no wait at the take", fontsize=11)
+    ax_w.set_title("Hardware Triggered: the start against each variant's load point", fontsize=11)
     ax_l.set_ylabel("Sample -> load without the wait (us)\na late set is taken on the next cycle")
     ax_l.set_xlabel("The set's start, from the top whose LOOP takes it (us). The init trigger is at the bottom, -25")
     for load, label in ((25, "the bottom"), (50, "the next top"), (75, "the next bottom"), (100, "the top after")):
@@ -653,12 +758,6 @@ def plot_start_calibration(path):
 
 plot_start_calibration(os.path.join(here, "PwmSampleSequence_3_StartCalibration.png"))
 
-plot_order_compare([("Before 2026-11-01: FOC first. The requests after the write, the PI on requests 1 tick old", ORDERS[2][1]),
-                    ("Built now, 3A-r: the requests first, then the take", next(s for s in SEQS if s.key == "3A-r")),
-                    ("VBUS_CAPTURE_ON_MAIN, the same trigger delay: the ADC ISR ends earlier", VBUS_MAIN[0][1]),
-                    (f"VBUS_CAPTURE_ON_MAIN, the set started {BASE['vsource']:.1f} us later, {HW_LEAD_VBUS_MAIN:.1f} us before the top", VBUS_MAIN[1][1])],
-                   os.path.join(here, "PwmSampleSequence_3_Order.png"))
-
 fig, (ax_a, ax_b, ax_c) = plt.subplots(3, 1, figsize=(11, 12.5), sharex=True)
 styles = {"1a": ("tab:purple", "-"), "1b": ("tab:purple", ":"), "1c": ("tab:green", "-"), "2a": ("tab:orange", "-"), "2b": ("tab:red", "--"), "3A": ("tab:blue", "-"), "3A-r": ("tab:brown", "-")}
 for s in SEQS:
@@ -670,7 +769,6 @@ for s in SEQS:
 ax_a.axvline(1.0, color="gray", linewidth=0.8)
 for load, name in ((25, "same period's bottom"), (50, "next top"), (75, "next bottom"), (100, "top after")):
     ax_a.text(1.605, load - SAMPLE_OFFSET, f"loads at the {name}", fontsize=7, va="center", color="gray")
-ax_a.text(1.605, 25 + HW_LEAD - SAMPLE_OFFSET + 0.5, "3A-r: its sample is ahead of the top", fontsize=7, va="bottom", color="tab:brown")
 ax_a.set_ylabel("Sample -> load (us)")
 ax_a.set_title("Current-loop sequences on KE, by a factor on every ISR duration (1 = the estimate)")
 ax_a.grid()

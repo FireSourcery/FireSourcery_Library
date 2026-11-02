@@ -60,7 +60,7 @@ static inline void Motor_PollSpeed(Motor_T * p_dev)
 static inline void Motor_CaptureSensor(Motor_T * p_dev)
 {
     RotorSensor_CaptureAngle(p_dev->P_MOTOR->p_ActiveSensor);
-    Motor_PollSpeed(p_dev);
+    if (Motor_IsAnalogCycle(p_dev) == true) { Motor_PollSpeed(p_dev); } /* With the requests. The 1 ms poll lands on a fixed cycle, delayed at most 1 */
 }
 
 

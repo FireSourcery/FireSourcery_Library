@@ -49,6 +49,8 @@
 #define MOTOR_I_LOOP_FREQ MOTOR_CONTROL_FREQ /* CONTROL_FREQ / ANALOG_DIVIDER) */
 #endif
 
+#define MOTOR_I_LOOP_DIVIDER (MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) /* Control cycles per I loop cycle, the analog cycle's period */
+
 #ifndef MOTOR_SPEED_LOOP_FREQ
 #define MOTOR_SPEED_LOOP_FREQ (1000U)
 #endif
@@ -70,10 +72,9 @@
 #define MOTOR_CONTROL_CYCLES(Milliseconds)  CYCLES_OF_MS(MOTOR_CONTROL_FREQ, Milliseconds)
 #define MOTOR_CONTROL_TIME_MS(Cycles)       MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
 
-/* Ramp Time */
-/* Torque Ramp may differ from I Loop */
-#define MOTOR_TORQUE_CYCLES(Milliseconds)   CYCLES_OF_MS(MOTOR_CONTROL_FREQ, Milliseconds)
-#define MOTOR_TORQUE_TIME_MS(Cycles)        MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
+/* Ramp Time. The torque requests step on the analog cycle, at the I loop's rate */
+#define MOTOR_TORQUE_CYCLES(Milliseconds)   CYCLES_OF_MS(MOTOR_I_LOOP_FREQ, Milliseconds)
+#define MOTOR_TORQUE_TIME_MS(Cycles)        MS_OF_CYCLES(MOTOR_I_LOOP_FREQ, Cycles)
 
 #define MOTOR_I_CYCLES(Milliseconds)        CYCLES_OF_MS(MOTOR_I_LOOP_FREQ, Milliseconds)
 #define MOTOR_I_TIME_MS(Cycles)             MS_OF_CYCLES(MOTOR_I_LOOP_FREQ, Cycles)

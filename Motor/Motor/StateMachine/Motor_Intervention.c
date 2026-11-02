@@ -58,7 +58,7 @@
 static void TorqueZero_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    p_context->ControlTimerBase = 0U;
+    Motor_ResetControlTimer(p_context);
     // Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
     // p_context->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT; /* Torque control mode for active braking */
     /* seed Target to a small generating bias */
@@ -123,7 +123,7 @@ static void SpeedZero_Entry(Motor_T * p_motor)
     /* Intervention_Entry calls MatchIVState */
     /* Match speed ramp to current speed for bumpless transfer */
     Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp));
-    p_context->ControlTimerBase = 0U;
+    Motor_ResetControlTimer(p_context);
 }
 
 static void SpeedZero_Proc(Motor_T * p_motor)
@@ -188,7 +188,7 @@ const State_T INTERVENTION_STATE_SPEED_ZERO =
 /* Entry from Run traverses SpeedZero_Entry. Entry from SpeedZero continues the ramp in progress. */
 static void SafeStop_Entry(Motor_T * p_motor)
 {
-    p_motor->P_MOTOR->ControlTimerBase = 0U;
+    Motor_ResetControlTimer(p_motor->P_MOTOR);
 }
 
 static State_T * SafeStop_Next(Motor_T * p_motor)

@@ -74,6 +74,11 @@ static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Motor_Analog_MarkIabc
 #endif
 
 
+/*
+    The analog cycle by the Motor's own count, in step with the controller's [Motor_ResetControlTimer]: the I Sample Cycle.
+    The LOOP steps the requests and polls the speed loop on it, at MOTOR_I_LOOP_FREQ. Under the hardware trigger the set is taken in the
+    next cycle, the I Feedback Cycle, which then runs no requests before its write. Every cycle without a divider.
+*/
 static inline bool Motor_IsAnalogCycle(Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
 
 /* Optionally mark on Start */

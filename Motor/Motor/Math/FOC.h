@@ -70,7 +70,7 @@ typedef struct
 {
     // fract16_t IsMax;     /* Current circle radius */
     ufract16_t IdLimit;     /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
-    ufract16_t IdGain;      /* Field weakening integrator gain per control cycle */
+    ufract16_t IdGain;      /* Field weakening integrator gain per step */
 }
 FOC_FieldWeakeningTuning_T;
 
