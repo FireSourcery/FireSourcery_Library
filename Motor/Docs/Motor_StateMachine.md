@@ -18,9 +18,8 @@ side on (V0), `PWM` drives the bridge. T0 is 50 % duty on every phase (`Phase_Ac
 | Inputs | main thread, `StateMachine_Tree_Input` | the handler and the transition run on the call |
 | Transition commands | main thread, `StateMachine_Tree_InvokeTransition` | on the call |
 
-- The PWM ISR captures the rotor angle and the speed tick, then runs the state machine. With
-  `MOTOR_I_FEEDBACK_FIRST` the speed tick runs after the state machine, so the `LOOP`'s duty write still makes the
-  load point. Each period then counts one tick of `ControlTimerBase`; states reset it on entry and time against it.
+- The PWM ISR captures the rotor angle and the speed tick, then runs the state machine. Each period then counts
+  one tick of `ControlTimerBase`; states reset it on entry and time against it.
 - Under `STATE_MACHINE_ASYNC_CRITICAL` an input masks IRQs for its handler and transition, so the PWM ISR never
   runs between the old state's exit and the new state's entry. Without a lock define the engine is lock-free, and
   `Motor_StateMachine.h` stops the build: the engine runs the new entry before it moves the leaf, so a PWM ISR in

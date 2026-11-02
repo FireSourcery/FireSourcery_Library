@@ -143,12 +143,23 @@ static inline void Phase_Analog_MarkI(Phase_Analog_T * p_analog, Phase_Bitmask_T
 /*
     alternatively, directly on register state
 */
-static void Phase_Analog_Mark(const Phase_Analog_T * p_analog, Phase_Bitmask_T state)
+static void Phase_Analog_Mark(Phase_Analog_T * p_analog, Phase_Bitmask_T state)
 {
     ADC_Conversion_Mark((state.A) ? &p_analog->IA : &p_analog->VA);
     ADC_Conversion_Mark((state.B) ? &p_analog->IB : &p_analog->VB);
     ADC_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
 }
+
+// static inline Phase_Id_T Phase_ADC_IabcCompleted(Phase_Analog_T * p_analog, adc_mask_t landed)
+// {
+//     return Phase_IdOf((Phase_Bitmask_T)
+//     {
+//         .A = ((landed & p_analog->IA.CHANNEL_MASK) != 0UL),
+//         .B = ((landed & p_analog->IB.CHANNEL_MASK) != 0UL),
+//         .C = ((landed & p_analog->IC.CHANNEL_MASK) != 0UL),
+//     });
+// }
+
 
 // #if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
 // static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Phase_Analog_MarkI(&p_motor->PHASE_ANALOG, Phase_Bitmask(Phase_Inverse(Phase_ReadDutyMax(&p_motor->PHASE)))); }
@@ -219,16 +230,17 @@ static inline Phase_Data_T Phase_Iabc_PuOfAdcu(const Phase_Triplet_T * p_zeros, 
 }
 
 /*
-    One batch's I set: [Phase_Data_T] of ADCU, Flags the phases converted, the others' values stale.
-    Low-side sensing converts 2 of 3 [Motor_Analog_MarkI], and the third is solved.
+    One batch's I set of ADCU: [phases] the phases converted, the others' values stale.
+    Low-side sensing converts 2 of 3 [Motor_Analog_MarkI], and the third is solved. All 3 leave it as converted.
 */
-static inline void Phase_Analog_CaptureIBatch(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, Phase_Data_T adcu)
+static inline void Phase_Analog_CaptureIBatch(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases)
 {
-    p_phase->I = Phase_Data(Phase_Analog_IPuOf(p_zeros->A, adcu.A), Phase_Analog_IPuOf(p_zeros->B, adcu.B), Phase_Analog_IPuOf(p_zeros->C, adcu.C), Phase_IdOf(adcu.Flags));
-#if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
+    p_phase->I = Phase_Data(Phase_Analog_IPuOf(p_zeros->A, a), Phase_Analog_IPuOf(p_zeros->B, b), Phase_Analog_IPuOf(p_zeros->C, c), phases);
     _Phase_Analog_SolveI(&p_phase->I);
-#endif
 }
+
+
+
 
 static inline Phase_Data_T Phase_Vabc_PuOfAdcu(adc_result_t a, adc_result_t b, adc_result_t c)
 {
@@ -244,19 +256,4 @@ static inline Phase_Data_T Phase_Vabc_PuOfAdcu(adc_result_t a, adc_result_t b, a
     };
 }
 
-
-
-// /*!
-//     @brief Virtual channel identifiers
-// */
-// typedef enum Phase_AnalogChannel
-// {
-//     PHASE_ADC_CHANNEL_VA,
-//     PHASE_ADC_CHANNEL_VB,
-//     PHASE_ADC_CHANNEL_VC,
-//     PHASE_ADC_CHANNEL_IA,
-//     PHASE_ADC_CHANNEL_IB,
-//     PHASE_ADC_CHANNEL_IC,
-// }
-// Phase_AnalogChannel_T;
 

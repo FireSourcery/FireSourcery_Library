@@ -116,7 +116,7 @@ static inline uint16_t _Phase_VAlignDutyOfPu(uint16_t pu, uint32_t vBusInv_pu) {
 
 /* 1 as 1/2 vBus */
 /* fract16 scale */
-void Phase_Align_VRatio(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t scalar) { Phase_Align(p_phase, id, _Phase_VAlignDutyOfRatio(scalar)); }
+void Phase_Align_VRatio(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t vNorm) { Phase_Align(p_phase, id, _Phase_VAlignDutyOfRatio(vNorm)); }
 
 /* v in the pu base of VBus */
 void Phase_Align_V(Phase_VOut_T * p_phase, Phase_Id_T id, uint32_t vBusInv_pu, uint16_t v_pu) { Phase_Align(p_phase, id, _Phase_VAlignDutyOfPu(v_pu, vBusInv_pu)); }

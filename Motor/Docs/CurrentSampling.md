@@ -21,10 +21,10 @@ Where the phase-current sample sits in the PWM period, how its conversion starts
 | Option | Effect |
 |---|---|
 | none | The LOOP takes the set at its own angle: `Motor_FOC_TakeI` Parks and clears the flags |
-| `MOTOR_I_FEEDBACK_FIRST` | The torque LOOPs run the current loop on the held requests, write, then step the requests |
-| `MOTOR_I_CAPTURE_ON_PHASE` | The set's completion Parks it, at the angle of the PWM interrupt that started it. Needs a board completion that calls `Motor_ADC_OnIabc_Thread` |
-| `MOTOR_I_FEEDBACK_ON_PHASE` | The completion also runs the current loop, in the states whose action table holds `Motor_FOC_ProcTorqueFeedback`. Needs `MOTOR_I_CAPTURE_ON_PHASE` |
+| `MOTOR_I_FEEDBACK_ON_PHASE` | The completion also runs the current loop, in the states whose action table holds `Motor_FOC_ProcTorqueFeedback`. Needs a board completion that calls `Motor_ADC_OnIabc_Thread` |
 | `FOC_I_SAMPLE_DELAY` | Every I Park takes θ − ω·delay, the delay in control periods. Independent of the others |
+
+A state that Parks the set at its completion, at the angle the PWM interrupt that started it set, calls `Motor_FOC_CaptureI` in its ON_PHASE action and takes the set with `Motor_FOC_TakeCapturedI`. Functions, not an option: [ConditionalCompilation.md](../../Docs/Conventions/ConditionalCompilation.md).
 
 ## Not established
 

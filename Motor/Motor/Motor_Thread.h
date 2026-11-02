@@ -74,16 +74,9 @@ static inline void Motor_CaptureSensor(Motor_T * p_dev)
 */
 static inline void Motor_PWM_Thread(Motor_T * p_dev)
 {
-#if defined(MOTOR_I_FEEDBACK_FIRST)
-    /* The speed tick's requests after the LOOP's write, so the write still makes the bottom */
-    RotorSensor_CaptureAngle(p_dev->P_MOTOR->p_ActiveSensor);
-    _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
-    Motor_PollSpeed(p_dev);
-#else
     Motor_CaptureSensor(p_dev);
 
     _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
-#endif
     // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
     // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
     // Motor_FOC_WriteDuty_Thread(p_dev);
@@ -104,19 +97,24 @@ static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
 /*
     The I set's completion, the set already captured, e.g. by per-channel pushes. From the ADC or DMA ISR.
     Run at the PWM ISR's priority, so the active state is not mid-transition. ON_PHASE reaches the active leaf state only.
+    The set stays raw: the state's take Parks it, or its ON_PHASE action does [Motor_FOC_CaptureI].
 */
 static inline void _Motor_OnIabc_Thread(Motor_T * p_motor)
 {
-#if defined(MOTOR_I_CAPTURE_ON_PHASE)
-    Motor_FOC_CaptureI(p_motor->P_MOTOR); /* Else the LOOP's take Parks it, at its own angle */
-#endif
     _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
 }
 
-/* One batch's I set, [Phase_Data_T] of ADCU, Flags the phases converted [Phase_Analog_CaptureIBatch] */
-static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, Phase_Data_T adcu)
+/* One batch's I set of ADCU, all 3 phases converted */
+static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu)
 {
-    Motor_Analog_CaptureIBatch(p_motor->P_MOTOR, adcu);
+    Motor_Analog_CaptureIabc(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu);
+    _Motor_OnIabc_Thread(p_motor);
+}
+
+/* Low-side sensing's I set of ADCU [PHASE_ANALOG_I_SENSOR_LOW_SIDE]: [phases] the phases converted, the third solved [Phase_Analog_CaptureIBatch] */
+static inline void Motor_ADC_OnIBatch_Thread(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu, Phase_Id_T phases)
+{
+    Motor_Analog_CaptureIBatch(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu, phases);
     _Motor_OnIabc_Thread(p_motor);
 }
 

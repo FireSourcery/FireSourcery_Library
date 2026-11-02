@@ -45,6 +45,7 @@ diagram where the structure is not obvious from the shape.
 | [ProtocolStack.md](ProtocolStack.md) | Architectural | A wire protocol with a spec-fixed profile and a device integration: generic engine, opaque-context table |
 | [WrapperSurface.md](WrapperSurface.md) | Design | An outer module exposes an inner one, or couples two peers: adapt, get or forward, and when a wrapper type earns itself |
 | [EdgePollSnapshot.md](EdgePollSnapshot.md) | Idiom | An edge detector wraps a poll that writes what it compares: snapshot the prior value first |
+| [GuardedCall.md](GuardedCall.md) | Idiom | An optional feature: compile its definitions in every build, guard the one reference, and the linker drops them |
 
 ---
 

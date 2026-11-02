@@ -443,12 +443,9 @@ static inline void _FOC_SetIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
 static inline void FOC_MatchIVState(FOC_T * p_foc)
 {
 #if defined(FOC_DECOUPLE_ENABLE)
-    /* Vq_measured = PI_out + Vq_ff */
-    PID_SetOutputState(&p_foc->PidId, fract16_sat(p_foc->Vd - FOC_VdFeedforward(p_foc)));
-    PID_SetOutputState(&p_foc->PidIq, fract16_sat(p_foc->Vq - FOC_VqFeedforward(p_foc)));
+    FOC_MatchIVState_Decouple(p_foc);
 #else
-    PID_SetOutputState(&p_foc->PidId, p_foc->Vd);
-    PID_SetOutputState(&p_foc->PidIq, p_foc->Vq);
+    FOC_MatchIVState_Base(p_foc);
 #endif
 }
 

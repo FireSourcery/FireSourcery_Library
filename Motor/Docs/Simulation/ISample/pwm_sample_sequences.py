@@ -1,7 +1,11 @@
 """
 KE current-loop sequences: where the I sample is captured, Parked and run through the PI, and when its output loads.
 
-One timeline per sequence (PwmSampleSequence_<n>_<name>.png), and a summary across a CPU speed factor (PwmSampleSequenceSummary.png).
+Three paths, each with its variants:
+    1. The ADC ISR captures the I set, and the PWM ISR's LOOP takes it and runs the PI. 1a the take finds it, 1b it misses, 1c the LOOP waits.
+    2. The ADC ISR also runs the PI, at the I set's completion. 2a at the PWM ISR's priority, 2b above it.
+    3. The I set is started ahead of the top, so it lands before the PWM ISR, which runs the PI first.
+One timeline per variant (PwmSampleSequence_<variant>_<name>.png), and a summary across a CPU speed factor (PwmSampleSequenceSummary.png).
 CurrentLoopSequencing.md and CurrentSampling.md describe the hardware and the code paths.
 
 Model
@@ -52,7 +56,7 @@ CONV = (("VSOURCE", 0.0, 2.5), ("IA", 2.5, 2.0), ("IB", 4.5, 2.0), ("IC", 6.5, 2
 CONV_DONE = 8.5
 SAMPLE_OFFSET = 4.5  # IB, the middle of the set
 AGE_US, HOLD_HALF_US = 96.0, 50.0  # CurrentSenseFilter.md, hold tau 10 us, 300 Hz; the 10 kHz loop's half hold
-HW_LEAD = CONV_DONE + BASE["adc_entry"] + BASE["vsource"] + BASE["icapture"] + BASE["adc_exit"] + 0.5  # sequence 6: done before the top
+HW_LEAD = CONV_DONE + BASE["adc_entry"] + BASE["vsource"] + BASE["icapture"] + BASE["adc_exit"] + 0.5  # path 3: done before the top
 
 KIND_COLOR = {"shell": "#d9d9d9", "theta": "#81c784", "req": "#b39ddb", "capture": "#64b5f6", "pi": "#e57373", "out": "#ffb74d", "spin": "#f5f5f5"}
 KIND_LABEL = {"shell": "entry, dispatch, exit", "theta": "angle: sensor, SetTheta", "req": "requests: ramp, field weakening",
@@ -60,42 +64,41 @@ KIND_LABEL = {"shell": "entry, dispatch, exit", "theta": "angle: sensor, SetThet
 
 
 class Seq:
-    def __init__(self, key, title, file, adc_prio, adc_isr, park_in, pi_in, order, trigger, notes):
+    def __init__(self, key, title, file, adc_prio, adc_isr, park_in, pi_in, order, trigger, notes, vbus="adc", lead=None):
         self.key, self.title, self.file = key, title, file
         self.adc_prio, self.adc_isr = adc_prio, adc_isr      # the ADC ISR handles the I set
-        self.park_in, self.pi_in = park_in, pi_in            # 'adc' / 'loop' ; 'loop' / 'adc' / 'poll'
+        self.park_in, self.pi_in = park_in, pi_in            # 'adc' / 'loop' ; 'loop' / 'adc' / 'wait'
         self.order, self.trigger = order, trigger            # 'default' / 'foc_first' ; 'sw' / 'hw'
         self.notes = notes
+        self.vbus = vbus                                     # 'adc': VBus captured in the ADC ISR; 'main': on the main thread [VBUS_CAPTURE_ON_MAIN]
+        self.lead = HW_LEAD if lead is None else lead        # 'hw': the set's start before the top
 
 
 SEQS = [
-    Seq("0", "LOOP captures, at the next tick's angle", None, PRIO_PWM, True, "loop", "loop", "default", "sw",
-        ["Reference only. The ADC ISR captures, the next tick's LOOP Parks and runs the PI."]),
-    Seq("1", "Run_Proc, ADC ISR at equal priority (MOTOR_I_CAPTURE_ON_PHASE)", "1_RunProcEqualPriority", PRIO_PWM, True, "adc", "loop", "default", "sw",
-        ["The ADC ISR runs after the PWM ISR returns: Run_Proc on this tick always comes first,",
-         "so the PI runs on the next tick. One duty writer per tick, the LOOP."]),
-    Seq("2", "ON_PHASE in the ADC ISR, equal priority (MOTOR_I_FEEDBACK_ON_PHASE)", "2_OnPhaseEqualPriority", PRIO_PWM, True, "adc", "adc", "default", "sw",
+    Seq("1a", "PI in the PWM ISR, the take finds the set. The ADC ISR preempts before the take", "1a_TakeHit", PRIO_HIGH, True, "loop", "loop", "default", "sw",
+        ["The ADC ISR only captures. The LOOP's take Parks at this tick's angle and runs the PI",
+         "if the set landed before the take, else on the next tick: 1b. One duty writer."]),
+    Seq("1b", "PI in the PWM ISR, the take misses. The ADC ISR at the PWM ISR's priority", "1b_TakeMiss", PRIO_PWM, True, "loop", "loop", "default", "sw",
+        ["1a's miss: the capture comes after this tick's take. At the PWM ISR's priority the ADC ISR",
+         "runs after the PWM ISR returns, so it always misses. The next tick's LOOP takes the set,",
+         "Parked at its own angle. One duty writer per tick, the LOOP."]),
+    Seq("1c", "PI in the PWM ISR, the LOOP waits at the take. The ADC ISR preempts and captures", "1c_TakeWait", PRIO_HIGH, True, "loop", "wait", "default", "sw",
+        ["The LOOP spins at its take until the ADC ISR, above it, has captured the set. It never misses.",
+         "Spins only if the LOOP reaches the take before the set lands. One duty writer."]),
+    Seq("2a", "PI in the ADC ISR, at the PWM ISR's priority (MOTOR_I_FEEDBACK_ON_PHASE)", "2a_OnPhaseEqualPriority", PRIO_PWM, True, "adc", "adc", "default", "sw",
         ["The ADC ISR runs after the PWM ISR returns, so the PI waits for the whole PWM ISR.",
          "The PWM ISR and the PI land in the same period: the analog period's load.",
          "The 1 ms SysTick thread (priority 2, exception 15) also runs first when it is pending."]),
-    Seq("3", "ON_PHASE in the ADC ISR, ADC at higher priority", "3_OnPhaseHigherPriority", PRIO_HIGH, True, "adc", "adc", "default", "sw",
+    Seq("2b", "PI in the ADC ISR, above the PWM ISR", "2b_OnPhasePreempt", PRIO_HIGH, True, "adc", "adc", "default", "sw",
         ["The ADC ISR preempts the PWM ISR wherever it is. Hazards:",
          "- the Park takes the held angle: the previous tick's if the LOOP has not reached SetTheta,",
          "- a state transition in progress in the PWM ISR: ON_PHASE dispatches to a half-entered state,",
          "- the LOOP's write after it can overwrite its duty with the old Vdq."]),
-    Seq("4", "Run_Proc, ADC at higher priority: capture preempts, the LOOP takes a fresh sample", "4_RunProcHigherPriority", PRIO_HIGH, True, "loop", "loop", "default", "sw",
-        ["The ADC ISR only captures; the LOOP Parks at this tick's angle and runs the PI if the batch",
-         "landed before its take, else on the next tick, as in 1. One duty writer.",
-         "Needs the LOOP's take and Park atomic against the capture (mask the ADC IRQ for a few us)."]),
-    Seq("5", "Run_Proc polls the ADC", "5_RunProcPoll", PRIO_PWM, False, "loop", "poll", "default", "sw",
-        ["The PWM ISR waits for the batch at the take, captures and Parks it from the results buffer.",
-         "No second ISR, no race. Spins only if the LOOP reaches the take before the batch lands.",
-         "The ADC ISR keeps the other channels; its I set work moves into the PWM ISR."]),
-    Seq("6", "Hardware trigger ahead of the top, FOC first in the PWM ISR", "6_TriggerAheadFocFirst", PRIO_PWM, True, "loop", "loop", "foc_first", "hw",
+    Seq("3", "The set timed ahead of the top, PI in the PWM ISR", "3_TriggerAhead", PRIO_HIGH, True, "loop", "loop", "default", "hw",
         [f"FTM2 starts the ADC {HW_LEAD:.1f} us before the top (init trigger + SIM_SOPT0[DELAY], or a match trigger),",
-         "so the batch and its capture finish in idle time before the PWM ISR.",
-         "The PWM ISR runs SetTheta, Park, PI and the write first, then the requests for the next tick",
-         "(the PI takes requests one tick old). ADTRG is ADC-wide: the other channels need the trigger too."]),
+         "so the batch and its capture finish in idle time before the PWM ISR, and the take never misses.",
+         "The requests run before the take, so the write misses the bottom; FOC first made it (ORDERS below).",
+         "ADTRG is ADC-wide: the other channels need the trigger too."]),
 ]
 
 
@@ -118,7 +121,7 @@ class Sim:
             analog = (n % 2 == 0)
             self.at(tick, lambda tick=tick, analog=analog: self.release("PWM ISR", PRIO_PWM, IRQ_FTM2, self.pwm_isr(tick, analog), tick))
             if analog and seq.trigger == "hw":
-                self.at(tick - HW_LEAD, lambda tick=tick: self.start_adc(tick - HW_LEAD, tick))
+                self.at(tick - seq.lead, lambda tick=tick: self.start_adc(tick - self.seq.lead, tick))
 
     # Events and jobs
     def at(self, time, fn):
@@ -162,10 +165,9 @@ class Sim:
 
     def loop_take(self, tick, analog):
         s, d = self.seq, self.d
-        if s.pi_in == "poll" and analog:
-            yield self.until("spin", "spin", lambda: self.landed(tick))
-            yield self.seg("VSOURCE, I", "capture", d["vsource"] + d["icapture"], lambda: self.capture(tick))
-        if s.pi_in in ("loop", "poll") and self.token is not None:
+        if s.pi_in == "wait" and analog:
+            yield self.until("spin", "spin", lambda: self.token == tick)  # the ADC ISR, above, captures
+        if s.pi_in in ("loop", "wait") and self.token is not None:
             b = self.take()
             if s.park_in == "loop":
                 yield self.seg("Park", "capture", d["park"], lambda b=b: self.park(b))
@@ -193,7 +195,8 @@ class Sim:
     def adc_isr(self, tick):
         s, d = self.seq, self.d
         yield self.seg("entry", "shell", d["adc_entry"])
-        yield self.seg("VSOURCE", "capture", d["vsource"])
+        if s.vbus == "adc":
+            yield self.seg("VSOURCE", "capture", d["vsource"])
         yield self.seg("I", "capture", d["icapture"], lambda: self.capture(tick))
         if s.park_in == "adc":
             yield self.seg("Park", "capture", d["park"], lambda: self.park(tick))
@@ -365,8 +368,87 @@ for i, k in enumerate(ks):
     if i % 5 == 0:
         print(f"{k:4.2f}  " + " ".join(f"{sweep[s.key][i]['sample_to_load']:6.1f}" for s in SEQS))
 
+# The LOOP's order: the requests before the take (default), or after the write (FOC first, the PI on requests 1 tick old)
+ORDERS = [
+    ("1a, FOC first", Seq("1a", "", None, PRIO_HIGH, True, "loop", "loop", "foc_first", "sw", [])),
+    ("1c, FOC first", Seq("1c", "", None, PRIO_HIGH, True, "loop", "wait", "foc_first", "sw", [])),
+    ("3, FOC first", Seq("3", "", None, PRIO_HIGH, True, "loop", "loop", "foc_first", "hw", [])),
+]
+# VBus on the main thread [VBUS_CAPTURE_ON_MAIN]: the ADC ISR loses the VBus capture, so the set can start that much later
+HW_LEAD_VBUS_MAIN = HW_LEAD - BASE["vsource"]
+VBUS_MAIN = [
+    ("3, VBus main", Seq("3", "", None, PRIO_HIGH, True, "loop", "loop", "default", "hw", [], vbus="main")),
+    ("3, VBus main, later", Seq("3", "", None, PRIO_HIGH, True, "loop", "loop", "default", "hw", [], vbus="main", lead=HW_LEAD_VBUS_MAIN)),
+]
+order_ks = (0.6, 0.8, 1.0, 1.2, 1.4)
+print("\nsample -> load (us) by LOOP order; the write at k = 1")
+print(f"{'':20s}" + " ".join(f"k {k:<4}" for k in order_ks) + "  write")
+for name, s in [(f"{s.key}, default", s) for s in SEQS if s.key in ("1a", "1c", "3")] + ORDERS + VBUS_MAIN:
+    print(f"{name:20s}" + " ".join(f"{Sim(s, k).run().result()['sample_to_load']:6.1f}" for k in order_ks) + f"  {Sim(s, 1.0).run().result()['write']:5.1f}")
+
+
+def plot_order_compare(pairs, path):
+    """The same sequence in each LOOP order, one panel each, on one time axis around the take's top."""
+    t_lo, t_hi = -25.0, 60.0
+    lanes = {"ADC": 3.0, "ADC ISR": 2.0, "PWM ISR": 1.0}
+    fig, axes = plt.subplots(len(pairs) + 1, 1, figsize=(12, 1.6 + 2.6 * len(pairs)), sharex=True,
+                             gridspec_kw={"height_ratios": [0.7] + [2.0] * len(pairs)})
+    ax_c = axes[0]
+    ts = [t_lo + i * 0.1 for i in range(int((t_hi - t_lo) / 0.1) + 1)]
+    ax_c.plot(ts, [1 - abs(2 * (((t + 25) % 50) / 50) - 1) for t in ts], color="black", linewidth=1)
+    for lp in (-25.0, 0.0, 25.0, 50.0):
+        top = (lp % T == 0)
+        ax_c.plot(lp, 1.0 if top else 0.0, marker="v" if top else "^", color="gray", markersize=6)
+        if lp > t_lo:
+            ax_c.text(lp, 1.12 if top else -0.32, "top: loads" if top else "bottom: loads", ha="center", fontsize=7, color="gray")
+    ax_c.set_ylim(-0.45, 1.3)
+    ax_c.set_yticks([])
+    ax_c.set_ylabel("FTM2\ncounter")
+    ax_c.set_title("Path 3, the set timed ahead of the top: the LOOP's order", fontsize=11)
+    for ax, (label, seq) in zip(axes[1:], pairs):
+        sim = Sim(seq, 1.0).run()
+        r = sim.result()
+        b = sim.batches[0.0]
+        for name, start, width in CONV:
+            ax.broken_barh([(b["start"] + start, width)], (lanes["ADC"] - 0.3, 0.6), facecolors="#cfd8dc" if name == "VSOURCE" else "#90a4ae", edgecolor="white")
+            ax.text(b["start"] + start + width / 2, lanes["ADC"], {"VSOURCE": "VS"}.get(name, name), ha="center", va="center", fontsize=6)
+        for lane, seg_label, kind, a, e, tag in sim.trace:
+            if e < t_lo or a > t_hi:
+                continue
+            ax.broken_barh([(a, e - a)], (lanes[lane] - 0.3, 0.6), facecolors=KIND_COLOR[kind], edgecolor="#555555", linewidth=0.4)
+            if e - a >= 2.4:
+                ax.text((a + e) / 2, lanes[lane], seg_label, ha="center", va="center", fontsize=6)
+        for n in (-1, 0, 1):
+            ax.axvline(n * T, color="black", linewidth=0.6, linestyle=":")
+            ax.axvline(n * T + LOAD, color="gray", linewidth=0.4, linestyle=":")
+        ax.plot([r["write"]] * 2, [lanes["PWM ISR"] - 0.45, lanes["PWM ISR"] + 0.45], color="black", linewidth=1.5)
+        ax.text(r["write"] + 0.6, lanes["PWM ISR"] + 0.42, f"write {r['write']:.1f} us", fontsize=7)
+        ax.annotate("", (r["load"], 0.25), (r["sample"], 0.25), arrowprops=dict(arrowstyle="->", color="green", linewidth=1.5))
+        ax.plot(r["load"], 0.25, marker="*", color="green", markersize=13)
+        ax.text((r["sample"] + r["load"]) / 2, -0.05, f"sample -> load {r['sample_to_load']:.1f} us: loads at the {'bottom' if r['load'] % T else 'next top'}",
+                ha="center", fontsize=8, color="green")
+        ax.set_yticks(list(lanes.values()))
+        ax.set_yticklabels(list(lanes.keys()))
+        ax.set_ylim(-0.3, 3.6)
+        ax.set_title(label, fontsize=9, loc="left")
+    axes[-1].set_xlim(t_lo, t_hi)
+    axes[-1].set_xlabel("Time from the top whose LOOP takes the set (us)")
+    fig.legend(handles=[Patch(facecolor=c, edgecolor="#555555", label=KIND_LABEL[k]) for k, c in KIND_COLOR.items() if k != "spin"],
+               loc="lower center", ncol=3, fontsize=7, bbox_to_anchor=(0.5, 0.0))
+    fig.text(0.01, 0.005, "Durations are estimates (k = 1), not measured.", fontsize=7, color="gray")
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    fig.savefig(path, dpi=100)
+    plt.close(fig)
+
+
+plot_order_compare([("Before 2026-11-01: FOC first. The requests after the write, the PI on requests 1 tick old", ORDERS[2][1]),
+                    ("Built now: the requests first, then the take", next(s for s in SEQS if s.key == "3")),
+                    ("VBUS_CAPTURE_ON_MAIN, the same trigger delay: the ADC ISR ends earlier", VBUS_MAIN[0][1]),
+                    (f"VBUS_CAPTURE_ON_MAIN, the set started {BASE['vsource']:.1f} us later, {HW_LEAD_VBUS_MAIN:.1f} us before the top", VBUS_MAIN[1][1])],
+                   os.path.join(here, "PwmSampleSequence_3_Order.png"))
+
 fig, (ax_a, ax_b, ax_c) = plt.subplots(3, 1, figsize=(11, 12.5), sharex=True)
-styles = {"0": ("black", ":"), "1": ("tab:blue", "-"), "2": ("tab:orange", "-"), "3": ("tab:red", "--"), "4": ("tab:purple", "--"), "5": ("tab:green", "-"), "6": ("tab:brown", "-")}
+styles = {"1a": ("tab:purple", "-"), "1b": ("tab:purple", ":"), "1c": ("tab:green", "-"), "2a": ("tab:orange", "-"), "2b": ("tab:red", "--"), "3": ("tab:brown", "-")}
 for s in SEQS:
     color, ls = styles[s.key]
     label = f"{s.key}. {s.title}"
@@ -376,7 +458,7 @@ for s in SEQS:
 ax_a.axvline(1.0, color="gray", linewidth=0.8)
 for load, name in ((25, "same period's bottom"), (50, "next top"), (75, "next bottom"), (100, "top after")):
     ax_a.text(1.605, load - SAMPLE_OFFSET, f"loads at the {name}", fontsize=7, va="center", color="gray")
-ax_a.text(1.605, 25 + HW_LEAD - SAMPLE_OFFSET + 0.5, "6: its sample is ahead of the top", fontsize=7, va="bottom", color="tab:brown")
+ax_a.text(1.605, 25 + HW_LEAD - SAMPLE_OFFSET + 0.5, "3: its sample is ahead of the top", fontsize=7, va="bottom", color="tab:brown")
 ax_a.set_ylabel("Sample -> load (us)")
 ax_a.set_title("Current-loop sequences on KE, by a factor on every ISR duration (1 = the estimate)")
 ax_a.grid()

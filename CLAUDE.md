@@ -72,6 +72,7 @@
 - **Expression style**: Prefer concise, declarative expressions over procedural manipulation. Use library primitives (`math_clamp`, `fract16_div`, `fract16_mul`, `math_min/max`) composed into single expressions that mirror the domain formula. Avoid early-return ladders and temporaries that break a formula into steps. Function body should look like the equation in its docstring, not reconstruct it.
 - For functions called with known constant values at compile time, input parameter correctness is a part of the API contract. favor `assert` instead of runtime error checking logic
 - No token pasting technique for preprocessor macros. VA_ARGS for generic handling ergonomics is okay.
+- **Preprocessor paths sparingly**: they confuse the code. Variants are separate functions; an `#if` selects among them at one point only where it saves code, prevents a cross product, or is a configuration case (`FOC_ProcIFeedback`). A caller's or state's choice is a function call, a timing gap is tuning. An optional feature's definitions compile in every build; guard only the call or table row, and the linker drops them. [Docs/Conventions/ConditionalCompilation.md](Docs/Conventions/ConditionalCompilation.md), [Docs/Patterns/GuardedCall.md](Docs/Patterns/GuardedCall.md)
 
 ### Important Rules
 - **No heap allocation** (`malloc`/`free` are never used)

@@ -41,9 +41,10 @@
 
     @note overflow
     vPhase_pu < vBus_pu * .57
-    vBusInv_pu * vBus_pu = INT32_MAX
-    overflow when VBus drops more than 42% before v_pu updates
-    VBus fault detection should trigger before this point
+    for vBusInv_pu * vBus_pu = INT32_MAX
+        overflow when VBus drops more than 42% before v_pu updates
+        VBus fault detection should trigger before this point
+    vBusInv_pu * vBus_pu = INT32_MAX / 2
 */
 static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_pu, fract16_t vphase_pu) { return (int32_t)vphase_pu * (int32_t)vBusInv_pu / FRACT16_SCALE; }
 static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_pu, fract16_t vphase_pu) { return fract16_div(vphase_pu, vBus_pu); }

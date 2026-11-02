@@ -34,6 +34,12 @@ The convention the motor layer writes duties in, and the counter events it relie
 
 ## One period
 
+| PWMx | Conducting | Phase node |
+|---|---|---|
+| high | high side | +Vbus |
+| low | low side, about 0.7 µs after the falling edge | −i·R_DS(on) |
+| either, Pin ENx low | neither | floats |
+
 ![PWM and sample timing, one KE period](Simulation/PwmSampleTiming.png)
 
 From [pwm_sample_timing.py](Simulation/pwm_sample_timing.py): a KE0x FTM at 20 kHz (MOD 1250), midclamp at Vbus/2 at a line-to-line peak, duties 0.933 / 0.500 / 0.067. Time 0 is the counter top.

@@ -45,27 +45,33 @@ typedef const struct ADC_Conversion
     /* for starting. */
     ADC_T * P_ADC;
     adc_channel_t CHANNEL;
+    // adc_mask_t CHANNEL_MASK;
 }
 ADC_Conversion_T;
 
+/* AdcArray must be a constexpr */
 #define ADC_CONVERSION(AdcArray, AdcId, ChannelIndex) (ADC_Conversion_T) \
         { .P_ADC = &(AdcArray[AdcId]), .CHANNEL = (ChannelIndex), .P_RESULT = &((AdcArray[AdcId]).P_CHANNEL_RESULTS[ChannelIndex])  }
 
 /* From the ADC by name, where the Board holds it as a struct and not an array. P_RESULT resolves on read */
 #define ADC_CONVERSION_FROM(AdcStruct, ChannelIndex) (ADC_Conversion_T) { .P_ADC = &(AdcStruct), .CHANNEL = (ChannelIndex), }
 
+/*
+    Abstracted access functions
+*/
 static inline void ADC_Conversion_Mark(ADC_Conversion_T * p_conv) { ADC_MarkChannel(p_conv->P_ADC, p_conv->CHANNEL); }
 static inline bool ADC_Conversion_IsMarked(ADC_Conversion_T * p_conv) { return ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }
+
 static inline adc_result_t ADC_Conversion_GetResult(ADC_Conversion_T * p_conv) { return ADC_ResultOf(p_conv->P_ADC, p_conv->CHANNEL); }
 static inline void ADC_Conversion_ClearResult(ADC_Conversion_T * p_conv) { p_conv->P_ADC->P_CHANNEL_RESULTS[p_conv->CHANNEL] = 0U; }
 
 
-static inline void ADC_ConversionMap_Resolve(ADC_Conversion_T ** p_conv, uint8_t count, adc_result_t * p_dest)
-{
-    for (uint8_t index = 0U; index < count; index++) { p_dest[index] = ADC_Conversion_GetResult(p_conv[index]); }
-}
 
-
+//
+// static inline void ADC_ConversionMap_Resolve(ADC_Conversion_T ** p_conv, uint8_t count, adc_result_t * p_dest)
+// {
+//     for (uint8_t index = 0U; index < count; index++) { p_dest[index] = ADC_Conversion_GetResult(p_conv[index]); }
+// }
 
 /* Destination. The consumer's index */
 /* Source. A slot in any ADC's results buffer */

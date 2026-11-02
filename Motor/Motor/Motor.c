@@ -231,7 +231,7 @@ void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
     Push alternative, with [_Motor_SetILimits]: catch-all on a feedback mode update, Run_Entry.
     TorqueRamp and SpeedPid output units follow FeedbackMode.Current
 */
- void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
+void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
 {
     Motor_Context_T * p_motor = p_dev->P_MOTOR;
     interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
