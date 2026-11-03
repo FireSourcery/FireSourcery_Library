@@ -91,24 +91,38 @@ typedef struct AnglePll
 }
 AnglePll_T;
 
-// typedef struct
-// {
-//     AnglePll_FilterTuning_T FilterTuning;
-//     ufract16_t Magnitude;       /* |x| of the last detected vector */
-//     uint16_t LockCount;
-// }
-// AnglePll_Collab_T;
 
 /******************************************************************************/
 /*
     Per tick
 */
 /******************************************************************************/
-static inline angle16_t AnglePll_Proc(AnglePll_T * p_pll, fract16_t phaseError)
+/*
+    The loop split at the sample: the correction sets ω̂ once per sample, the predict moves θ̂ every control tick, between corrections too.
+    ω̂ stays per control tick, at any correction rate. The loop filter's SampleFreq is the correction's rate.
+*/
+/* ω̂ from the phase error. θ̂ moves only at the predict */
+static inline void AnglePll_Correct(AnglePll_T * p_pll, fract16_t phaseError)
 {
     p_pll->PhaseError = phaseError;
-    return Angle_Integrate(&p_pll->Base, PID_ProcPI(&p_pll->LoopFilter, phaseError, 0));
+    Angle_SetDelta(&p_pll->Base, PID_ProcPI(&p_pll->LoopFilter, phaseError, 0));
 }
+
+/* θ̂ += ω̂ */
+static inline angle16_t AnglePll_Predict(AnglePll_T * p_pll) { return Angle_IntegrateStep(&p_pll->Base); }
+
+/* Both, where the correction runs at the predict's rate */
+static inline angle16_t AnglePll_Proc(AnglePll_T * p_pll, fract16_t phaseError)
+{
+    AnglePll_Correct(p_pll, phaseError);
+    return AnglePll_Predict(p_pll);
+}
+
+// static inline angle16_t AnglePll_Proc(AnglePll_T * p_pll, fract16_t phaseError)
+// {
+//     p_pll->PhaseError = phaseError;
+//     return Angle_Integrate(&p_pll->Base, PID_ProcPI(&p_pll->LoopFilter, phaseError, 0));
+// }
 
 static inline bool AnglePll_IsLocked(const AnglePll_T * p_pll) { return (p_pll->LockCount >= p_pll->FilterTuning.LockHoldCount); }
 
@@ -138,26 +152,45 @@ static inline void _AnglePll_ProcLock(AnglePll_T * p_pll, ufract16_t magnitude, 
     }
 }
 
-/* The detected vector: its error normalized against the floor, the lock on both, then the loop */
-static inline angle16_t _AnglePll_ProcDetected(AnglePll_T * p_pll, ufract16_t magnitude, accum32_t error)
+/* The detected vector: its error normalized against the floor, the lock on both, then the correction. The caller predicts [AnglePll_Predict] */
+static inline void _AnglePll_ProcDetected(AnglePll_T * p_pll, ufract16_t magnitude, accum32_t error)
 {
     fract16_t phaseError = angle_pll_normalize(p_pll->FilterTuning.MagFloor, magnitude, error);
     _AnglePll_ProcLock(p_pll, magnitude, phaseError);
-    return AnglePll_Proc(p_pll, phaseError);
+    AnglePll_Correct(p_pll, phaseError);
 }
 
-/* x along θ, detected against θ̂ */
-static inline angle16_t AnglePll_ProcVector(AnglePll_T * p_pll, fract16_t x, fract16_t y)
+// static inline angle16_t _AnglePll_ProcDetected(AnglePll_T * p_pll, ufract16_t magnitude, accum32_t error)
+// {
+//     fract16_t phaseError = angle_pll_normalize(p_pll->FilterTuning.MagFloor, magnitude, error);
+//     _AnglePll_ProcLock(p_pll, magnitude, phaseError);
+//     return AnglePll_Proc(p_pll, phaseError);
+// }
+
+/* x along θ, detected against θ̂. Corrects ω̂ only */
+static inline void AnglePll_ProcVector(AnglePll_T * p_pll, fract16_t x, fract16_t y)
 {
     struct fract16_xy unit = Angle_UnitVector(&p_pll->Base);
-    return _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error(x, y, unit.y, unit.x));
+    _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error(x, y, unit.y, unit.x));
 }
 
-/* x already in the frame of θ̂ */
-static inline angle16_t AnglePll_ProcRelative(AnglePll_T * p_pll, fract16_t x, fract16_t y)
+/* x already in the frame of θ̂. Corrects ω̂ only */
+static inline void AnglePll_ProcRelative(AnglePll_T * p_pll, fract16_t x, fract16_t y)
 {
-    return _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error_relative(y));
+    _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error_relative(y));
 }
+
+/* Corrected and predicted in one call, returning θ̂ */
+// static inline angle16_t AnglePll_ProcVector(AnglePll_T * p_pll, fract16_t x, fract16_t y)
+// {
+//     struct fract16_xy unit = Angle_UnitVector(&p_pll->Base);
+//     return _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error(x, y, unit.y, unit.x));
+// }
+
+// static inline angle16_t AnglePll_ProcRelative(AnglePll_T * p_pll, fract16_t x, fract16_t y)
+// {
+//     return _AnglePll_ProcDetected(p_pll, fract16_vector_magnitude(x, y), angle_pll_error_relative(y));
+// }
 
 /******************************************************************************/
 /*
@@ -186,7 +219,7 @@ static inline void AnglePll_Reset(AnglePll_T * p_pll)
     p_pll->LossCount = 0;
 }
 
-/* Loop filter SampleFreq is the Proc rate */
+/* Loop filter SampleFreq is the correction's rate [AnglePll_Correct] */
 static inline void AnglePll_InitFrom(AnglePll_T * p_pll, const PID_Config_T * p_loopFilter)
 {
     PID_InitFrom(&p_pll->LoopFilter, p_loopFilter);

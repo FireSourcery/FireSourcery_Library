@@ -41,14 +41,26 @@ static void Sensorless_Sensor_Init(Sensorless_Sensor_T * p_sensor)
     EmfObserver_Init(p_sensor->P_OBSERVER, p_sensor->P_NVM_CONFIG);
 }
 
-/* Idempotent publish — Proc already advances θ̂, ω̂ in the observer's [AnglePll_T];
-   here we forward it to the RotorSensor common interface state. */
+/*
+    Every control tick: θ̂ += ω̂, then publish. As Hall interpolates between edges, the correction lands once per sample [Motor_Sensorless_Thread].
+    Once per tick: the only caller is Motor_CaptureSensor.
+*/
 static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
+    AnglePll_Predict(&p_sensor->P_OBSERVER->Pll);
     p_rotor->AngleSpeed.Angle = p_sensor->P_OBSERVER->Pll.Base.Angle;
     _RotorSensor_CaptureDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
 }
+
+/* Idempotent publish — Proc already advances θ̂, ω̂ in the observer's [AnglePll_T];
+   here we forward it to the RotorSensor common interface state. */
+// static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
+// {
+//     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
+//     p_rotor->AngleSpeed.Angle = p_sensor->P_OBSERVER->Pll.Base.Angle;
+//     _RotorSensor_CaptureDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
+// }
 
 /* Project observer ω̂ → fract16 speed via the configured SpeedPuRef.
    Assumes CAPTURE_ANGLE already published Delta into AngleSpeed this tick. */

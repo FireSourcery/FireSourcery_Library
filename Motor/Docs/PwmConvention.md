@@ -14,7 +14,7 @@ The convention the motor layer writes duties in, and the counter events it relie
 |---|---|---|
 | `Phase_ActivateV0` | 0/0/0 | every low side on: the terminals are shorted to the negative rail, and every low-side window is the whole period |
 | `Phase_ActivateT0` | 50 % | the state `Motor_Analog_Calibrate` measures the zero offsets in |
-| floating (`Phase_IsFloat`) | outputs off | neither side; the analog cycle marks V instead of I |
+| floating (`Phase_IsFloat`) | outputs off | neither side; the marks set V instead of I |
 
 ## Sign
 

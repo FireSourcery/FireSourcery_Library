@@ -436,7 +436,7 @@ static void Run_Proc(Motor_T * p_motor)
     //     Motor_ExternControl(p_motor);
     // #endif
 
-    // bool step = _Motor_IsAnalogCycle(p_context->ControlTimerBase);
+    // Motor_FOC_AngleControl(p_context, VBus_Pu(p_motor->P_VBUS), Angle_Value(&p_context->SensorState.AngleSpeed), FOC_IdFw(&p_context->Foc), Ramp_GetOutput(&p_context->TorqueRamp));
 
     Motor_FOC_WriteDuty(p_motor);
 }
@@ -505,6 +505,18 @@ static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedback
     // return NULL;
 }
 
+/*
+    Feedback lost: the NEXT of the states that drive on the sensor's angle, RUN and INTERVENTION, and the substates that fall through to them.
+    Hall and SinCos never report it, Encoder holds its alignment, the observer releases its lock [AnglePll_FilterTuning_T].
+*/
+static State_T * _Motor_TransitionFeedbackLost(Motor_T * p_motor)
+{
+    if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { return NULL; }
+    if (Motor_IsSpeedFreewheelLimitRange(p_motor) == true) { return &MOTOR_STATE_PASSIVE; }
+    p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
+    return &MOTOR_STATE_FAULT;
+}
+
 static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
@@ -524,6 +536,7 @@ const State_T MOTOR_STATE_RUN =
     .P_ACTION_TABLE     = &RUN_ACTION_TABLE[0U],
     .ENTRY              = (State_Action_T)Run_Entry,
     .LOOP               = (State_Action_T)Run_Proc,
+    .NEXT               = (State_Input0_T)_Motor_TransitionFeedbackLost,
 };
 
 

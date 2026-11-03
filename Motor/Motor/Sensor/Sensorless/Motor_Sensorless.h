@@ -48,7 +48,9 @@ extern void Motor_Sensorless_StartRunChain(Motor_T * p_motor);
 extern State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor);
 
 /* The observer before the FOC proc. Takes the device as a state action does, for an ON_PHASE action table */
-extern void Motor_Sensorless_CaptureStator(Motor_T * p_motor);
+// extern void Motor_Sensorless_CaptureStator(Motor_T * p_motor);
+/* The observer's correction, every control cycle after the PWM ISR's write and the board's arm */
+extern void Motor_Sensorless_Thread(Motor_T * p_motor);
 extern void Motor_Sensorless_InitWinding(Motor_T * p_motor);
 #endif
 
@@ -56,13 +58,14 @@ extern void Motor_Sensorless_InitWinding(Motor_T * p_motor);
 /*
     Feedback lost: a NEXT for the states that drive on the sensor's angle. RUN, INTERVENTION, or a sensor's substate of them.
     Hall and SinCos never report it, Encoder holds its alignment, the observer releases its lock [AnglePll_FilterTuning_T].
+    Moved to Motor_StateMachine.c, the NEXT of RUN and INTERVENTION.
 */
 /******************************************************************************/
-static State_T * _Motor_TransitionFeedbackLost(Motor_T * p_motor)
-{
-    if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { return NULL; }
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor) == true) { return &MOTOR_STATE_PASSIVE; }
-    p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
-    return &MOTOR_STATE_FAULT;
-}
+// static State_T * _Motor_TransitionFeedbackLost(Motor_T * p_motor)
+// {
+//     if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { return NULL; }
+//     if (Motor_IsSpeedFreewheelLimitRange(p_motor) == true) { return &MOTOR_STATE_PASSIVE; }
+//     p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
+//     return &MOTOR_STATE_FAULT;
+// }
 

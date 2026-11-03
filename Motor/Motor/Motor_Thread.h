@@ -90,10 +90,10 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     Motor_MarkAnalog_Thread
 */
 /******************************************************************************/
-static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
-{
-    if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
-}
+// static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
+// {
+//     if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
+// }
 
 /*
     The I set's completion, the set already captured, e.g. by per-channel pushes. From the ADC or DMA ISR.

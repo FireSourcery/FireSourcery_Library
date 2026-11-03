@@ -93,7 +93,7 @@ int MotorController_Var_OutputDebug_Get(MotorController_T * p_dev, MotorControll
         // case MOT_VAR_DEBUG0: value = Angle_Value(&p_motorState->OpenLoopAngle) - Angle_Value(&p_motorState->FocSensorless.AngleSpeed);             break;
         // case MOT_VAR_DEBUG1: value = Angle_Delta(&p_motorState->OpenLoopAngle);             break;
         // case MOT_VAR_DEBUG2: value = Angle_Delta(&p_motorState->FocSensorless.AngleSpeed);      break;
-        case MOT_VAR_DEBUG0: value = p_dev->P_MC->ISequenceProfile;             break; /* [us] The I set's completion to the I Feedback Cycle's write */
+        case MOT_VAR_DEBUG0: value = p_dev->P_MC->ISequenceProfile;             break; /* [us] The I set's completion to the end of the LOOP that takes it */
         case MOT_VAR_DEBUG1: value = 0;             break;
         case MOT_VAR_DEBUG2: value = 0;             break;
         case MOT_VAR_DEBUG3: value = 0;             break;

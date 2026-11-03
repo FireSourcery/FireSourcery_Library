@@ -48,11 +48,12 @@
         StepEemfSta     super-twisting SMO, estimated dq        i_dq, v_dq → ê_dq → PLL → θ̂, ω̂
     The tail detects the rotor vector of ê [foc_rotor_of_emf] in the shared [AnglePll_T].
 
-    Caller owns the FOC chain. Each control tick, after the FOC proc, the integration layer:
-        1. Captures the period into Stator: the i_abc sampled this tick [Stator_AlphaBeta_CaptureIabc],
-           then the v_αβ commanded this tick [Stator_AlphaBeta_CaptureVOut].
-        2. Steps one front end.
-        3. Reads θ̂ via FOC_Sensorless_GetAngle().
+    Caller owns the FOC chain. The integration layer:
+        1. Each control tick, predicts θ̂ += ω̂ [AnglePll_Predict], and reads θ̂ from [Pll.Base].
+        2. Once per sample, steps one front end on the sample and the voltage held across the period it closes [VOutAlpha, VOutBeta].
+           The front end corrects ω̂ only [AnglePll_Correct]: the sample's rate may be below the control tick's.
+        3. After each write, holds the command for the next sample's period [EmfObserver_HoldV].
+    The model's step and the loop filter run at the sample's rate [EmfObserver_InitWinding] [EmfObserver_Config_T.Pll.SampleFreq].
 
     Per-unit, the plant at the rad base [stator_math.h]
         v_pu   = V / V_base
@@ -81,31 +82,55 @@ EmfObserver_Config_T;
 
 /*
     K_smo will need tuning per motor.
-    LpfCoef: ~100 Hz at 20 kHz (k_lp = dt/(τ+dt), τ = 1/(2π·100) = 1592 µs, dt = 50 µs).
-    PLL gains: normalized phase error (fract16 ±1) → ω̂ (angle16/dt). Crossover ≈ Kp·π rad/dt, at the LPF cutoff,
+    [Freq] the sample's rate, the front end's: MOTOR_CONTROL_FREQ.
+    LpfCoef: ~100 Hz (k_lp = dt/(τ+dt) = 1 / (1 + Freq·τ), τ = 1/(2π·100) = 1592 µs). 998 at 20 kHz.
+    PLL gains: normalized phase error (fract16 ±1) → ω̂ (angle16 per control tick). Crossover ≈ Kp·π rad per control tick, at the LPF cutoff,
         the PI zero Ki / (Fs·Kp) a quarter below it. Far above the LPF, the loop loses its phase margin.
+        ω̂ holds between corrections, so Kp keeps its crossover at any [Freq]; Ki through SampleFreq.
 */
-#define EMF_OBSERVER_CONFIG_DEFAULT(VBus, v_max, I, i_max) (EmfObserver_Config_T)                                  \
-{                                                                                                                   \
-    .K_smo          = (fract16_t)FRACT16(.60F * VBus / v_max),                                                      \
-    .SmoSat         = (fract16_t)FRACT16(.15F * I / i_max),         /* 15 % of IMax boundary layer */               \
-    .LpfCoef        = 998,                                          /* ~100 Hz LPF at 20 kHz */                     \
-    .PllFilterTuning =                                                                                              \
-    {                                                                                                               \
-        .MagFloor       = (ufract16_t)FRACT16(.05F * VBus / v_max), /* 5 % of VMax */                               \
-        .LockErrTol     = (ufract16_t)FRACT16(.05F),                /* 5 % normalized error */                      \
-        .LockHoldCount  = 200U,                                     /* 10 ms at 20 kHz */                           \
-        .LossHoldCount  = 200U,                                     /* 10 ms at 20 kHz */                           \
-    },                                                                                                              \
-    .Pll =                                                                                                          \
-    {                                                                                                               \
-        .Mode       = PID_MODE_PI,                                                                                  \
-        .SampleFreq = 20000U,                                                                                       \
-        .Kp         = 328,                                          /* ≈ 0.01 Q17.15, crossover ≈ 100 Hz */         \
-        .Ki         = 51472,                                        /* ≈ 1.57 /s Q17.15, zero ≈ 25 Hz */            \
-        .Kd         = 0,                                                                                            \
-    },                                                                                                              \
+#define EMF_OBSERVER_CONFIG_DEFAULT(VBus, v_max, I, i_max, Freq) (EmfObserver_Config_T)                                     \
+{                                                                                                                           \
+    .K_smo          = (fract16_t)FRACT16(.60F * VBus / v_max),                                                              \
+    .SmoSat         = (fract16_t)FRACT16(.15F * I / i_max),         /* 15 % of IMax boundary layer */                       \
+    .LpfCoef        = (fract16_t)FRACT16(1.0F / (1.0F + (float)(Freq) / (2.0F * 3.14159265F * 100.0F))), /* ~100 Hz */    \
+    .PllFilterTuning =                                                                                                      \
+    {                                                                                                                       \
+        .MagFloor       = (ufract16_t)FRACT16(.05F * VBus / v_max), /* 5 % of VMax */                                       \
+        .LockErrTol     = (ufract16_t)FRACT16(.05F),                /* 5 % normalized error */                              \
+        .LockHoldCount  = (uint16_t)((Freq) / 100U),                /* 10 ms, in samples */                                 \
+        .LossHoldCount  = (uint16_t)((Freq) / 100U),                /* 10 ms, in samples */                                 \
+    },                                                                                                                      \
+    .Pll =                                                                                                                  \
+    {                                                                                                                       \
+        .Mode       = PID_MODE_PI,                                                                                          \
+        .SampleFreq = (Freq),                                                                                               \
+        .Kp         = 328,                                          /* ≈ 0.01 Q17.15, crossover ≈ 100 Hz */                 \
+        .Ki         = 51472,                                        /* ≈ 1.57 /s Q17.15, zero ≈ 25 Hz */                    \
+        .Kd         = 0,                                                                                                    \
+    },                                                                                                                      \
 }
+
+// #define EMF_OBSERVER_CONFIG_DEFAULT(VBus, v_max, I, i_max) (EmfObserver_Config_T)
+// {
+//     .K_smo          = (fract16_t)FRACT16(.60F * VBus / v_max),
+//     .SmoSat         = (fract16_t)FRACT16(.15F * I / i_max),         /* 15 % of IMax boundary layer */
+//     .LpfCoef        = 998,                                          /* ~100 Hz LPF at 20 kHz */
+//     .PllFilterTuning =
+//     {
+//         .MagFloor       = (ufract16_t)FRACT16(.05F * VBus / v_max), /* 5 % of VMax */
+//         .LockErrTol     = (ufract16_t)FRACT16(.05F),                /* 5 % normalized error */
+//         .LockHoldCount  = 200U,                                     /* 10 ms at 20 kHz */
+//         .LossHoldCount  = 200U,                                     /* 10 ms at 20 kHz */
+//     },
+//     .Pll =
+//     {
+//         .Mode       = PID_MODE_PI,
+//         .SampleFreq = 20000U,
+//         .Kp         = 328,                                          /* ≈ 0.01 Q17.15, crossover ≈ 100 Hz */
+//         .Ki         = 51472,                                        /* ≈ 1.57 /s Q17.15, zero ≈ 25 Hz */
+//         .Kd         = 0,
+//     },
+// }
 
 
 typedef struct EmfObserver_Axis
@@ -125,6 +150,7 @@ typedef struct EmfObserver
     /* VModel_Proc and Eemf_Proc, in the frame θ̂ */
     EmfObserver_Axis_T D, Q;
     AnglePll_T Pll;                     /* θ̂, ω̂, |ê|, lock */
+    fract16_t VOutAlpha, VOutBeta;      /* the command held across the period the next sample closes. Held after the write [EmfObserver_HoldV] */
     EmfObserver_Config_T Config;
 }
 EmfObserver_T;
@@ -280,6 +306,9 @@ static inline void EmfObserver_SeedAngle(EmfObserver_T * p_obs, angle16_t theta,
 
 static inline bool EmfObserver_IsLocked(const EmfObserver_T * p_obs) { return AnglePll_IsLocked(&p_obs->Pll); }
 
+/* After the write: the command the next sample's period holds. Where several writes share the period, the last before the sample */
+static inline void EmfObserver_HoldV(EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta) { p_obs->VOutAlpha = v_alpha; p_obs->VOutBeta = v_beta; }
+
 
 /******************************************************************************/
 /*!
@@ -294,6 +323,8 @@ static void EmfObserver_Reset(EmfObserver_T * p_obs)
     p_obs->D = (EmfObserver_Axis_T){ 0 };
     p_obs->Q = (EmfObserver_Axis_T){ 0 };
     AnglePll_Reset(&p_obs->Pll);
+    p_obs->VOutAlpha = 0;
+    p_obs->VOutBeta = 0;
 }
 
 static void EmfObserver_Init(EmfObserver_T * p_obs, const EmfObserver_Config_T * p_config)
@@ -304,7 +335,10 @@ static void EmfObserver_Init(EmfObserver_T * p_obs, const EmfObserver_Config_T *
     EmfObserver_Reset(p_obs);
 }
 
-/* The plant from the motor's model at the turn base. Lq on both axes, the extended EMF: one plant for every front end. Validate checks (l_turn != 0U) */
+/*
+    The plant from the motor's model at the turn base. Lq on both axes, the extended EMF: one plant for every front end. Validate checks (l_turn != 0U)
+    The model steps once per [ticks] control ticks, the sample's period: G across it. L, and so X = ω̂·L, stays per control tick, as ω̂ does.
+*/
 static inline void EmfObserver_InitWinding(EmfObserver_T * p_obs, accum32_t r, uint32_t l_turn) { Stator_Winding_Init(&p_obs->Winding, r, l_turn); }
 
 

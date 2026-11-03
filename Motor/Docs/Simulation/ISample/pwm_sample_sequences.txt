@@ -1,0 +1,74 @@
+Nominal durations (k = 1), us: entry 0.4, adc_start 1.6, sensor 3.0, sm 2.0, requests 7.2, theta 1.6, park 1.5, pi 9.6, out 5.1, exit 1.5, adc_entry 1.5, vsource 3.5, vbus_store 0.5, vbus_divide 3.0, icapture 2.0, dispatch 0.3, adc_exit 0.5, fifo_read 0.3, arm 1.6, arm_idle 0.3
+seq        sample Park from  offset  PI end   write   load smp->load actuation CPU analog   off PWM delay
+1a            6.5         0    -6.5    34.4    39.5     50      43.5       189       41.0  20.8       0.0
+1b            6.5        50   +43.5    75.3    80.4    100      93.5       239       29.9  31.9       0.0
+1c            6.5         0    -6.5    34.4    39.5     50      43.5       189       41.0  20.8       0.0
+2a            6.5         0    -6.5    35.7    40.8     50      43.5       189       41.3  20.8       0.0
+2b            6.5       -50   -56.5    28.9    34.0     50      43.5       189       41.3  20.8       0.0
+before      -12.0         0   +12.0    25.3    30.4     50      62.0       208       31.9  12.6       0.0
+after        10.1         0   -10.1    32.8    37.9     50      39.9       186       39.4   5.1       0.0
+before+V    -12.0         0   +12.0    25.3    30.4     50      62.0       208       31.9  28.3       0.0
+after+V      10.1         0   -10.1    32.8    37.9     50      39.9       186       39.4  20.8       0.0
+bottom      -10.5         0   +10.5    19.1    24.2     25      35.5       182       29.3  28.9       1.0
+
+sample -> load (us) by speed factor k
+k            1a        1b        1c        2a        2b    before     after  before+V   after+V    bottom
+0.40       69.6      69.6      19.6      19.6      19.6      37.0     114.9      37.0      64.9      35.5
+0.50       69.5      69.5      19.5      19.5      19.5      37.0     114.9      37.0      64.9      35.5
+0.60       69.2      69.2      19.2      19.2      19.2      37.0     114.9      37.0      64.9      35.5
+0.70       44.0      69.0      44.0      44.0      44.0      37.0     139.9      37.0      64.9      35.5
+0.80       43.8      68.8      43.8      43.8      43.8      37.0     139.9      37.0      64.9      35.5
+0.90       43.6      93.6      43.6      43.6      43.6      62.0     139.9      62.0      89.9      35.5
+1.00       43.5      93.5      43.5      43.5      43.5      62.0      39.9      62.0      39.9      35.5
+1.10       43.2      93.2      43.2      43.2      43.2      62.0      39.9      62.0      39.9      60.5
+1.20       43.0      93.0      43.0      43.0      43.0      62.0      39.9      62.0      39.9      60.5
+1.30       67.8      92.8      67.8      67.8      42.8      62.0      39.9      62.0      39.9      60.5
+1.40       67.6      92.6      67.6      67.6      42.6      62.0      64.9      62.0      64.9      60.5
+1.50       67.5      92.5      67.5      67.5      42.5      62.0      64.9      62.0      64.9      60.5
+1.60       67.2      91.0      67.2      67.2      42.2      87.0      64.9      87.0      64.9      60.5
+
+sample -> load (us) by LOOP order; the write at k = 1
+                            k 0.6  k 0.8  k 1.0  k 1.2  k 1.4   write
+1a, default                   69.2   43.8   43.5   43.0   67.6   39.5
+1c, default                   19.2   43.8   43.5   43.0   67.6   39.5
+bottom, 15.0 us, built        35.5   35.5   35.5   60.5   60.5   24.2
+before, 16.5 us, built        37.0   37.0   62.0   62.0   62.0   30.4
+1a, FOC first                 69.2   68.8   68.5   93.0   42.6   73.2
+1c, FOC first                 19.2   43.8   43.5   43.0   42.6   34.2
+before, FOC first             37.0   37.0   37.0   62.0   62.0   23.2
+before+V, VBus off            37.0   37.0   62.0   62.0   62.0   30.4
+before+V, VBus off, later     34.0   34.0   59.0   59.0   59.0   30.4
+
+the latest starts at k 1. The bottom: bottom 14.4 us before the top, bottom VBus off 11.4 us before the top, every 1.7 us before the top and every, wait 4.6 us after the top at k 0.5. The next top: after 5.6 us after the top, 2.6 us after the top at k 0.8; after+V, wait 17.6 us after the top
+
+alternating sets, each arm ahead of its trigger (us), all 7 others marked, by k
+  k 1.0   the I set's arm  14.1  the others' arm   9.2
+  k 1.2   the I set's arm   9.8  the others' arm   2.6
+  k 1.4   the I set's arm   5.6  the others' arm  -3.8
+  k 1.5   the I set's arm   3.6  the others' arm  -7.0
+
+Triggered by load point: sample -> load (us) by k; * the take missed. 'every' runs at k x 0.5, a stand-in for S32
+                                                               delay k 0.8   k 0.9   k 1.0   k 1.1   k 1.2    holds, k     write  CPU, taking / next cycle
+loads at the bottom
+  bottom, 14.4 us before the top, the latest                 bus / 2   34.9    34.9    34.9    59.9    59.9   0.50-1.00   24.8  29.9 / 28.3
+  bottom, 15.0 us before the top, built                          bus   35.5    35.5    35.5    60.5    60.5   0.50-1.01   24.2  29.3 / 28.9
+  bottom, the same, all 7 main-loop channels on the off cycle       bus   35.5    35.5    35.5    60.5    60.5   0.50-1.01   24.2  27.8 / 31.3
+  bottom, until 11-03, the throttle and brake walked             bus   35.5    35.5    60.5    60.5    60.5   0.96-1.50   26.2  27.7 / 27.3
+  bottom, 16.5 us before the top, the ISR before the top         bus   37.0    37.0    37.0    62.0    62.0   0.50-1.06   23.2  28.3 / 29.9
+  bottom, VBus off, 11.4 us before the top, the latest       bus / 2   31.9    31.9    31.9    56.9    56.9   0.50-1.00   24.8  29.9 / 28.3
+  bottom, VBus off, 15.0 us before the top                       bus   35.5    35.5    35.5    60.5    60.5   0.50-1.06   23.2  28.3 / 29.9
+  every, 1.7 us before the top, the latest                  S32, PDB   72.2*   72.2*   22.2    22.2    22.2   0.95-1.30   19.0  19.7 / 19.7
+  every, wait, the same start                               S32, PDB   22.2    22.2    22.2    22.2    22.2   0.50-1.30   19.0  19.7 / 19.7
+  every, wait, 4.6 us after the top, the latest             S32, PDB   15.9    15.9    15.9    40.9    40.9   0.50-1.00   25.0  25.7 / 25.7
+loads at the next top
+  before, 16.5 us before the top, built                          bus   37.0    62.0    62.0    62.0    62.0   0.82-1.50   30.4  31.9 / 12.6
+  after, 5.6 us after the top, the latest                    bus / 4  139.9*  139.9*   39.9    39.9    39.9   0.99-1.31   37.9  39.4 /  5.1
+  after, 2.6 us after the top, the latest at k 0.8           bus / 4   42.9    42.9    42.9    42.9    42.9   0.78-1.31   37.9  39.4 /  5.1
+  before+V, 16.5 us before the top, built until 11-02            bus   37.0    62.0    62.0    62.0    62.0   0.82-1.50   30.4  31.9 / 28.3
+  before+V, 14.8 us before the top, the bus clock's reach        bus   35.3    60.3    60.3    60.3    60.3   0.82-1.47   31.6  33.1 / 27.1
+  after+V, 5.6 us after the top, the latest                  bus / 4   64.9*   89.9*   39.9    39.9    39.9   0.99-1.31   37.9  39.4 / 20.8
+  after+V, wait, the same start                              bus / 4   39.9    39.9    39.9    39.9    39.9   0.50-1.31   37.9  39.4 / 20.8
+  after+V, 2.6 us after the top, the latest at k 0.8         bus / 4   42.9    42.9    42.9    42.9    42.9   0.78-1.31   37.9  39.4 / 20.8
+  after+V, wait, 17.6 us after the top, the latest           bus / 8   27.9    27.9    27.9    52.9    52.9   0.50-1.00   49.8  50.0 / 22.1
+
+figures written beside this file

@@ -28,14 +28,11 @@
     @author FireSourcery
     @brief  RotorSensor reading the rotor through the stator [EmfObserver_T].
 
-    Differs from Hall/Encoder/SinCos: the transducer is push-driven, it needs i_αβ and v_αβ from FOC, not a peripheral.
-    The integration layer invokes Sensorless_Sensor_Proc once per control tick, after the FOC proc. The vtable's
-    CAPTURE_ANGLE/CAPTURE_SPEED publish the observer's θ̂, ω̂ into RotorSensor_State idempotently.
-
-    Only the sensorless start-up substates (Motor_Sensorless.c) drive Proc; RotorSensor_CaptureAngle alone would publish a frozen θ̂.
-
-    Or before the FOC proc, from the phase image and the voltage held across the period: Sensorless_Sensor_ProcEemf,
-    by [Motor_Sensorless_CaptureStator]. CAPTURE_ANGLE then publishes the prediction the last step made for this sample.
+    Differs from Hall/Encoder/SinCos: the correction is push-driven, it needs the phase sample and the voltage held across
+    its period, not a peripheral. As Hall interpolates between edges, CAPTURE_ANGLE predicts θ̂ += ω̂ every control tick and
+    publishes it [AnglePll_Predict]. Once per sample, after the PWM ISR's write, the Motor layer pushes the sample and the held
+    voltage [Motor_Sensorless_Thread] → Sensorless_Sensor_ProcEemf, which corrects ω̂ for the next prediction.
+    The FOC Parks the sample at the θ̂ the tick published, the frame the correction Parks it in. Every state reads the same θ̂.
 */
 /******************************************************************************/
 #include "../../Model/EmfObserver.h"
@@ -69,14 +66,15 @@ extern const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE;
 /******************************************************************************/
 /*
     One control tick, after the FOC proc: the period its sample closes and the command it made, from the αβ it carries.
+    Superseded by the correction once per sample [Motor_Sensorless_Thread]: the start-up substates drove it every control tick.
 */
-static inline void Sensorless_Sensor_Proc(Sensorless_Sensor_T * p_sensor, const FOC_T * p_foc)
-{
-    EmfObserver_AlphaBeta_Proc(p_sensor->P_OBSERVER, p_foc->Ialpha, p_foc->Ibeta, p_foc->Valpha, p_foc->Vbeta);
-}
+// static inline void Sensorless_Sensor_Proc(Sensorless_Sensor_T * p_sensor, const FOC_T * p_foc)
+// {
+//     EmfObserver_AlphaBeta_Proc(p_sensor->P_OBSERVER, p_foc->Ialpha, p_foc->Ibeta, p_foc->Valpha, p_foc->Vbeta);
+// }
 
 /*
-    One control tick, before the FOC proc: the αβ sample, and the αβ voltage held across the period it closes.
+    Once per sample: the αβ sample, and the αβ voltage held across the period it closes. Corrects ω̂ [AnglePll_Correct].
     The EEMF front end in the frame θ̂ the tracker holds at the call [EmfObserver_Eemf_Proc]: i at θ̂, v at the period's mean angle θ̂ − Δθ̂/2.
 */
 static inline void Sensorless_Sensor_ProcEemf(Sensorless_Sensor_T * p_sensor, fract16_t i_alpha, fract16_t i_beta, fract16_t v_alpha, fract16_t v_beta)
