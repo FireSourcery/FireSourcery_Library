@@ -147,7 +147,9 @@ static inline void _ADC_Disarm(ADC_T * p_adc)
 {
     HAL_ADC_Deactivate(p_adc->P_HAL_ADC); /* Resets the fifo */
     p_adc->P_STATE->ActiveChannelCount = 0U;
+#ifndef NDEBUG
     p_adc->P_STATE->MissedTriggers++;
+#endif
 }
 
 /*!

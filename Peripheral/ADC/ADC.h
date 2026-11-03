@@ -128,9 +128,9 @@ typedef struct ADC_State
     uint32_t ErrorCount;
     uint32_t IncompleteCycles;
     uint32_t FifoMismatch;
-#endif
-#if ADC_HW_TRIGGER_ENABLE
+    // #if ADC_HW_TRIGGER_ENABLE
     uint32_t MissedTriggers;    /* Armed sets disarmed at the next arm, no trigger having come. Outside NDEBUG: KE06 builds define it */
+    // #endif
 #endif
 }
 ADC_State_T;
