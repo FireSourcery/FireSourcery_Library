@@ -60,7 +60,7 @@ static inline void Motor_PollSpeed(Motor_T * p_dev)
 static inline void Motor_CaptureSensor(Motor_T * p_dev)
 {
     RotorSensor_CaptureAngle(p_dev->P_MOTOR->p_ActiveSensor);
-    if (Motor_IsAnalogCycle(p_dev) == true) { Motor_PollSpeed(p_dev); } /* With the requests. The 1 ms poll lands on a fixed cycle, delayed at most 1 */
+    // if (Motor_IsAnalogCycle(p_dev) == true) { Motor_PollSpeed(p_dev); } /* With the requests. The 1 ms poll lands on a fixed cycle, delayed at most 1 */
 }
 
 
@@ -81,6 +81,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
     // Motor_FOC_WriteDuty_Thread(p_dev);
 
+    Motor_PollSpeed(p_dev);
     p_dev->P_MOTOR->ControlTimerBase++;
 }
 

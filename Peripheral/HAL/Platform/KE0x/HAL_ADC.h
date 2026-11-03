@@ -161,5 +161,7 @@ static inline void HAL_ADC_Init(HAL_ADC_T * p_hal)
 */
 static inline void KE0x_ADC_InitHwTriggerFtm2(HAL_ADC_T * p_hal) { (void)p_hal; SIM->SOPT0 = (SIM->SOPT0 & ~SIM_SOPT0_ADHWT_MASK) | SIM_SOPT0_ADHWT(2U); }
 static inline void KE0x_ADC_InitHwTriggerDelay(HAL_ADC_T * p_hal, uint8_t ticks) { (void)p_hal; SIM->SOPT0 = (SIM->SOPT0 & ~SIM_SOPT0_DELAY_MASK) | SIM_SOPT0_DELAY(ticks); }
+/* The delay's clock, the bus clock / (1 << [busRef]), 0 to 7 (p. 54). SIM_SOPT0[BUSREF] also divides the bus clock output, CLKOE's */
+static inline void KE0x_ADC_InitHwTriggerDelayClock(HAL_ADC_T * p_hal, uint8_t busRef) { (void)p_hal; SIM->SOPT0 = (SIM->SOPT0 & ~SIM_SOPT0_BUSREF_MASK) | SIM_SOPT0_BUSREF(busRef); }
 
 #endif
