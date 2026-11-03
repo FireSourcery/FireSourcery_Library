@@ -69,7 +69,7 @@
 #define ADC_HW_SEQUENCER_ENABLE false
 #endif
 
-/* The platform supplies HAL_ADC_ArmEach, HAL_ADC_HW_TRIGGER_FIFO */
+/* Selects the completion's branch [_ADC_OnComplete]. The arms compile either way: HAL_ADC_ArmEach arms nothing without HAL_ADC_HW_TRIGGER_FIFO */
 #ifndef ADC_HW_TRIGGER_ENABLE
 #define ADC_HW_TRIGGER_ENABLE false
 #endif
@@ -128,9 +128,7 @@ typedef struct ADC_State
     uint32_t ErrorCount;
     uint32_t IncompleteCycles;
     uint32_t FifoMismatch;
-    // #if ADC_HW_TRIGGER_ENABLE
-    uint32_t MissedTriggers;    /* Armed sets disarmed at the next arm, no trigger having come. Outside NDEBUG: KE06 builds define it */
-    // #endif
+    uint32_t MissedTriggers;    /* Armed sets disarmed at the next arm, no trigger having come */
 #endif
 }
 ADC_State_T;

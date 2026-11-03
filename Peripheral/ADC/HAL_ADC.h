@@ -136,6 +136,9 @@ static inline void HAL_ADC_ArmEach(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, 
     HAL_ADC_WriteHwTriggerFifoCount(p_hal, count);
     HAL_ADC_WriteFifo_ActivateOnLast(p_hal, p_pins, count);
 }
+#else
+/* No Hw trigger fifo: arms nothing. A Hw sequenced platform's sets run on its sequencer [HAL_ADC_SelectDmaSequence] */
+static inline void HAL_ADC_ArmEach(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, uint8_t count) { (void)p_hal; (void)p_pins; (void)count; }
 #endif
 
 static inline void HAL_ADC_CaptureEach(const HAL_ADC_T * p_hal, const adc_pin_t * p_pins, uint8_t count, adc_result_t * p_results)

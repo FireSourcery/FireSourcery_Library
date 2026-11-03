@@ -132,7 +132,6 @@ static inline void ADC_ActivateMarked(ADC_T * p_adc)
 //     ADC_ActivateMarked(p_adc);
 // }
 
-// #if ADC_HW_TRIGGER_ENABLE
 /******************************************************************************/
 /*
     Hw triggered activation
@@ -185,7 +184,6 @@ static inline bool ADC_ArmMarked(ADC_T * p_adc, adc_mask_t filter)
 
     return isArmed;
 }
-// #endif
 
 /******************************************************************************/
 /*
