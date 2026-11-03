@@ -104,25 +104,19 @@ static inline void _Motor_OnIabc_Thread(Motor_T * p_motor)
     _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
 }
 
-/* One batch's I set of ADCU, all 3 phases converted */
-static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu)
-{
-    Motor_Analog_CaptureIabc(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu);
-    _Motor_OnIabc_Thread(p_motor);
-}
 
-/* Low-side sensing's I set of ADCU [PHASE_ANALOG_I_SENSOR_LOW_SIDE]: [phases] the phases converted, the third solved [Phase_Analog_CaptureIBatch] */
-static inline void Motor_ADC_OnIBatch_Thread(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu, Phase_Id_T phases)
-{
-    Motor_Analog_CaptureIBatch(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu, phases);
-    _Motor_OnIabc_Thread(p_motor);
-}
+// /* Low-side sensing's I set of ADCU [PHASE_ANALOG_I_SENSOR_LOW_SIDE]: [phases] the phases converted, the third solved [Phase_Analog_CaptureIBatch] */
+// static inline void Motor_ADC_OnIBatch_Thread(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu, Phase_Id_T phases)
+// {
+//     Motor_Analog_CaptureIBatch(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu, phases);
+//     _Motor_OnIabc_Thread(p_motor);
+// }
 
-static inline void Motor_OnIabc_Thread(Motor_T * p_motor, int32_t a, int32_t b, int32_t c)
-{
-    p_motor->P_MOTOR->PhaseInput.I = (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits = PHASE_ID_ABC, };
-    _Motor_OnIabc_Thread(p_motor);
-}
+// static inline void Motor_OnIabc_Thread(Motor_T * p_motor, int32_t a, int32_t b, int32_t c)
+// {
+//     p_motor->P_MOTOR->PhaseInput.I = (Phase_Data_T) { .Values = { .A = a, .B = b, .C = c }, .Flags.Bits = PHASE_ID_ABC, };
+//     _Motor_OnIabc_Thread(p_motor);
+// }
 
 /******************************************************************************/
 /*

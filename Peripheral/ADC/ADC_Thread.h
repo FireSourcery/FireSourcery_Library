@@ -29,7 +29,8 @@
     @brief  Base ISR and thread entry points. 1 ADC, no set and no handler.
 
     Software:       ADC_OnComplete_ISR, in the ADC ISR. ADC_ActivateMarked, in the thread that requests.
-    Hw triggered:   ADC_ArmMarked, before ADC_ActivateMarked. The same ISR captures the armed fifo.
+    Hw triggered:   ADC_ArmMarked, or ADC_Arm for a set as given, once per trigger, in place of ADC_ActivateMarked. The same ISR captures the armed fifo,
+                    and continues nothing: every set converts on a trigger the thread arms it for.
     Hw sequenced:   ADC_ActivateSlots writes the sequencer. ADC_OnCompleteTransfer_ISR, in the
                     transfer complete ISR, flags the set the caller armed.
 
@@ -55,6 +56,7 @@ static inline void _ADC_ActivateMarked(ADC_T * p_adc)
     The captured channels leave the work queue and enter the completion flags, so the two words
     hold the whole conversion state: what is left to convert, and what has landed unconsumed.
 */
+// static inline void _ADC_OnComplete(HAL_ADC_T * p_adc, state )
 static inline void _ADC_OnComplete(ADC_T * p_adc)
 {
     ADC_State_T * p_state = p_adc->P_STATE;
@@ -69,23 +71,24 @@ static inline void _ADC_OnComplete(ADC_T * p_adc)
     if (p_state->ActiveChannelCount > 0U)
     {
         adc_mask_t captured = _ADC_Capture(p_adc);
-#if ADC_HW_TRIGGER_ENABLE
-        HAL_ADC_DisableHwTrigger(p_adc->P_HAL_ADC); /* An armed fifo converts once. The walk continues by software start */
-#endif
 
         p_state->ChannelMarkers &= ~captured;
         p_state->CompleteFlags  |=  captured;
         p_state->ActiveChannelCount = 0U;
 
+#if ADC_HW_TRIGGER_ENABLE
+        HAL_ADC_Deactivate(p_adc->P_HAL_ADC); /* Resets the fifo. The thread arms the next set on its own trigger [ADC_ArmMarked] */
+#else
         /* Continue incrementing. Channels do not repeat until all marked channels have completed once */
         if (p_state->ChannelMarkers != 0UL) { _ADC_ActivateMarked(p_adc); }
         else { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
+#endif
     }
 }
 
 /*!
-    @brief  Capture the active channels, continue with the remaining marked channels.
-            Run in the ADC ISR. Higher priority than the thread calling ADC_ActivateMarked.
+    @brief  Capture the active channels. Software started: continue with the remaining marked channels.
+            Run in the ADC ISR. Higher priority than the thread calling ADC_ActivateMarked or ADC_ArmMarked.
 */
 static inline void ADC_OnComplete_ISR(ADC_T * p_adc)
 {
@@ -104,12 +107,10 @@ static inline void ADC_PollCompleteFifo(ADC_T * p_adc)
 /*!
     @brief  Start the marked channels. Run in the thread that requests conversions.
             Only 1 thread starts conversions, no critical section is needed.
+            Not with a Hw trigger [ADC_HW_TRIGGER_ENABLE]: its thread arms each set instead [ADC_ArmMarked].
 */
 static inline void ADC_ActivateMarked(ADC_T * p_adc)
 {
-#if ADC_HW_TRIGGER_ENABLE
-    if (ADC_ReadIsArmed(p_adc) == true) { return; } /* The armed fifo converts first, and its completion continues the walk */
-#endif
     /*
         While the ADC is active the remaining channels continue from the ISR.
         The ISR does not start within this block when a single thread calls it.
@@ -123,116 +124,66 @@ static inline void ADC_ActivateMarked(ADC_T * p_adc)
 #endif
 }
 
-#if ADC_HW_TRIGGER_ENABLE
+// static inline void ADC_ActivateMarked_Thread(ADC_T * p_adc)
+// {
+// #if ADC_HW_TRIGGER_ENABLE
+//     if (ADC_ReadIsArmed(p_adc) == true) { return; } /* The armed fifo converts first, and its completion continues the walk */
+// #endif
+//     ADC_ActivateMarked(p_adc);
+// }
+
+// #if ADC_HW_TRIGGER_ENABLE
 /******************************************************************************/
 /*
     Hw triggered activation
-    1 fifo of marked channels, armed ahead to convert on the next Hw trigger: the set lands when
-    the trigger places it, not when the thread runs. The trigger's route and delay are the Board's.
+    1 fifo of marked channels per trigger, armed ahead: the set lands when the trigger places it, not when the thread runs.
+    The trigger's route and delay are the Board's. Nothing converts by software start, and the completion continues nothing:
+    a channel converts on a trigger the thread arms its set for. The trigger stays on from the first arm, so a trigger before
+    the next arm finds the reset fifo and converts nothing. [ActiveChannelCount] is the armed state.
 */
 /******************************************************************************/
-/* Its trigger did not come. The channels stay marked, and the walk converts them by software start */
+/* Its trigger did not come. The channels stay marked for the next arm */
 static inline void _ADC_Disarm(ADC_T * p_adc)
 {
-    HAL_ADC_DisableHwTrigger(p_adc->P_HAL_ADC);
     HAL_ADC_Deactivate(p_adc->P_HAL_ADC); /* Resets the fifo */
     p_adc->P_STATE->ActiveChannelCount = 0U;
     p_adc->P_STATE->MissedTriggers++;
 }
 
 /*!
-    @brief  Arm the marked channels of [set], alone in the fifo, on the next Hw trigger.
-            Run in the thread that requests conversions, before ADC_ActivateMarked, at intervals
-            of at least the trigger's period. Higher priority ADC ISR, as ADC_ActivateMarked.
-
-    The other marked channels wait. The set's completion captures and flags it as a walk's fifo,
-    returns the ADC to software start, and continues the walk.
-
-    Not armed, ADC_ActivateMarked converts the set by software start:
-        - Active. The walk in flight reaches the set after its fifo.
-        - Still armed from the last call. No trigger came, so the set is disarmed and converts by
-          software this once. A trigger that never comes cannot hold the walk.
-
-    @return true where armed
-*/
-static inline bool ADC_ArmMarked(ADC_T * p_adc, adc_mask_t set)
-{
-    adc_mask_t marked = p_adc->P_STATE->ChannelMarkers & set;
-    bool isArmed = false;
-
-    if (ADC_ReadIsActive(p_adc) == false)
-    {
-        if (ADC_ReadIsArmed(p_adc) == true) { _ADC_Disarm(p_adc); }
-        else if (marked != 0UL)
-        {
-            (void)_ADC_SetStateFrom(p_adc->P_STATE, marked);
-            _ADC_Arm(p_adc);
-            isArmed = true;
-        }
-    }
-
-    return isArmed;
-}
-
-/*
-    Every marked channel on the trigger, nothing walking.
-    The fifo holds the marked channels of [set] last, and as many others as fit ahead of them. Slots no channel takes repeat
-    [set]'s first channel, so the fifo is always full: [set] converts at the same place before the completion, whatever else is
-    marked. Channels past the fifo stay marked for the next arm.
-    The trigger stays on after the completion [ADC_OnCompleteArmed_ISR], so ADC_ActivateMarked starts nothing, and the reset fifo
-    leaves a trigger before the next arm nothing to convert. [ActiveChannelCount] is the armed state: ADTRG stays 1.
-*/
-/*!
-    @brief  Arm every marked channel the fifo holds, the marked channels of [set] last, on the next Hw trigger.
-            Run in the thread that requests conversions, at intervals of at least the trigger's period. Higher priority ADC ISR.
+    @brief  Arm [channels] on the next Hw trigger, as given, marked or not. In channel order, up to the fifo's depth.
+            Run in the thread that requests conversions, at most once per trigger period. Higher priority ADC ISR.
             Still armed from the last call, no trigger came: disarmed, counted in MissedTriggers, and armed again.
+            The caller's [channels] is not empty, and the ADC is idle [ADC_ReadIsActive].
+*/
+static inline void ADC_Arm(ADC_T * p_adc, adc_mask_t channels)
+{
+    assert(channels != 0UL);
+    if (p_adc->P_STATE->ActiveChannelCount > 0U) { _ADC_Disarm(p_adc); }
+    (void)_ADC_SetStateFrom(p_adc->P_STATE, channels);
+    _ADC_Arm(p_adc);
+}
+
+/*!
+    @brief  Arm the marked channels of [set], filtered [ADC_Arm]. The other marked channels wait for an arm of their own set.
+            Nothing of [set] marked: a stale arm is still disarmed, and nothing armed.
+            While the ADC converts, arms nothing.
     @return true where armed
 */
-static inline bool ADC_ArmMarkedAll(ADC_T * p_adc, adc_mask_t set)
+static inline bool ADC_ArmMarked(ADC_T * p_adc, adc_mask_t filter)
 {
-    ADC_State_T * p_state = p_adc->P_STATE;
-    adc_mask_t setMarked = p_state->ChannelMarkers & set;
+    adc_mask_t marked = p_adc->P_STATE->ChannelMarkers & filter;
     bool isArmed = false;
 
     if (ADC_ReadIsActive(p_adc) == false)
     {
-        if (p_state->ActiveChannelCount > 0U) { _ADC_Disarm(p_adc); }
-        if (setMarked != 0UL)
-        {
-            uint8_t slots = ADC_FIFO_LENGTH_MAX - ADC_ChannelCountOf(setMarked);
-            adc_channel_t pad = ADC_ChannelStartOf(setMarked);
-            (void)_ADC_AppendStateFrom(p_state, p_state->ChannelMarkers & ~set, slots);
-            while (p_state->ActiveChannelCount < slots) { p_state->ActiveChannels[p_state->ActiveChannelCount++] = pad; }
-            (void)_ADC_AppendStateFrom(p_state, setMarked, ADC_FIFO_LENGTH_MAX);
-            _ADC_Arm(p_adc);
-            isArmed = true;
-        }
+        if (p_adc->P_STATE->ActiveChannelCount > 0U) { _ADC_Disarm(p_adc); } /* Here for the empty set. ADC_Arm's own is then dead, and compiles out */
+        if (marked != 0UL) { ADC_Arm(p_adc, marked); isArmed = true; }
     }
 
     return isArmed;
 }
-
-/*!
-    @brief  The completion of a fifo armed by ADC_ArmMarkedAll. Run in the ADC ISR, in place of ADC_OnComplete_ISR.
-            Captures and flags the fifo, and continues nothing. The trigger stays on.
-*/
-static inline void ADC_OnCompleteArmed_ISR(ADC_T * p_adc)
-{
-    ADC_State_T * p_state = p_adc->P_STATE;
-
-    HAL_ADC_ClearConversionCompleteFlag(p_adc->P_HAL_ADC);
-
-    if (p_state->ActiveChannelCount > 0U)
-    {
-        adc_mask_t captured = _ADC_Capture(p_adc);
-        p_state->ChannelMarkers &= ~captured;
-        p_state->CompleteFlags  |=  captured;
-        p_state->ActiveChannelCount = 0U;
-    }
-
-    HAL_ADC_Deactivate(p_adc->P_HAL_ADC); /* Resets the fifo */
-}
-#endif
+// #endif
 
 /******************************************************************************/
 /*
@@ -248,6 +199,7 @@ static inline void ADC_OnCompleteArmed_ISR(ADC_T * p_adc)
     The sequencer routes the trigger to the slot range, and converts it on every trigger until
     another range is written. Software has no sequencer: its register write is the fifo push.
 */
+// todo remove for inline
 static inline void ADC_ActivateSlots(ADC_T * p_adc, adc_channel_t channelStart, uint8_t count)
 {
 #ifdef HAL_ADC_DMA_ENABLE

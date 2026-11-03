@@ -31,37 +31,38 @@
 #ifndef HAL_REBOOT_PLATFORM_H
 #define HAL_REBOOT_PLATFORM_H
 
+#include "KE0x_Clock.h"
 #include "KE0x.h"
-#include "fsl_clock.h"
+// #include "fsl_clock.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
-static inline void HAL_ResetClock()
-{
-    const ics_config_t icsConfig_BOARD_BootClockRUN =
-    {
-        .icsMode = kICS_ModeFEI,                  /* FEI - FLL Engaged Internal */
-        .irClkEnableMode = 0,                     /* ICSIRCLK disabled */
-        .bDiv = 0x1U,                             /* Bus clock divider: divided by 2 */
-        .rDiv = 0x0U,                             /* FLL external reference clock divider: divided by 1 */
-    };
-    const sim_clock_config_t simConfig_BOARD_BootClockRUN =
-    {
-        .outDiv1 = 0x0U,                          /* DIV1 clock divider: divided by 1 */
-        .outDiv2 = 0x0U,                          /* DIV2 clock divider: divided by 1 */
-        .outDiv3 = 0x0U,                          /* DIV3 clock divider: divided by 1 */
-        .busClkPrescaler = 0x0U,                  /* bus clock optional prescaler */
-    };
-    /* Set the system clock dividers in SIM to safe value. */
-    CLOCK_SetSimSafeDivs();
-    /* Set ICS to FEI mode. */
-    CLOCK_BootToFeiMode(icsConfig_BOARD_BootClockRUN.bDiv);
-    /* Configure the Internal Reference clock (ICSIRCLK). */
-    CLOCK_SetInternalRefClkConfig(icsConfig_BOARD_BootClockRUN.irClkEnableMode);
-    /* Set the clock configuration in SIM module. */
-    CLOCK_SetSimConfig(&simConfig_BOARD_BootClockRUN);
-}
+// static inline void HAL_ResetClock()
+// {
+//     const ics_config_t icsConfig_BOARD_BootClockRUN =
+//     {
+//         .icsMode = kICS_ModeFEI,                  /* FEI - FLL Engaged Internal */
+//         .irClkEnableMode = 0,                     /* ICSIRCLK disabled */
+//         .bDiv = 0x1U,                             /* Bus clock divider: divided by 2 */
+//         .rDiv = 0x0U,                             /* FLL external reference clock divider: divided by 1 */
+//     };
+//     const sim_clock_config_t simConfig_BOARD_BootClockRUN =
+//     {
+//         .outDiv1 = 0x0U,                          /* DIV1 clock divider: divided by 1 */
+//         .outDiv2 = 0x0U,                          /* DIV2 clock divider: divided by 1 */
+//         .outDiv3 = 0x0U,                          /* DIV3 clock divider: divided by 1 */
+//         .busClkPrescaler = 0x0U,                  /* bus clock optional prescaler */
+//     };
+//     /* Set the system clock dividers in SIM to safe value. */
+//     CLOCK_SetSimSafeDivs();
+//     /* Set ICS to FEI mode. */
+//     CLOCK_BootToFeiMode(icsConfig_BOARD_BootClockRUN.bDiv);
+//     /* Configure the Internal Reference clock (ICSIRCLK). */
+//     CLOCK_SetInternalRefClkConfig(icsConfig_BOARD_BootClockRUN.irClkEnableMode);
+//     /* Set the clock configuration in SIM module. */
+//     CLOCK_SetSimConfig(&simConfig_BOARD_BootClockRUN);
+// }
 
 static inline void HAL_Reboot()
 {
@@ -73,7 +74,7 @@ static inline void HAL_Reboot()
     SCB->ICSR |= SCB_ICSR_PENDSTCLR_Msk;
 
 // #ifdef HAL_REBOOT_RESET_CLOCK
-    HAL_ResetClock();
+    KE0x_InitClockReset();
 // #endif
 
     NVIC_SystemReset();

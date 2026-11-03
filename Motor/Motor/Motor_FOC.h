@@ -121,7 +121,7 @@ extern void Motor_FOC_ResolveISupplyLimits(Motor_T * p_motor);
 /*
     The state running the current loop resolves the held inputs, on entry and on its speed tick.
     The supply window is resolved periodically on the selected thread, and on entry under the Direction the state runs with:
-        MOTOR_I_SUPPLY_LIMITS_ON_SPEED  the speed tick, [Motor_FOC_ProcISupplyLimitsOnSpeed]
+        MOTOR_I_SUPPLY_LIMITS_ON_SPEED  the speed tick, [Motor_FOC_ResolveISupplyLimitsOnSpeed]
         MOTOR_I_SUPPLY_LIMITS_ON_VBUS   the VBus thread, 1 ms
         MOTOR_I_SUPPLY_LIMITS_ON_MAIN   the main thread, 16 ms
         none                            never resolved, the window stays open from [Motor_Init]
@@ -135,7 +135,7 @@ static inline void Motor_FOC_ResolveISupplyLimitsOnEntry(Motor_T * p_motor)
 #endif
 }
 
-static inline void Motor_FOC_ProcISupplyLimitsOnSpeed(Motor_T * p_motor)
+static inline void Motor_FOC_ResolveISupplyLimitsOnSpeed(Motor_T * p_motor)
 {
 #if defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED)
     Motor_FOC_ResolveISupplyLimits(p_motor);

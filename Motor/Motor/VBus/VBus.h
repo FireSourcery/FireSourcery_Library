@@ -108,6 +108,8 @@ static inline void VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 */
 #include "../Phase_Input/Phase_Analog.h" /* for Phase_Analog_VPuOf() */
 static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBus_Capture(p_vbus, Phase_Analog_VPuOf(adcu)); }
+/* Proc divide separately */
+static inline void VBus_ADC_CaptureVPu(VBus_T * p_vbus, adc_result_t adcu) { _VBus_Capture(p_vbus, Phase_Analog_VPuOf(adcu)); }
 /* optionally separate filter for monitor vs vout scaling  */
 
 /******************************************************************************/

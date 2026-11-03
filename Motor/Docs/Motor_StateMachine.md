@@ -158,9 +158,9 @@ of it.
 
 | Leaf | `ON_SPEED` | `ON_PHASE` |
 |---|---|---|
-| `RUN` | `Motor_FOC_CaptureVSpeed`, `Motor_FOC_ProcISupplyLimitsOnSpeed`, `Motor_ResolveILimits`, `Motor_ResolveSpeedLimits`, then the speed loop in speed mode | `Motor_FOC_ProcTorqueFeedback` |
-| `TORQUE_ZERO` | `Motor_FOC_CaptureVSpeed`, `Motor_FOC_ProcISupplyLimitsOnSpeed`, `Motor_ResolveILimits` | `Motor_FOC_ProcTorqueFeedback` |
-| `SPEED_ZERO`, `SAFE_STOP` | `Motor_FOC_CaptureVSpeed`, `Motor_FOC_ProcISupplyLimitsOnSpeed`, `Motor_ResolveILimits`, then the speed loop toward zero | `Motor_FOC_ProcTorqueFeedback` |
+| `RUN` | `Motor_FOC_CaptureVSpeed`, `Motor_FOC_ResolveISupplyLimitsOnSpeed`, `Motor_ResolveILimits`, `Motor_ResolveSpeedLimits`, then the speed loop in speed mode | `Motor_FOC_ProcTorqueFeedback` |
+| `TORQUE_ZERO` | `Motor_FOC_CaptureVSpeed`, `Motor_FOC_ResolveISupplyLimitsOnSpeed`, `Motor_ResolveILimits` | `Motor_FOC_ProcTorqueFeedback` |
+| `SPEED_ZERO`, `SAFE_STOP` | `Motor_FOC_CaptureVSpeed`, `Motor_FOC_ResolveISupplyLimitsOnSpeed`, `Motor_ResolveILimits`, then the speed loop toward zero | `Motor_FOC_ProcTorqueFeedback` |
 
 The current limits resolve before the speed loop, which clamps against them.
 

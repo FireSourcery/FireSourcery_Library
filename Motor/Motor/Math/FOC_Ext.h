@@ -42,7 +42,10 @@
 /******************************************************************************/
 /* From Iabc to Idq */
 // static inline bool FOC_CaptureIabc_Async(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
-static inline bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
+// __attribute__((noinline))
+/* optiona wrap AB selection */
+// static inline bool FOC_CaptureInputI(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
+__attribute__((noinline)) static bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
 {
     if (p_iabc->Flags.Bits == PHASE_ID_ABC)  /* alternatively use batch callback */
     {

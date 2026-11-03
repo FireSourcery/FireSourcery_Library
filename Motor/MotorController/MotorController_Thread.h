@@ -216,10 +216,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
-#if defined(VBUS_CAPTURE_ON_MAIN)
-        /* The bus ratio and its reciprocal's divide, out of the ADC ISR. The ISRs read a value up to 1 ms old */
-        VBus_Analog_Capture(p_dev->P_VBUS, ADC_Conversion_GetResult(&p_dev->VBUS_CONVERSION));
-#endif
 
 #if defined(MOTOR_I_SUPPLY_LIMITS_ON_MAIN)
         /* The supply window follows the bus and each motor's operating point. Store only, the motor resolves on its speed tick */

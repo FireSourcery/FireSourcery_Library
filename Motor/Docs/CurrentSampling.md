@@ -13,7 +13,7 @@ Where the phase-current sample sits in the PWM period, how its conversion starts
 
 - **Mark before the write.** In the PWM interrupt, `_Motor_Analog_Thread` marks I (V while floating) before `Motor_PWM_Thread` writes this cycle's duties. The duty registers then hold the duties of the window around this top, which `PHASE_ANALOG_I_SENSOR_LOW_SIDE` selects from.
 - **Software start.** In the PWM interrupt, after the marks: it converts in the window around this top.
-- **Hardware trigger.** `ADC_ArmMarked`, under `ADC_HW_TRIGGER_ENABLE` on a platform with `HAL_ADC_HW_TRIGGER_FIFO` (KE0x), arms the marked set alone on the trigger. The completion turns the trigger off and walks the other marked channels by software. A set still armed at the next arming had no trigger: it is walked by software that cycle and counted in `MissedTriggers`.
+- **Hardware trigger.** `ADC_ArmMarked`, under `ADC_HW_TRIGGER_ENABLE` on a platform with `HAL_ADC_HW_TRIGGER_FIFO` (KE0x), arms the marked channels of one set on the next trigger, one set per trigger: the board alternates the I set with the other marked channels. The completion continues nothing, so nothing walks by software. A set still armed at the next arm had no trigger: it is disarmed, counted in `MissedTriggers`, and stays marked for its next arm.
 - **A trigger after the bottom converts at the next write's duties.** The window around the next top runs at the duties written after the marks, so `PHASE_ANALOG_I_SENSOR_LOW_SIDE`'s selection is one write old there. Near a handoff between the two highest duties, the phase left out may not be the highest. Not evaluated.
 
 ## Where the current loop takes the sample

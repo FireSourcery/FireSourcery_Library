@@ -93,18 +93,25 @@ static inline void HAL_ADC_Deactivate(HAL_ADC_T * p_hal)
     p_hal->SC1 = (p_hal->SC1 & ~(ADC_SC1_COCO_MASK | ADC_SC1_AIEN_MASK)) | ADC_SC1_ADCH_MASK;
 }
 
+/*
+    Hardware trigger control functions
+*/
 static inline void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_hal) { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
 static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal) { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
-// #if defined(HAL_ADC_HW_TRIGGER_FIFO)
+
 static inline bool HAL_ADC_ReadIsHwTrigger(const HAL_ADC_T * p_hal) { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADTRG_MASK) != 0U); }
 
 /*
     [HTRGME] 1 Hw trigger converts the whole fifo, else 1 conversion per trigger (KE06 RM Rev. 4 pp. 341, 351).
     A software start converts the whole fifo either way, so the walk's HAL_ADC_WriteFifoCount may clear it.
 */
-static inline void HAL_ADC_WriteFifoCountPerTrigger(HAL_ADC_T * p_hal, uint32_t count) { p_hal->SC4 = ADC_SC4_AFDEP(count - 1U) | ADC_SC4_HTRGME_MASK; }
-// #endif
+static inline void HAL_ADC_WriteHwTriggerFifoCount(HAL_ADC_T * p_hal, uint32_t count) { p_hal->SC4 = ADC_SC4_AFDEP(count - 1U) | ADC_SC4_HTRGME_MASK; }
 
+
+
+/*
+
+*/
 static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal) { p_hal->SC1 &= ~ADC_SC1_ADCO_MASK; }
 static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
 

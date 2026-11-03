@@ -44,7 +44,7 @@ flowchart LR
     %% Call sites
     C1S[["MC main 1 s<br/>MotorController_ProcILimits<br/>→ Motor_SetILimitDerates"]]
     ENT[["Run_Entry, Intervention_Entry<br/>Motor_FOC_ResolveISupplyLimitsOnEntry<br/>then Motor_ResolveILimits"]]
-    TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, SpeedZero<br/>Motor_FOC_ProcISupplyLimitsOnSpeed<br/>then Motor_ResolveILimits"]]
+    TICK[["Speed tick 1 kHz<br/>Run (Current), TorqueZero, SpeedZero<br/>Motor_FOC_ResolveISupplyLimitsOnSpeed<br/>then Motor_ResolveILimits"]]
     CVB[["VBus thread 1 ms"]]
     MC10[["MC main ~16 ms"]]
     RES[["Motor_ResolveILimits<br/>each push"]]

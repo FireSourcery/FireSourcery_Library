@@ -92,8 +92,9 @@ static void Motor_PollFaultFlags(Motor_T * p_motor)
     Set on Direction change
     Clip opposite user direction range, no plugging.
 */
-// static void _Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
+// static void SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 // {
+//     Motor_SetDirection(p_dev, direction);
 //     Motor_FOC_SetDirection(p_dev, direction);
 // }
 
@@ -410,7 +411,9 @@ static void Run_Entry(Motor_T * p_motor)
         Motor_FOC_MatchVOutput(p_context);
     }
 
+//#if defined(MOTOR_VOLTAGE_CONTROL_MODE_ENABLE)
     // if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); } else { Motor_FOC_MatchTorqueVState(p_context); }
+
     Motor_FOC_MatchTorqueIState(p_context);
     if (p_context->FeedbackMode.Speed == 1U)
     {
@@ -424,15 +427,25 @@ static void Run_Entry(Motor_T * p_motor)
 static void Run_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
+//#if defined(MOTOR_VOLTAGE_CONTROL_MODE_ENABLE)
     // if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcAngleV(p_motor); }
+
     Motor_FOC_ProcTorqueReq(p_motor, (p_context->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_context->PidSpeed) : p_context->UserCmd);
+
     // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     //     Motor_ExternControl(p_motor);
     // #endif
 
+    // bool step = _Motor_IsAnalogCycle(p_context->ControlTimerBase);
+
     Motor_FOC_WriteDuty(p_motor);
 }
 
+/******************************************************************************/
+/*!
+    [RUN_ACTION_TABLE]
+*/
+/******************************************************************************/
 /*
     I Bus power balance is derived from speed sign
 */
@@ -440,12 +453,18 @@ static void Run_OnSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_CaptureVSpeed(p_context);
-    Motor_FOC_ProcISupplyLimitsOnSpeed(p_motor);
-    Motor_ResolveILimits(p_motor->P_MOTOR); /* Before the speed loop clamps against them */
-    Motor_ResolveSpeedLimits(p_motor->P_MOTOR);
+    Motor_FOC_ResolveISupplyLimitsOnSpeed(p_motor);
+    Motor_ResolveILimits(p_context); /* Before the speed loop clamps against them */
+    Motor_ResolveSpeedLimits(p_context);
     if (p_context->FeedbackMode.Speed == 1U) { Motor_ProcSpeedControlOf(p_context, p_context->UserCmd); }
 }
 
+// static void Run_OnIPhase(Motor_T * p_motor)
+// {
+//     Motor_Context_T * p_context = p_motor->P_MOTOR;
+//     Motor_FOC_ProcTorqueFeedback(p_motor);
+//     Motor_FOC_WriteDuty(p_motor);
+// }
 
 static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
@@ -455,8 +474,11 @@ static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 #endif
 };
 
-/*
+/******************************************************************************/
+/*!
+    [RUN_TRANSITION_TABLE]
 */
+/******************************************************************************/
 static State_T * Run_InputRelease(Motor_T * p_motor)
 {
     return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_SPEED_ZERO;
@@ -474,10 +496,7 @@ static State_T * Run_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
     }
 }
 
-
-/*
-
-*/
+/* */
 static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
     _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);

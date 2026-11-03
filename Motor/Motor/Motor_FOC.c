@@ -25,7 +25,6 @@
     @file   Motor_FOC.c
     @author FireSourcery
     @brief
-
 */
 /******************************************************************************/
 #include "Motor_FOC.h"
@@ -41,32 +40,29 @@ void Motor_FOC_WriteDuty(Motor_T * p_motor)
 }
 
 
-
-
 /******************************************************************************/
 /*!
-
+    functions mapping to StateMachine handlers
 */
 /******************************************************************************/
+
 /*
     The sample the current loop runs on, once, Parked at the held angle.
     Out of line: every current-mode proc takes it, and inline each would carry its own Clarke and Park.
 */
-__attribute__((noinline)) static bool Motor_FOC_TakeI(Motor_Context_T * p_motor) { return FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); }
-
-
+// __attribute__((noinline)) static bool Motor_FOC_TakeI(Motor_Context_T * p_motor) { return FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); }
 // __attribute__((noinline)) static bool Motor_FOC_ClarkePark(Motor_Context_T * p_motor) { return _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); }
 
 
 /* The torque path's i_d request as the LOOP last stepped it */
-static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
-{
-#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    return FOC_IdFw(&p_context->Foc);
-#else
-    (void)p_context; return 0;
-#endif
-}
+// static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
+// {
+// #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+//     return FOC_IdFw(&p_context->Foc);
+// #else
+//     (void)p_context; return 0;
+// #endif
+// }
 
 /*
     The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
@@ -74,16 +70,16 @@ static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
     The take Parks at the angle the LOOP last set, the sample's tick.
     ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
 */
-void Motor_FOC_ProcTorqueFeedback(Motor_T * p_motor)
-{
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
-    if (Motor_FOC_TakeI(p_context) == true)
-    {
-        FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), Motor_FOC_IdTorqueReq(p_context), Ramp_GetOutput(&p_context->TorqueRamp));
-        FOC_ProcInvClarkePark(&p_context->Foc);
-        Motor_FOC_WriteDuty(p_motor);
-    }
-}
+// void Motor_FOC_ProcTorqueFeedback(Motor_T * p_motor)
+// {
+//     Motor_Context_T * p_context = p_motor->P_MOTOR;
+//     if (Motor_FOC_TakeI(p_context) == true)
+//     {
+//         FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), Motor_FOC_IdTorqueReq(p_context), Ramp_GetOutput(&p_context->TorqueRamp));
+//         FOC_ProcInvClarkePark(&p_context->Foc);
+//         Motor_FOC_WriteDuty(p_motor);
+//     }
+// }
 
 
 /*
@@ -94,7 +90,8 @@ __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor,
 {
     FOC_SetTheta(&p_motor->Foc, theta);
 #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ) /* update angle only for voutput, until divider from adc is set */
-    if (Motor_FOC_TakeI(p_motor)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
+    // if (Motor_FOC_TakeI(p_motor)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
+    if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
 #else
     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
@@ -105,7 +102,8 @@ __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor,
 
 /* Common state machine call for torque */
 /*
-    FW integrator advances on the V held from the previous cycle, then supplies this
+    FW integrator advances on the V held from the previous cycle, then supplies th
+    is
     cycle's idReq — one cycle of V→idReq latency, same as advancing it after AngleControl.
 
     The first tick after resume reads the VBemf capture rather than an applied V. That is
@@ -125,6 +123,7 @@ void _Motor_FOC_ProcTorqueReq(Motor_Context_T * p_context, ufract16_t vbus, frac
     fract16_t id = 0;
 #endif
     fract16_t iq = step ? Ramp_ProcNextOf(&p_context->TorqueRamp, req) : Ramp_GetOutput(&p_context->TorqueRamp);
+
     Motor_FOC_AngleControl(p_context, vbus, Angle_Value(&p_context->SensorState.AngleSpeed), id, iq);
 }
 
@@ -140,6 +139,7 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t angle, fract16_t idReq)
 {
     fract16_t id = _Motor_IsAnalogCycle(p_motor->ControlTimerBase) ? _Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(p_motor))) : Ramp_GetOutput(&p_motor->TorqueRamp);
+
     Motor_FOC_AngleControl(p_motor, vBus, angle, id, 0);
 }
 
@@ -155,7 +155,7 @@ void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idRe
 */
 void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
 {
-    (void)Motor_FOC_TakeI(p_motor); /* Update for measurements */
+    FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); /* Update for measurements */
     FOC_SetAngleV(&p_motor->Foc, theta, vd, vq);
 }
 
@@ -220,7 +220,7 @@ void Motor_FOC_ProcAngleV(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     fract16_t vReq = _Motor_IsAnalogCycle(p_context->ControlTimerBase) ? _Ramp_ProcNextOf(&p_context->TorqueRamp, p_context->UserCmd) : Ramp_GetOutput(&p_context->TorqueRamp); /* inner loop clips with VLimit. The I Sample Cycle, as the torque path */
     FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
-    (void)Motor_FOC_TakeI(p_context); /* Still capture I for overcurrent */
+    FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I); /* Still capture I for overcurrent */
     FOC_ProcVControl(&p_context->Foc, fract16_mul(VBus_Pu(p_motor->P_VBUS), FRACT16_1_DIV_SQRT3), 0, vReq);
     FOC_ProcInvClarkePark(&p_context->Foc);
 }

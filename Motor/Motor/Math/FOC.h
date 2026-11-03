@@ -537,6 +537,7 @@ static inline void FOC_SetVAntiPlugging(FOC_T * p_foc, sign_t sign, uint16_t vq)
 //     PID_SetOutputLimits(&p_foc->PidId, 0 - vq, vq);
 // }
 
+/* Set VDirection */
 static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPhaseLimit)
 {
     interval_t v = interval_half_plane(direction, vPhaseLimit);

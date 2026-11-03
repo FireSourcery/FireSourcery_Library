@@ -62,7 +62,7 @@ static inline void HAL_ADC_Init(HAL_ADC_T * p_hal);
 /* Platform capability, from HAL_Types.h: 1 Hw trigger converts the whole fifo */
 #ifdef HAL_ADC_HW_TRIGGER_FIFO
 static inline bool HAL_ADC_ReadIsHwTrigger(const HAL_ADC_T * p_hal);
-static inline void HAL_ADC_WriteFifoCountPerTrigger(HAL_ADC_T * p_hal, uint32_t count);
+static inline void HAL_ADC_WriteHwTriggerFifoCount(HAL_ADC_T * p_hal, uint32_t count);
 #endif
 
 #ifdef HAL_ADC_DMA_ENABLE
@@ -133,7 +133,7 @@ static inline void HAL_ADC_ActivateEach(HAL_ADC_T * p_hal, const adc_pin_t * p_p
 static inline void HAL_ADC_ArmEach(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, uint8_t count)
 {
     HAL_ADC_EnableHwTrigger(p_hal); /* First. Under software trigger, the last fifo write starts the conversion */
-    HAL_ADC_WriteFifoCountPerTrigger(p_hal, count);
+    HAL_ADC_WriteHwTriggerFifoCount(p_hal, count);
     HAL_ADC_WriteFifo_ActivateOnLast(p_hal, p_pins, count);
 }
 #endif

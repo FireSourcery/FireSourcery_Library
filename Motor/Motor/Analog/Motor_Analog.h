@@ -55,13 +55,16 @@ static inline void Motor_Analog_CaptureIb(Motor_Context_T * p_motor, adc_result_
 static inline void Motor_Analog_CaptureIc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 
 static inline void Motor_Analog_CaptureIabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.I = Phase_Iabc_PuOfAdcu(&p_motor->Config.IabcZeroRef_Adcu, a, b, c);}
-// static inline void Motor_Analog_CaptureI2Of3(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_Analog_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
-static inline void Motor_Analog_CaptureIBatch(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_Analog_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
 static inline void Motor_Analog_CaptureVabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.V = Phase_Vabc_PuOfAdcu(a, b, c);}
 
 /* Without checking for previous completion. Conversions must complete within the analog cycle */
 static inline void Motor_Analog_MarkVabc(Motor_T * p_motor) { Phase_Analog_MarkVabc(&p_motor->PHASE_ANALOG); }
 static inline void Motor_Analog_MarkIabc(Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
+
+
+// todo PHASE_ANALOG_I_SENSOR_LOW_SIDE macro in one layer
+// static inline void Motor_Analog_CaptureI2Of3(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_Analog_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
+static inline void Motor_Analog_CaptureIBatch(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_Analog_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
 
 /*
     The driven I sample. Before the PWM thread writes this cycle's duties: the duty registers hold those of the window being sampled.
@@ -90,15 +93,16 @@ static inline void _Motor_Analog_Thread(Motor_T * p_dev)
     else { Motor_Analog_MarkVabc(p_dev); }
 }
 
-static inline void _Motor_Analog_ByPhase_Thread(Motor_T * p_dev)
-{
-    (void)p_dev;
-}
 
+
+#include "Motor/Motor/Motor_StateMachine.h"
+/* One batch's I set of ADCU, all 3 phases converted */
 // directly from board
-// static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c)
-
-
+static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu)
+{
+    Motor_Analog_CaptureIabc(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu);
+    _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
+}
 
 
 /*

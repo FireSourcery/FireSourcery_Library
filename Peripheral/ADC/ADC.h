@@ -60,11 +60,9 @@
         Hw sequenced    - ADC_HW_SEQUENCER_ENABLE. A trigger converts the slot range, a transfer
                           fills the results, and the Board's ISR flags the set it armed.
         Software        - Channels are marked, the ISR walks them, fifo depth at a time.
-        Hw triggered    - ADC_HW_TRIGGER_ENABLE. Software, except 1 fifo of marked channels is armed
-                          ahead and converts on the Hw trigger. Its completion returns the ADC to
-                          software start, and the walk continues. ADC_ArmMarked, ADC_Thread.h.
-                          Or every marked channel on the trigger, a full fifo per trigger and no walk:
-                          ADC_ArmMarkedAll with ADC_OnCompleteArmed_ISR.
+        Hw triggered    - ADC_HW_TRIGGER_ENABLE. Channels are marked, and the thread arms the marked
+                          channels of 1 set per trigger, 1 fifo, to convert on it. The completion
+                          continues nothing: no walk. ADC_ArmMarked, ADC_Thread.h.
 */
 /******************************************************************************/
 #ifndef ADC_HW_SEQUENCER_ENABLE
@@ -171,10 +169,10 @@ ADC_T;
 static inline bool ADC_ReadIsActive(ADC_T * p_adc) { return HAL_ADC_ReadConversionActiveFlag(p_adc->P_HAL_ADC); }
 static inline void ADC_Deactivate(ADC_T * p_adc) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
 
-#if ADC_HW_TRIGGER_ENABLE
-/* A fifo armed on the Hw trigger, not yet complete. The completion clears it, so the register is the state */
-static inline bool ADC_ReadIsArmed(ADC_T * p_adc) { return HAL_ADC_ReadIsHwTrigger(p_adc->P_HAL_ADC); }
-#endif
+// static inline void ADC_ActivateSequence(ADC_T * p_adc, adc_mask_t mask )
+// {
+//     HAL_ADC_ADmaSequence(p_adc->P_HAL_ADC, mask);
+// }
 
 /******************************************************************************/
 /*

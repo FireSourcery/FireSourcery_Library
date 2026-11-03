@@ -252,7 +252,7 @@ void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
 /******************************************************************************/
 void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
-    FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS));
+    FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS)); // move to statemachine's set
     p_dev->P_MOTOR->Direction = direction;
     RotorSensor_ZeroInitial(p_dev->P_MOTOR->p_ActiveSensor);
     // Motor_ResolveSpeedLimits(p_dev->P_MOTOR);

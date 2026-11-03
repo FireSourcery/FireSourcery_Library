@@ -211,6 +211,8 @@ typedef struct MotorController_Context
 
     uint32_t MicrosRef;
     uint32_t ControlLoopProfile;
+    uint32_t ISampleMicrosRef;  /* The ADC completion ISR's entry. The Board's ISR stamps it */
+    uint32_t ISequenceProfile;  /* [us] The I set's completion ISR entry to the I Feedback Cycle's write */
 }
 MotorController_Context_T;
 

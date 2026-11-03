@@ -43,6 +43,7 @@ static_assert(sizeof(CalibrationBuffer_T) <= MOTOR_CALIBRATION_BUFFER_SIZE, "Cal
 
 /* allow adc module callback to skip storing raw value */
 /* Phase_Input_Get Fract16 performed with 0 as zero reference */
+// todo remove
 static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_I_PU_PER_ADCU * PHASE_ANALOG_I_POLARITY)); }
 
 static CalibrationBuffer_T * GetBuffer(Motor_T * p_motor) { return (CalibrationBuffer_T *)p_motor->P_MOTOR->CalibrationBuffer; }
