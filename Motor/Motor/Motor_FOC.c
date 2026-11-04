@@ -58,7 +58,7 @@ __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor,
 }
 
 #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)
-// separate path
+/* The divided I loop's take, not built [MOTOR_I_LOOP_FREQ]: the PI only on the set's token, the angle every cycle for the write */
 // __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 // {
 //     FOC_SetTheta(&p_motor->Foc, theta);  /* update angle only for voutput */
@@ -80,7 +80,7 @@ __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor,
     from that same capture; without the seed this ordering ramps from 0 over the settling
     cycles instead.
 
-    The requests step every control cycle, at MOTOR_CONTROL_FREQ, the rate their slope and gain are scaled to.
+    The requests step every control cycle, the I loop's rate as built [MOTOR_I_LOOP_FREQ], which their slope and gain are scaled to.
 */
 void _Motor_FOC_ProcTorqueReq(Motor_Context_T * p_context, ufract16_t vbus, fract16_t req)
 {
@@ -183,7 +183,7 @@ void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 
 /*
     The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
-    The LOOP steps them [_Motor_FOC_ProcTorqueReq] every control cycle, the rate their slopes and gains are scaled to, and the state entries match them.
+    The LOOP steps them [_Motor_FOC_ProcTorqueReq] every control cycle, the I loop's rate as built, which their slopes and gains are scaled to, and the state entries match them.
     The take Parks at the angle the LOOP last set, the sample's tick.
     ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
 */

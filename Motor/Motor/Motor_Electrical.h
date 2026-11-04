@@ -223,7 +223,7 @@ typedef struct
 {
     // fract16_t IsMax;     /* Current circle radius */
     ufract16_t IfwLimit;     /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
-    ufract16_t IfwGain;      /* Field weakening integrator gain per I loop cycle, MOTOR_I_LOOP_FREQ: the requests step on the analog cycle */
+    ufract16_t IfwGain;      /* Field weakening integrator gain per I loop cycle, MOTOR_I_LOOP_FREQ: every control cycle as built */
 }
 Motor_FieldWeakeningTuning_T;
 

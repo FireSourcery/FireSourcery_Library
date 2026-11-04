@@ -42,13 +42,13 @@
 
 static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
 
-/*  */
+/* The control cycle that samples the I set: every one as built, the mask 0. With a divider, 1 in MOTOR_I_LOOP_DIVIDER [MOTOR_I_LOOP_FREQ] */
 static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & (uint32_t)PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
 
 /*
-    The analog cycle by the Motor's own count, in step with the controller's [Motor_ResetControlTimer]: the I Sample Cycle.
-    The LOOP steps the requests and polls the speed loop on it, at MOTOR_I_LOOP_FREQ. Under the hardware trigger the set is taken in the
-    next cycle, the I Feedback Cycle, which then runs no requests before its write. Every cycle without a divider.
+    The analog cycle by the Motor's own count. As built every control cycle, and nothing gates on it: the requests, the take and the PI
+    run every cycle [Motor_FOC_AngleControl]. For a divided I loop: the cycle that steps the requests, its set taken on the next,
+    the count kept in step with the controller's [Motor_ResetControlTimer].
 */
 static inline bool Motor_IsAnalogCycle(Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
 

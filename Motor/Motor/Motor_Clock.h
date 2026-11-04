@@ -44,11 +44,18 @@
 
 #define MOTOR_CONTROL_PERIOD_US (1000000U / MOTOR_CONTROL_FREQ) /* us */
 
+/*
+    The I loop's rate: the take, the PI, and the requests the PI runs on, the torque ramp and field weakening. Their coefficients are
+    per I loop cycle: the PI's [SampleFreq], [TorqueRampSlope_PuPerTick], [IfwGain], and MOTOR_TORQUE_CYCLES.
+    Built: the I loop every control cycle, MOTOR_I_LOOP_FREQ equal to MOTOR_CONTROL_FREQ [Motor_FOC_AngleControl].
+    Kept for a divided I loop, MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_DIVIDER, as on a board that can't fit the requests and the PI in every
+    control cycle: the alternating form, whose PI write loads at the bottom.
+*/
 #ifndef MOTOR_I_LOOP_FREQ
-#define MOTOR_I_LOOP_FREQ MOTOR_CONTROL_FREQ /* CONTROL_FREQ / MOTOR_I_LOOP_DIVIDER) */
+#define MOTOR_I_LOOP_FREQ MOTOR_CONTROL_FREQ /* MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_DIVIDER */
 #endif
 
-#define MOTOR_I_LOOP_DIVIDER (MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) /* Control cycles per I loop cycle, the analog cycle's period */
+#define MOTOR_I_LOOP_DIVIDER (MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) /* Control cycles per I loop cycle, the analog cycle's period. 1 as built */
 
 #ifndef MOTOR_SPEED_LOOP_FREQ
 #define MOTOR_SPEED_LOOP_FREQ (1000U)
@@ -71,7 +78,7 @@
 #define MOTOR_CONTROL_CYCLES(Milliseconds)  CYCLES_OF_MS(MOTOR_CONTROL_FREQ, Milliseconds)
 #define MOTOR_CONTROL_TIME_MS(Cycles)       MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
 
-/* Ramp Time. The torque requests step on the analog cycle, at the I loop's rate */
+/* Ramp Time. The torque requests step at the I loop's rate: every control cycle as built */
 #define MOTOR_TORQUE_CYCLES(Milliseconds)   CYCLES_OF_MS(MOTOR_I_LOOP_FREQ, Milliseconds)
 #define MOTOR_TORQUE_TIME_MS(Cycles)        MS_OF_CYCLES(MOTOR_I_LOOP_FREQ, Cycles)
 

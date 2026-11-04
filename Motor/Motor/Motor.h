@@ -233,7 +233,7 @@ typedef struct Motor_Config
         Pu per tick with additional ACCUMULATOR_SHIFT.
     */
     uint32_t SpeedRampSlope_PuPerTick;
-    uint32_t TorqueRampSlope_PuPerTick;     /* Per control cycle, MOTOR_CONTROL_FREQ */
+    uint32_t TorqueRampSlope_PuPerTick;     /* Per I loop cycle, MOTOR_I_LOOP_FREQ: every control cycle as built */
 
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
@@ -379,7 +379,7 @@ typedef struct Motor_Context
 }
 Motor_Context_T;
 
-/* Restart the state counter */
+/* Restart the state counter. A divided I loop [MOTOR_I_LOOP_DIVIDER] keeps the bits under the divider instead: the analog cycle's parity */
 static inline void Motor_ResetControlTimer(Motor_Context_T * p_context) { p_context->ControlTimerBase = 0U; }
 
 
