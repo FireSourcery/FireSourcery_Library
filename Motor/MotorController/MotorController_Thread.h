@@ -306,7 +306,7 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_dev)
     // p_fields->MicrosRef = SysTime_GetMicros();
     if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true)
     {
-        for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { _Motor_Analog_Thread(&p_dev->MOTORS.P_DEVS[i]); }
+        for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_ADC_MarkPhases(&p_dev->MOTORS.P_DEVS[i]); }
     }
     ADC_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 

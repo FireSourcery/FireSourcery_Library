@@ -70,9 +70,6 @@ static inline bool Motor_FOC_IsPlugging(const Motor_Context_T * p_motor) { retur
 static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (Motor_FOC_IsGenerating(p_motor) && !Motor_FOC_IsPlugging(p_motor)); }
 
 
-
-
-
 /******************************************************************************/
 /*
 
@@ -85,13 +82,7 @@ static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 
 static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->Foc, Motor_GetDecouplingOmega(p_motor)); }
 
-/*
-    The I set's flags are the token: one set runs the current loop once.
-    The torque procs Park it at their take [Motor_FOC_TakeI], at the angle they set.
-    A state that Parks it earlier, e.g. in its ON_PHASE action, at the angle [FOC_T] holds there, pairs the two below.
-*/
-/* Parks at the held angle. The flags stay set */
-// static inline void Motor_FOC_CaptureI(Motor_Context_T * p_motor) { _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values); }
+
 
 
 /* Directly read register state */

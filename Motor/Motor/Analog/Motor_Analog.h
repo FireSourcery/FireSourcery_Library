@@ -35,9 +35,9 @@
 #include "Peripheral/ADC/ADC_Conversion.h"
 
 /* 0 -> 1x, 1 -> 2x, 2 -> 4x, 3 -> 8x */
+/* PHASE_I_SAMPLE_DIVIDER_MASK */
 #ifndef PHASE_ANALOG_DIVIDER_MASK
 #define PHASE_ANALOG_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
-/* PHASE_I_SAMPLE_DIVIDER_MASK */
 #endif
 
 static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
@@ -45,6 +45,16 @@ static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_F
 /*  */
 static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & (uint32_t)PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
 
+/*
+    The analog cycle by the Motor's own count, in step with the controller's [Motor_ResetControlTimer]: the I Sample Cycle.
+    The LOOP steps the requests and polls the speed loop on it, at MOTOR_I_LOOP_FREQ. Under the hardware trigger the set is taken in the
+    next cycle, the I Feedback Cycle, which then runs no requests before its write. Every cycle without a divider.
+*/
+static inline bool Motor_IsAnalogCycle(Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
+
+/*
+    Mappable as callbacks
+*/
 /* VBus_Analog_Capture in VBus.h */
 static inline void Motor_Analog_CaptureVa(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
 static inline void Motor_Analog_CaptureVb(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVb(&p_motor->PhaseInput, adcu); }
@@ -54,12 +64,38 @@ static inline void Motor_Analog_CaptureIa(Motor_Context_T * p_motor, adc_result_
 static inline void Motor_Analog_CaptureIb(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIb(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 static inline void Motor_Analog_CaptureIc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 
+/* Collective completetion */
 static inline void Motor_Analog_CaptureIabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.I = Phase_Iabc_PuOfAdcu(&p_motor->Config.IabcZeroRef_Adcu, a, b, c);}
 static inline void Motor_Analog_CaptureVabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.V = Phase_Vabc_PuOfAdcu(a, b, c);}
 
 /* Without checking for previous completion. Conversions must complete within the analog cycle */
 static inline void Motor_Analog_MarkVabc(Motor_T * p_motor) { Phase_Analog_MarkVabc(&p_motor->PHASE_ANALOG); }
 static inline void Motor_Analog_MarkIabc(Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
+
+
+/* Optionally mark on Start */
+static inline void Motor_ADC_MarkPhases(Motor_T * p_dev)
+{
+    /* foc return on first 1. alternatively handle per phase */
+    if (!Phase_IsFloat(&p_dev->PHASE)) {  Phase_Analog_MarkIabc(&p_dev->PHASE_ANALOG);  }
+    else { Phase_Analog_MarkVabc(&p_dev->PHASE_ANALOG);}
+}
+
+
+
+#include "Motor/Motor/Motor_StateMachine.h"
+/* One batch's I set of ADCU, all 3 phases converted */
+// directly from board
+// static inline void Motor_ADC_OnIabc(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu)
+// {
+//     Motor_Analog_CaptureIabc(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu);
+//     _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
+// }
+
+
+/*
+*/
+extern void Motor_Analog_Calibrate(Motor_T * p_motor);
 
 
 // todo PHASE_ANALOG_I_SENSOR_LOW_SIDE macro in one layer
@@ -75,37 +111,3 @@ static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Phase_Analog_MarkI(&p
 #else
 static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Motor_Analog_MarkIabc(p_motor); }
 #endif
-
-
-/*
-    The analog cycle by the Motor's own count, in step with the controller's [Motor_ResetControlTimer]: the I Sample Cycle.
-    The LOOP steps the requests and polls the speed loop on it, at MOTOR_I_LOOP_FREQ. Under the hardware trigger the set is taken in the
-    next cycle, the I Feedback Cycle, which then runs no requests before its write. Every cycle without a divider.
-*/
-static inline bool Motor_IsAnalogCycle(Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
-
-/* Optionally mark on Start */
-static inline void _Motor_Analog_Thread(Motor_T * p_dev)
-{
-    // RotorSensor_MarkAnalog(&p_dev->Sensor);
-    /* foc return on first 1. alternatively handle per phase */
-    if (!Phase_IsFloat(&p_dev->PHASE)) { Motor_Analog_MarkI(p_dev); }
-    else { Motor_Analog_MarkVabc(p_dev); }
-}
-
-
-
-#include "Motor/Motor/Motor_StateMachine.h"
-/* One batch's I set of ADCU, all 3 phases converted */
-// directly from board
-static inline void Motor_ADC_OnIabc_Thread(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu)
-{
-    Motor_Analog_CaptureIabc(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu);
-    _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
-}
-
-
-/*
-*/
-extern void Motor_Analog_Calibrate(Motor_T * p_motor);
-

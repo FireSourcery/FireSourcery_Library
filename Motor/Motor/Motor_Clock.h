@@ -39,14 +39,13 @@
 */
 /******************************************************************************/
 #ifndef MOTOR_CONTROL_FREQ
-#define MOTOR_CONTROL_FREQ (20000U) /* Hz */
-/* MOTOR_OUTER_LOOP_FREQ 1000U */
+#define MOTOR_CONTROL_FREQ (20000U) /* PWM update frequency. */
 #endif
 
 #define MOTOR_CONTROL_PERIOD_US (1000000U / MOTOR_CONTROL_FREQ) /* us */
 
 #ifndef MOTOR_I_LOOP_FREQ
-#define MOTOR_I_LOOP_FREQ MOTOR_CONTROL_FREQ /* CONTROL_FREQ / ANALOG_DIVIDER) */
+#define MOTOR_I_LOOP_FREQ MOTOR_CONTROL_FREQ /* CONTROL_FREQ / MOTOR_I_LOOP_DIVIDER) */
 #endif
 
 #define MOTOR_I_LOOP_DIVIDER (MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) /* Control cycles per I loop cycle, the analog cycle's period */

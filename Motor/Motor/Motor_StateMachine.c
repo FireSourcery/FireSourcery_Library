@@ -88,6 +88,7 @@ static void Motor_PollFaultFlags(Motor_T * p_motor)
     // p_motor->P_MOTOR->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR->Thermistor);
     p_motor->P_MOTOR->FaultFlags.Overheat = 0;
 }
+
 /*
     Set on Direction change
     Clip opposite user direction range, no plugging.
@@ -95,7 +96,7 @@ static void Motor_PollFaultFlags(Motor_T * p_motor)
 // static void SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 // {
 //     Motor_SetDirection(p_dev, direction);
-//     Motor_FOC_SetDirection(p_dev, direction);
+//     Motor_FOC_SetDirection(p_dev, direction); // let foc set direction  handle vlimit
 // }
 
 /* if eliminating Motor_Context.Direction which shadows FOC.VLimit */
@@ -329,8 +330,6 @@ static State_T * Passive_InputDirection(Motor_T * p_motor, state_value_t directi
                 Motor_SetDirection(p_motor, direction); break;
             default: break; /* Invalid direction */
         }
-        /* Null direction can function as disable while other directions not function as enable. */
-        // if (direction == MOTOR_DIRECTION_NULL) { p_nextState = &MOTOR_STATE_DEACTIVATED; }
     }
 
     return p_nextState;
@@ -435,7 +434,13 @@ static void Run_Proc(Motor_T * p_motor)
     // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     //     Motor_ExternControl(p_motor);
     // #endif
-
+    // if (!_Motor_IsAnalogCycle(p_context->ControlTimerBase))
+    // {
+    //   #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    //     FOC_ProcIdFieldWeakening(&p_context->Foc, VBus_Pu(p_motor->P_VBUS));
+    //   #endif
+    //     Ramp_ProcNextOf(&p_context->TorqueRamp, (p_context->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_context->PidSpeed) : p_context->UserCmd);
+    // }
     // Motor_FOC_AngleControl(p_context, VBus_Pu(p_motor->P_VBUS), Angle_Value(&p_context->SensorState.AngleSpeed), FOC_IdFw(&p_context->Foc), Ramp_GetOutput(&p_context->TorqueRamp));
 
     Motor_FOC_WriteDuty(p_motor);
@@ -470,7 +475,7 @@ static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)Run_OnSpeed,
 #if defined(MOTOR_I_FEEDBACK_ON_PHASE)
-    [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Motor_FOC_ProcTorqueFeedback,
+    [MOTOR_STATE_INPUT_ON_PHASE] = (State_Action_T)Motor_FOC_ProcIFeedback,
 #endif
 };
 
@@ -522,7 +527,7 @@ static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
     [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
     [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Run_InputFeedbackMode,
     [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Run_InputControl,
-    // [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Run_InputStop,
+    // [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Run_InputStop, /* optionally accept transition to passive */
     [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,
     [MOTOR_STATE_INPUT_INTERVENTION]    = (State_Input_T)TransitionIntervention,
     [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
@@ -574,7 +579,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
     {
         case PHASE_VOUT_Z:
         case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_SPEED_ZERO;
-        case PHASE_VOUT_PWM:    return RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL;
+        case PHASE_VOUT_PWM:    return RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL; /* TorqueZero may run without feedback */
         default: return NULL;
     }
 }

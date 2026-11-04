@@ -240,7 +240,7 @@ State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor) { (void)p_motor; retu
 /******************************************************************************/
 /*
     The sample, and the command held across the period it closes [EmfObserver_HoldV].
-    The phase output decides i and v. The analog thread samples I while driven, V while floating [_Motor_Analog_Thread].
+    The phase output decides i and v. The analog thread samples I while driven, V while floating [Motor_ADC_MarkPhases].
     The mode is the one the state left for the next period: on the tick it changes, it misreads one sample.
 */
 static void CaptureStator(Motor_T * p_motor)
@@ -285,7 +285,7 @@ void Motor_Sensorless_Thread(Motor_T * p_motor)
 /******************************************************************************/
 /*
     One control tick, before the FOC proc: the sample closes the period, with the v held across it.
-    The phase output across the period decides that v. The analog thread samples I while driven, V while floating [_Motor_Analog_Thread].
+    The phase output across the period decides that v. The analog thread samples I while driven, V while floating [Motor_ADC_MarkPhases].
     Valid only while the sensorless adapter is the selected sensor.
 */
 // void Motor_Sensorless_CaptureStator(Motor_T * p_motor)

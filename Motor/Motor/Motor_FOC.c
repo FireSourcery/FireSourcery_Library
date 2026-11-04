@@ -45,43 +45,6 @@ void Motor_FOC_WriteDuty(Motor_T * p_motor)
     functions mapping to StateMachine handlers
 */
 /******************************************************************************/
-
-/*
-    The sample the current loop runs on, once, Parked at the held angle.
-    Out of line: every current-mode proc takes it, and inline each would carry its own Clarke and Park.
-*/
-// __attribute__((noinline)) static bool Motor_FOC_TakeI(Motor_Context_T * p_motor) { return FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); }
-// __attribute__((noinline)) static bool Motor_FOC_ClarkePark(Motor_Context_T * p_motor) { return _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); }
-
-
-/* The torque path's i_d request as the LOOP last stepped it */
-// static inline fract16_t Motor_FOC_IdTorqueReq(const Motor_Context_T * p_context)
-// {
-// #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-//     return FOC_IdFw(&p_context->Foc);
-// #else
-//     (void)p_context; return 0;
-// #endif
-// }
-
-/*
-    The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
-    The LOOP steps them [_Motor_FOC_ProcTorqueReq] every control cycle, the rate their slopes and gains are scaled to, and the state entries match them.
-    The take Parks at the angle the LOOP last set, the sample's tick.
-    ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
-*/
-// void Motor_FOC_ProcTorqueFeedback(Motor_T * p_motor)
-// {
-//     Motor_Context_T * p_context = p_motor->P_MOTOR;
-//     if (Motor_FOC_TakeI(p_context) == true)
-//     {
-//         FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), Motor_FOC_IdTorqueReq(p_context), Ramp_GetOutput(&p_context->TorqueRamp));
-//         FOC_ProcInvClarkePark(&p_context->Foc);
-//         Motor_FOC_WriteDuty(p_motor);
-//     }
-// }
-
-
 /*
     Current-mode angle control. Req Id/Iq to Vabc.
     Out of line: one copy for every current-mode proc. -O3 otherwise inlines it into each align proc, 364 B each on KE.
@@ -93,21 +56,20 @@ __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor,
     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
     FOC_ProcInvClarkePark(&p_motor->Foc);
 }
+
+#if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)
+// separate path
 // __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 // {
-//     FOC_SetTheta(&p_motor->Foc, theta);
-// #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ) /* update angle only for voutput, until divider from adc is set */
-//     // if (Motor_FOC_TakeI(p_motor)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
+//     FOC_SetTheta(&p_motor->Foc, theta);  /* update angle only for voutput */
 //     if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
-// #else
-//     _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values);
-//     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-// #endif
 //     FOC_ProcInvClarkePark(&p_motor->Foc);
 // }
+#endif
 
-
-/* Common state machine call for torque */
+/*
+    Common state machine call for torque
+*/
 /*
     FW integrator advances on the V held from the previous cycle, then supplies th
     is
@@ -137,7 +99,9 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
     _Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR, VBus_Pu(p_motor->P_VBUS), req);
 }
 
-/* Common state machine call for align */
+/*
+    Common state machine call for align
+*/
 /* id limits update with FOC_DECOUPLE_ENABLE. id limits set at direction only when FOC_DECOUPLE disabled */
 /* idReq input is userReq or preset IAlign. */
 /* TorqueRamp steps every control cycle, as in the torque path, whose slope it shares */
@@ -174,10 +138,10 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t theta,
 /*
     Current-mode pipeline. Sensor theta, TorqueRamp on Iq, Id from field weakening.
 */
-void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
-{
-    Motor_FOC_ProcTorqueReq(p_motor, p_motor->P_MOTOR->UserCmd);
-}
+// void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
+// {
+//     Motor_FOC_ProcTorqueReq(p_motor, p_motor->P_MOTOR->UserCmd);
+// }
 
 /* on feedback mode update */
 void Motor_FOC_MatchVOutput(Motor_Context_T * p_context)
@@ -216,6 +180,27 @@ void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
     p_context->UserCmd = FOC_Iq(&p_context->Foc); /* may be ~1-50ms before next user input */
 }
 
+
+/*
+    The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
+    The LOOP steps them [_Motor_FOC_ProcTorqueReq] every control cycle, the rate their slopes and gains are scaled to, and the state entries match them.
+    The take Parks at the angle the LOOP last set, the sample's tick.
+    ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
+*/
+void Motor_FOC_ProcIFeedback(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    // #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    //     return FOC_IdFw(&p_context->Foc);
+    // #else
+    //     (void)p_context; return 0;
+    // #endif
+    //  FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
+    _FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I.Values);
+    FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), FOC_IdFw(&p_context->Foc), Ramp_GetOutput(&p_context->TorqueRamp));
+    FOC_ProcInvClarkePark(&p_context->Foc);
+    // Motor_FOC_WriteDuty(p_motor);
+}
 
 /*
     Voltage-mode on a separate path

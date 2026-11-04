@@ -79,7 +79,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
     // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
     // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
-    // Motor_FOC_WriteDuty_Thread(p_dev);
+    // Motor_FOC_WriteDuty_Thread(p_dev); // okay if statemachine transitions for Duty0,0,0 state
 
     Motor_PollSpeed(p_dev);
     p_dev->P_MOTOR->ControlTimerBase++;
@@ -87,12 +87,12 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
 
 /******************************************************************************/
 /*
-    Motor_MarkAnalog_Thread
+
 */
 /******************************************************************************/
 // static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
 // {
-//     if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
+//     if (Motor_IsAnalogCycle(p_dev) == true) { Motor_ADC_MarkPhases(p_dev); }
 // }
 
 /*
@@ -100,11 +100,10 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     Run at the PWM ISR's priority, so the active state is not mid-transition. ON_PHASE reaches the active leaf state only.
     The set stays raw: the state's take Parks it, or its ON_PHASE action does [Motor_FOC_CaptureI].
 */
-static inline void _Motor_OnIabc_Thread(Motor_T * p_motor)
-{
-    _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
-}
-
+// static inline void _Motor_OnIabc_Thread(Motor_T * p_motor)
+// {
+//     _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
+// }
 
 // /* Low-side sensing's I set of ADCU [PHASE_ANALOG_I_SENSOR_LOW_SIDE]: [phases] the phases converted, the third solved [Phase_Analog_CaptureIBatch] */
 // static inline void Motor_ADC_OnIBatch_Thread(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu, Phase_Id_T phases)

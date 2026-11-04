@@ -49,7 +49,7 @@
 static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_pu, fract16_t vphase_pu) { return (int32_t)vphase_pu * (int32_t)vBusInv_pu / FRACT16_SCALE; }
 static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_pu, fract16_t vphase_pu) { return fract16_div(vphase_pu, vBus_pu); }
 /*  */
-static inline fract16_t svpwm_vphase_vbus(ufract16_t vBus_pu, fract16_t vNorm) { return fract16_mul(vNorm, vBus_pu); }
+static inline fract16_t svpwm_vphase_pu(ufract16_t vBus_pu, fract16_t vNorm) { return fract16_mul(vNorm, vBus_pu); }
 
 
 struct svpwm_abc { ufract16_t a, b, c; };
@@ -102,6 +102,11 @@ static inline struct svpwm_abc svpwm_clamp(fract16_t vA, fract16_t vB, fract16_t
     return (struct svpwm_abc) { .a = fract16_sat_positive(vA - vZero), .b = fract16_sat_positive(vB - vZero), .c = fract16_sat_positive(vC - vZero) };
 }
 
+/******************************************************************************/
+/*!
+    Midclamp ceiling
+*/
+/******************************************************************************/
 /*!
     [svpwm_clamp] with k solved per vector for the highest duty at dutyCeiling, k = (dutyCeiling − spread) / (1 − spread),
     held to [0, 1/2]: midclamp until the highest duty reaches the ceiling, then toward the bottom clamp.
@@ -127,12 +132,23 @@ static inline struct svpwm_abc svpwm_midclamp_ceiling(fract16_t vA, fract16_t vB
 /*!
     Modulation limit of a duty limit: the radius |v|/VBus at which the highest duty over a cycle reaches a peak.
     A current read in the low-side window keeps (1 − dutyPeak)·T of the period there.
+*/
+/******************************************************************************/
+/*
+    The window forms above as one expression, in floating point, for precompile values. With w = Window/Period,
+    the highest duty over a cycle under [svpwm_clamp] is k + (1 − k)·√3·r, so the largest radius that leaves the window is
+        r = (1 − w/(1 − k)) / √3
+    k = 1/2, midclamp: (1 − 2w)/√3.
+    k = 0, the bottom clamp: (1 − w)/√3. Also [svpwm_midclamp_ceiling]'s, for a ceiling at or under 1 − w; over it, midclamp's.
+    Window and Period in one unit, k in [0:1). FRACT16 truncates, keeping the window.
+*/
+#define SVPWM_CLAMP_RADIUS_OF_WINDOW(Window, Period, K) FRACT16((1.0F - (float)(Window) / (float)(Period) / (1.0F - (float)(K))) / 1.73205080756887729F)
 
+/*
     The macros are the constant-expression forms, for configuration: FOC_V_CIRCLE_PER_V_BUS, initializers, static_assert.
     The functions take and return the same fract16 values.
     FRACT16_SQRT3_DIV_2 and FRACT16_1_DIV_SQRT3 are objects, not constant expressions, so the macros round their own to the same values.
 */
-/******************************************************************************/
 #define _SVPWM_FRACT16_OF(x)    ((int32_t)((x) * FRACT16_SCALE + 0.5))
 #define _SVPWM_SQRT3_DIV_2      _SVPWM_FRACT16_OF(0.86602540378443865)
 #define _SVPWM_1_DIV_SQRT3      _SVPWM_FRACT16_OF(0.57735026918962576)
@@ -149,15 +165,7 @@ static inline struct svpwm_abc svpwm_midclamp_ceiling(fract16_t vA, fract16_t vB
 #define SVPWM_MIDCLAMP_RADIUS_OF_WINDOW(Window, Period)                         SVPWM_MIDCLAMP_RADIUS(SVPWM_DUTY_PEAK_OF_WINDOW(Window, Period))
 #define SVPWM_MIDCLAMP_CEILING_RADIUS_OF_WINDOW(Window, Period, DutyCeiling)    SVPWM_MIDCLAMP_CEILING_RADIUS(SVPWM_DUTY_PEAK_OF_WINDOW(Window, Period), DutyCeiling)
 
-/*
-    The window forms above as one expression, in floating point, for precompile values. With w = Window/Period,
-    the highest duty over a cycle under [svpwm_clamp] is k + (1 − k)·√3·r, so the largest radius that leaves the window is
-        r = (1 − w/(1 − k)) / √3
-    k = 1/2, midclamp: (1 − 2w)/√3.
-    k = 0, the bottom clamp: (1 − w)/√3. Also [svpwm_midclamp_ceiling]'s, for a ceiling at or under 1 − w; over it, midclamp's.
-    Window and Period in one unit, k in [0:1). FRACT16 truncates, keeping the window.
-*/
-#define SVPWM_CLAMP_RADIUS_OF_WINDOW(Window, Period, K) FRACT16((1.0F - (float)(Window) / (float)(Period) / (1.0F - (float)(K))) / 1.73205080756887729F)
+
 
 /*!
     The highest duty [svpwm_midclamp] writes over a cycle at radius r, at each line-to-line peak: 1/2 + (√3/2)·r.
