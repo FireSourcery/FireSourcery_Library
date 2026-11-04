@@ -55,7 +55,8 @@
 #define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))
 /* Observer state is allocated by the table entry — Motor_Context_T carries none, so the
    sensorless build option costs nothing when unselected. */
-#define MOTOR_SENSOR_TABLE_INIT_SENSORLESS(MotorStateStruct, p_NvmConfig) SENSORLESS_SENSOR_INIT(&((MotorStateStruct).SensorState), (p_NvmConfig))
+#define MOTOR_SENSOR_TABLE_INIT_SENSORLESS(MotorStateStruct, p_NvmConfig) SENSORLESS_SENSOR_INIT(&((MotorStateStruct).SensorState), &((MotorStateStruct).Config.Electrical), (p_NvmConfig))
+// #define MOTOR_SENSOR_TABLE_INIT_SENSORLESS(MotorStateStruct, p_NvmConfig) SENSORLESS_SENSOR_INIT(&((MotorStateStruct).SensorState), (p_NvmConfig))
 
 /* The selected sensor's start-up chain, NULL where none */
 extern State_T * Motor_Sensor_StartUpState(Motor_T * p_motor);

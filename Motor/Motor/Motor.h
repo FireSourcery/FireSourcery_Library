@@ -286,8 +286,8 @@ typedef struct Motor_Context
     /*
         Position Sensor
     */
-    const RotorSensor_T * p_ActiveSensor;   /* Pointer to entry in SENSOR_TABLE */
-    RotorSensor_State_T SensorState;        /* Compile time configured address. Sensor State includes [Angle_T] */
+    const RotorSensor_T * p_ActiveSensor;   /* runtime selectable sensor. Pointer to entry in SENSOR_TABLE */
+    RotorSensor_State_T SensorState;        /* Hold the sensor publish destination. Compile time mapped. Sensor State includes [Angle_T] */
 
     /*
         Active State binds ProcNextOf
@@ -374,13 +374,10 @@ typedef struct Motor_Context
 #if  defined(MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
     // volatile uint32_t MicrosRef;
     volatile uint32_t DebugCounter;
-#endif
     volatile uint32_t DebugBuffer[16];
+#endif
 }
 Motor_Context_T;
-
-/* Restart the state counter. A divided I loop [MOTOR_I_LOOP_DIVIDER] keeps the bits under the divider instead: the analog cycle's parity */
-static inline void Motor_ResetControlTimer(Motor_Context_T * p_context) { p_context->ControlTimerBase = 0U; }
 
 
 /*!
@@ -459,6 +456,9 @@ static inline Motor_Direction_T Motor_Direction(const Motor_Context_T * p_motor)
 static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_of(Motor_Direction(p_motor->P_MOTOR) * VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 
+
+/* Restart the state counter. A divided I loop [MOTOR_I_LOOP_DIVIDER] keeps the bits under the divider instead: the analog cycle's parity */
+static inline void Motor_ResetControlTimer(Motor_Context_T * p_context) { p_context->ControlTimerBase = 0U; }
 
 
 /******************************************************************************/

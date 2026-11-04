@@ -227,8 +227,17 @@ void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
     Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN);
 }
 
-/* The chain that acquires the angle from standstill, for an entry from outside: a PWM request in PASSIVE, or a cmd */
-State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor) { (void)p_motor; return &SENSORLESS_ALIGN; }
+/*
+    The chain that acquires the angle from standstill, for an entry from outside: a PWM request in PASSIVE, or a cmd.
+    NULL unless the sensorless adapter is the active sensor: the chain waits on the observer, which only the active sensor runs [Motor_Sensorless_Thread].
+    Config.SensorMode can name it before a reboot makes it active.
+*/
+State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor)
+{
+    return (p_motor->P_MOTOR->p_ActiveSensor == &GetSensorless(p_motor)->BASE) ? &SENSORLESS_ALIGN : NULL;
+}
+
+// State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor) { (void)p_motor; return &SENSORLESS_ALIGN; }
 
 
 /******************************************************************************/
@@ -318,13 +327,13 @@ void Motor_Sensorless_Thread(Motor_T * p_motor)
 /*
     The observer's plant, from the model on the same view as FOC's [Motor_FOC_InitParams]: Lq on both axes, the extended EMF.
     Re-resolve with it, on a change of the model. An invalid model keeps the prior winding, as it keeps FOC's view.
-    The model steps once per I loop cycle, the sample's period [Motor_Sensorless_Thread].
+    Superseded by the sensor's INIT_UNITS [Sensorless_Sensor_InitUnits], on Motor_Reset with the other sensor units: this one had no caller.
 */
-void Motor_Sensorless_InitWinding(Motor_T * p_motor)
-{
-    const Motor_Electrical_T * p_electrical = &p_motor->P_MOTOR->Config.Electrical;
-    if (Motor_Electrical_IsValid(p_electrical) == true) { EmfObserver_InitWinding(GetSensorless(p_motor)->P_OBSERVER, p_electrical->Rs, Motor_Lq_PuTurn(p_electrical)); }
-}
+// void Motor_Sensorless_InitWinding(Motor_T * p_motor)
+// {
+//     const Motor_Electrical_T * p_electrical = &p_motor->P_MOTOR->Config.Electrical;
+//     if (Motor_Electrical_IsValid(p_electrical) == true) { EmfObserver_InitWinding(GetSensorless(p_motor)->P_OBSERVER, p_electrical->Rs, Motor_Lq_PuTurn(p_electrical)); }
+// }
 
 // void Motor_Sensorless_InitWinding(Motor_T * p_motor)
 // {

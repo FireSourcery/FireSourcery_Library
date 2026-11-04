@@ -24,7 +24,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   math_svpwm.h
+    @file   svpwm_math.h
     @author FireSourcery
     @brief  SVPWM pure math functions.
 */
@@ -33,64 +33,55 @@
 
 
 /*!
-    VBusNorm
-    Normalize V to VBus as 1.0F
-    [VBus/sqrt3] => [1/sqrt3]
-    Svpwm input as VPhase/VBus
-    @return [-1/sqrt3:1/sqrt3]
+    vPhase / VBus, the svpwm input, normalized to VBus as 1.0F.
+    @return [-1.0/sqrt3:1.0/sqrt3], e.g. [VBus/sqrt3] -> [1.0/sqrt3]
 
-    @note overflow
-    vPhase_pu < vBus_pu * .57
-    for vBusInv_pu * vBus_pu = INT32_MAX
-        overflow when VBus drops more than 42% before v_pu updates
-        VBus fault detection should trigger before this point
-    vBusInv_pu * vBus_pu = INT32_MAX / 2
+    @note The fract16 return wraps at |vPhase| ≥ VBus, with vBusInv_pu · vBus_pu = 2^30 [VBus_T].
+    A vPhase at the linear limit VBus/√3 reaches it when VBus drops 42 % before vPhase updates. VBus fault detection should trip first.
 */
 static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_pu, fract16_t vphase_pu) { return (int32_t)vphase_pu * (int32_t)vBusInv_pu / FRACT16_SCALE; }
 static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_pu, fract16_t vphase_pu) { return fract16_div(vphase_pu, vBus_pu); }
-/*  */
 static inline fract16_t svpwm_vphase_pu(ufract16_t vBus_pu, fract16_t vNorm) { return fract16_mul(vNorm, vBus_pu); }
 
 
 struct svpwm_abc { ufract16_t a, b, c; };
 
 /*!
+    Midclamp, the null time shared equally between O111 and O000.
+
     @param[in] vA, vB, vC - normalized to VBus as 1.0F, [-1/sqrt3:1/sqrt3]
-                            vA = 1/sqrt3 <=> Phase A voltage output VBus/sqrt3
-    @param[out] p_dutyA, p_dutyB, p_dutyC - [0:32767]
+    @return [0:32767]
 */
 static inline struct svpwm_abc svpwm_midclamp(fract16_t vA, fract16_t vB, fract16_t vC)
 {
-    // Find the maximum and minimum of the three phase voltages
     int32_t vMax = math_max(math_max(vA, vB), vC);
     int32_t vMin = math_min(math_min(vA, vB), vC);
 
-    // Calculate the zero - sequence voltage (midclamp adjustment)
     int32_t vZero = (vMax + vMin) / 2 - FRACT16_1_DIV_2;
 
-    // Adjust the phase voltages to ensure midclamp
     int32_t dutyA = vA - vZero;
     int32_t dutyB = vB - vZero;
     int32_t dutyC = vC - vZero;
 
-    // Saturate the duty cycles to ensure they are within the range of 0 to 1
     return (struct svpwm_abc) { .a = fract16_sat_positive(dutyA), .b = fract16_sat_positive(dutyB), .c = fract16_sat_positive(dutyC) };
 }
 
-// static inline struct svpwm_abc svpwm_midclamp_vbus(uint32_t vBusInv_pu, fract16_t vA, fract16_t vB, fract16_t vC)
-// {
-//     return svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC));
-// }
-
 /*!
-    General clamp. The zero sequence vZero = k·(vMax − 1) + (1 − k)·vMin places k of the null time at O111, all phases high,
-    and 1 − k at O000, all phases low. The line-to-line voltages are the same for any k.
-        lowest duty     k·(1 − spread)
-        highest duty    spread + k·(1 − spread), the shortest low-side window (1 − k)·(1 − spread)
-    k = 0, the bottom clamp, vZero = vMin. k = 1/2, midclamp [svpwm_midclamp], to rounding. k = 1, the top clamp, vZero = vMax − 1.
+    General clamp. [vZero = k·(vMax − 1) + (1 − k)·vMin] The zero sequence places
+        k of the null time  at O111,    all phases high
+        1 − k               at O000,    all phases low
+
+    The line-to-line voltages are the same for any k. With spread = vMax − vMin,
+        lowest duty         k·(1 − spread)
+        highest duty        k·(1 − spread) + spread
+        low-side window     (1 − k)·(1 − spread), the shortest, under the highest duty
+
+    k = 0,      the bottom clamp, vZero = vMin.
+    k = 1/2,    midclamp [svpwm_midclamp], to rounding.
+    k = 1,      the top clamp, vZero = vMax − 1.
 
     @param[in] vA, vB, vC - normalized to VBus as 1.0F, [-1/sqrt3:1/sqrt3]
-    @param[in] k - [0:32768] <=> [0:1]
+    @param[in] k - [0:32768] <=> [0:1], the share of the null time at O111
     @return [0:32767]
 */
 static inline struct svpwm_abc svpwm_clamp(fract16_t vA, fract16_t vB, fract16_t vC, ufract16_t k)
@@ -108,12 +99,14 @@ static inline struct svpwm_abc svpwm_clamp(fract16_t vA, fract16_t vB, fract16_t
 */
 /******************************************************************************/
 /*!
-    [svpwm_clamp] with k solved per vector for the highest duty at dutyCeiling, k = (dutyCeiling − spread) / (1 − spread),
-    held to [0, 1/2]: midclamp until the highest duty reaches the ceiling, then toward the bottom clamp.
-    vZero is linear in k, so the clamp holds vZero between the two, without the division.
-    A spread past the ceiling takes the bottom clamp, the closest it can come.
-        √3/2:           midclamp below 0.42·VBus, the bottom clamp at the linear limit VBus/√3
-        FRACT16_MAX:    midclamp, inside the linear range
+    [svpwm_clamp] with k solved per vector for the highest duty at dutyCeiling, k = (dutyCeiling − spread) / (1 − spread), held to [0, 1/2].
+    vZero is linear in k, so clamping vZero holds k, without the division:
+        k = 1/2,    vZero = (vMax + vMin)/2 − 1/2,  midclamp, until its highest duty reaches the ceiling
+        k solved,   vZero = vMax − dutyCeiling,     the highest duty at the ceiling
+        k = 0,      vZero = vMin,                   the bottom clamp, once the spread passes the ceiling, the closest it can come
+
+    dutyCeiling = √3/2,         midclamp below 0.42·VBus, the bottom clamp at the linear limit VBus/√3
+    dutyCeiling = FRACT16_MAX,  midclamp, inside the linear range
 
     @param[in] vA, vB, vC - normalized to VBus as 1.0F, [-1/sqrt3:1/sqrt3]
     @param[in] dutyCeiling - [0:32767]
@@ -130,16 +123,17 @@ static inline struct svpwm_abc svpwm_midclamp_ceiling(fract16_t vA, fract16_t vB
 
 /******************************************************************************/
 /*!
-    Modulation limit of a duty limit: the radius |v|/VBus at which the highest duty over a cycle reaches a peak.
-    A current read in the low-side window keeps (1 − dutyPeak)·T of the period there.
+    Modulation limit of a duty limit: the radius |v|/VBus at which the highest duty over a cycle reaches dutyPeak,
+    leaving a current read in the low-side window (1 − dutyPeak)·T of the period.
 */
 /******************************************************************************/
 /*
-    The window forms above as one expression, in floating point, for precompile values. With w = Window/Period,
-    the highest duty over a cycle under [svpwm_clamp] is k + (1 − k)·√3·r, so the largest radius that leaves the window is
+    One floating-point expression, for precompile values.
+    With w = Window/Period, the highest duty over a cycle under [svpwm_clamp] is k + (1 − k)·√3·r,
+    so the largest radius that leaves the window is
         r = (1 − w/(1 − k)) / √3
-    k = 1/2, midclamp: (1 − 2w)/√3.
-    k = 0, the bottom clamp: (1 − w)/√3. Also [svpwm_midclamp_ceiling]'s, for a ceiling at or under 1 − w; over it, midclamp's.
+    k = 1/2,    midclamp,           (1 − 2w)/√3
+    k = 0,      the bottom clamp,   (1 − w)/√3, also [svpwm_midclamp_ceiling]'s for a ceiling at or under 1 − w; over it, midclamp's
     Window and Period in one unit, k in [0:1). FRACT16 truncates, keeping the window.
 */
 #define SVPWM_CLAMP_RADIUS_OF_WINDOW(Window, Period, K) FRACT16((1.0F - (float)(Window) / (float)(Period) / (1.0F - (float)(K))) / 1.73205080756887729F)
@@ -152,6 +146,7 @@ static inline struct svpwm_abc svpwm_midclamp_ceiling(fract16_t vA, fract16_t vB
 #define _SVPWM_FRACT16_OF(x)    ((int32_t)((x) * FRACT16_SCALE + 0.5))
 #define _SVPWM_SQRT3_DIV_2      _SVPWM_FRACT16_OF(0.86602540378443865)
 #define _SVPWM_1_DIV_SQRT3      _SVPWM_FRACT16_OF(0.57735026918962576)
+// constexpr int32_t SVPWM_SQRT3_DIV_2 = _SVPWM_FRACT16_OF(0.86602540378443865);
 
 #define SVPWM_MIDCLAMP_DUTY_PEAK(Radius)                        (FRACT16_SCALE / 2 + (((int32_t)(Radius) * _SVPWM_SQRT3_DIV_2) >> 15))
 #define SVPWM_MIDCLAMP_RADIUS(DutyPeak)                         ((((int32_t)(DutyPeak) * 2 - FRACT16_SCALE) * _SVPWM_1_DIV_SQRT3) >> 15)
@@ -186,8 +181,8 @@ static inline ufract16_t svpwm_midclamp_radius(ufract16_t dutyPeak) { return SVP
 /*!
     The largest radius at which the highest duty [svpwm_midclamp_ceiling] writes over a cycle stays at or under dutyPeak.
     That duty is midclamp's [svpwm_midclamp_duty_peak], held to the ceiling, then the bottom clamp's spread √3·r once it passes the ceiling:
+        dutyPeak under the ceiling          [svpwm_midclamp_radius]
         dutyPeak at or over the ceiling     dutyPeak / √3
-        under                               [svpwm_midclamp_radius]
     Midclamp's at VBus/2, 93.3 %, keeps the same low-side window under the ceiling √3/2 to 0.539·VBus.
 
     @param[in] dutyPeak - [1/2:1]
@@ -201,18 +196,20 @@ static inline ufract16_t svpwm_midclamp_ceiling_radius(ufract16_t dutyPeak, ufra
 
 
 /*
-    Transform V with midclamp 3rd harmonic adjustment
-    without shifting to half Duty
+    [svpwm_midclamp] without the 1/2 duty offset.
 */
-static inline struct svpwm_abc svpwm_midclamp_transform(fract16_t vA, fract16_t vB, fract16_t vC)
+struct _svpwm_abc { int32_t a, b, c; };
+
+static inline struct _svpwm_abc svpwm_midclamp_transform(fract16_t vA, fract16_t vB, fract16_t vC)
 {
-    // Find the maximum and minimum of the three phase voltages
     int32_t vMax = math_max(math_max(vA, vB), vC);
     int32_t vMin = math_min(math_min(vA, vB), vC);
-
-    // Calculate the zero - sequence voltage(midclamp adjustment)
     int32_t vZero = (vMax + vMin) / 2;
 
-    return (struct svpwm_abc) { .a = fract16_sat_positive(vA - vZero), .b = fract16_sat_positive(vB - vZero), .c = fract16_sat_positive(vC - vZero) };
+    return (struct _svpwm_abc){ .a = (vA - vZero), .b = (vB - vZero), .c = (vC - vZero) };
 }
 
+// static inline struct svpwm_abc svpwm_midclamp_vbus(uint32_t vBusInv_pu, fract16_t vA, fract16_t vB, fract16_t vC)
+// {
+//     return svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_pu, vA), svpwm_norm_vbus_inv(vBusInv_pu, vB), svpwm_norm_vbus_inv(vBusInv_pu, vC));
+// }

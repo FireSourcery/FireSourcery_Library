@@ -51,7 +51,7 @@ extern State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor);
 // extern void Motor_Sensorless_CaptureStator(Motor_T * p_motor);
 /* The observer's correction, every control cycle after the PWM ISR's write and the board's arm */
 extern void Motor_Sensorless_Thread(Motor_T * p_motor);
-extern void Motor_Sensorless_InitWinding(Motor_T * p_motor);
+// extern void Motor_Sensorless_InitWinding(Motor_T * p_motor); /* The sensor's INIT_UNITS resolves the winding */
 #endif
 
 /******************************************************************************/

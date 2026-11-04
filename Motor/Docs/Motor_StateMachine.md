@@ -49,7 +49,11 @@ stateDiagram-v2
     MOTOR_STATE_INTERVENTION --> MOTOR_STATE_PASSIVE: PHASE_OUTPUT Z / 0 within freewheel limit, SAFE_STOP at zero speed
     MOTOR_STATE_INTERVENTION --> MOTOR_STATE_FAULT: SAFE_STOP watchdog
 
+    MOTOR_STATE_RUN --> MOTOR_STATE_PASSIVE: feedback lost, within freewheel limit
+    MOTOR_STATE_RUN --> MOTOR_STATE_FAULT: feedback lost above freewheel limit
+
     MOTOR_STATE_PASSIVE --> MOTOR_STATE_OPEN_LOOP: OPEN_LOOP, zero speed
+    MOTOR_STATE_PASSIVE --> MOTOR_STATE_OPEN_LOOP: PHASE_OUTPUT PWM, no feedback, zero speed, the sensor's start-up chain
     MOTOR_STATE_OPEN_LOOP --> MOTOR_STATE_PASSIVE: PHASE_OUTPUT Z / 0, OPEN_LOOP exit, DIRECTION NULL
 
     MOTOR_STATE_FAULT --> MOTOR_STATE_DEACTIVATED: FaultFlags cleared
@@ -82,7 +86,11 @@ encoder procedures, and encoder start-up, enter `FAULT` from their sub-states. A
   to `CALIBRATION`.
 - `PASSIVE` is freewheel or hold. `Z` floats only within the freewheel limit; above it V0 stays. `0` applies V0 at
   any speed. `PWM` starts `RUN` when a direction is set and the active sensor reports feedback
-  (`RotorSensor_IsFeedbackAvailable`); otherwise it is ignored.
+  (`RotorSensor_IsFeedbackAvailable`). Without feedback, at zero speed, it enters the active sensor's start-up chain
+  (`Motor_Sensor_StartUpState`), a sub-state of `OPEN_LOOP`; only sensorless has one. Otherwise it is ignored.
+- `RUN` and `INTERVENTION`, and the `INTERVENTION` sub-states through them, leave when the active sensor reports no
+  feedback (`NEXT`, `_Motor_TransitionFeedbackLost`): to `PASSIVE` within the freewheel limit, else to `FAULT` with
+  `PositionSensor`. Hall and SinCos always report feedback, the encoder once aligned, the observer while locked.
 - `RUN` entry matches against the previous output. From float, the voltage is matched to the captured back-EMF
   (`Motor_FOC_MatchVFreewheel`) and the bridge starts at T0. From any other output (V0 in `PASSIVE`, or driven, from
   `INTERVENTION` or `RUN` re-entering itself), the voltage state is matched to the present output
@@ -114,7 +122,7 @@ they take their root's handlers.
 |---|---|---|---|---|---|---|---|
 | `INIT` | — | — | — | — | — | — | — |
 | `DEACTIVATED` | set → `FAULT` | — | stored | stored | — | → `CALIBRATION` at zero speed; `NULL` ignored | — |
-| `PASSIVE` | set → `FAULT` | `PWM` → `RUN`; `Z`, `0` set the output | stored | stored at zero speed | → branch at zero speed; `NULL` ignored | — | — |
+| `PASSIVE` | set → `FAULT` | `PWM` → `RUN`, or without feedback at zero speed the sensor's start-up chain; `Z`, `0` set the output | stored | stored at zero speed | → branch at zero speed; `NULL` ignored | — | — |
 | `RUN` | set → `FAULT` | `Z`, `0` release | stored, re-enters `RUN` | — | — | — | → target |
 | `TORQUE_ZERO`, `SPEED_ZERO` | set → `FAULT` | `Z`, `0` release; `PWM` → `RUN` | stored | — | — | — | → target |
 | `SAFE_STOP` | set → `FAULT` | `Z`, `0` → `PASSIVE` at zero speed; `PWM` refused | stored | — | — | — | refused |
@@ -281,7 +289,7 @@ id yet.
 |---|---|---|---|---|
 | `OPEN_LOOP_STATE_ANGLE_ALIGN` | `Motor_OpenLoop.c` | `Motor_OpenLoop_SetAngleAlign`, `Motor_OpenLoop_SetAngleAlign_Phase` | T0, then the align command at the set angle (`Motor_FOC_ProcAlignCmd`) | `OPEN_LOOP` inputs |
 | `OPEN_LOOP_STATE_START_UP_ALIGN` → `OPEN_LOOP_STATE_RUN` | `Motor_OpenLoop.c` | `Motor_OpenLoop_StartRunChain`, direction set | V0, start-up align for `Config.AlignTime_Cycles`, then the open-loop angle ramp | `OPEN_LOOP` inputs |
-| `SENSORLESS_ALIGN` → `SENSORLESS_START_UP` | `Motor_Sensorless.c` | `Motor_Sensorless_StartRunChain`, direction set, sensorless the active sensor | V0, start-up align for `AlignTime_Cycles` with the observer converging; then the open-loop ramp, the observer's PLL seeded at the ramp's angle | `RUN` on the observer's lock |
+| `SENSORLESS_ALIGN` → `SENSORLESS_START_UP` | `Motor_Sensorless.c` | `PWM` on `PASSIVE` without lock at zero speed, or `Motor_Sensorless_StartRunChain`; direction set, sensorless the active sensor | V0, start-up align for `AlignTime_Cycles` with the observer converging; then the open-loop ramp, the observer's PLL seeded at the ramp's angle | `RUN` on the observer's lock |
 | `START_UP` → `START_UP_ALIGN` → `START_UP_VALIDATE_ALIGN` → `START_UP_VALIDATE_CLOSED_LOOP` | `Motor_Encoder.c` | `Motor_Encoder_StartUpChain`, a command on `PASSIVE`, at zero speed | align until the shaft settles and capture the encoder zero; open-loop run for twice the align time; closed loop for twice the align time | `RUN`; `FAULT` with `PositionSensor` if the encoder did not move, or on a speed / voltage polarity mismatch |
 | `ALIGN` → `VALIDATE_ALIGN` → `VALIDATE_CLOSED_LOOP` | `Motor_Encoder.c` | `Motor_Encoder_StartAlignZero`, `Motor_Encoder_StartValidateAlign`, `Motor_Encoder_StartValidateClosedLoop` | the same steps, each startable alone | the bare `OPEN_LOOP`; `FAULT` as above |
 
@@ -293,8 +301,9 @@ id yet.
   `MOTOR_SENSOR_ENCODER_ENABLE`.
 - The handoffs to `RUN` clear `FeedbackMode.OpenLoop`. `RUN` reads the angle from the active sensor, which the
   observer or the encoder already publishes.
-- `Motor_Sensor_StartUpState` names the selected sensor's start-up chain, for an entry by `PWM` in `PASSIVE`; that
-  path is commented out and the function has no caller.
+- `Motor_Sensor_StartUpState` names the selected sensor's start-up chain, for an entry by `PWM` in `PASSIVE`. It is
+  `NULL` but for sensorless, and for sensorless unless the adapter is the active sensor: `Config.SensorMode` takes
+  effect on reboot. The sensorless hand-off re-Parks the FOC's operating point at θ̂ (`FOC_MatchTheta`) before `RUN`.
 
 ### `CALIBRATION`
 

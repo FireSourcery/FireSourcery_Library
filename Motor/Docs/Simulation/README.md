@@ -7,6 +7,7 @@ design lands here, not only in a scratchpad, with its plot saved beside it.
 |---|---|
 | `Svpwm/` | SVPWM ceiling and blend sets, zero-sequence placement, low-side window and hold models, `MidClampBlend.md` |
 | `ISample/` | PWM sample sequences |
+| `Sensorless/` | The sensorless math as geometry: the voltage polygon, frames, SMO, LPF, detector and PLL, for `SensorlessMath.md`; the observer's values on the current-loop timeline, as built and with its fixes, for `Sensorless.md` |
 | `pwm_sample_timing.py` | PWM sample timing |
 | `atan2.py` | atan2 |
 

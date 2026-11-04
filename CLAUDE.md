@@ -26,6 +26,7 @@
   - C comments — brackets, `[TypeName_T]`, which the `.vscode/comment-reference` grammar highlights.
   - Bold — emphasis only, never code.
   - Older docs still use `[Name]` in markdown; convert them only when asked.
+- **Rows and columns expose symmetry.** Where clauses share a form (the cases of one parameter, a value and its complement, one quantity per phase), set them as rows, one case per row, the shared parts aligned in columns. Apply it unsparingly: two parallel clauses are enough. C comments align with spaces; markdown uses a table. [Docs/Conventions/Comments.md](Docs/Conventions/Comments.md#layout)
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
 - Architecture notes and findings live in `Docs/`: Conventions, Patterns, Decisions, Findings, Modules, References. Index: [Docs/README.md](Docs/README.md).
 - A doc leads with a reference sheet of what is the case: facts, rules, options and their defaults, limits, and what is not measured. Derivations, each experiment, and verification logs go in files of their own. Split an existing doc only when asked.

@@ -26,3 +26,37 @@ language cannot state. `CLAUDE.md` holds the short form under Core Principles an
 - **Keep**: rationale no declaration states ("Axis is a biased page; bits [13:11] alone wrap
   4,5,6,7,0,1,2,3"), a one-line orientation at a file or section head, and a cross-reference to
   where the full explanation lives.
+
+## Layout
+
+Parallel clauses are a table written as a sentence. Where clauses share a form (the cases of one
+parameter, a value and its complement, one quantity per phase), set them as rows, one case per row,
+the shared parts aligned in columns. The symmetry then reads down a column, and a break in it stands
+out. Apply it unsparingly: two parallel clauses are enough. Prose stays for what has no parallel.
+
+From `svpwm_clamp` in `Motor/Motor/Math/svpwm_math.h`. Before:
+
+```text
+General clamp. The zero sequence vZero = k·(vMax − 1) + (1 − k)·vMin places k of the null time at O111, all phases high,
+and 1 − k at O000, all phases low.
+k = 0, the bottom clamp, vZero = vMin. k = 1/2, midclamp [svpwm_midclamp], to rounding. k = 1, the top clamp, vZero = vMax − 1.
+```
+
+After:
+
+```text
+General clamp. [vZero = k·(vMax − 1) + (1 − k)·vMin] The zero sequence places
+    k of the null time  at O111,    all phases high
+    1 − k               at O000,    all phases low
+
+k = 0,      the bottom clamp, vZero = vMin.
+k = 1/2,    midclamp [svpwm_midclamp], to rounding.
+k = 1,      the top clamp, vZero = vMax − 1.
+```
+
+The complements k and 1 − k, O111 and O000, high and low each share a column.
+
+- **C comments**: align with spaces, not tabs, and indent the rows under the line that introduces
+  them.
+- **Markdown** collapses runs of spaces in prose: use a table, or a fenced block when the rows are
+  equations.

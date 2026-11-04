@@ -29,6 +29,7 @@
 /******************************************************************************/
 /******************************************************************************/
 #include "Motor_StateMachine.h"
+#include "Sensor/Motor_Sensor.h" /* Motor_Sensor_StartUpState */
 #include "Motor/Motor/VBus/VBus_Monitor.h"
 #include "StateMachine/Motor_Intervention.h"
 #include "Motor_Config.h"
@@ -294,6 +295,8 @@ static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutp
             {
                 //optionally substate for wait bemf capture
                 if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
+                /* From standstill, the active sensor's start-up chain, a sub-state of OPEN_LOOP. NULL where it has none: no transition */
+                else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { p_nextState = Motor_Sensor_StartUpState(p_motor); }
                 // else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) /* OpenLoop start at 0 speed */
                 // {
                 //     p_nextState = &MOTOR_STATE_OPEN_LOOP;
