@@ -165,10 +165,6 @@ ADC_T;
 static inline bool ADC_ReadIsActive(ADC_T * p_adc) { return HAL_ADC_ReadConversionActiveFlag(p_adc->P_HAL_ADC); }
 static inline void ADC_Deactivate(ADC_T * p_adc) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
 
-// static inline void ADC_ActivateSequence(ADC_T * p_adc, adc_mask_t mask )
-// {
-//     HAL_ADC_ADmaSequence(p_adc->P_HAL_ADC, mask);
-// }
 
 /******************************************************************************/
 /*

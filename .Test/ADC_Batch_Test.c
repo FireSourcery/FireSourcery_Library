@@ -225,7 +225,7 @@ static void test_foreign_adc_is_ignored(void)
 {
     Test_Reset(&SOLO_BATCH);
 
-    ADC_OnCompleteTransfer_ISR((ADC_T *)&ADCS[1U], ADC_MASK(ADC1_IC));  /* ADC1 converting for someone else */
+    _ADC_MarkComplete((ADC_T *)&ADCS[1U], ADC_MASK(ADC1_IC));  /* ADC1 converting for someone else */
     ADC_BatchTrigger_OnComplete_ISR(&Trigger, (ADC_T *)&ADCS[1U]);
     CHECK(JoinCount == 0U);
 

@@ -31,7 +31,7 @@
     Software:       ADC_OnComplete_ISR, in the ADC ISR. ADC_ActivateMarked, in the thread that requests.
     Hw triggered:   ADC_ArmMarked, or ADC_Arm for a set as given, once per trigger, in place of ADC_ActivateMarked. ADC_OnCompleteArmed_ISR captures
                     the armed fifo, and continues nothing: every set converts on a trigger the thread arms it for.
-    Hw sequenced:   ADC_ActivateSlots writes the sequencer. ADC_OnCompleteTransfer_ISR, in the
+    Hw sequenced:   ADC_ActivateSlots writes the sequencer. _ADC_MarkComplete, in the
                     transfer complete ISR, flags the set the caller armed.
 
     Both leave the same [CompleteFlags]. Everything that reads them is above this file.
@@ -168,39 +168,3 @@ static inline bool ADC_ArmMarked(ADC_T * p_adc, adc_mask_t filter)
 //     ADC_ActivateMarked(p_adc);
 // }
 
-
-/******************************************************************************/
-/*
-    Hw sequenced activation
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
-    Route the trigger to [channelStart, channelStart + count). The Hw converts and transfers on each trigger.
-    Board or platform provided, when ADC_HW_SEQUENCER_ENABLE is true.
-*/
-/*
-    The sequencer routes the trigger to the slot range, and converts it on every trigger until
-    another range is written. Software has no sequencer: its register write is the fifo push.
-*/
-// todo remove for inline
-static inline void ADC_ActivateSlots(ADC_T * p_adc, adc_channel_t channelStart, uint8_t count)
-{
-#ifdef HAL_ADC_DMA_ENABLE
-    HAL_ADC_SelectDmaSequence(p_adc->P_HAL_ADC, channelStart, count);
-#else
-    (void)p_adc; (void)channelStart; (void)count;
-#endif
-}
-
-/*!
-    @brief  The transfer for [armed] is complete, the results buffer holds it.
-            Run in the transfer complete ISR. The caller clears the Hw flag, and names the set
-            it armed - the base has no sequencer state to read it back from.
-
-    ADC ISR priority: a consumer that joins several ADCs needs their ISRs at 1 priority.
-*/
-static inline void ADC_OnCompleteTransfer_ISR(ADC_T * p_adc, adc_mask_t armed)
-{
-    p_adc->P_STATE->CompleteFlags |= armed;
-}

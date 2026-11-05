@@ -101,6 +101,18 @@ static inline void _ADC_Arm(ADC_T * p_adc)
     _ADC_ArmFrom(p_adc->P_HAL_ADC, p_adc->P_CHANNEL_PINS, &p_adc->P_STATE->ActiveChannels[0U], p_adc->P_STATE->ActiveChannelCount);
 }
 
+/*
+    The sequencer routes the trigger to the slot range, and converts it on every trigger until
+    another range is written. Software has no sequencer: its register write is the fifo push.
+
+    does not need to mark state
+    point of access in case HAL_ADC_SelectDmaSequence changes
+*/
+static inline void _ADC_ActivateDma(ADC_T * p_adc, adc_mask_t channels)
+{
+    HAL_ADC_SelectDmaSequence(p_adc->P_HAL_ADC, ADC_ChannelStartOf(channels), ADC_ChannelCountOf(channels));
+}
+
 /******************************************************************************/
 /*
     Channel markers
@@ -202,4 +214,17 @@ static inline bool _ADC_CaptureActive(ADC_T * p_adc)
     }
 
     return isCaptured;
+}
+
+
+/*!
+    @brief  The transfer for [armed] is complete, the results buffer holds it.
+            Run in the transfer complete ISR. The caller clears the Hw flag, and names the set
+            it armed - the base has no sequencer state to read it back from.
+
+    ADC ISR priority: a consumer that joins several ADCs needs their ISRs at 1 priority.
+*/
+static inline void _ADC_MarkComplete(ADC_T * p_adc, adc_mask_t armed)
+{
+    p_adc->P_STATE->CompleteFlags |= armed;
 }

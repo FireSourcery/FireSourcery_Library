@@ -150,7 +150,7 @@ static inline void ADC_BatchTrigger_OnComplete_ISR(ADC_BatchTrigger_T * p_trigge
     assert(p_active != NULL);   /* A batch must be activated before the trigger is enabled */
 
     const ADC_Sequence_T * p_part = _ADC_Batch_PartOf(p_active, p_adc);
-    if (p_part != NULL) { ADC_OnCompleteTransfer_ISR(p_adc, p_part->CHANNELS); }    /* This part landed. A part of a batch no longer active is ignored */
+    if (p_part != NULL) { _ADC_MarkComplete(p_adc, p_part->CHANNELS); }    /* This part landed. A part of a batch no longer active is ignored */
 
     if (ADC_Batch_Poll(p_active) == true)
     {

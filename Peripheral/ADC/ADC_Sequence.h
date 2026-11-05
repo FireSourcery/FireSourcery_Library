@@ -57,8 +57,8 @@ ADC_Sequence_T;
 
 #define ADC_SEQUENCE(p_Adc, Channels, CompleteFn, p_Context) (ADC_Sequence_T)ADC_SEQUENCE_FIELDS(p_Adc, Channels, CompleteFn, p_Context)
 
-static inline adc_channel_t ADC_Sequence_Start(ADC_Sequence_T * p_sequence) { return ADC_ChannelStartOf(p_sequence->CHANNELS); }
-static inline uint8_t ADC_Sequence_Count(ADC_Sequence_T * p_sequence) { return ADC_ChannelCountOf(p_sequence->CHANNELS); }
+// static inline adc_channel_t ADC_Sequence_Start(ADC_Sequence_T * p_sequence) { return ADC_ChannelStartOf(p_sequence->CHANNELS); }
+// static inline uint8_t ADC_Sequence_Count(ADC_Sequence_T * p_sequence) { return ADC_ChannelCountOf(p_sequence->CHANNELS); }
 
 /******************************************************************************/
 /*
@@ -78,7 +78,7 @@ static inline void ADC_Sequence_Activate(ADC_Sequence_T * p_sequence)
 static inline void ADC_Sequence_ActivateDma(ADC_Sequence_T * p_sequence)
 {
     assert(ADC_Mask_IsContiguous(p_sequence->CHANNELS)); /* The Hw converts a slot range. A sparse set has no Hw sequence */
-    ADC_ActivateSlots(p_sequence->P_ADC, ADC_Sequence_Start(p_sequence), ADC_Sequence_Count(p_sequence));
+    _ADC_ActivateDma(p_sequence->P_ADC, p_sequence->CHANNELS);
 }
 
 /******************************************************************************/
@@ -89,7 +89,7 @@ static inline void ADC_Sequence_ActivateDma(ADC_Sequence_T * p_sequence)
 static inline bool ADC_Sequence_IsComplete(ADC_Sequence_T * p_sequence) { return ADC_IsComplete(p_sequence->P_ADC, p_sequence->CHANNELS); }
 
 /* All or nothing. A partial set keeps its flags, so a set that straddles 2 ISRs still closes */
-static inline bool ADC_Sequence_TakeComplete(ADC_Sequence_T * p_sequence) { return ADC_PollComplete(p_sequence->P_ADC, p_sequence->CHANNELS); }
+static inline bool ADC_Sequence_PollComplete(ADC_Sequence_T * p_sequence) { return ADC_PollComplete(p_sequence->P_ADC, p_sequence->CHANNELS); }
 
 /*!
     @brief  Close the set where it has landed. Runs COMPLETE once, from the ISR or from a thread.
@@ -97,7 +97,7 @@ static inline bool ADC_Sequence_TakeComplete(ADC_Sequence_T * p_sequence) { retu
 */
 static inline bool ADC_Sequence_Poll(ADC_Sequence_T * p_sequence)
 {
-    bool isComplete = ADC_Sequence_TakeComplete(p_sequence);
+    bool isComplete = ADC_Sequence_PollComplete(p_sequence);
     if ((isComplete == true) && (p_sequence->COMPLETE != NULL)) { p_sequence->COMPLETE(p_sequence->P_CONTEXT); }
     return isComplete;
 }
@@ -119,7 +119,7 @@ ADC_SequenceTrigger_T;
 #define ADC_SEQUENCE_TRIGGER_ALLOC() (&(ADC_SequenceTrigger_T){})
 
 /* Deferred, 1 store. Any thread. Applied at the completion that follows */
-static inline void ADC_SequenceTrigger_Select(ADC_SequenceTrigger_T * p_trigger, ADC_Sequence_T * p_sequence) { p_trigger->p_NextSequence = p_sequence; }
+static inline void ADC_SequenceTrigger_SetNext(ADC_SequenceTrigger_T * p_trigger, ADC_Sequence_T * p_sequence) { p_trigger->p_NextSequence = p_sequence; }
 
 /* Converting. A deferred selection is not applied until the active set completes */
 static inline bool ADC_SequenceTrigger_IsActive(const ADC_SequenceTrigger_T * p_trigger, ADC_Sequence_T * p_sequence) { return (p_trigger->p_ActiveSequence == p_sequence); }
@@ -149,7 +149,7 @@ static inline void ADC_SequenceTrigger_OnCompleteDma_ISR(ADC_SequenceTrigger_T *
     ADC_Sequence_T * p_completed = p_trigger->p_ActiveSequence;
     assert(p_completed != NULL); /* A sequence must be activated before the trigger is enabled */
 
-    ADC_OnCompleteTransfer_ISR(p_completed->P_ADC, p_completed->CHANNELS);
+    _ADC_MarkComplete(p_completed->P_ADC, p_completed->CHANNELS);
     ADC_Sequence_Poll(p_completed);
 
     ADC_Sequence_T * p_next = p_trigger->p_NextSequence;

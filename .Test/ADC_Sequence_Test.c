@@ -49,7 +49,7 @@ static void OnSequenceComplete(void * p_context)
 {
     (void)p_context;
     CompleteCount++;
-    if (p_RequestSequence != NULL) { ADC_SequenceTrigger_Select(&Trigger, p_RequestSequence); p_RequestSequence = NULL; }
+    if (p_RequestSequence != NULL) { ADC_SequenceTrigger_SetNext(&Trigger, p_RequestSequence); p_RequestSequence = NULL; }
 }
 
 static void Test_Reset(const ADC_Sequence_T * p_sequence)
@@ -76,12 +76,12 @@ static void test_take_is_an_edge(void)
 
     CHECK(ADC_Sequence_IsComplete(&SEQUENCE_I) == false);
 
-    ADC_OnCompleteTransfer_ISR(p_Adc, SEQUENCE_I.CHANNELS);
+    _ADC_MarkComplete(p_Adc, SEQUENCE_I.CHANNELS);
     CHECK(ADC_Sequence_IsComplete(&SEQUENCE_I) == true);        /* peek is a level, and stays */
     CHECK(ADC_Sequence_IsComplete(&SEQUENCE_I) == true);
 
-    CHECK(ADC_Sequence_TakeComplete(&SEQUENCE_I) == true);      /* take consumes it */
-    CHECK(ADC_Sequence_TakeComplete(&SEQUENCE_I) == false);
+    CHECK(ADC_Sequence_PollComplete(&SEQUENCE_I) == true);      /* take consumes it */
+    CHECK(ADC_Sequence_PollComplete(&SEQUENCE_I) == false);
     CHECK(ADC_Sequence_IsComplete(&SEQUENCE_I) == false);
 }
 
@@ -90,12 +90,12 @@ static void test_partial_set_keeps_its_flags(void)
 {
     Test_Reset(&SEQUENCE_I);
 
-    ADC_OnCompleteTransfer_ISR(p_Adc, ADC_MASK(SLOT_IA));
-    CHECK(ADC_Sequence_TakeComplete(&SEQUENCE_I) == false);
+    _ADC_MarkComplete(p_Adc, ADC_MASK(SLOT_IA));
+    CHECK(ADC_Sequence_PollComplete(&SEQUENCE_I) == false);
     CHECK(ADC_CompleteFlags(p_Adc) == ADC_MASK(SLOT_IA));       /* not consumed */
 
-    ADC_OnCompleteTransfer_ISR(p_Adc, ADC_MASK(SLOT_IB));
-    CHECK(ADC_Sequence_TakeComplete(&SEQUENCE_I) == true);
+    _ADC_MarkComplete(p_Adc, ADC_MASK(SLOT_IB));
+    CHECK(ADC_Sequence_PollComplete(&SEQUENCE_I) == true);
     CHECK(ADC_CompleteFlags(p_Adc) == 0UL);
 }
 
@@ -104,11 +104,11 @@ static void test_take_leaves_what_it_does_not_name(void)
 {
     Test_Reset(&SEQUENCE_I);
 
-    ADC_OnCompleteTransfer_ISR(p_Adc, SEQUENCE_I.CHANNELS | SEQUENCE_V.CHANNELS);
+    _ADC_MarkComplete(p_Adc, SEQUENCE_I.CHANNELS | SEQUENCE_V.CHANNELS);
 
-    CHECK(ADC_Sequence_TakeComplete(&SEQUENCE_I) == true);
+    CHECK(ADC_Sequence_PollComplete(&SEQUENCE_I) == true);
     CHECK(ADC_CompleteFlags(p_Adc) == SEQUENCE_V.CHANNELS);
-    CHECK(ADC_Sequence_TakeComplete(&SEQUENCE_V) == true);
+    CHECK(ADC_Sequence_PollComplete(&SEQUENCE_V) == true);
 }
 
 /******************************************************************************/
@@ -135,7 +135,7 @@ static void test_selection_applies_at_the_completion(void)
 {
     Test_Reset(&SEQUENCE_I);
 
-    ADC_SequenceTrigger_Select(&Trigger, &SEQUENCE_V);
+    ADC_SequenceTrigger_SetNext(&Trigger, &SEQUENCE_V);
     CHECK(AdcRegisters.RangeStart == SLOT_IA);      /* not yet */
     CHECK(ADC_SequenceTrigger_IsActive(&Trigger, &SEQUENCE_I));
 
@@ -153,8 +153,8 @@ static void test_last_request_wins(void)
 {
     Test_Reset(&SEQUENCE_I);
 
-    ADC_SequenceTrigger_Select(&Trigger, &SEQUENCE_V);
-    ADC_SequenceTrigger_Select(&Trigger, &SEQUENCE_MONITOR);
+    ADC_SequenceTrigger_SetNext(&Trigger, &SEQUENCE_V);
+    ADC_SequenceTrigger_SetNext(&Trigger, &SEQUENCE_MONITOR);
 
     Test_TriggerAndIsr();
     CHECK(ADC_SequenceTrigger_IsActive(&Trigger, &SEQUENCE_MONITOR));
@@ -168,7 +168,7 @@ static void test_selection_during_the_completion_applies_now(void)
 {
     Test_Reset(&SEQUENCE_I);
 
-    ADC_SequenceTrigger_Select(&Trigger, &SEQUENCE_V);   /* pending: this completion would apply V */
+    ADC_SequenceTrigger_SetNext(&Trigger, &SEQUENCE_V);   /* pending: this completion would apply V */
     p_RequestSequence = &SEQUENCE_MONITOR;               /* and the handler asks for MONITOR while it runs */
 
     Test_TriggerAndIsr();
