@@ -171,18 +171,13 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
     _FOC_ParkI(p_foc, iab.alpha, iab.beta);
 }
 
-// static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
-// {
-//     struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
-//     p_foc->Id = fract16_sat(i.d);
-//     p_foc->Iq = fract16_sat(i.q);
-// }
 
 // static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 // {
 //     foc_clarke_ab(&p_foc->Ialpha, &p_foc->Ibeta, p_foc->Ia, p_foc->Ib);
-//     foc_park (&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
+//     foc_park(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
 // }
+
 
 /*
     OutputV
@@ -214,10 +209,7 @@ static inline bool _FOC_ProcVCircle(FOC_T * p_foc, ufract16_t vCircle, int32_t v
     return ((accum32_t)p_foc->Vd != vdReq) || ((accum32_t)p_foc->Vq != vqReq);
 }
 
-static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vCircle)
-{
-    return foc_q_circle_limit(vCircle, p_foc->Vd);
-}
+static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vCircle) { return foc_q_circle_limit(vCircle, p_foc->Vd); }
 
 
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
@@ -231,13 +223,7 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     p_foc->Vc = fract16_sat(v.c);
 }
 
-// static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
-// {
-//     struct foc_abc v = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-//     p_foc->Va = fract16_sat(v.a);
-//     p_foc->Vb = fract16_sat(v.b);
-//     p_foc->Vc = fract16_sat(v.c);
-// }
+
 
 /******************************************************************************/
 /*
@@ -462,19 +448,6 @@ static inline void FOC_MatchIVSensor(FOC_T * p_foc)
     else { FOC_MatchIVState(p_foc); } /* FOC_ProcVBemfClarkePark */
 }
 
-/*
-    The operating point the last proc left, seen from θ: the dq of its αβ sample and command.
-    On a change of the angle source, e.g. the open-loop ramp to a sensor, before [FOC_MatchIVState] seeds the loop from it.
-*/
-static inline void FOC_MatchTheta(FOC_T * p_foc, angle16_t theta)
-{
-    FOC_SetTheta(p_foc, theta);
-    _FOC_ParkI(p_foc, p_foc->Ialpha, p_foc->Ibeta);
-    struct foc_dq v = foc_park(p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
-    p_foc->Vd = fract16_sat(v.d);
-    p_foc->Vq = fract16_sat(v.q);
-}
-
 static void FOC_ClearCaptureState(FOC_T * p_foc)
 {
     p_foc->Id = 0;
@@ -507,6 +480,39 @@ static void FOC_ResetFeedbackState(FOC_T * p_foc)
     p_foc->ElectricalSpeed.ParkOffsetSine = 0;
 #endif
 }
+
+/*
+    The operating point the last proc left, seen from θ: the dq of its αβ sample and command.
+    On a change of the angle source, e.g. the open-loop ramp to a sensor, before [FOC_MatchIVState] seeds the loop from it.
+*/
+static inline void FOC_MatchTheta(FOC_T * p_foc, angle16_t theta)
+{
+    FOC_SetTheta(p_foc, theta);
+    _FOC_ParkI(p_foc, p_foc->Ialpha, p_foc->Ibeta);
+    struct foc_dq v = foc_park(p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
+    p_foc->Vd = fract16_sat(v.d);
+    p_foc->Vq = fract16_sat(v.q);
+}
+/******************************************************************************/
+/*!
+    Capture and process the current feedback in the dq frame.
+    This function sets the electrical angle and performs Clarke-Park transformation on the input currents.
+*/
+/******************************************************************************/
+/* TransformInput */
+static inline void FOC_CaptureI(FOC_T * p_foc, angle16_t theta, fract16_t ia, fract16_t ib, fract16_t ic)
+{
+    FOC_SetTheta(p_foc, theta);
+    FOC_ProcClarkePark(p_foc, ia, ib, ic);
+}
+
+/* Transform to V output */
+static inline void FOC_ProcIControl(FOC_T * p_foc, ufract16_t vBus, fract16_t dReq, fract16_t qReq)
+{
+    FOC_ProcIFeedback(p_foc, vBus, dReq, qReq);
+    FOC_ProcInvClarkePark(p_foc);
+}
+
 
 /******************************************************************************/
 /*!
@@ -653,31 +659,17 @@ static inline void FOC_MatchIdFieldWeakening(FOC_T * p_foc, ufract16_t vBus)
     p_foc->IdFw = (omegaLd == 0U) ? 0 : math_clamp(-fract16_div(excess, omegaLd), -(int32_t)p_foc->FieldWeakening.IdLimit, 0);
 }
 
-// static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)
+// static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vBus,     int16_t iqReq)
 // {
-//     FOC_ProcIFeedback_Decouple(p_foc, vBus, direction, FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
+//     FOC_ProcIFeedback(p_foc, vBus,   FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
 // }
 
-// static inline void FOC_ProcITorque(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)
+// static inline void FOC_ProcITorque(FOC_T * p_foc, ufract16_t vBus,     int16_t iqReq)
 // {
-//     FOC_ProcIFeedback(p_foc, vBus, direction, 0, iqReq);
+//     FOC_ProcIFeedback(p_foc, vBus,   0, iqReq);
 // }
 
 
-/*
-    Split for common
-*/
-static inline void FOC_ProcInput(FOC_T * p_foc, angle16_t theta, fract16_t ia, fract16_t ib, fract16_t ic)
-{
-    FOC_SetTheta(p_foc, theta);
-    FOC_ProcClarkePark(p_foc, ia, ib, ic);
-}
-
-static inline void FOC_ProcOutput(FOC_T * p_foc, ufract16_t vBus, fract16_t dReq, fract16_t qReq)
-{
-    FOC_ProcIFeedback(p_foc, vBus, dReq, qReq);
-    FOC_ProcInvClarkePark(p_foc);
-}
 
 /******************************************************************************/
 /*!
@@ -696,7 +688,6 @@ static void FOC_InitElectrical(FOC_T * p_foc, const FOC_Electrical_T * p_electri
 {
     p_foc->Electrical = *p_electrical;
     p_foc->LShift = fixed_bit_width(math_max(p_electrical->Ld, p_electrical->Lq) >> FRACT16_N_BITS);
-    // p_foc->Stator.Winding = (Stator_Winding_T) { .R = fract16_sat(p_electrical->Rs), .L = accum32_mul(p_electrical->Lq, FRACT16_1_DIV_PI) }; /* EEMF Lq, at the rad base L_turn / π */
 }
 
 static void FOC_InitFieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning_T * p_fwTuning)

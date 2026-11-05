@@ -1,12 +1,19 @@
 """
 The sensorless observer on the built current-loop timeline: the value each step reads and writes, when it was produced, and when
 the duty it leads to is applied. The ISR timing is ISample's built form ('before': KE06, the 20 kHz PWM, a 100 us control cycle),
-with the observer's correction (Motor_Sensorless_Thread) added after the write and its prediction in place of the Hall capture.
+with the observer's prediction in place of the Hall capture. Three forms of its correction:
+
+    A       built: on the FOC's take, in SENSORLESS_RUN's LOOP after the write [Motor_Sensorless_CorrectOnTake]   SensorlessSequenceA.png
+    B       on the FOC's take, between the take and the PI [Motor_Sensorless_ProcTorqueReq]. Not wired           SensorlessSequenceB.png
+    thread  Motor_Sensorless_Thread, after the write: its own Clarke, sin/cos of θ̂ and Park of i. Removed 2026-11-05,
+            drawn with its two fixes by sensorless_sequence_fixed.py
+
+A and B read the same i(k), θ̂(k), ω̂(k−1) and v(k−1), for the same ω̂(k): they differ in when, and in the hold.
 
     isample_model.py, isample_sequences.py, isample_plots.py   the scheduler, the built sequence, the lanes' drawing (../ISample)
-    Motor/Docs/Sensorless.md, Timeline                         the doc that states the results
+    Motor/Docs/Sensorless.md, Timeline                         the doc that states the built form's results
 
-Writes SensorlessSequence.png beside this file and prints the checks. Run from any directory.
+Writes the A and B figures beside this file and prints the checks. Run from any directory.
 """
 import math
 import os
@@ -20,13 +27,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.patches import Patch, Polygon  # noqa: E402
 
-from isample_model import LOAD, SAMPLE_OFFSET, T, Sim  # noqa: E402
+from isample_model import BASE, LOAD, SAMPLE_OFFSET, T, Sim  # noqa: E402
 from isample_plots import KIND_COLOR, KIND_LABEL, LANES, _conversions, _counter, _trace  # noqa: E402
 from isample_sequences import SEQ_BEFORE  # noqa: E402
 
 US_PER_INSTR = 0.032   # isample_model.py's estimate: 50 MHz, CPI ~1.6
 PREDICT_US = 0.8       # CAPTURE_ANGLE: AnglePll_Predict and the publish, in place of the Hall capture's 3.0
-# The correction, by instructions on the driven path of the linked KE06 image (Motor_Sensorless_Thread and its callees)
+# The thread's correction, by instructions on the driven path of the linked KE06 image (Motor_Sensorless_Thread and its callees)
 CORRECTION = (
     ("frames", "obs_frame", 278),   # the active-sensor test, Clarke, sin/cos of θ̂ and of θ̂ − Δθ̂/2, the 2 Parks
     ("SMO d, q", "obs_smo", 615),   # X = ω̂·L, then per axis: the model, z, the LPF. 6 64-bit multiplies, 2 divides
@@ -34,32 +41,52 @@ CORRECTION = (
     ("PI", "pi", 45),               # AnglePll_Correct: PID_ProcPI
     ("hold", "obs_hold", 40),       # Phase_ReadVOut, EmfObserver_HoldV
 )
-SPEED_POLL_US = 17.0   # the 1 ms speed poll's tick, in Motor_PWM_Thread before the correction: the board's note
+# The correction on the FOC's take [EmfObserver_Eemf_ProcHeld], us at k 1: the Clarke, θ̂'s sin/cos and i's Park are the take's.
+# Left of the frames: the hold angle's sin/cos and v's Park, estimated at the model's SetTheta and Park, not counted. The law as the thread's
+ON_TAKE = (("v Park", "obs_vpark", BASE["theta"] + BASE["park"]),) + tuple(
+    ("PLL" if label == "PI" else label, kind, n * US_PER_INSTR) for label, kind, n in CORRECTION[1:4])
+HOLD_US = 0.3          # A: EmfObserver_HoldV alone, 2 stores; the phase output's branch is the thread's. Estimated
+SPEED_POLL_US = 17.0   # the 1 ms speed poll's tick, in Motor_PWM_Thread after the LOOP: the board's note
 F_E = 300.0            # electrical Hz, for the angles
 DEG_PER_US = 360.0 * F_E * 1e-6
 
-KIND_COLOR.update({"obs_frame": "#80deea", "obs_smo": "#f48fb1", "obs_det": "#ffe082", "obs_hold": "#c5e1a5"})
+KIND_COLOR.update({"obs_frame": "#80deea", "obs_smo": "#f48fb1", "obs_det": "#ffe082", "obs_hold": "#c5e1a5", "obs_vpark": "#b2dfdb"})
 KIND_LABEL.update({"obs_frame": "correction: Clarke, the 2 Parks", "obs_smo": "correction: the SMO, d and q",
-                   "obs_det": "correction: detector, lock", "obs_hold": "correction: hold the command"})
+                   "obs_det": "correction: detector, lock", "obs_hold": "correction: hold the command",
+                   "obs_vpark": "correction: the hold angle's sin/cos, v's Park"})
 
 
 class SensorlessSim(Sim):
-    """The built sequence with the observer selected: the prediction at CAPTURE_ANGLE, the correction after the write"""
+    """The built sequence with the observer selected: the prediction at CAPTURE_ANGLE, the correction by [form]: 'A', 'B' or 'thread'"""
 
-    def __init__(self, seq, k, extra=None, between=False, **kw):
+    def __init__(self, seq, k, extra=None, between=False, form="thread", **kw):
         super().__init__(seq, k, **kw)
         self.d["sensor"] = PREDICT_US * k
-        self.extra = extra or {}  # tick -> us of one more segment ahead of the correction: the speed poll
-        self.between = between    # the correction in the between ISR, after its arm: an option, not built
+        self.extra = extra or {}  # tick -> us of one more segment at the end of the PWM thread: the speed poll
+        self.between = between    # the thread: the correction in the between ISR, after its arm: an option, not built
+        self.form = form
+
+    def correction(self):
+        if self.form == "thread":
+            for label, kind, n in CORRECTION:
+                yield self.seg(label, kind, n * US_PER_INSTR * self.k)
+            return
+        for label, kind, us in ON_TAKE:
+            yield self.seg(label, kind, us * self.k)
+        if self.form == "A":
+            yield self.seg("hold", "obs_hold", HOLD_US * self.k)
 
     def pwm_isr(self, tick, analog):
         for sg in super().pwm_isr(tick, analog):
+            if self.form == "B" and analog and sg["label"] == "PI":
+                yield from self.correction()  # between the take and the loop
             if sg["label"] == "exit":
+                if self.form == "A" and analog:
+                    yield from self.correction()  # the LOOP's, after its write, before the speed poll
                 if analog and tick in self.extra:
                     yield self.seg("speed", "theta", self.extra[tick] * self.k)
-                if analog != self.between:
-                    for label, kind, n in CORRECTION:
-                        yield self.seg(label, kind, n * US_PER_INSTR * self.k)
+                if self.form == "thread" and analog != self.between:
+                    yield from self.correction()  # the application's thread, after the PWM thread
             yield sg
 
 
@@ -71,10 +98,12 @@ def seg_times(sim, lane, label, tag):
 def cycle_times(sim, tick):
     """The instants of control cycle [tick]: its sample, the capture, the prediction, the take, the write, the load, the correction"""
     ct = tick + (T if sim.between else 0.0)  # the PWM ISR the correction runs in
+    first, pll = (CORRECTION[0][0], "PI") if sim.form == "thread" else (ON_TAKE[0][0], "PLL")
+    take = seg_times(sim, "PWM ISR", "Park", tick)
     t = dict(sample=sim.batches[tick]["start"] + SAMPLE_OFFSET, capture=seg_times(sim, "ADC ISR", "I", tick)[1],
-             predict=seg_times(sim, "PWM ISR", "sensor", tick)[1], take=seg_times(sim, "PWM ISR", "Park", tick)[0],
-             write=seg_times(sim, "PWM ISR", "out", tick)[1], correct=seg_times(sim, "PWM ISR", "frames", ct)[0],
-             smo=seg_times(sim, "PWM ISR", "SMO d, q", ct)[1], pi=seg_times(sim, "PWM ISR", "PI", ct)[1],
+             predict=seg_times(sim, "PWM ISR", "sensor", tick)[1], take=take[0], take_end=take[1],
+             write=seg_times(sim, "PWM ISR", "out", tick)[1], correct=seg_times(sim, "PWM ISR", first, ct)[0],
+             smo=seg_times(sim, "PWM ISR", "SMO d, q", ct)[1], pi=seg_times(sim, "PWM ISR", pll, ct)[1],
              hold=seg_times(sim, "PWM ISR", "hold", ct)[1])
     t["load"] = (math.floor(t["write"] / LOAD + 1e-9) + 1) * LOAD
     return t
@@ -91,7 +120,7 @@ def margin_text(m):
 
 def unicode_text(ascii_text):
     """The notes print in ASCII, for the console's cp1252, and draw in their symbols"""
-    for a, u in (("deg", "°"), ("k-1", "k−1"), ("k-2", "k−2"), ("->", "→"), ("dtheta^", "Δθ̂"), ("theta^", "θ̂"), ("1/2", "½"), (" * ", "·")):
+    for a, u in (("deg", "°"), ("k-1", "k−1"), ("k-2", "k−2"), ("->", "→"), ("dtheta^", "Δθ̂"), ("theta^", "θ̂"), ("omega^", "ω̂"), ("1/2", "½"), (" * ", "·")):
         ascii_text = ascii_text.replace(a, u)
     return ascii_text
 
@@ -100,13 +129,66 @@ def idx(j):
     return "k" if j == 0 else (f"k+{j}" if j > 0 else f"k−{-j}")
 
 
-# Value lanes, top to bottom: (name, color)
+# Value lanes: (name, color)
 VLANES = [("PhaseInput.I", "#bbdefb"), ("θ̂  Pll.Base.Angle,\nSensorState", "#c8e6c9"), ("ω̂  Pll.Base.Delta", "#a5d6a7"),
           ("command  Foc.Vd,q → Vα,β", "#ffe0b2"), ("applied  the duty", "#ffcc80"), ("held  VOutAlpha, VOutBeta", "#f8bbd0"),
           ("observer  î, z, ê", "#f48fb1")]
-VY = {name: len(VLANES) - 1 - i for i, (name, _) in enumerate(VLANES)}
 VNAME = [name for name, _ in VLANES]
 I_, TH, OM, CMD, APP, HELD, OBS = VNAME
+TAKE_LANE = ("take  Foc.Id, Iq", "#b3e5fc")
+TAKE = TAKE_LANE[0]
+
+
+def thread_spec(c, correct_label):
+    """The thread form's lanes and cycle k's steps: (time, label, reads, writes)"""
+    c0, c1 = c[0], c[1]
+    return dict(vlanes=VLANES, strong_prev=(APP, HELD), ylim=(-20.5, 3.2),
+                tracks=[(I_, "capture", lambda j: f"i({idx(j)})"), (TH, "predict", lambda j: f"θ̂({idx(j)}) = θ̂({idx(j - 1)}) + ω̂({idx(j - 1)})"),
+                        (OM, "pi", lambda j: f"ω̂({idx(j)})"), (CMD, "write", lambda j: f"v({idx(j)}): Vdq at θ̂({idx(j)})"),
+                        (APP, "load", lambda j: f"v({idx(j)})"), (HELD, "hold", lambda j: f"v({idx(j)})"), (OBS, "smo", lambda j: f"î, ê ({idx(j)})")],
+                steps=[(c0["capture"], "capture i(k)", [], [I_]),
+                       (c0["predict"], "predict θ̂(k)", [TH, OM], [TH]),
+                       (c0["take"], "LOOP: Park i(k) at θ̂(k), PI", [I_, TH], []),
+                       (c0["write"], "write v(k)", [], [CMD]),
+                       (c0["correct"] + 0.8, correct_label, [I_, TH, OM, HELD], []),
+                       (c0["load"], "load v(k)", [CMD], [APP]),
+                       (c0["smo"], "SMO: ê(k)", [], [OBS]),
+                       (c0["pi"], "PI: ω̂(k)", [], [OM]),
+                       (c0["hold"], "hold v(k)", [CMD], [HELD]),
+                       (c1["predict"], "predict θ̂(k+1)", [TH, OM], [TH])],
+                kinds=["shell", "theta", "req", "capture", "pi", "out", "arm", "obs_frame", "obs_smo", "obs_det", "obs_hold"],
+                kind_labels={"theta": "angle: predict, SetTheta"})
+
+
+def on_take_spec(form):
+    """A or B: the take a lane of its own, read by the PI and the correction. A holds v(k); B reads v(k−1) where the loop left it"""
+    hold = (form == "A")
+
+    def spec(c, correct_label):
+        c0, c1 = c[0], c[1]
+        lanes = dict(VLANES)
+        names = [I_, TH, OM, TAKE, CMD, APP] + ([HELD] if hold else []) + [OBS]
+        steps = [(c0["capture"], "capture i(k)", [], [I_]),
+                 (c0["predict"], "predict θ̂(k)", [TH, OM], [TH]),
+                 (c0["take_end"], "take: Clarke, Park i(k) at θ̂(k)", [I_, TH], [TAKE]),
+                 (c0["write"], "PI, write v(k)", [TAKE], [CMD]),
+                 (c0["correct"] + 0.8, correct_label, [TAKE, TH, OM, HELD if hold else CMD], []),
+                 (c0["load"], "load v(k)", [CMD], [APP]),
+                 (c0["smo"], "SMO: ê(k)", [], [OBS]),
+                 (c0["pi"], "PLL: ω̂(k)", [], [OM]),
+                 (c1["predict"], "predict θ̂(k+1)", [TH, OM], [TH])]
+        tracks = [(I_, "capture", lambda j: f"i({idx(j)})"), (TH, "predict", lambda j: f"θ̂({idx(j)}) = θ̂({idx(j - 1)}) + ω̂({idx(j - 1)})"),
+                  (OM, "pi", lambda j: f"ω̂({idx(j)})"), (TAKE, "take_end", lambda j: f"i({idx(j)}) at θ̂({idx(j)})"),
+                  (CMD, "write", lambda j: f"v({idx(j)}): Vdq at θ̂({idx(j)})"), (APP, "load", lambda j: f"v({idx(j)})"),
+                  (OBS, "smo", lambda j: f"î, ê ({idx(j)})")]
+        if hold:
+            steps.append((c0["hold"], "hold v(k)", [CMD], [HELD]))
+            tracks.append((HELD, "hold", lambda j: f"v({idx(j)})"))
+        return dict(vlanes=[(n, TAKE_LANE[1] if n == TAKE else lanes[n]) for n in names], strong_prev=(APP, HELD if hold else CMD),
+                    ylim=(-20.5, 3.2) if hold else (-23.5, 3.2), tracks=tracks, steps=steps,
+                    kinds=["shell", "theta", "req", "capture", "pi", "out", "arm", "obs_vpark", "obs_smo", "obs_det"] + (["obs_hold"] if hold else []),
+                    kind_labels={"theta": "angle: predict, SetTheta", "pi": "PI: the current loop's, the PLL's"})
+    return spec
 
 
 def bus(ax, a, b, y, label, color, strong):
@@ -139,27 +221,23 @@ def period_angles(c, hold_lead):
     return dict(p0=p0, p1=p1, split=c[-1]["load"] - p0, mean_applied=sum(applied) / n_pts, mean_modeled=sum(modeled) / n_pts)
 
 
-def plot_timeline(sim, path, title, hold_lead, correct_label, modeled_label, gap_label, lines):
-    """The figure: the counter, the ISRs, the values each step reads and writes, the angles. [lines] the notes"""
+def plot_timeline(sim, path, title, hold_lead, correct_label, modeled_label, gap_label, lines, spec=thread_spec):
+    """The figure: the counter, the ISRs, the values each step reads and writes, the angles. [lines] the notes, [spec] the form's lanes and steps"""
     c = cycles(sim)
+    s = spec(c, correct_label)
+    vlanes = s["vlanes"]
+    vy = {name: len(vlanes) - 1 - i for i, (name, _) in enumerate(vlanes)}
+    vname = [name for name, _ in vlanes]
     t_lo, t_hi = -125.0, 165.0
 
     # Value histories: (start, end, label, cycle) per lane. A value lasts from its write to the next
-    color = dict(VLANES)
-    hist = {name: [] for name in VNAME}
-
-    def track(name, key, label):
+    color = dict(vlanes)
+    hist = {name: [] for name in vname}
+    for name, key, label in s["tracks"]:
         for j in (-2, -1, 0, 1):
             nxt = c[j + 1][key] if j + 1 in c else t_hi + 10
             hist[name].append((c[j][key], nxt, label(j), j))
-    track(I_, "capture", lambda j: f"i({idx(j)})")
-    track(TH, "predict", lambda j: f"θ̂({idx(j)}) = θ̂({idx(j - 1)}) + ω̂({idx(j - 1)})")
-    track(OM, "pi", lambda j: f"ω̂({idx(j)})")
-    track(CMD, "write", lambda j: f"v({idx(j)}): Vdq at θ̂({idx(j)})")
-    track(APP, "load", lambda j: f"v({idx(j)})")
-    track(HELD, "hold", lambda j: f"v({idx(j)})")
-    track(OBS, "smo", lambda j: f"î, ê ({idx(j)})")
-    for name in VNAME:  # the value before the first tracked write
+    for name in vname:  # the value before the first tracked write
         first = hist[name][0]
         hist[name].insert(0, (t_lo - 10, first[0], "", first[3] - 1))
 
@@ -193,24 +271,14 @@ def plot_timeline(sim, path, title, hold_lead, correct_label, modeled_label, gap
     ax_l.set_ylim(0.4, 3.9)
 
     # Values
-    for name in VNAME:
+    for name in vname:
         for a, b, label, j in hist[name]:
             a2, b2 = max(a, t_lo - 2), min(b, t_hi + 2)
             if b2 > a2:
-                bus(ax_v, a2, b2, VY[name], label, color[name], j in (-1, 0) if name in (APP, HELD) else j == 0)
+                bus(ax_v, a2, b2, vy[name], label, color[name], j in (-1, 0) if name in s["strong_prev"] else j == 0)
 
     # Cycle k's steps: reads (open), writes (filled), on one vertical
-    c0, c1 = c[0], c[1]
-    steps = sorted([(c0["capture"], "capture i(k)", [], [I_]),
-             (c0["predict"], "predict θ̂(k)", [TH, OM], [TH]),
-             (c0["take"], "LOOP: Park i(k) at θ̂(k), PI", [I_, TH], []),
-             (c0["write"], "write v(k)", [], [CMD]),
-             (c0["correct"] + 0.8, correct_label, [I_, TH, OM, HELD], []),
-             (c0["load"], "load v(k)", [CMD], [APP]),
-             (c0["smo"], "SMO: ê(k)", [], [OBS]),
-             (c0["pi"], "PI: ω̂(k)", [], [OM]),
-             (c0["hold"], "hold v(k)", [CMD], [HELD]),
-             (c1["predict"], "predict θ̂(k+1)", [TH, OM], [TH])], key=lambda st: st[0])
+    steps = sorted(s["steps"], key=lambda st: st[0])
     rows_end = []  # each label row's last label end, to stack the labels that would overlap
     us_per_char = (t_hi - t_lo) / 205.0
     for n, (x, label, reads, writes) in enumerate(steps):
@@ -222,17 +290,17 @@ def plot_timeline(sim, path, title, hold_lead, correct_label, modeled_label, gap
             rows_end.append(x + half)
         else:
             rows_end[row] = x + half
-        y_text = len(VLANES) - 0.55 + 0.42 * row
-        ys = [VY[v] for v in reads + writes]
+        y_text = len(vlanes) - 0.55 + 0.42 * row
+        ys = [vy[v] for v in reads + writes]
         ax_v.plot([x, x], [min(ys) - 0.35, y_text], color="#455a64", linewidth=0.7, linestyle="--")
         for v in reads:
-            ax_v.plot(x, VY[v], marker="o", markersize=7, markerfacecolor="white", markeredgecolor="black", zorder=5)
+            ax_v.plot(x, vy[v], marker="o", markersize=7, markerfacecolor="white", markeredgecolor="black", zorder=5)
         for v in writes:
-            ax_v.plot(x, VY[v], marker="o", markersize=7, color="black", zorder=5)
+            ax_v.plot(x, vy[v], marker="o", markersize=7, color="black", zorder=5)
         ax_v.text(x, y_text, text, ha="center", va="bottom", fontsize=7, bbox=dict(boxstyle="round,pad=0.15", facecolor="white", edgecolor="none"))
-    ax_v.set_yticks([VY[v] for v in VNAME])
-    ax_v.set_yticklabels(VNAME, fontsize=8)
-    ax_v.set_ylim(-0.6, len(VLANES) - 0.2 + 0.42 * len(rows_end))
+    ax_v.set_yticks([vy[v] for v in vname])
+    ax_v.set_yticklabels(vname, fontsize=8)
+    ax_v.set_ylim(-0.6, len(vlanes) - 0.2 + 0.42 * len(rows_end))
     ax_v.plot([], [], marker="o", linestyle="", markerfacecolor="white", markeredgecolor="black", label="reads")
     ax_v.plot([], [], marker="o", linestyle="", color="black", label="writes")
     ax_v.legend(loc="lower left", fontsize=7, ncol=2)
@@ -267,9 +335,10 @@ def plot_timeline(sim, path, title, hold_lead, correct_label, modeled_label, gap
         ax_a.plot([p0, p1], [mean_applied, mean_applied], color="black", linewidth=0.8, linestyle=":")
         ax_a.text(p1 - 1, mean_applied + 0.35, f"applied and modeled, mean {mean_applied:.1f}°", fontsize=7, ha="right")
         ax_a.text(p1 - 1, mean_applied - 1.0, f"{mean_modeled - mean_applied:.1f}°: {gap_label}", fontsize=7, ha="right")
-    ax_a.text(c[-1]["load"], -19.3, f"v(k−2) {split:.0f} µs | v(k−1) {p1 - c[-1]['load']:.0f} µs", ha="center", fontsize=7, color="#ef6c00")
+    y_lo, y_hi = s["ylim"]
+    ax_a.text(c[-1]["load"], y_lo + 1.2, f"v(k−2) {split:.0f} µs | v(k−1) {p1 - c[-1]['load']:.0f} µs", ha="center", fontsize=7, color="#ef6c00")
     ax_a.set_ylabel(f"angle from the rotor\n(° at {F_E:.0f} Hz electrical)")
-    ax_a.set_ylim(-20.5, 3.2)
+    ax_a.set_ylim(y_lo, y_hi)
     ax_a.legend(loc="lower right", fontsize=7)
     ax_a.set_xlim(t_lo, t_hi)
     ax_a.set_xlabel("Time from the top of control cycle k (µs)")
@@ -280,57 +349,80 @@ def plot_timeline(sim, path, title, hold_lead, correct_label, modeled_label, gap
 
     ax_a.text(0.0, -0.2, unicode_text("\n".join(lines)), transform=ax_a.transAxes,
               ha="left", va="top", fontsize=7.5, bbox=dict(boxstyle="round", facecolor="white", edgecolor="#999999"))
-    kinds = ["shell", "theta", "req", "capture", "pi", "out", "arm", "obs_frame", "obs_smo", "obs_det", "obs_hold"]
-    fig.legend(handles=[Patch(facecolor=KIND_COLOR[k], edgecolor="#555555", label=KIND_LABEL[k] if k != "theta" else "angle: predict, SetTheta") for k in kinds],
+    fig.legend(handles=[Patch(facecolor=KIND_COLOR[k], edgecolor="#555555", label=s["kind_labels"].get(k, KIND_LABEL[k])) for k in s["kinds"]],
                loc="upper right", bbox_to_anchor=(0.995, 0.108), fontsize=7, ncol=2)
     fig.text(0.01, 0.003, "Durations are estimates (k = 1), not measured. The angles assume lock, θ̂(j) = θ at sample j, ω̂ = ω.", fontsize=7, color="gray")
     fig.tight_layout(rect=(0, 0.11, 1, 1))
     fig.savefig(path, dpi=100)
     plt.close(fig)
+    c0 = c[0]
     print(f"cycle k: sample {c0['sample']:.1f}, capture {c0['capture']:.1f}, predict {c0['predict']:.1f}, take {c0['take']:.1f}, write {c0['write']:.1f}, "
-          f"load {c0['load']:.1f}, correct {c0['correct']:.1f}-{c0['hold']:.1f} us")
+          f"load {c0['load']:.1f}, correct {c0['correct']:.1f}-{c0['hold' if not math.isnan(c0['hold']) else 'pi']:.1f} us")
     for line in lines:
         print(line)
     print("wrote", path)
 
 
-def main():
-    sim = SensorlessSim(SEQ_BEFORE, 1.0).run()
-    c = cycles(sim)
-    c0 = c[0]
-    pa = period_angles(c, 0.0)
-    p1, split, mean_applied, mean_modeled = pa["p1"], pa["split"], pa["mean_applied"], pa["mean_modeled"]
-    corr_us = sum(n for _, _, n in CORRECTION) * US_PER_INSTR
-    margins = {k: arm_margin(SensorlessSim(SEQ_BEFORE, k).run(), 0.0) for k in (1.0, 1.2)}
-    margins_speed = {k: arm_margin(SensorlessSim(SEQ_BEFORE, k, extra={0.0: SPEED_POLL_US}).run(), 0.0) for k in (1.0, 1.2)}
+def main_on_take():
+    """A and B, against each other and the removed thread"""
+    thread_us = sum(n for _, _, n in CORRECTION) * US_PER_INSTR
+    take_us = sum(us for _, _, us in ON_TAKE)
     base_margin = arm_margin(Sim(SEQ_BEFORE, 1.0).run(), 0.0)
-    k_miss = next(k / 100 for k in range(100, 151) if arm_margin(SensorlessSim(SEQ_BEFORE, k / 100).run(), 0.0) < 0)
-    # Option, not built: the correction in the between ISR, after its arm
-    opt = {k: SensorlessSim(SEQ_BEFORE, k, between=True).run() for k in (1.0, 1.2)}
-    opt_lines = [f"k {k:g}: arm {margin_text(arm_margin(o, 0.0))}; correction {seg_times(o, 'PWM ISR', 'frames', T)[0]:.1f} to "
-                 f"{seg_times(o, 'PWM ISR', 'hold', T)[1]:.1f} us; cycle k+1's PWM ISR starts {o.pwm_delay.get(2 * T, 0.0):.1f} us late, "
-                 f"writes at {seg_times(o, 'PWM ISR', 'out', 2 * T)[1] - 2 * T:.1f} us, still before its next top"
-                 for k, o in opt.items()]
-    lines = [f"The correction, estimated {corr_us:.1f} us at k 1 ({sum(n for _, _, n in CORRECTION)} instructions of the linked image, not measured): "
-             f"{c0['correct']:.1f} to {c0['hold']:.1f} us, past the next top.",
-             f"The between ISR waits for it, then arms the next set {margin_text(margins[1.0])} of its trigger ({base_margin:.1f} without the observer); "
-             f"from k {k_miss:.2f} it misses, {margin_text(margins[1.2])} at k 1.2. A missed arm: the set waits a control cycle.",
-             f"On the 1 ms speed tick, about {SPEED_POLL_US:.0f} us more ahead of it: {margin_text(margins_speed[1.0])} at k 1 ({margin_text(margins_speed[1.2])} at k 1.2).",
-             f"The period i(k) closes holds v(k-2) for {split:.0f} us and v(k-1) for {p1 - c[-1]['load']:.0f}: the write loads {c[0]['load'] - c[0]['write']:.0f} us after it, "
-             f"{c[0]['load'] - c[0]['sample']:.0f} after the sample.",
-             f"The observer models v(k-1) across all of it: its voltage leads the applied one by {mean_modeled - mean_applied:.1f} deg at {F_E:.0f} Hz, "
-             f"the sample -> load in rotation.",
-             f"The FOC's own command lags the rotor by {-mean_applied:.1f} deg on average over its hold: sample -> load plus half the hold, absorbed by the PI.",
-             "Not drawn: the sense chain's age, by which the current read lags the current (the board's filter), on top of the same offset."]
-    plot_timeline(sim, os.path.join(HERE, "SensorlessSequence.png"),
-                  "Sensorless on the built current-loop sequence: what each step reads and writes, and when the duty is applied\n"
-                  "KE06 timing ('before', ../ISample): the 20 kHz PWM, a 100 µs control cycle, the set on the trigger 16.5 µs before the top",
-                  0.0, "correct: i(k) at θ̂(k), v(k−1) at θ̂(k) − Δθ̂/2",
-                  "the observer's voltage for that period: v(k−1) across all of it, Parked at θ̂(k) − Δθ̂/2",
-                  f"the sample → load, {c[0]['load'] - c[0]['sample']:.0f} µs", lines)
-    print("Option, not built: the correction in the between ISR, after its arm. Drawn in sensorless_sequence_fixed.py")
-    for line in opt_lines:
-        print("  " + line)
+    thread_margin = arm_margin(SensorlessSim(SEQ_BEFORE, 1.0).run(), 0.0)
+    runs = {form: SensorlessSim(SEQ_BEFORE, 1.0, form=form).run() for form in ("A", "B")}
+    cs = {form: cycles(sim) for form, sim in runs.items()}
+    pas = {form: period_angles(c, 0.0) for form, c in cs.items()}
+    margins = {(form, k, speed): arm_margin(SensorlessSim(SEQ_BEFORE, k, extra={0.0: SPEED_POLL_US} if speed else None, form=form).run(), 0.0)
+               for form in ("A", "B") for k in (1.0, 1.2) for speed in (False, True)}
+    k_miss = {form: next((k / 100 for k in range(100, 151) if arm_margin(SensorlessSim(SEQ_BEFORE, k / 100, form=form).run(), 0.0) < 0), None)
+              for form in ("A", "B")}
+    k_bottom = next((k / 100 for k in range(100, 151) if cycle_times(SensorlessSim(SEQ_BEFORE, k / 100, form="B").run(), 0.0)["write"] > T + LOAD), None)
+    lead = {form: c[0]["load"] - c[0]["sample"] for form, c in cs.items()}
+    gap = {form: pa["mean_modeled"] - pa["mean_applied"] for form, pa in pas.items()}
+
+    def arm_lines(form):
+        miss = f"from k {k_miss[form]:.2f} it misses" if k_miss[form] else "it holds to k 1.5"
+        return [f"The between ISR waits for it, then arms the next set {margin_text(margins[(form, 1.0, False)])} of its trigger "
+                f"({base_margin:.1f} without the observer, {thread_margin:.1f} with the thread); {miss}, {margin_text(margins[(form, 1.2, False)])} at k 1.2.",
+                f"On the 1 ms speed tick, about {SPEED_POLL_US:.0f} us more: {margin_text(margins[(form, 1.0, True)])} at k 1 "
+                f"({margin_text(margins[(form, 1.2, True)])} at k 1.2)."]
+
+    def period_line(form):
+        c, pa = cs[form], pas[form]
+        return (f"The write loads {c[0]['load'] - c[0]['write']:.0f} us after it, {lead[form]:.0f} after the sample: the period i(k) closes holds v(k-2) "
+                f"for {pa['split']:.0f} us and v(k-1) for {pa['p1'] - c[-1]['load']:.0f}. The modeled voltage leads the applied one by {gap[form]:.1f} deg at {F_E:.0f} Hz.")
+
+    a0, b0 = cs["A"][0], cs["B"][0]
+    common = (f"Of the thread's {thread_us:.1f} us, the Clarke, theta^'s sin/cos and i's Park are the take's; "
+              f"the hold angle's sin/cos and v's Park stay, estimated {ON_TAKE[0][2]:.1f} us")
+    lines_a = [f"The correction on the take after the write, estimated {take_us + HOLD_US:.1f} us at k 1: {a0['correct']:.1f} to {a0['hold']:.1f} us. "
+               f"{common}.",
+               *arm_lines("A"),
+               period_line("A"),
+               f"The LOOP is the other sensors': the take, the PI and the write as Run_Proc's. Foc keeps the take through the loop: i(k) at theta^(k).",
+               "The hold stores v(k) for the next sample: the loop has overwritten Foc's v(k-1). Inputs as B's, i(k), theta^(k), omega^(k-1), v(k-1): the same omega^(k).",
+               "Not drawn: the sense chain's age, by which the current read lags the current (the board's filter), on top of the same offset."]
+    lines_b = [f"The correction between the take and the PI, estimated {take_us:.1f} us at k 1: {b0['correct']:.1f} to {b0['pi']:.1f} us. "
+               f"{common}.",
+               f"The write at {b0['write']:.1f} us, {b0['write'] - a0['write']:.1f} after A's: past the top at {T:.0f}, it loads at the bottom, {b0['load']:.0f} us, "
+               f"{b0['load'] - a0['load']:.0f} after A's. From k {k_bottom:.2f} it passes the bottom too, and loads at the next top, {2 * T:.0f} us.",
+               period_line("B") + f" A: {lead['A']:.0f} us, {gap['A']:.1f} deg.",
+               f"The FOC's own command lags the rotor by {-pas['B']['mean_applied']:.1f} deg on average over its hold, {-pas['A']['mean_applied']:.1f} in A.",
+               *arm_lines("B"),
+               "No hold: Foc still holds v(k-1) when the correction reads it. The torque path inlines a second copy of the loop. Inputs as A's: the same omega^(k)."]
+    correct_label = {"A": "correct: i(k) from the take, v(k−1) held, at θ̂(k) − Δθ̂/2",
+                     "B": "correct: i(k) from the take, v(k−1) still in Foc, at θ̂(k) − Δθ̂/2"}
+    titles = {"A": "Sensorless A, built: on the FOC's take after the write, in SENSORLESS_RUN's LOOP: what each step reads and writes, and when the duty is applied",
+              "B": "Sensorless B, on the FOC's take between the take and the PI: what each step reads and writes, and when the duty is applied"}
+    for form, lines in (("A", lines_a), ("B", lines_b)):
+        plot_timeline(runs[form], os.path.join(HERE, f"SensorlessSequence{form}.png"),
+                      titles[form] + "\nKE06 timing ('before', ../ISample): the 20 kHz PWM, a 100 µs control cycle, the set on the trigger 16.5 µs before the top",
+                      0.0, correct_label[form], "the observer's voltage for that period: v(k−1) across all of it, Parked at θ̂(k) − Δθ̂/2",
+                      f"the sample → load, {lead[form]:.0f} µs", lines, spec=on_take_spec(form))
+
+
+def main():
+    main_on_take()
 
 
 if __name__ == "__main__":

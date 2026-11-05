@@ -6,15 +6,16 @@ The rotor angle from the stator's EMF: the extended-EMF sliding-mode observer (`
 |---|---|
 | Selected by | `Config.SensorMode` = `ROTOR_SENSOR_ID_SENSORLESS`, in a build with `MOTOR_SENSOR_SENSORLESS_ENABLE`. Takes effect on reboot: `Motor_Init` sets `p_ActiveSensor` |
 | Predict | Every control cycle, at `CAPTURE_ANGLE`: θ̂ += ω̂ (`AnglePll_Predict`), then published to `RotorSensor_State_T.AngleSpeed` |
-| Correct | Every control cycle, after the write: `Motor_Sensorless_Thread`, from the application's `BOARD_PWM_ISR`. Corrects ω̂ only (`AnglePll_Correct`); the next predict carries it into θ̂. About 40 µs on KE06, estimated: [Timeline](#timeline) |
+| Correct | Every control cycle, after the write, in the LOOP of the observer's states (`Motor_Sensorless.c`): `SENSORLESS_RUN` on the FOC's take, Id and Iq at θ̂ (`Motor_Sensorless_CorrectOnTake`); the start-up chain on the FOC's Clarke, Iα and Iβ Parked at θ̂. One out-of-line copy (`CorrectDq`). Corrects ω̂ only (`AnglePll_Correct`); the next predict carries it into θ̂. About 33 µs on KE06, estimated: [Timeline](#timeline) |
+| States | `SENSORLESS_ALIGN`, `SENSORLESS_START_UP` under `OPEN_LOOP`, then `SENSORLESS_RUN`: an alternate RUN with RUN's entry, torque path and action table, reporting as RUN. No other state corrects; every exit from `SENSORLESS_RUN` resets the observer (`ZERO_INITIAL`). Release and intervention requests coast in PASSIVE: [States](#states) |
 | Front end | EEMF SMO in the frame θ̂ (`EmfObserver_Eemf_Proc`): i Parked at θ̂, the held command at θ̂ − Δθ̂/2, as if applied across the whole period the sample closes. It is applied from its load: [Timeline](#timeline) |
-| Inputs | The set the LOOP took: I while driven, V while floating (`Motor_ADC_MarkPhases`). The command held after the last write (`EmfObserver_HoldV`) |
+| Inputs | The FOC's take of the set the LOOP took, I while driven (`Motor_ADC_MarkPhases`). The command held after the last write (`EmfObserver_HoldV`) |
 | Plant | `Stator_Winding_T` from `Config.Electrical`: Rs, Lq on both axes, at `INIT_UNITS` on `Motor_Reset`. An electrical var reaches the FOC at once, the winding on `Motor_Reinit` |
 | Tuning | `EmfObserver_Config_T` from NVM (`P_NVM_CONFIG`). Default `EMF_OBSERVER_CONFIG_DEFAULT(VBus, v_max, I, i_max, Freq)`, Freq the control frequency. Vars are read only |
 | Feedback | `IS_FEEDBACK_AVAILABLE` is the lock: ‖ê‖ above `MagFloor` and the error within `LockErrTol` for `LockHoldCount` corrections, held through `LossHoldCount` |
 | Calibrated | `K_smo`, `LpfCoef`, `Winding.G` nonzero, else `INIT` → `FAULT` with `PositionSensor` |
 | Rates | Predict, correct, lock counts and the PLL PI at the control frequency (`Config.Pll.SampleFreq`); the model's G per control cycle (the turn base); `CAPTURE_SPEED` at `MOTOR_SPEED_LOOP_FREQ` |
-| Not wired | `Motor_Sensorless_StartRunChain` (a command entry), the αβ SMO (`EmfObserver_AlphaBeta_Proc`, `_ProcHeld`) and the voltage model (`EmfObserver_VModel_Proc`) |
+| Not wired | `Motor_Sensorless_StartRunChain` (a command entry), the correction between the take and the PI (`Motor_Sensorless_ProcTorqueReq`, form B), the αβ SMO (`EmfObserver_AlphaBeta_Proc`, `_ProcHeld`) and the voltage model (`EmfObserver_VModel_Proc`) |
 | Not measured | No hardware run, no plant simulation of this wiring. `K_smo`, `SmoSat` and the PLL gains are not tuned per motor. The correction's duration is an instruction-count estimate |
 
 ## Structure
@@ -129,14 +130,14 @@ flowchart TB
     end
     subgraph MotorLayer["Motor"]
         Thread["Motor_Thread.h<br/>Motor_PWM_Thread"]
-        SM["Motor_StateMachine.c<br/>PASSIVE entry, feedback lost"]
-        Chain["Motor_Sensorless.c<br/>start-up chain, Motor_Sensorless_Thread"]
+        SM["Motor_StateMachine.c<br/>RUN's parts, PASSIVE entry, feedback lost"]
+        Chain["Motor_Sensorless.c<br/>start-up chain, SENSORLESS_RUN"]
         FOCm["Motor_FOC.c<br/>Motor_FOC_AngleControl"]
         Analog["Analog/Motor_Analog.h<br/>PhaseInput"]
     end
     subgraph SensorLayer["Sensor"]
         RS["RotorSensor.h<br/>the vtable, RotorSensor_State_T"]
-        Adapter["Sensorless_Sensor.h, .c<br/>vtable methods, ProcEemf"]
+        Adapter["Sensorless_Sensor.h, .c<br/>vtable methods, CorrectDq, ParkI"]
     end
     subgraph ModelLayer["Model"]
         Obs["EmfObserver.h"]
@@ -149,7 +150,6 @@ flowchart TB
     end
 
     PWM --> Thread
-    PWM --> Chain
     ADC --> Analog
     Thread --> RS
     Thread --> SM
@@ -157,7 +157,9 @@ flowchart TB
     SM --> FOCm
     RS -. P_VTABLE .-> Adapter
     Chain --> Adapter
-    Chain --> Analog
+    Chain --> SM
+    Chain --> FOCm
+    FOCm --> Analog
     Adapter --> Obs
     Obs --> Stator
     Obs --> Pll
@@ -174,49 +176,48 @@ sequenceDiagram
     participant ISR as BOARD_PWM_ISR
     participant Thr as Motor_PWM_Thread
     participant Sen as Sensorless_Sensor
-    participant St as Active state
-    participant Obs as Motor_Sensorless_Thread
+    participant St as SENSORLESS_RUN
 
     Note over ADC: the set the LOOP takes, placed by the board
-    ADC->>ADC: Motor_Analog_CaptureIabc → PhaseInput.I, or Vabc → PhaseInput.V while floating
+    ADC->>ADC: Motor_Analog_CaptureIabc → PhaseInput.I
     ISR->>Thr: Motor_PWM_Thread, each motor
     Thr->>Sen: RotorSensor_CaptureAngle → CAPTURE_ANGLE
     Sen->>Sen: AnglePll_Predict, θ̂ += ω̂
     Sen-->>Thr: SensorState.AngleSpeed ← θ̂, ω̂
     Thr->>St: LOOP
-    St->>St: in RUN, Motor_FOC_AngleControl at θ̂ — SetTheta, take I, PI, InvPark
+    St->>St: RUN's torque path, Motor_FOC_AngleControl at θ̂ — SetTheta, take I, PI, InvPark
     St->>St: Motor_FOC_WriteDuty
-    Thr->>St: NEXT, _Motor_TransitionFeedbackLost in RUN and INTERVENTION
-    St->>Sen: IS_FEEDBACK_AVAILABLE → EmfObserver_IsLocked
+    St->>Sen: CorrectDq on the take, Foc.Id, Foc.Iq → AnglePll_Correct, ω̂
+    St->>St: EmfObserver_HoldV, this cycle's command
+    Thr->>St: NEXT, feedback lost
+    St->>Sen: IS_FEEDBACK_AVAILABLE → EmfObserver_IsLocked, this cycle's
     opt the speed timer, 1 ms
         Thr->>Sen: CAPTURE_SPEED → Speed_Pu from ω̂
+        Thr->>St: ON_SPEED, RUN's action table
     end
     Note over ISR: the board starts or arms the next set, board specific
-    ISR->>Obs: Motor_Sensorless_Thread, each motor, last
-    Obs->>Obs: CaptureStator → Sensorless_Sensor_ProcEemf → AnglePll_Correct, ω̂
-    Obs->>Obs: EmfObserver_HoldV, this cycle's command
 ```
 
-The correction is off the write's deadline: the FOC already Parked the sample at the θ̂ this cycle published, the frame the correction Parks it in.
+The correction is off the write's deadline: the FOC already Parked the sample at the θ̂ this cycle published, the frame the correction Parks it in. The start-up chain runs the same order, its LOOP on the ramp's angle.
 
 ## The correction
 
 ```mermaid
 sequenceDiagram
-    participant M as Motor_Sensorless_Thread
-    participant A as Sensorless_Sensor_ProcEemf
+    participant S as The state's LOOP
+    participant M as CorrectDq
+    participant A as EmfObserver_Eemf_ProcHeld
     participant O as EmfObserver_Eemf_Proc
     participant P as AnglePll_T
 
-    M->>M: return unless the adapter is the active sensor
-    M->>M: CaptureStator, Phase_ReadVOut
-    alt PWM or V0
-        M->>M: i = Clarke of PhaseInput.I, v = VOutAlpha, VOutBeta, 0 under V0
-    else Z, floating
-        M->>M: i = 0, v = Clarke of PhaseInput.V
+    alt SENSORLESS_RUN, the FOC at θ̂
+        S->>M: Foc.Id, Foc.Iq, the take
+    else the start-up chain, the FOC at the ramp
+        S->>S: EmfObserver_ParkI, Foc.Ialpha, Foc.Ibeta Parked at θ̂
+        S->>M: i_d, i_q
     end
-    M->>A: i_αβ, v_αβ
-    A->>A: Park i at θ̂, v at θ̂ − Δθ̂/2
+    M->>A: i_d, i_q, the held VOutAlpha, VOutBeta
+    A->>A: Park v at θ̂ − Δθ̂/2
     A->>O: i_d, i_q, v_d, v_q
     O->>O: X = ω̂·L, stator_reactance
     loop the D and Q axes
@@ -228,24 +229,23 @@ sequenceDiagram
     P->>P: error = −y / ‖ê‖, 0 at or below MagFloor
     P->>P: _AnglePll_ProcLock — LockCount, LossCount
     P->>P: AnglePll_Correct — ω̂ = PI(error)
-    M->>M: EmfObserver_HoldV — Foc.Valpha, Foc.Vbeta under PWM, else 0
+    M->>M: EmfObserver_HoldV — Foc.Valpha, Foc.Vbeta
 ```
 
-| `Phase_ReadVOut` | The analog thread marks | i | v |
+| State | The FOC's angle | i | v |
 |---|---|---|---|
-| `PHASE_VOUT_PWM` | I | Clarke of `PhaseInput.I` | the held command, `VOutAlpha`, `VOutBeta` |
-| `PHASE_VOUT_0` | I | Clarke of `PhaseInput.I` | 0: the EMF drives i through the shorted winding |
-| `PHASE_VOUT_Z` | V | 0 | Clarke of `PhaseInput.V`: the terminals read the EMF |
+| `SENSORLESS_RUN` | θ̂ | the take, `Foc.Id`, `Iq`: the FOC's Clarke, sine and cosine, and Park | the held command, `VOutAlpha`, `VOutBeta` |
+| `SENSORLESS_ALIGN`, `SENSORLESS_START_UP` | the ramp's | `Foc.Ialpha`, `Ibeta`, the FOC's Clarke, Parked at θ̂ | the held command |
 
-The mode is the one the state left for the next period. On the cycle it changes, the correction misreads one sample.
+Each state that corrects drives PWM, so the set is I and v is the command. No state corrects while the phases float or are shorted.
 
 ## Signal flow
 
 ```mermaid
 flowchart LR
     Th["θ̂, ω̂<br/>this cycle's prediction"]
-    subgraph Inputs["Sensorless_Sensor_ProcEemf, the frame θ̂"]
-        I["PhaseInput.I"] --> CI["Clarke"] --> ParkI["Park at θ̂"]
+    subgraph Inputs["the FOC's take, and the hold, in the frame θ̂"]
+        I["PhaseInput.I"] --> CI["Clarke, the FOC's"] --> ParkI["Park at θ̂<br/>the FOC's in SENSORLESS_RUN"]
         VH["VOutAlpha, VOutBeta<br/>the held command"] --> ParkV["Park at θ̂ − Δθ̂/2"]
     end
     Th --> ParkI
@@ -304,50 +304,35 @@ flowchart LR
 
 ## Timeline
 
-What each step of control cycle k reads and writes, on the built current-loop sequence: KE06, the 20 kHz PWM, a 100 µs control cycle, the set on the trigger 16.5 µs before the top. The lanes are the values as they stand: a value lasts from its write to the next. Open circles read, filled ones write. The bottom panel puts the angles in the rotor's frame at 300 Hz electrical, locked: θ̂(j) stands for the rotor at sample j.
+What each step of control cycle k reads and writes in `SENSORLESS_RUN`, on the built current-loop sequence: KE06, the 20 kHz PWM, a 100 µs control cycle, the set on the trigger 16.5 µs before the top. The lanes are the values as they stand: a value lasts from its write to the next. Open circles read, filled ones write. The bottom panel puts the angles in the rotor's frame at 300 Hz electrical, locked: θ̂(j) stands for the rotor at sample j.
 
-![The observer's values on the current-loop timeline](Simulation/Sensorless/SensorlessSequence.png)
+![The observer's values on the current-loop timeline](Simulation/Sensorless/SensorlessSequenceA.png)
 
-[Simulation/Sensorless/sensorless_sequence.py](Simulation/Sensorless/sensorless_sequence.py), on the ISample scheduler and its built sequence, with the prediction in place of the Hall capture and the correction added after the write. Durations are estimates at k = 1, the model's 32 ns per instruction; the board measured its code at about 1.2 times its estimates.
+[Simulation/Sensorless/sensorless_sequence.py](Simulation/Sensorless/sensorless_sequence.py), on the ISample scheduler and its built sequence, with the prediction in place of the Hall capture and the correction after the write. Durations are estimates at k = 1, the model's 32 ns per instruction; the board measured its code at about 1.2 times its estimates.
 
 | Step | Reads | Writes | At, µs from the top |
 |---|---|---|---|
 | The ADC ISR captures | the set, sampled at −12 | `PhaseInput.I` ← i(k) | −1 |
 | Predict, `CAPTURE_ANGLE` | θ̂(k−1), ω̂(k−1) | θ̂(k) | 1.2 |
-| The LOOP: Park, PI | i(k), θ̂(k) | | 12 |
-| Write | | v(k): Vdq(k) turned by θ̂(k) | 28.2 |
+| The take: Clarke, Park | i(k), θ̂(k) | `Foc.Id`, `Iq` ← i(k) at θ̂(k) | 12 |
+| PI, write | the take | v(k): Vdq(k) turned by θ̂(k) | 28.2 |
+| Correct | the take, θ̂(k), ω̂(k−1), the held v(k−1) | î, z, ê(k), then ω̂(k) | 28.2 to 61 |
 | Load, at the next top | v(k) | the duty, for 100 µs | 50 |
-| Correct | i(k), θ̂(k), ω̂(k−1), the held v(k−1) | î, z, ê(k), then ω̂(k) | 28.2 to 66.7 |
-| Hold | v(k) | `VOutAlpha`, `VOutBeta` | 68.0 |
+| Hold | v(k) | `VOutAlpha`, `VOutBeta` | 61.2 |
 | Predict, cycle k+1 | θ̂(k), ω̂(k) | θ̂(k+1) | 101.2 |
 
-- **The correction runs past the next top.** About 1,240 instructions, 39.6 µs: the driven path's ~470, six 64-bit multiplies, three divides, two sine and cosine lookups, a square root and the PI. The PWM ISR between control cycles waits behind it, 19.5 µs, then arms the next set 10.4 µs ahead of its trigger, 29.9 without the observer. From k 1.14 the arm misses, and the set waits a control cycle. On the 1 ms speed tick, about 17 µs more ahead of it, it misses at k 1.
+- **The correction runs past the next top.** 32.9 µs: the SMO, the detector and the PLL as counted on the removed thread's 1,239 instructions, and the hold angle's sine and cosine and v's Park, 3.1 µs estimated. The FOC's take supplies the rest: its Clarke, θ̂'s sine and cosine, and i's Park. The PWM ISR between control cycles waits behind it, 12.7 µs, then arms the next set 17.2 µs ahead of its trigger, 29.9 without the observer, 10.4 with the thread. From k 1.24 the arm misses, and the set waits a control cycle. On the 1 ms speed tick, about 17 µs more, it is 0.2 µs ahead at k 1 and misses at k 1.2.
 - **The held command is not the voltage across the period the sample closes.** The write loads at the next top, 62 µs after the sample, so that period holds v(k−2) for 62 µs and v(k−1) for 38. The correction pairs i(k) with v(k−1) across all of it. Its modeled voltage leads the applied one by the rotation in sample → load, ω·62 µs: 6.7° at 300 Hz. The hold angle θ̂ − Δθ̂/2 is right only for a command applied from the sample on.
 - **The FOC's own command** lags the rotor by sample → load plus half the hold, 112 µs, 12.1° at 300 Hz, absorbed by the PI's integrators. The observer models half the hold, 50 µs.
 - **Not drawn**: the sense chain's age, by which the current read lags the current, on top of the same offset.
 
-### With the fixes, not built
+### Fixes, not built
 
-The same timeline with both fixes, to compare:
-1. **The correction after the arm.** At the 20 kHz PWM, the PWM ISR between control cycles runs it, after its marks and its arm. At the 10 kHz PWM, with one PWM ISR per control cycle, the arm already comes before it.
-2. **The hold angle by the load.** v(k−1) is Parked at θ̂(k) + (L/P − ½)·Δθ̂, in place of θ̂(k) − Δθ̂/2. L is the time from sample to load, 62 µs; P is the control period, 100 µs.
+Two fixes were drawn on the removed thread ([sensorless_sequence_fixed.py](Simulation/Sensorless/sensorless_sequence_fixed.py)):
+1. **The correction after the arm.** At the 20 kHz PWM, the PWM ISR between control cycles runs it, after its marks and its arm: on the thread, the arm 29.9 µs ahead at k 1 and 1.2, and the next control cycle's write past its top from k 1.23. In the LOOP, the correction precedes the arm wherever the arm follows the PWM thread; moving it after the arm takes it out of the state again.
+2. **The hold angle by the load.** v(k−1) is Parked at θ̂(k) + (L/P − ½)·Δθ̂, in place of θ̂(k) − Δθ̂/2. L is the time from sample to load, 62 µs; P is the control period, 100 µs. It applies to the built form as is, and closes the 6.7°.
 
-![The timeline with the fixes](Simulation/Sensorless/SensorlessSequenceFixed.png)
-
-[Simulation/Sensorless/sensorless_sequence_fixed.py](Simulation/Sensorless/sensorless_sequence_fixed.py), on the same model.
-
-| | Built | With the fixes |
-|---|---|---|
-| The correction | 28.2 to 68.0 µs, in the control cycle's PWM ISR | 53.6 to 100.9 µs, in the between ISR, through the next set's ADC ISR |
-| The between ISR | starts 19.5 µs late | on time |
-| Its arm, ahead of the trigger, at k 1 / 1.2 | 10.4 µs / misses from k 1.14 | 29.9 / 29.1 µs |
-| The same, on the 1 ms speed tick | misses / misses | 29.9 / 10.1 µs |
-| The next control cycle starts late, at k 1 / 1.2 | 0 / 4.9 µs | 2.3 / 12.8 µs |
-| The same, on the speed tick | 0 / 25.3 µs: loads at the bottom, 25 µs later | 2.3 / 31.9 µs: loads at the bottom, 25 µs later |
-| Its write passes its top | at k 1.2 on the speed tick | from k 1.23; at k 1.2 on the speed tick |
-| The modeled voltage against the applied one, 300 Hz | leads by 6.7° | 0.0° |
-
-- **A missed arm costs a control cycle; a late write, half a PWM period.** The first fix trades one for the other, and moves the slack from the arm to the next cycle's write. Either way the correction's 40 µs is the cost; reusing the FOC's Park of i(k), which the LOOP already made at θ̂(k), would take off its Clarke, one Park and one sine and cosine.
+- **A missed arm costs a control cycle; a late write, half a PWM period.** The first fix trades one for the other, and moves the slack from the arm to the next cycle's write.
 - **The hold angle is exact for a Vdq steady across v(k−2) and v(k−1).** A Vdq step between them is modeled in v(k−1)'s for the L it isn't applied. Holding both commands and their L-weighted mean is exact for any Vdq, at 2 more fields. L/P belongs to the board's sequence.
 
 ## Init and selection
@@ -379,6 +364,36 @@ flowchart TB
 ```mermaid
 stateDiagram-v2
     PASSIVE --> SENSORLESS_ALIGN: PWM, direction set, no lock, zero speed
+    state OPEN_LOOP {
+        SENSORLESS_ALIGN --> SENSORLESS_START_UP: AlignTime_Cycles
+        note right of SENSORLESS_ALIGN
+            ZERO_INITIAL, EmfObserver_Reset
+            V0, then the align current at angle 0
+            corrects on the FOC's Clarke
+        end note
+        note right of SENSORLESS_START_UP
+            EmfObserver_SeedAngle at the ramp's angle and speed,
+            at entry and while |ê| is at or below MagFloor
+            the open-loop ramp, corrects on the FOC's Clarke
+        end note
+    }
+    SENSORLESS_START_UP --> SENSORLESS_RUN: lock, FOC_MatchTheta
+    OPEN_LOOP --> PASSIVE: Z or 0, DIRECTION NULL
+    SENSORLESS_RUN --> PASSIVE: Z or 0, intervention, lock lost within the freewheel limit
+    SENSORLESS_RUN --> FAULT: lock lost above it, PositionSensor, or a fault
+    note right of SENSORLESS_RUN
+        RUN's entry, torque path and action table, reports as RUN
+        corrects on the FOC's take, after the write
+        every exit resets the observer
+    end note
+    note left of PASSIVE
+        No state corrects the observer here
+        θ̂ predicts on the ω̂ the last correction left
+    end note
+```
+```mermaid
+stateDiagram-v2
+    PASSIVE --> SENSORLESS_ALIGN: PWM, direction set, no lock, zero speed
     PASSIVE --> RUN: PWM, direction set, locked
     state OPEN_LOOP {
         SENSORLESS_ALIGN --> SENSORLESS_START_UP: AlignTime_Cycles
@@ -402,8 +417,10 @@ stateDiagram-v2
         floating, it tracks the terminal EMF
     end note
 ```
-
 - `Motor_Sensor_StartUpState` returns `SENSORLESS_ALIGN` only while the adapter is the active sensor; `Config.SensorMode` can name it before the reboot that makes it so.
-- The hand-off re-Parks the FOC's sample and command at θ̂ (`FOC_MatchTheta`), and `Run_Entry` seeds the loop and the torque ramp from them.
+- The hand-off re-Parks the FOC's sample and command at θ̂ (`FOC_MatchTheta`), and RUN's entry (`_Motor_Run_Entry`) seeds the loop and the torque ramp from them. The lock it reads is the cycle's own: the LOOP corrected before NEXT.
+- **No catch-spin.** PASSIVE goes to RUN on a lock, and nothing corrects the observer in PASSIVE, so the observer never locks there. A release resets it, ω̂ = 0, so speed feedback reads 0 while the rotor coasts: a PWM request then starts `SENSORLESS_ALIGN` on a turning rotor. The acquisition procedure's DETECT phase replaces this.
+- **No sensorless intervention.** `SENSORLESS_RUN` sends an intervention request to PASSIVE, where the rotor coasts.
 - Full state machine: [Motor_StateMachine.md](Motor_StateMachine.md).
 - The math, drawn as geometry: [SensorlessMath.md](SensorlessMath.md).
+- Why the observer has its shape, the float-plant findings, the options not built, the Open list: [Sensorless.exp.md](Sensorless.exp.md).

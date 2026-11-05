@@ -289,7 +289,7 @@ id yet.
 |---|---|---|---|---|
 | `OPEN_LOOP_STATE_ANGLE_ALIGN` | `Motor_OpenLoop.c` | `Motor_OpenLoop_SetAngleAlign`, `Motor_OpenLoop_SetAngleAlign_Phase` | T0, then the align command at the set angle (`Motor_FOC_ProcAlignCmd`) | `OPEN_LOOP` inputs |
 | `OPEN_LOOP_STATE_START_UP_ALIGN` → `OPEN_LOOP_STATE_RUN` | `Motor_OpenLoop.c` | `Motor_OpenLoop_StartRunChain`, direction set | V0, start-up align for `Config.AlignTime_Cycles`, then the open-loop angle ramp | `OPEN_LOOP` inputs |
-| `SENSORLESS_ALIGN` → `SENSORLESS_START_UP` | `Motor_Sensorless.c` | `PWM` on `PASSIVE` without lock at zero speed, or `Motor_Sensorless_StartRunChain`; direction set, sensorless the active sensor | V0, start-up align for `AlignTime_Cycles` with the observer converging; then the open-loop ramp, the observer's PLL seeded at the ramp's angle | `RUN` on the observer's lock |
+| `SENSORLESS_ALIGN` → `SENSORLESS_START_UP` | `Motor_Sensorless.c` | `PWM` on `PASSIVE` without lock at zero speed, or `Motor_Sensorless_StartRunChain`; direction set, sensorless the active sensor | V0, start-up align for `AlignTime_Cycles` with the observer converging; then the open-loop ramp, the observer's PLL seeded at the ramp's angle. Each corrects the observer in its LOOP | `SENSORLESS_RUN`, sensorless's alternate `RUN`, on the observer's lock |
 | `START_UP` → `START_UP_ALIGN` → `START_UP_VALIDATE_ALIGN` → `START_UP_VALIDATE_CLOSED_LOOP` | `Motor_Encoder.c` | `Motor_Encoder_StartUpChain`, a command on `PASSIVE`, at zero speed | align until the shaft settles and capture the encoder zero; open-loop run for twice the align time; closed loop for twice the align time | `RUN`; `FAULT` with `PositionSensor` if the encoder did not move, or on a speed / voltage polarity mismatch |
 | `ALIGN` → `VALIDATE_ALIGN` → `VALIDATE_CLOSED_LOOP` | `Motor_Encoder.c` | `Motor_Encoder_StartAlignZero`, `Motor_Encoder_StartValidateAlign`, `Motor_Encoder_StartValidateClosedLoop` | the same steps, each startable alone | the bare `OPEN_LOOP`; `FAULT` as above |
 
@@ -304,6 +304,9 @@ id yet.
 - `Motor_Sensor_StartUpState` names the selected sensor's start-up chain, for an entry by `PWM` in `PASSIVE`. It is
   `NULL` but for sensorless, and for sensorless unless the adapter is the active sensor: `Config.SensorMode` takes
   effect on reboot. The sensorless hand-off re-Parks the FOC's operating point at θ̂ (`FOC_MatchTheta`) before `RUN`.
+- `SENSORLESS_RUN` (`Motor_Sensorless.c`) is a top state in `RUN`'s place, with `RUN`'s id, entry, torque path and
+  action table. Its LOOP corrects the observer after the write; its own transitions send release and intervention
+  requests to `PASSIVE`, and every exit resets the observer. [Sensorless.md](Sensorless.md#states).
 
 ### `CALIBRATION`
 

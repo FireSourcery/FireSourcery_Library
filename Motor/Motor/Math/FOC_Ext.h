@@ -72,15 +72,6 @@ static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_inp
     }
 }
 
-/* only speed sets async */
-/* FeedbackState */
-static inline void _FOC_ProcIFeedbackLoop(FOC_T * p_foc, const volatile Phase_Triplet_T * p_iabc, ufract16_t vBus, angle16_t angle, int16_t dReq, int16_t qReq)
-{
-    FOC_SetTheta(p_foc, angle);
-    _FOC_CaptureIabc(p_foc, p_iabc);
-    FOC_ProcIFeedback(p_foc, vBus, dReq, qReq);
-    FOC_ProcInvClarkePark(p_foc);
-}
 
 static inline Phase_Triplet_T FOC_Vabc(const FOC_T * p_foc) { return (Phase_Triplet_T) { .A = p_foc->Va, .B = p_foc->Vb, .C = p_foc->Vc, }; }
 
@@ -90,7 +81,21 @@ static inline Phase_Triplet_T FOC_GetVOut(const FOC_T * p_foc)
     return (Phase_Triplet_T) { .A = fract16_sat(vOut.a), .B = fract16_sat(vOut.b), .C = fract16_sat(vOut.c), };
 }
 
+// static inline Phase_Triplet_T FOC_ProcIFeedbackVOut(FOC_T * p_foc, ufract16_t vBus, angle16_t angle, int16_t dReq, int16_t qReq)
+// {
+//     FOC_ProcIFeedback(p_foc, vBus, dReq, qReq);
+//     return FOC_GetVOut(p_foc);
+// }
 
+
+#include "Motor/Motor/Model/EmfObserver.h"
+/*
+    One control tick, after the FOC proc
+*/
+// static inline void FOC_Sensorless_Proc(const FOC_T * p_foc, EmfObserver_T * p_observer)
+// {
+//     EmfObserver_AlphaBeta_Proc(p_observer, p_foc->Ialpha, p_foc->Ibeta, p_foc->Valpha, p_foc->Vbeta);
+// }
 
 /*
     Operating point. One sample of the dq state. Every condition below reads the sample, not the live FOC fields.

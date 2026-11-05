@@ -83,7 +83,50 @@ static inline angle16_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 static inline void Motor_FOC_CaptureVSpeed(Motor_Context_T * p_motor) { FOC_CaptureSpeed(&p_motor->Foc, Motor_GetDecouplingOmega(p_motor)); }
 
 
+/******************************************************************************/
+/*
+    The current loop in pieces [Motor_FOC_AngleControl]: the take, then the loop.
+    Foc keeps the take after the loop. A step between them, or after the write, reads Id/Iq at the take's θ.
+*/
+/******************************************************************************/
+/* The take: θ, then the I set Clarke-Parked at it. Writes Sine/Cosine, Ialpha/Ibeta, Id/Iq */
+static inline void Motor_FOC_CaptureI(Motor_Context_T * p_motor, angle16_t theta)
+{
+    FOC_SetTheta(&p_motor->Foc, theta);
+    // FOC_CaptureI(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed), p_motor->PhaseInput.I.A, p_motor->PhaseInput.I.B, p_motor->PhaseInput.I.C);
+    _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values); /* The set as it stands, no freshness check: on the trigger it landed before this cycle's top */
+}
 
+/* The loop on the take: PI to Vd/Vq, then Valpha/Vbeta, Va..Vc. Valpha/Vbeta hold the last write until then */
+static inline void Motor_FOC_ProcIControl(Motor_Context_T * p_motor, ufract16_t vBus, fract16_t dReq, fract16_t qReq)
+{
+    FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
+    FOC_ProcInvClarkePark(&p_motor->Foc);
+}
+
+/* The torque path's d request: field weakening's, stepped on the V of the last write. Reads nothing the take writes */
+static inline fract16_t _Motor_FOC_ProcIdReq(Motor_Context_T * p_motor, ufract16_t vBus)
+{
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    return FOC_ProcIdFieldWeakening(&p_motor->Foc, vBus);
+#else
+    (void)p_motor; (void)vBus; return 0;
+#endif
+}
+
+void _Motor_FOC_ProcReqStep(Motor_Context_T * p_context, ufract16_t vbus, fract16_t req)
+{
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    FOC_ProcIdFieldWeakening(&p_context->Foc, vbus);
+#endif
+    Ramp_ProcNextOf(&p_context->TorqueRamp, req);
+}
+
+/* Map to StateMachine  */
+static inline void _Motor_FOC_ProcOnInput(Motor_Context_T * p_motor)
+{
+    FOC_CaptureI(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed), p_motor->PhaseInput.I.A, p_motor->PhaseInput.I.B, p_motor->PhaseInput.I.C);
+}
 
 /* Directly read register state */
 /* state machine handles write gate state */
@@ -100,7 +143,6 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_dev)
         default: break;
     }
 }
-
 
 
 /*

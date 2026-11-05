@@ -73,6 +73,13 @@ static inline state_t StateMachine_GetPathId(const StateMachine_Active_T * p_act
     return StateMachine_GetLeafState(p_active)->PATH_ID.Id;
 }
 
+
+static inline void _StateMachine_ActionInputRootState(const StateMachine_Active_T * p_active, void * p_context, size_t id)
+{
+    State_ActionInput(StateMachine_GetRootState(p_active), p_context, id);
+}
+
+
 /*
 
 */

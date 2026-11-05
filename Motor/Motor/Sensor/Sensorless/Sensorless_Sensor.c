@@ -42,7 +42,8 @@ static void Sensorless_Sensor_Init(Sensorless_Sensor_T * p_sensor)
 }
 
 /*
-    Every control tick: θ̂ += ω̂, then publish. As Hall interpolates between edges, the correction lands once per sample [Motor_Sensorless_Thread].
+    Every control tick: θ̂ += ω̂, then publish. As Hall interpolates between edges, the correction lands once per sample, in the observer's states [Motor_Sensorless.c].
+    In any other state, on the ω̂ the last correction left: SENSORLESS_RUN's exits reset it [ZERO_INITIAL].
     Once per tick: the only caller is Motor_CaptureSensor.
 */
 static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)

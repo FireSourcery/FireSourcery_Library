@@ -94,8 +94,8 @@ static void Hall_RotorSensor_CaptureSpeed(Hall_RotorSensor_T * p_sensor)
     /* Propagate FreqD for interpolation */
     AngleCounter_ResolveAngleDelta(p_sensor->P_COUNTER);
     /* Write speed to output interface */
-    _RotorSensor_SetSpeedPu(p_sensor->BASE.P_STATE, AngleCounter_GetSpeed_Pu(p_sensor->P_COUNTER));
     _RotorSensor_SetDelta(p_sensor->BASE.P_STATE, p_sensor->P_COUNTER->Base.Delta);
+    _RotorSensor_SetSpeedPu(p_sensor->BASE.P_STATE, AngleCounter_GetSpeed_Pu(p_sensor->P_COUNTER));
 }
 
 static bool Hall_RotorSensor_IsFeedbackAvailable(Hall_RotorSensor_T * p_sensor) { (void)p_sensor; return true; }

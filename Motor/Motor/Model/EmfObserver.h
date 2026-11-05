@@ -301,10 +301,63 @@ static angle16_t EmfObserver_Eemf_Proc(EmfObserver_T * p_obs, fract16_t i_d, fra
     return Angle_Value(&p_obs->Pll.Base);
 }
 
+/* The mean angle of the period the sample closes, the frame turning across it: θ̂ − Δθ̂/2 */
+static inline angle16_t _EmfObserver_HoldAngle(const EmfObserver_T * p_obs) { return (angle16_t)(Angle_Value(&p_obs->Pll.Base) - Angle_Delta(&p_obs->Pll.Base) / 2); }
+
+/*
+    EEMF SMO on the command the observer holds [EmfObserver_HoldV], after the write: the loop has overwritten its v[k−1], the hold still has it.
+        FOC_SetTheta                θ
+        FOC_ProcClarkePark          Ialpha, Ibeta, Id, Iq ← i[k]
+        FOC_ProcIFeedback           Vd, Vq ← v[k]
+        FOC_ProcInvClarkePark       Valpha, Vbeta, Va..Vc ← v[k]
+        EmfObserver_Eemf_ProcHeld   i[k] in Id/Iq, θ̂_[k], v[k−1] in VOutAlpha/VOutBeta
+        EmfObserver_HoldV           VOutAlpha, VOutBeta ← v[k], for the next sample
+*/
+static angle16_t EmfObserver_Eemf_ProcHeld(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q)
+{
+    struct fract16_xy hold = fract16_vector(_EmfObserver_HoldAngle(p_obs));
+    struct foc_dq v = foc_park(p_obs->VOutAlpha, p_obs->VOutBeta, hold.y, hold.x);
+    return EmfObserver_Eemf_Proc(p_obs, i_d, i_q, v.d, v.q);
+}
+
+
+
+/* The αβ sample in the frame θ̂, for a caller whose take Parked it at another angle */
+static inline struct foc_dq EmfObserver_ParkI(const EmfObserver_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
+{
+    struct fract16_xy frame = Angle_UnitVector(&p_obs->Pll.Base);
+    struct foc_dq i = foc_park(i_alpha, i_beta, frame.y, frame.x);
+    return (struct foc_dq){ .d = fract16_sat(i.d), .q = fract16_sat(i.q) };
+}
+
+/* An αβ voltage held across the period the sample closes, in the frame θ̂: Parked at the period's mean angle */
+static inline struct foc_dq EmfObserver_ParkHold(const EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta)
+{
+    struct fract16_xy hold = fract16_vector(_EmfObserver_HoldAngle(p_obs));
+    struct foc_dq v = foc_park(v_alpha, v_beta, hold.y, hold.x);
+    return (struct foc_dq){ .d = fract16_sat(v.d), .q = fract16_sat(v.q) };
+}
+
+/*
+    EEMF SMO on the dq sample and an αβ voltage held across the period it closes [EmfObserver_ParkHold].
+    i_dq the sample at θ̂: the FOC's take, where the FOC Parks at θ̂. Only without [FOC_I_SAMPLE_DELAY]: with it, the take is at θ̂ − ω·delay.
+    Between the take and the loop, v[k−1] is still the FOC's Valpha/Vbeta [EmfObserver_Eemf_Proc].
+*/
+static angle16_t EmfObserver_Eemf_ProcVAlphaBeta(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q, fract16_t v_alpha, fract16_t v_beta)
+{
+    struct foc_dq v = EmfObserver_ParkHold(p_obs, v_alpha, v_beta);
+    return EmfObserver_Eemf_Proc(p_obs, i_d, i_q, v.d, v.q);
+}
+
+
+
 /* Bumpless seed: θ̂ and ω̂ from a known reference, e.g. the open-loop ramp */
 static inline void EmfObserver_SeedAngle(EmfObserver_T * p_obs, angle16_t theta, angle16_t delta) { AnglePll_Seed(&p_obs->Pll, theta, delta); }
 
 static inline bool EmfObserver_IsLocked(const EmfObserver_T * p_obs) { return AnglePll_IsLocked(&p_obs->Pll); }
+
+/* |ê| at or below the floor: the correction holds θ̂, ω̂ as they were [AnglePll_IsIndeterminate] */
+static inline bool EmfObserver_IsIndeterminate(const EmfObserver_T * p_obs) { return AnglePll_IsIndeterminate(&p_obs->Pll); }
 
 /* After the write: the command the next sample's period holds. Where several writes share the period, the last before the sample */
 static inline void EmfObserver_HoldV(EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta) { p_obs->VOutAlpha = v_alpha; p_obs->VOutBeta = v_beta; }
@@ -347,14 +400,24 @@ static inline void EmfObserver_InitWinding(EmfObserver_T * p_obs, accum32_t r, u
     Var
 */
 /******************************************************************************/
+/* Appended only: the index is the wire's MotVarId.Base, 16 per type */
 typedef enum EmfObserver_Var
 {
     EMF_OBSERVER_VAR_ANGLE,
     EMF_OBSERVER_VAR_DELTA,
-    EMF_OBSERVER_VAR_EMF_ALPHA,
+    EMF_OBSERVER_VAR_EMF_ALPHA,     /* the stationary front end's [EmfObserver_AlphaBeta_Proc]. 0 under the EEMF one */
     EMF_OBSERVER_VAR_EMF_BETA,
     EMF_OBSERVER_VAR_EMF_MAG,
     EMF_OBSERVER_VAR_PLL_ERR,
+    /* Diagnostics: the EEMF front end [EmfObserver_Eemf_Proc], the detector and the lock [_AnglePll_ProcLock] */
+    EMF_OBSERVER_VAR_EMF_D,         /* ê_d, the detector's input: 0 at lock */
+    EMF_OBSERVER_VAR_EMF_Q,         /* ê_q: ω·ψ at lock, signed with the rotation */
+    EMF_OBSERVER_VAR_Z_D,           /* z_d, the SMO's correction before the LPF. ±K_smo outside the boundary layer */
+    EMF_OBSERVER_VAR_Z_Q,
+    EMF_OBSERVER_VAR_DIRECTION,     /* the rotor vector's sign, from ω̂ [_EmfObserver_Direction] */
+    EMF_OBSERVER_VAR_LOCK_COUNT,    /* consecutive stable samples, toward LockHoldCount */
+    EMF_OBSERVER_VAR_LOSS_COUNT,    /* while locked, consecutive unstable samples, toward LossHoldCount */
+    EMF_OBSERVER_VAR_LOCKED,        /* IS_FEEDBACK_AVAILABLE */
 }
 EmfObserver_Var_T;
 
@@ -368,6 +431,14 @@ static inline int32_t EmfObserver_GetVar(const EmfObserver_T * p_obs, EmfObserve
         case EMF_OBSERVER_VAR_EMF_BETA:     return p_obs->Beta.Emf;
         case EMF_OBSERVER_VAR_EMF_MAG:      return p_obs->Pll.Magnitude;
         case EMF_OBSERVER_VAR_PLL_ERR:      return p_obs->Pll.PhaseError;
+        case EMF_OBSERVER_VAR_EMF_D:        return p_obs->D.Emf;
+        case EMF_OBSERVER_VAR_EMF_Q:        return p_obs->Q.Emf;
+        case EMF_OBSERVER_VAR_Z_D:          return p_obs->D.Z;
+        case EMF_OBSERVER_VAR_Z_Q:          return p_obs->Q.Z;
+        case EMF_OBSERVER_VAR_DIRECTION:    return _EmfObserver_Direction(&p_obs->Pll.Base);
+        case EMF_OBSERVER_VAR_LOCK_COUNT:   return p_obs->Pll.LockCount;
+        case EMF_OBSERVER_VAR_LOSS_COUNT:   return p_obs->Pll.LossCount;
+        case EMF_OBSERVER_VAR_LOCKED:       return EmfObserver_IsLocked(p_obs);
         default: return 0;
     }
 }

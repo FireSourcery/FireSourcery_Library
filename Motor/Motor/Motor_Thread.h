@@ -54,6 +54,7 @@ static inline void Motor_PollSpeed(Motor_T * p_dev)
     {
         RotorSensor_CaptureSpeed(p_dev->P_MOTOR->p_ActiveSensor);
         _StateMachine_ActionInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MOTOR_STATE_INPUT_ON_SPEED); /* No critical section. Same thread as ISR */
+        // _StateMachine_ActionInputRootState(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MOTOR_STATE_INPUT_ON_SPEED);
     }
 }
 

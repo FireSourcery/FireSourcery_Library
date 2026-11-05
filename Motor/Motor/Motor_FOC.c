@@ -29,6 +29,7 @@
 /******************************************************************************/
 #include "Motor_FOC.h"
 #include "Analog/Motor_Analog.h"
+#include "Math/FOC.h"
 
 
 /*
@@ -51,10 +52,9 @@ void Motor_FOC_WriteDuty(Motor_T * p_motor)
 */
 __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 {
-    FOC_SetTheta(&p_motor->Foc, theta);
-    _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I.Values); /* The set as it stands, no freshness check: on the trigger it landed before this cycle's top */
-    FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-    FOC_ProcInvClarkePark(&p_motor->Foc);
+    Motor_FOC_CaptureI(p_motor, theta);
+    // FOC_CaptureI(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed), p_motor->PhaseInput.I.A, p_motor->PhaseInput.I.B, p_motor->PhaseInput.I.C);
+    Motor_FOC_ProcIControl(p_motor, vBus, dReq, qReq);
 }
 
 #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)
@@ -84,11 +84,7 @@ __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor,
 */
 void _Motor_FOC_ProcTorqueReq(Motor_Context_T * p_context, ufract16_t vbus, fract16_t req)
 {
-#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    fract16_t id = FOC_ProcIdFieldWeakening(&p_context->Foc, vbus);
-#else
-    fract16_t id = 0;
-#endif
+    fract16_t id = _Motor_FOC_ProcIdReq(p_context, vbus);
     fract16_t iq = Ramp_ProcNextOf(&p_context->TorqueRamp, req);
 
     Motor_FOC_AngleControl(p_context, vbus, Angle_Value(&p_context->SensorState.AngleSpeed), id, iq);
@@ -210,7 +206,7 @@ void Motor_FOC_ProcAngleV(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     fract16_t vReq = _Ramp_ProcNextOf(&p_context->TorqueRamp, p_context->UserCmd); /* inner loop clips with VLimit. Every control cycle, as the torque path */
     FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
-    FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I); /* Still capture I for overcurrent */
+    _FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I.Values); /* Still capture I for overcurrent */
     FOC_ProcVControl(&p_context->Foc, fract16_mul(VBus_Pu(p_motor->P_VBUS), FRACT16_1_DIV_SQRT3), 0, vReq);
     FOC_ProcInvClarkePark(&p_context->Foc);
 }

@@ -126,6 +126,9 @@ static inline angle16_t AnglePll_Proc(AnglePll_T * p_pll, fract16_t phaseError)
 
 static inline bool AnglePll_IsLocked(const AnglePll_T * p_pll) { return (p_pll->LockCount >= p_pll->FilterTuning.LockHoldCount); }
 
+/* The last detected vector at or below the floor: θ indeterminate, the error read 0, ω̂ held */
+static inline bool AnglePll_IsIndeterminate(const AnglePll_T * p_pll) { return (p_pll->Magnitude <= p_pll->FilterTuning.MagFloor); }
+
 // static inline void _AnglePll_ProcLock(AnglePll_T * p_pll, ufract16_t magnitude, fract16_t phaseError)
 // {
 //     bool stable = (magnitude > p_pll->FilterTuning.MagFloor) && (fract16_abs(phaseError) < p_pll->FilterTuning.LockErrTol);

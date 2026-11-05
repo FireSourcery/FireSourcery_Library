@@ -6,7 +6,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 |---|---|---|---|
 | Stator | v = R·i + L·di/dt + X·J·i + e, in the rotor's frame; X = ω·L, J the quarter turn | A closed polygon of voltages; when it doesn't close, the gap is L·Δi | `stator_i_next`, `Stator_Axis_Integrate` |
 | Frames | i_dq = e^(−jθ̂)·i_αβ | Clarke: three projections of one vector. Park: the frame turned by θ̂ | `foc_clarke`, `foc_park` |
-| Hold angle | v_dq = Park(v_αβ, θ̂ − Δθ̂/2) | The mean of an arc | `Sensorless_Sensor_ProcEemf` |
+| Hold angle | v_dq = Park(v_αβ, θ̂ − Δθ̂/2) | The mean of an arc | `EmfObserver_ParkHold` |
 | SMO switch | σ = î − i, z = K_smo·sat(σ / SmoSat) | A ramp clipped into plateaus; it balances the EMF where it crosses e − R·σ | `smo_sigma`, `smo_z` |
 | SMO step | σ' = (1 − G·R)·σ − G·z(σ) + G·e | A cobweb: staircase, zigzag or orbit, by the pole 1 − G·(R + K_smo/SmoSat) | `_EmfObserver_ProcSmo` |
 | LPF | ê ← ê + a·(z − ê) | A geometric series; the response on a circle | `lpf_step` |
