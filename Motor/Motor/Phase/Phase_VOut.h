@@ -118,10 +118,10 @@ static inline void _Phase_Disable(const Pin_T * p_pin, const PWM_T * p_pwm) { _P
 // static inline void _Phase_Enable(const Pin_T * p_pin, const PWM_T * p_pwm) { Pin_Output_High(p_pin); PWM_Enable(p_pwm); }
 // static inline void _Phase_Disable(const Pin_T * p_pin, const PWM_T * p_pwm) { Pin_Output_Low(p_pin); PWM_Disable(p_pwm); }
 
+/* 1 write, no read: the set or the clear register by [isOn] */
 static inline void _Phase_WriteOnOff(const Pin_T * p_pin, const PWM_T * p_pwm, bool isOn)
 {
-    if (isOn == true) { _Phase_Enable(p_pin, p_pwm); } else { _Phase_Disable(p_pin, p_pwm); }
-    // _PHASE_PIN_DEF(Pin_Output_WritePhysical(p_pin, isOn), PWM_WriteEnable(p_pwm, isOn));
+    _PHASE_PIN_DEF((void)p_pwm; Pin_Output_WritePhysical(p_pin, isOn), PWM_WriteEnable(p_pwm, isOn));
 }
 
 /* ReadOnOff using register state */
@@ -150,12 +150,7 @@ static inline bool _Phase_ReadOnOffC(Phase_VOut_T * p_phase) { return _Phase_Rea
 */
 static inline uint32_t _Phase_PwmSyncOf(Phase_VOut_T * p_phase, Phase_Id_T id)
 {
-    const Phase_Bitmask_T state = Phase_Bitmask(id);
-    return (_PWM_ChannelMaskOf(&p_phase->PWM_A, state.A) | _PWM_ChannelMaskOf(&p_phase->PWM_B, state.B) | _PWM_ChannelMaskOf(&p_phase->PWM_C, state.C));
-// #ifdef PHASE_INDIVIDUAL_CHANNEL_CONTROL
-// #else
-// return _PWM_Module_ChannelMaskOf(&p_phase->PWM_MODULE, state.Bits);
-// #endif
+    return Phase_MaskOf(id, p_phase->PWM_A.CHANNEL_ID, p_phase->PWM_B.CHANNEL_ID, p_phase->PWM_C.CHANNEL_ID);
 }
 
 /*
@@ -188,17 +183,6 @@ static inline uint32_t _Phase_PinSyncOf(Phase_VOut_T * p_phase, Phase_Id_T id)
     return (Pin_Module_MaskOf(&p_phase->PIN_A, state.A) | Pin_Module_MaskOf(&p_phase->PIN_B, state.B) | Pin_Module_MaskOf(&p_phase->PIN_C, state.C));
 }
 
-static inline void _Phase_SyncOnOff(Phase_VOut_T * p_phase, Phase_Id_T state)
-{
-#ifdef PHASE_PIN_SYNC /* caller enable when PINs are of the same module */
-    _Pin_WriteSyncOnOff(&p_phase->PIN_A, _Phase_PinSyncOf(p_phase, state));
-#else
-    (void)p_phase; (void)state;
-#endif
-// #ifndef PHASE_PIN_SWITCH
-//     _PWM_Module_WriteSyncOnOff(&p_phase->PWM_MODULE, _Phase_PwmSyncOf(p_phase, state));
-// #endif
-}
 
 /******************************************************************************/
 /*!
@@ -206,10 +190,14 @@ static inline void _Phase_SyncOnOff(Phase_VOut_T * p_phase, Phase_Id_T state)
 */
 /******************************************************************************/
 /* Let the compiler optimize/expand into the 8 derived functions */
+/*
+    PHASE_PIN_SYNC: 2 writes, the phases going off before the phases going on.
+    Otherwise 3 writes, in phase order.
+*/
 static inline void _Phase_WriteGates(Phase_VOut_T * p_phase, Phase_Id_T id)
 {
-#ifdef PHASE_PIN_SYNC
-    _Phase_SyncOnOff(p_phase, id); /* single register write */
+#ifdef PHASE_PIN_SYNC /* caller enable when PINs are of the same module */
+    Pin_Module_WriteOutput(&p_phase->PIN_A, _Phase_PinSyncOf(p_phase, PHASE_ID_ABC), _Phase_PinSyncOf(p_phase, id));
 #else
     const Phase_Bitmask_T state = Phase_Bitmask(id);
     _Phase_WriteOnOffA(p_phase, state.A);

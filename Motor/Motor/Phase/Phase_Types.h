@@ -76,6 +76,22 @@ Phase_Bitmask_T;
 static inline Phase_Bitmask_T Phase_Bitmask(Phase_Id_T id) { return (Phase_Bitmask_T) { .Bits = id }; }
 static inline Phase_Id_T Phase_IdOf(Phase_Bitmask_T id) { return (Phase_Id_T)id.Bits; }
 
+/*
+    Phase_Id <-> register mask. Phase A, B, C at bit [indexA], [indexB], [indexC] of a peripheral register.
+*/
+/* Spread 0b0CBA to the register's bits */
+static inline uint32_t Phase_MaskOf(Phase_Id_T id, uint32_t indexA, uint32_t indexB, uint32_t indexC)
+{
+    const Phase_Bitmask_T bits = Phase_Bitmask(id);
+    return (((uint32_t)bits.A << indexA) | ((uint32_t)bits.B << indexB) | ((uint32_t)bits.C << indexC));
+}
+
+/* Gather the register's bits to 0b0CBA. The inverse of Phase_MaskOf */
+static inline Phase_Id_T Phase_IdOfMask(uint32_t mask, uint32_t indexA, uint32_t indexB, uint32_t indexC)
+{
+    return Phase_IdOf((Phase_Bitmask_T) { .A = ((mask >> indexA) & 1U), .B = ((mask >> indexB) & 1U), .C = ((mask >> indexC) & 1U) });
+}
+
 /* Virtual CCW */
 /* +60 degrees */
 static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)

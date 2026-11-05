@@ -94,8 +94,14 @@ static inline bool Pin_Input_Read(const Pin_T * p_pin) { return (Pin_Input_ReadP
 */
 /******************************************************************************/
 static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ? p_pin->ID : 0UL); }
-// static inline uint32_t Pin_Module_WriteSyncOn(const Pin_T * p_pin, uint32_t states) { return HAL_Pin_Module_WriteOutput(p_pin->P_HAL_PIN, states); }
-// static inline uint32_t Pin_Module_WriteSyncOff(const Pin_T * p_pin, uint32_t states) { return HAL_Pin_Module_WriteOutput(p_pin->P_HAL_PIN, states); }
+
+/* The pins in [mask], all of [p_pin]'s module, as voltage level. The rest of [mask] off, then [states] on: 2 writes, no read */
+static inline void Pin_Module_WriteOutput(const Pin_T * p_pin, uint32_t mask, uint32_t states)
+{
+    HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, mask & ~states);
+    HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, states);
+    // HAL_Pin_WriteModuleOutput(p_pin->P_HAL_PIN, mask, states);
+}
 
 /******************************************************************************/
 /*!
@@ -118,7 +124,6 @@ static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { retur
 static void Pin_Output_Init(const Pin_T * p_pin)
 {
     HAL_Pin_InitOutput(p_pin->P_HAL_PIN, p_pin->ID);
-    // HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, p_pin->ID);
     Pin_Output_Off(p_pin);
 }
 

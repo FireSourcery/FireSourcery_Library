@@ -51,7 +51,8 @@ static inline uint32_t HAL_PWM_ReadDuty(HAL_PWM_T * p_hal, uint32_t channel)    
 
 static inline void HAL_PWM_EnableOutput(HAL_PWM_T * p_hal, uint32_t channel)                { p_hal->OUTMASK &= ~(1UL << channel); }
 static inline void HAL_PWM_DisableOutput(HAL_PWM_T * p_hal, uint32_t channel)               { p_hal->OUTMASK |= (1UL << channel); }
-static inline bool HAL_PWM_ReadOutputState(HAL_PWM_T * p_hal, uint32_t channel)             { return p_hal->OUTMASK & (1UL << channel); }
+static inline bool HAL_PWM_ReadOutputState(HAL_PWM_T * p_hal, uint32_t channel)             { return ((p_hal->OUTMASK & (1UL << channel)) == 0UL); } /* OUTMASK 1 is masked, forced inactive */
+
 static inline void HAL_PWM_EnableInvertPolarity(HAL_PWM_T * p_hal, uint32_t channel)        { p_hal->POL |= (1UL << channel); }
 static inline void HAL_PWM_DisableInvertPolarity(HAL_PWM_T * p_hal, uint32_t channel)       { p_hal->POL &= ~(1UL << channel); }
 
@@ -75,15 +76,19 @@ static inline void HAL_PWM_ClearInterrupt(HAL_PWM_Module_T * p_hal)    { p_hal->
 static inline void HAL_PWM_DisableInterrupt(HAL_PWM_Module_T * p_hal)  { p_hal->SC &= ~FTM_SC_TOIE_MASK; }
 static inline void HAL_PWM_EnableInterrupt(HAL_PWM_Module_T * p_hal)   { p_hal->SC |= FTM_SC_TOIE_MASK; }
 
-/* Sync update buffered values, via config select in init. */
-static inline void HAL_PWM_SyncModule(HAL_PWM_Module_T * p_hal) { p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
-
 /* update buffer and actuate sync update */
 /* Duty may write channels individually then sync */
-static inline void HAL_PWM_SyncModuleDuty(HAL_PWM_Module_T * p_hal, uint32_t channels) { (void)channels; p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
-/* Write full register only, if sync is enabled */
-static inline void HAL_PWM_SyncModuleOutputState(HAL_PWM_Module_T * p_hal, uint32_t channels)   { (void)p_hal; (void)channels; /* p_hal->OUTMASK &= ~channels; */ }
-static inline void HAL_PWM_SyncModuleInvert(HAL_PWM_Module_T * p_hal, uint32_t channels) { (void)p_hal; (void)channels; /* p_hal->POL |= channels; p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK;*/ }
+/* The whole SYNC value: the trigger and the loading points. Every duty sync rewrites every bit, so a bit enabled at init goes here */
+#define _HAL_PWM_SYNC_DUTY (FTM_SYNC_SWSYNC_MASK | FTM_SYNC_CNTMIN_MASK | FTM_SYNC_CNTMAX_MASK) // | FTM_SYNC_SYNCHOM_MASK
+static inline void HAL_PWM_SyncModuleDuty(HAL_PWM_Module_T * p_hal, uint32_t channels) { (void)channels; p_hal->SYNC = _HAL_PWM_SYNC_DUTY; }
+/*
+    Whole register writes: every channel's state in 1 write, so the phases change on the same clock. Neither waits for a loading point.
+*/
+#define _HAL_PWM_OUTMASK_ALL (FTM_OUTMASK_CH0OM_MASK | FTM_OUTMASK_CH1OM_MASK | FTM_OUTMASK_CH2OM_MASK | FTM_OUTMASK_CH3OM_MASK | FTM_OUTMASK_CH4OM_MASK | FTM_OUTMASK_CH5OM_MASK | FTM_OUTMASK_CH6OM_MASK | FTM_OUTMASK_CH7OM_MASK)
+/* [channels] on, the rest masked. OUTMASK loads from its buffer on the next system clock, SYNCHOM = 0 */
+static inline void HAL_PWM_SyncModuleOutputState(HAL_PWM_Module_T * p_hal, uint32_t channels) { p_hal->OUTMASK = (_HAL_PWM_OUTMASK_ALL & ~channels); }
+/* [channels] inverted, the rest active high. POL has no write buffer: it changes at the write, no sync applies */
+static inline void HAL_PWM_SyncModuleInvert(HAL_PWM_Module_T * p_hal, uint32_t channels) { p_hal->POL = channels; }
 
 /* Caller accounts for factor of 2 in up down mode */
 static inline void HAL_PWM_InitModulePeriod(HAL_PWM_Module_T * p_hal, uint32_t ticks)
@@ -109,16 +114,13 @@ static inline void HAL_PWM_InitModule(HAL_PWM_Module_T * p_hal)
     p_hal->MODE         = FTM_MODE_WPDIS_MASK | FTM_MODE_FTMEN_MASK; /* Enable FTM mode */
     p_hal->COMBINE      = FTM_COMBINE_SYNCEN0_MASK | FTM_COMBINE_SYNCEN1_MASK | FTM_COMBINE_SYNCEN2_MASK | FTM_COMBINE_SYNCEN3_MASK;    /* All channel sync set to enable. */
     /* Software write trigger Sync */
-    /* Sync of channels other than duty cannot be written with iterative |= */
-    p_hal->SYNC         = FTM_SYNC_SWSYNC_MASK | FTM_SYNC_CNTMIN_MASK | FTM_SYNC_CNTMAX_MASK; // | FTM_SYNC_SYNCHOM_MASK;
-    p_hal->SYNCONF      = FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWWRBUF_MASK; // | FTM_SYNCONF_INVC_MASK, FTM_SYNCONF_HWWRBUF_MASK
-                            // | FTM_SYNCONF_SWOC_MASK | FTM_SYNCONF_SWINVC_MASK | FTM_SYNCONF_SWOM_MASK| FTM_SYNCONF_SWSOC_MASK;
-                            // | FTM_SYNCONF_SWRSTCNT_MASK
-    p_hal->OUTMASK      = FTM_OUTMASK_CH0OM_MASK | FTM_OUTMASK_CH1OM_MASK | FTM_OUTMASK_CH2OM_MASK | FTM_OUTMASK_CH3OM_MASK | FTM_OUTMASK_CH4OM_MASK | FTM_OUTMASK_CH5OM_MASK | FTM_OUTMASK_CH6OM_MASK | FTM_OUTMASK_CH7OM_MASK;
+    p_hal->SYNC         = _HAL_PWM_SYNC_DUTY;
+    /* Enhanced sync, the software trigger loads MOD, CNTIN, CnV at the loading point. The other synced registers (OUTMASK, INVCTRL, SWOCTRL) load at the trigger itself, so they are left unsynced. SWRSTCNT would restart the period on every duty sync */
+    p_hal->SYNCONF      = FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWWRBUF_MASK;
+    p_hal->OUTMASK      = _HAL_PWM_OUTMASK_ALL;
     p_hal->EXTTRIG      = FTM_EXTTRIG_INITTRIGEN_MASK;
     p_hal->CONF         = FTM_CONF_BDMMODE(0x03U);
-    p_hal->SC           = FTM_SC_CPWMS_MASK | FTM_SC_TOIE_MASK;
-    p_hal->SC           |= FTM_SC_CLKS(0x01U);
+    p_hal->SC           = FTM_SC_CPWMS_MASK | FTM_SC_TOIE_MASK; /* Clock off. HAL_PWM_InitModulePeriod writes MOD and starts the counter */
 }
 
 #endif
