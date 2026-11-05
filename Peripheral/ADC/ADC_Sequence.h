@@ -57,8 +57,6 @@ ADC_Sequence_T;
 
 #define ADC_SEQUENCE(p_Adc, Channels, CompleteFn, p_Context) (ADC_Sequence_T)ADC_SEQUENCE_FIELDS(p_Adc, Channels, CompleteFn, p_Context)
 
-// static inline adc_channel_t ADC_Sequence_Start(ADC_Sequence_T * p_sequence) { return ADC_ChannelStartOf(p_sequence->CHANNELS); }
-// static inline uint8_t ADC_Sequence_Count(ADC_Sequence_T * p_sequence) { return ADC_ChannelCountOf(p_sequence->CHANNELS); }
 
 /******************************************************************************/
 /*

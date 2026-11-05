@@ -49,8 +49,9 @@ static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
     AnglePll_Predict(&p_sensor->P_OBSERVER->Pll);
+
     p_rotor->AngleSpeed.Angle = p_sensor->P_OBSERVER->Pll.Base.Angle;
-    _RotorSensor_CaptureDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
+    _RotorSensor_SetDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
 }
 
 /* Idempotent publish — Proc already advances θ̂, ω̂ in the observer's [AnglePll_T];
@@ -59,7 +60,7 @@ static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
 // {
 //     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
 //     p_rotor->AngleSpeed.Angle = p_sensor->P_OBSERVER->Pll.Base.Angle;
-//     _RotorSensor_CaptureDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
+//     _RotorSensor_SetDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
 // }
 
 /* Project observer ω̂ → fract16 speed via the configured SpeedPuRef.
@@ -67,8 +68,8 @@ static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
 static void Sensorless_Sensor_CaptureSpeed(Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
-    // p_rotor->Speed_Pu = Angle_ResolveSpeed_Pu(&p_rotor->AngleSpeed, &p_rotor->UnitRef.SpeedPuRef);
-    _RotorSensor_CaptureSpeedPu(p_rotor, Angle_ResolveSpeed_Pu(&p_rotor->AngleSpeed, &p_rotor->UnitRef.SpeedPuRef));
+
+    _RotorSensor_SetSpeedPu(p_rotor, Angle_ResolveSpeed_Pu(&p_rotor->AngleSpeed, &p_rotor->UnitRef.SpeedPuRef));
 }
 
 static bool Sensorless_Sensor_IsFeedbackAvailable(Sensorless_Sensor_T * p_sensor)

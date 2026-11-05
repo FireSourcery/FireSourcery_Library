@@ -37,7 +37,6 @@
 #include "../../StateMachine/Motor_OpenLoop.h"
 #include "../../Motor_FOC.h"
 
-#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 /*
     Start the sensorless align → ramp → closed-loop handoff chain.
     Enters MOTOR_STATE_OPEN_LOOP at the SENSORLESS_ALIGN substate; the substate
@@ -49,10 +48,11 @@ extern State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor);
 
 /* The observer before the FOC proc. Takes the device as a state action does, for an ON_PHASE action table */
 // extern void Motor_Sensorless_CaptureStator(Motor_T * p_motor);
+
 /* The observer's correction, every control cycle after the PWM ISR's write and the board's arm */
 extern void Motor_Sensorless_Thread(Motor_T * p_motor);
+
 // extern void Motor_Sensorless_InitWinding(Motor_T * p_motor); /* The sensor's INIT_UNITS resolves the winding */
-#endif
 
 /******************************************************************************/
 /*
