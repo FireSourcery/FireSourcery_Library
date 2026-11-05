@@ -60,20 +60,18 @@
         Hw sequenced    - ADC_HW_SEQUENCER_ENABLE. A trigger converts the slot range, a transfer
                           fills the results, and the Board's ISR flags the set it armed.
         Software        - Channels are marked, the ISR walks them, fifo depth at a time.
-        Hw triggered    - ADC_HW_TRIGGER_ENABLE. Channels are marked, and the thread arms the marked
-                          channels of 1 set per trigger, 1 fifo, to convert on it. The completion
-                          continues nothing: no walk. ADC_ArmMarked, ADC_Thread.h.
+        Hw triggered    - Channels are marked, and the thread arms the marked channels of 1 set
+                          per trigger, 1 fifo, to convert on it. The completion continues nothing:
+                          no walk. ADC_ArmMarked, ADC_OnCompleteArmed_ISR, ADC_Thread.h.
+                          HAL_ADC_ArmEach arms nothing without HAL_ADC_HW_TRIGGER_FIFO.
 */
 /******************************************************************************/
 #ifndef ADC_HW_SEQUENCER_ENABLE
 #define ADC_HW_SEQUENCER_ENABLE false
 #endif
-
-/* Selects the completion's branch [_ADC_OnComplete]. The arms compile either way: HAL_ADC_ArmEach arms nothing without HAL_ADC_HW_TRIGGER_FIFO */
-#ifndef ADC_HW_TRIGGER_ENABLE
-#define ADC_HW_TRIGGER_ENABLE false
-#endif
-
+// #ifndef ADC_HW_TRIGGER_ENABLE
+// #define ADC_HW_TRIGGER_ENABLE false
+// #endif
 #ifdef HAL_ADC_FIFO_LENGTH_MAX
 #define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
 #endif

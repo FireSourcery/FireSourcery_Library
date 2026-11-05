@@ -34,8 +34,8 @@
 
         static ADC_Channel_T ADC0_CHANNELS[] =
         {
-            [CHANNEL_VSOURCE]     = ADC_CHANNEL(&ADCS[0U], CHANNEL_VSOURCE, PIN_VSOURCE, &VBus, VBus_Analog_Capture),
-            [CHANNEL_MOTOR0_IA]   = ADC_CHANNEL(&ADCS[0U], CHANNEL_MOTOR0_IA, PIN_IA, &Motors[0U], Motor_Analog_CaptureIa),
+            [CHANNEL_VSOURCE]     = ADC_CHANNEL_INIT(&ADCS[0U], CHANNEL_VSOURCE, PIN_VSOURCE, &VBus, VBus_Analog_Capture),
+            [CHANNEL_MOTOR0_IA]   = ADC_CHANNEL_INIT(&ADCS[0U], CHANNEL_MOTOR0_IA, PIN_IA, &Motors[0U], Motor_Analog_CaptureIa),
         };
 
         void BOARD_ADC0_ISR(void) { ADC_Channel_OnComplete_ISR(&ADCS[0U], ADC0_CHANNELS); }
@@ -57,7 +57,7 @@ ADC_Channel_T;
 #define ADC_CHANNEL_FIELDS(p_Adc, ChannelId, PinId, p_Context, CaptureFn) \
     { .P_ADC = (p_Adc), .ID = (ChannelId), .PIN = (PinId), .CAPTURE = (ADC_Capture_T)(CaptureFn), .P_CONTEXT = (void *)(p_Context), }
 
-#define ADC_CHANNEL(p_Adc, ChannelId, PinId, p_Context, CaptureFn) (ADC_Channel_T)ADC_CHANNEL_FIELDS(p_Adc, ChannelId, PinId, p_Context, CaptureFn)
+#define ADC_CHANNEL_INIT(p_Adc, ChannelId, PinId, p_Context, CaptureFn) (ADC_Channel_T)ADC_CHANNEL_FIELDS(p_Adc, ChannelId, PinId, p_Context, CaptureFn)
 
 static inline adc_mask_t ADC_Channel_Mask(ADC_Channel_T * p_channel) { return ADC_MaskOf(p_channel->ID); }
 

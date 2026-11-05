@@ -41,8 +41,8 @@ typedef const struct ADC_Reference
 ADC_Reference_T;
 
 /* Derives ADC_MAX from the bits, at config time */
-#define ADC_REFERENCE_INIT(AdcBits, AdcVrefMilliv) (ADC_Reference_T) \
-    { .ADC_BITS = (AdcBits), .ADC_MAX = ((1U << (AdcBits)) - 1U), .ADC_VREF_MILLIV = (AdcVrefMilliv), }
+#define ADC_REFERENCE_INIT(Bits, VrefMilliv) \
+    { .ADC_BITS = (Bits), .ADC_MAX = ((1U << (Bits)) - 1U), .ADC_VREF_MILLIV = (VrefMilliv), }
 
 /* Global static. Defined in the main App */
 extern const ADC_Reference_T ADC_REFERENCE;

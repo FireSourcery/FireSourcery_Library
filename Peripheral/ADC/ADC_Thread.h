@@ -29,8 +29,8 @@
     @brief  Base ISR and thread entry points. 1 ADC, no set and no handler.
 
     Software:       ADC_OnComplete_ISR, in the ADC ISR. ADC_ActivateMarked, in the thread that requests.
-    Hw triggered:   ADC_ArmMarked, or ADC_Arm for a set as given, once per trigger, in place of ADC_ActivateMarked. The same ISR captures the armed fifo,
-                    and continues nothing: every set converts on a trigger the thread arms it for.
+    Hw triggered:   ADC_ArmMarked, or ADC_Arm for a set as given, once per trigger, in place of ADC_ActivateMarked. ADC_OnCompleteArmed_ISR captures
+                    the armed fifo, and continues nothing: every set converts on a trigger the thread arms it for.
     Hw sequenced:   ADC_ActivateSlots writes the sequencer. ADC_OnCompleteTransfer_ISR, in the
                     transfer complete ISR, flags the set the caller armed.
 
@@ -45,55 +45,18 @@
     Software activation
 */
 /******************************************************************************/
-static inline void _ADC_ActivateMarked(ADC_T * p_adc)
-{
-    _ADC_SetStateFrom(p_adc->P_STATE, p_adc->P_STATE->ChannelMarkers);
-    assert(p_adc->P_STATE->ActiveChannelCount > 0U); /* Callers gate on ChannelMarkers, so the selection is never empty */
-    _ADC_Activate(p_adc);
-}
-
-/*
-    The captured channels leave the work queue and enter the completion flags, so the two words
-    hold the whole conversion state: what is left to convert, and what has landed unconsumed.
-*/
-// static inline void _ADC_OnComplete(HAL_ADC_T * p_adc, state )
-static inline void _ADC_OnComplete(ADC_T * p_adc)
-{
-    ADC_State_T * p_state = p_adc->P_STATE;
-
-#ifndef NDEBUG
-    if (p_state->ActiveChannelCount == 0U) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); p_state->ErrorCount++; }
-#if (ADC_FIFO_LENGTH_MAX > 1U)
-    else if (p_state->ActiveChannelCount != HAL_ADC_ReadFifoCount(p_adc->P_HAL_ADC)) { p_state->FifoMismatch++; }
-#endif
-#endif
-
-    if (p_state->ActiveChannelCount > 0U)
-    {
-        adc_mask_t captured = _ADC_Capture(p_adc);
-
-        p_state->ChannelMarkers &= ~captured;
-        p_state->CompleteFlags  |=  captured;
-        p_state->ActiveChannelCount = 0U;
-
-#if ADC_HW_TRIGGER_ENABLE
-        HAL_ADC_Deactivate(p_adc->P_HAL_ADC); /* Resets the fifo. The thread arms the next set on its own trigger [ADC_ArmMarked] */
-#else
-        /* Continue incrementing. Channels do not repeat until all marked channels have completed once */
-        if (p_state->ChannelMarkers != 0UL) { _ADC_ActivateMarked(p_adc); }
-        else { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
-#endif
-    }
-}
-
 /*!
-    @brief  Capture the active channels. Software started: continue with the remaining marked channels.
-            Run in the ADC ISR. Higher priority than the thread calling ADC_ActivateMarked or ADC_ArmMarked.
+    @brief  Capture the active channels, and continue with the remaining marked channels. Software started [ADC_ActivateMarked].
+            Run in the ADC ISR. Higher priority than the thread calling ADC_ActivateMarked.
 */
 static inline void ADC_OnComplete_ISR(ADC_T * p_adc)
 {
     HAL_ADC_ClearConversionCompleteFlag(p_adc->P_HAL_ADC);
-    _ADC_OnComplete(p_adc);
+    if (_ADC_CaptureActive(p_adc) == true) /* Continue incrementing. Channels do not repeat until all marked channels have completed once */
+    {
+        if (p_adc->P_STATE->ChannelMarkers != 0UL) { _ADC_ActivateMarked(p_adc); }
+        else { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
+    }
 }
 
 /*!
@@ -107,7 +70,7 @@ static inline void ADC_PollCompleteFifo(ADC_T * p_adc)
 /*!
     @brief  Start the marked channels. Run in the thread that requests conversions.
             Only 1 thread starts conversions, no critical section is needed.
-            Not with a Hw trigger [ADC_HW_TRIGGER_ENABLE]: its thread arms each set instead [ADC_ArmMarked].
+            Not with a Hw trigger: its thread arms each set instead [ADC_ArmMarked].
 */
 static inline void ADC_ActivateMarked(ADC_T * p_adc)
 {
@@ -124,12 +87,12 @@ static inline void ADC_ActivateMarked(ADC_T * p_adc)
 #endif
 }
 
-// static inline void ADC_ActivateMarked_Thread(ADC_T * p_adc)
+// static inline void ADC_Activate(ADC_T * p_adc, adc_mask_t channels)
 // {
-// #if ADC_HW_TRIGGER_ENABLE
-//     if (ADC_ReadIsArmed(p_adc) == true) { return; } /* The armed fifo converts first, and its completion continues the walk */
-// #endif
-//     ADC_ActivateMarked(p_adc);
+// p_adc->P_STATE->ChannelMarkers |= channels;
+    // _ADC_SetStateFrom(p_adc->P_STATE, p_adc->P_STATE->ChannelMarkers);
+    // assert(p_adc->P_STATE->ActiveChannelCount > 0U); /* Callers gate on ChannelMarkers, so the selection is never empty */
+    // _ADC_Activate(p_adc);
 // }
 
 /******************************************************************************/
@@ -141,6 +104,18 @@ static inline void ADC_ActivateMarked(ADC_T * p_adc)
     the next arm finds the reset fifo and converts nothing. [ActiveChannelCount] is the armed state.
 */
 /******************************************************************************/
+/*!
+    @brief  Capture the armed fifo. Continues nothing.
+            Run in the ADC ISR, in place of ADC_OnComplete_ISR. Higher priority than the thread calling ADC_ArmMarked.
+*/
+static inline void ADC_OnCompleteArmed_ISR(ADC_T * p_adc)
+{
+    HAL_ADC_ClearConversionCompleteFlag(p_adc->P_HAL_ADC);
+    /* The thread arms the next set on its own trigger [ADC_ArmMarked] */
+    if (_ADC_CaptureActive(p_adc) == true) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); } /* Resets the fifo */
+}
+
+
 /* Its trigger did not come. The channels stay marked for the next arm */
 static inline void _ADC_Disarm(ADC_T * p_adc)
 {
@@ -184,6 +159,15 @@ static inline bool ADC_ArmMarked(ADC_T * p_adc, adc_mask_t filter)
 
     return isArmed;
 }
+
+// static inline void ADC_ActivateMarked_Thread(ADC_T * p_adc)
+// {
+// #if ADC_HW_TRIGGER_ENABLE
+//     if (ADC_ReadIsArmed(p_adc) == true) { return; } /* The armed fifo converts first, and its completion continues the walk */
+// #endif
+//     ADC_ActivateMarked(p_adc);
+// }
+
 
 /******************************************************************************/
 /*

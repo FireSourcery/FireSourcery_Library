@@ -134,7 +134,7 @@ static inline void HAL_ADC_ArmEach(HAL_ADC_T * p_hal, const adc_pin_t * p_pins, 
 {
     HAL_ADC_EnableHwTrigger(p_hal); /* First. Under software trigger, the last fifo write starts the conversion */
     HAL_ADC_WriteHwTriggerFifoCount(p_hal, count);
-    HAL_ADC_WriteFifo_ActivateOnLast(p_hal, p_pins, count);
+    HAL_ADC_WriteFifo_ActivateOnLast(p_hal, p_pins, count); /* same as activate for now. */
 }
 #else
 /* No Hw trigger fifo: arms nothing. A Hw sequenced platform's sets run on its sequencer [HAL_ADC_SelectDmaSequence] */

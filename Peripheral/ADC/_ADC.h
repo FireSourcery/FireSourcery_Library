@@ -160,3 +160,46 @@ static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, adc_mask_t sou
     return _ADC_SetStateFrom_Branch(p_state, sourceMarkers);
 #endif
 }
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+static inline void _ADC_ActivateMarked(ADC_T * p_adc)
+{
+    _ADC_SetStateFrom(p_adc->P_STATE, p_adc->P_STATE->ChannelMarkers);
+    assert(p_adc->P_STATE->ActiveChannelCount > 0U); /* Callers gate on ChannelMarkers, so the selection is never empty */
+    _ADC_Activate(p_adc);
+}
+
+/*
+    The captured channels leave the work queue and enter the completion flags, so the two words
+    hold the whole conversion state: what is left to convert, and what has landed unconsumed.
+    false where nothing was active. Each completion continues from here its own way.
+*/
+// static inline void _ADC_OnComplete(HAL_ADC_T * p_adc, state )
+static inline bool _ADC_CaptureActive(ADC_T * p_adc)
+{
+    ADC_State_T * p_state = p_adc->P_STATE;
+    bool isCaptured = false;
+
+#ifndef NDEBUG
+    if (p_state->ActiveChannelCount == 0U) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); p_state->ErrorCount++; }
+#if (ADC_FIFO_LENGTH_MAX > 1U)
+    else if (p_state->ActiveChannelCount != HAL_ADC_ReadFifoCount(p_adc->P_HAL_ADC)) { p_state->FifoMismatch++; }
+#endif
+#endif
+
+    if (p_state->ActiveChannelCount > 0U)
+    {
+        adc_mask_t captured = _ADC_Capture(p_adc);
+
+        p_state->ChannelMarkers &= ~captured;
+        p_state->CompleteFlags  |=  captured;
+        p_state->ActiveChannelCount = 0U;
+        isCaptured = true;
+    }
+
+    return isCaptured;
+}
