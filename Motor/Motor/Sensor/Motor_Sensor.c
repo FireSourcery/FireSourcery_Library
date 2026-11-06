@@ -59,3 +59,18 @@ State_T * Motor_Sensor_StartUpState(Motor_T * p_motor)
     }
 }
 
+/*
+    The open loop that carries on from the selected sensor's last angle, for RUN's feedback loss. NULL where the sensor has none.
+    Referenced only under [MOTOR_OPEN_LOOP_FALLBACK_ENABLE]: compiled in every build.
+*/
+State_T * Motor_Sensor_FallbackState(Motor_T * p_motor)
+{
+    switch (p_motor->P_MOTOR->Config.SensorMode)
+    {
+    #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+        case ROTOR_SENSOR_ID_SENSORLESS: return Motor_Sensorless_FallbackState(p_motor);
+    #endif
+        default: return NULL;
+    }
+}
+

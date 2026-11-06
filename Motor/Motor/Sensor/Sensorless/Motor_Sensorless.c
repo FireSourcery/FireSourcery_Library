@@ -47,8 +47,10 @@
 
 // #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 
+static const State_T SENSORLESS_COAST;
 static const State_T SENSORLESS_ALIGN;
 static const State_T SENSORLESS_START_UP;
+static const State_T SENSORLESS_FALLBACK;
 
 /* Keep it compiling. */
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
@@ -56,6 +58,56 @@ static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { ret
 #else
 static inline const Sensorless_Sensor_T * GetSensorless(Motor_T * p_motor) { return NULL; }
 #endif
+
+
+/******************************************************************************/
+/*
+    Coast — a start pending under PASSIVE until PASSIVE has lasted the coast time [MOTOR_SENSORLESS_COAST_CYCLES], then ALIGN.
+    The chain's entry from PASSIVE at speed 0 [Motor_Sensorless_StartUpState]: the request is taken and waited out, not refused,
+    as the application sends it once, on the throttle's edge.
+    No entry, no LOOP: PASSIVE's phase state stays, and its LOOP keeps the capture, the observer's input, true.
+    Entered and left within PASSIVE, PASSIVE is not entered again: ControlTimerBase counts on from its entry [Motor_ResetControlTimer].
+*/
+/******************************************************************************/
+/* Cancelled by a cleared direction. Caught where the observer reaches feedback, as PASSIVE's PWM request is */
+static State_T * Coast_Next(Motor_T * p_motor)
+{
+    if (Motor_Direction(p_motor->P_MOTOR) == MOTOR_DIRECTION_NULL) { return &MOTOR_STATE_PASSIVE; }
+    if (RotorSensor_IsFeedbackAvailable(&GetSensorless(p_motor)->BASE) == true) { return &MOTOR_STATE_RUN; }
+    return (p_motor->P_MOTOR->ControlTimerBase >= MOTOR_SENSORLESS_COAST_CYCLES) ? &SENSORLESS_ALIGN : NULL;
+}
+
+/* Overrides PASSIVE's: Z or 0 cancels the pending start, back to PASSIVE, with the phase state PASSIVE applies. PWM is already pending */
+static State_T * Coast_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
+{
+    switch ((Phase_VOutMode_T)phaseOutput)
+    {
+        case PHASE_VOUT_Z:
+            if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
+            return &MOTOR_STATE_PASSIVE;
+        case PHASE_VOUT_0:
+            Phase_ActivateV0(&p_motor->PHASE);
+            return &MOTOR_STATE_PASSIVE;
+        case PHASE_VOUT_PWM:    return NULL;
+        default:                return NULL;
+    }
+}
+
+static const State_Input_T COAST_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
+{
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT] = (State_Input_T)Coast_InputControl,
+};
+
+static const State_T SENSORLESS_COAST =
+{
+    .PATH_ID    = { .Depth0 = MOTOR_STATE_ID_PASSIVE }, /* sub-state id not yet allocated: reports as the root state */
+
+    .P_TOP    = &MOTOR_STATE_PASSIVE,
+    .P_PARENT = &MOTOR_STATE_PASSIVE,
+    .DEPTH    = 1U,
+    .NEXT     = (State_Input0_T)Coast_Next,
+    .P_TRANSITION_TABLE = &COAST_TRANSITION_TABLE[0U],
+};
 
 
 /******************************************************************************/
@@ -165,6 +217,35 @@ static const State_T SENSORLESS_START_UP =
 
 /******************************************************************************/
 /*
+    Fallback — from RUN, |ê| fallen below MagRun with the lock still held [Motor_Sensorless_FallbackState].
+    START_UP's seed reversed: the ramp takes the observer's angle and speed, its current the final value at once. Then START_UP's ramp and hand-off,
+    back to RUN once |ê| holds above MagRun again.
+    The ramp drives toward OpenLoopRampSpeedFinal, whatever the user's command: a speed-held load's fallback, not traction's.
+*/
+/******************************************************************************/
+static void Fallback_Entry(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    Angle_SetAngle(&p_context->OpenLoopAngle, Angle_Value(&GetSensorless(p_motor)->P_OBSERVER->Pll.Base));
+    Ramp_SetOutputState(&p_context->OpenLoopSpeedRamp, Motor_GetSpeedFeedback(p_context));
+    Ramp_SetOutputState(&p_context->OpenLoopIRamp, math_min(p_context->Config.OpenLoopRampIFinal_Pu, Motor_ILimitMotoring(p_context)) * Motor_Direction(p_context));
+}
+
+static const State_T SENSORLESS_FALLBACK =
+{
+    .PATH_ID    = { .Depth0 = MOTOR_STATE_ID_OPEN_LOOP }, /* sub-state id not yet allocated: reports as the root state */
+
+    .P_TOP    = &MOTOR_STATE_OPEN_LOOP,
+    .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
+    .DEPTH    = 1U,
+    .ENTRY    = (State_Action_T)Fallback_Entry,
+    .LOOP     = (State_Action_T)StartUp_Proc,
+    .NEXT     = (State_Input0_T)StartUp_Next,
+};
+
+
+/******************************************************************************/
+/*
     Entry points
 */
 /******************************************************************************/
@@ -178,7 +259,7 @@ void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
 {
     if (Motor_Direction(p_motor->P_MOTOR) == MOTOR_DIRECTION_NULL) { return; }
     if (p_motor->P_MOTOR->p_ActiveSensor != &GetSensorless(p_motor)->BASE) { return; }
-    Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN);
+    Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN); /* a command: no coast, which is PASSIVE's */
 }
 
 /*
@@ -186,12 +267,24 @@ void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
     NULL unless the sensorless adapter is the active sensor: the chain waits on the observer, which only the active sensor runs [Motor_CaptureStator].
     Config.SensorMode can name it before a reboot makes it active.
 */
+/* ALIGN once PASSIVE has lasted the coast time, the coast first otherwise: a PASSIVE substate, entered without leaving PASSIVE */
 State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor)
 {
-    return (p_motor->P_MOTOR->p_ActiveSensor == &GetSensorless(p_motor)->BASE) ? &SENSORLESS_ALIGN : NULL;
+    if (p_motor->P_MOTOR->p_ActiveSensor != &GetSensorless(p_motor)->BASE) { return NULL; }
+    return (p_motor->P_MOTOR->ControlTimerBase >= MOTOR_SENSORLESS_COAST_CYCLES) ? &SENSORLESS_ALIGN : &SENSORLESS_COAST;
 }
 
 // State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor) { (void)p_motor; return &SENSORLESS_ALIGN; }
+
+/*
+    The open-loop fallback, for RUN's feedback loss [Motor_Sensor_FallbackState]: the ramp from θ̂, ω̂ while they are still the rotor's.
+    Locked, |ê| below MagRun: the observer still tracks. A lost lock leaves no angle to seed: NULL, and RUN leaves as without the fallback.
+*/
+State_T * Motor_Sensorless_FallbackState(Motor_T * p_motor)
+{
+    if (p_motor->P_MOTOR->p_ActiveSensor != &GetSensorless(p_motor)->BASE) { return NULL; }
+    return (EmfObserver_IsLocked(GetSensorless(p_motor)->P_OBSERVER) == true) ? &SENSORLESS_FALLBACK : NULL;
+}
 
 
 /******************************************************************************/

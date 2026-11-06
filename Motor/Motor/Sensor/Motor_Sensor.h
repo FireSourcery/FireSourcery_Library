@@ -60,6 +60,7 @@
 
 /* The selected sensor's start-up chain, NULL where none */
 extern State_T * Motor_Sensor_StartUpState(Motor_T * p_motor);
+extern State_T * Motor_Sensor_FallbackState(Motor_T * p_motor);
 
 
 #if defined(MOTOR_SENSOR_HALL_ENABLE)

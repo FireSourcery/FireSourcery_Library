@@ -101,6 +101,11 @@
 #define MOTOR_FOC_FIELD_WEAKENING_ENABLE
 #endif
 
+/* RUN's feedback loss continues on the open-loop ramp from the sensor's last angle [Motor_Sensor_FallbackState]. Off by default: the ramp imposes speed, not the command */
+#if !defined(MOTOR_OPEN_LOOP_FALLBACK_ENABLE)
+#define MOTOR_OPEN_LOOP_FALLBACK_DISABLE
+#endif
+
 // #if !defined(MOTOR_I_SUPPLY_LIMITS_ON_SPEED) && !defined(MOTOR_I_SUPPLY_LIMITS_ON_VBUS)  && !defined(MOTOR_I_SUPPLY_LIMITS_ON_MAIN)
 // #define MOTOR_I_SUPPLY_LIMITS_ON_SPEED
 // #endif
@@ -581,7 +586,8 @@ static_assert(MOTOR_SPEED_BASE_V_PU == FRACT16_SCALE / 2, "VSpeed = Speed / 2, S
 static inline int32_t _Motor_GetVSpeed_Pu(Motor_T * p_motor) { return Motor_GetSpeedFeedback(p_motor->P_MOTOR) / 2; }
 static inline int32_t Motor_GetVSpeed_Pu(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Pu(p_motor), p_motor->P_MOTOR->Config.VSpeedAdjustment); }
 
-static inline uint16_t Motor_GetSpeedFreewheelLimit_Pu(Motor_T * p_motor) { return Motor_SpeedRated_Pu(p_motor); }
+// static inline uint16_t Motor_GetSpeedFreewheelLimit_Pu(Motor_T * p_motor) { return Motor_SpeedRated_Pu(p_motor); }
+static inline uint16_t Motor_GetSpeedFreewheelLimit_Pu(Motor_T * p_motor) { return VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS) * 2; }
 static inline bool Motor_IsSpeedFreewheelLimitRange(Motor_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor->P_MOTOR)) < Motor_GetSpeedFreewheelLimit_Pu(p_motor)); }
 
 /*

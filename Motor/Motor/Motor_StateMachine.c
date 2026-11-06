@@ -518,6 +518,10 @@ static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedback
 static State_T * _Motor_TransitionFeedbackLost(Motor_T * p_motor)
 {
     if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { return NULL; }
+#if defined(MOTOR_OPEN_LOOP_FALLBACK_ENABLE)
+    State_T * p_fallback = Motor_Sensor_FallbackState(p_motor); /* The open loop from the sensor's last angle, NULL where it has none or lost it */
+    if (p_fallback != NULL) { return p_fallback; }
+#endif
     if (Motor_IsSpeedFreewheelLimitRange(p_motor) == true) { return &MOTOR_STATE_PASSIVE; }
     p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
     return &MOTOR_STATE_FAULT;
@@ -849,23 +853,6 @@ const State_T MOTOR_STATE_FAULT =
     Fault interface functions
 */
 /******************************************************************************/
-/* Pass only delta flags — handler applies OR FaultSet / AND-NOT FaultClear atomically */
-// void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
-// {
-//     StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultSet = faultFlags.Value }.Value);
-// }
-
-// void Motor_StateMachine_ClearFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
-// {
-//     StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultClear = faultFlags.Value }.Value);
-// }
-
-// bool Motor_StateMachine_TryClearFaultAll(Motor_T * p_motor)
-// {
-//     Motor_StateMachine_ClearFault(p_motor, (Motor_FaultFlags_T){ .Value = UINT16_MAX });
-//     return !Motor_IsFault(p_motor);
-// }
-
 
 // // inline bool Motor_IsClosedLoop(Motor_T * p_motor)
 // // {

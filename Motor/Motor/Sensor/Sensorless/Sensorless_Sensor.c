@@ -85,9 +85,10 @@ static void Sensorless_Sensor_CaptureSpeed(Sensorless_Sensor_T * p_sensor)
     _RotorSensor_SetSpeedPu(p_rotor, speed);
 }
 
+/* The lock, and |ê| at the closed loop's minimum [EmfObserver_IsFeedbackAvailable]: RUN leaves below it while θ̂ is still the rotor's */
 static bool Sensorless_Sensor_IsFeedbackAvailable(Sensorless_Sensor_T * p_sensor)
 {
-    return EmfObserver_IsLocked(p_sensor->P_OBSERVER);
+    return EmfObserver_IsFeedbackAvailable(p_sensor->P_OBSERVER);
 }
 
 static void Sensorless_Sensor_ZeroInitial(Sensorless_Sensor_T * p_sensor)

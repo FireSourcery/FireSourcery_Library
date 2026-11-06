@@ -50,6 +50,7 @@ typedef union Version_Flags
         uint16_t FieldWeakening : 1U;
         uint16_t OpenLoop : 1U;
         uint16_t ElectricalCalibration : 1U;
+        uint16_t OpenLoopFallback : 1U;
     };
     uint32_t Value;
 }
@@ -66,5 +67,8 @@ static const Version_Flags_T MOTOR_VERSION_FLAGS =
 #endif
 #if defined(MOTOR_CALIBRATION_ELECTRICAL_ENABLE)
     .ElectricalCalibration = 1U,
+#endif
+#if defined(MOTOR_OPEN_LOOP_FALLBACK_ENABLE)
+    .OpenLoopFallback = 1U,
 #endif
 };

@@ -38,6 +38,14 @@
 #include "../../Motor_FOC.h"
 
 /*
+    The coast before ALIGN, from PASSIVE's entry: speed reads 0 below the floor, turning or not, and ALIGN on a rotor still turning stops it at once.
+    Control cycles. The start-up chain waits it out floating [SENSORLESS_COAST].
+*/
+#ifndef MOTOR_SENSORLESS_COAST_CYCLES
+#define MOTOR_SENSORLESS_COAST_CYCLES MOTOR_CONTROL_CYCLES(1000U)
+#endif
+
+/*
     Start the sensorless align → ramp → closed-loop handoff chain.
     Enters MOTOR_STATE_OPEN_LOOP at the SENSORLESS_ALIGN substate; the substate
     chain transitions to MOTOR_STATE_RUN once the observer reports lock.
@@ -45,6 +53,7 @@
 */
 extern void Motor_Sensorless_StartRunChain(Motor_T * p_motor);
 extern State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor);
+extern State_T * Motor_Sensorless_FallbackState(Motor_T * p_motor);
 
 /* The observer before the FOC proc. Takes the device as a state action does, for an ON_PHASE action table */
 // extern void Motor_Sensorless_CaptureStator(Motor_T * p_motor);

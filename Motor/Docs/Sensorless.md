@@ -12,7 +12,8 @@ The rotor angle from the stator's EMF: the extended-EMF sliding-mode observer (`
 | Inputs | The FOC's take of the set the LOOP took, I while driven (`Motor_ADC_MarkPhases`). The command held after the last write (`EmfObserver_HoldV`) |
 | Plant | `Stator_Winding_T` from `Config.Electrical`: Rs, Lq on both axes, at `INIT_UNITS` on `Motor_Reset`. An electrical var reaches the FOC at once, the winding on `Motor_Reinit` |
 | Tuning | `EmfObserver_Config_T` from NVM (`P_NVM_CONFIG`). Default `EMF_OBSERVER_CONFIG_DEFAULT(VBus, v_max, I, i_max, Freq)`, Freq the control frequency. Vars are read only |
-| Feedback | `IS_FEEDBACK_AVAILABLE` is the lock: ‖ê‖ above `MagFloor` and the error within `LockErrTol` for `LockHoldCount` corrections, held through `LossHoldCount` |
+| Feedback | `IS_FEEDBACK_AVAILABLE` is the lock, ‖ê‖ above `MagFloor` and the error within `LockErrTol` for `LockHoldCount` corrections, held through `LossHoldCount`, and ‖ê‖ at or above `MagRun`, the closed loop's minimum (`EmfObserver_IsFeedbackAvailable`). Decelerating, RUN leaves at `MagRun` while the lock still holds |
+| Fallback | With `MOTOR_OPEN_LOOP_FALLBACK_ENABLE`, RUN's feedback loss with the lock still held enters `SENSORLESS_FALLBACK` (`Motor_Sensor_FallbackState`): the open-loop ramp seeded from θ̂ and the speed, its current at the final value, then START_UP's ramp and hand-off. It drives toward `OpenLoopRampSpeedFinal`, whatever the command. Without it, or with the lock lost: PASSIVE, or FAULT above the freewheel limit |
 | Calibrated | `K_smo`, `LpfCoef`, `Winding.G` nonzero, else `INIT` → `FAULT` with `PositionSensor` |
 | Rates | Predict, correct, lock counts and the PLL PI at the control frequency (`Config.Pll.SampleFreq`); the model's G per control cycle (the turn base); `CAPTURE_SPEED` at `MOTOR_SPEED_LOOP_FREQ` |
 | Not wired | `Motor_Sensorless_StartRunChain` (a command entry), the correction between the take and the PI (`Motor_Sensorless_ProcTorqueReq`, form B), the αβ SMO (`EmfObserver_AlphaBeta_Proc`, `_ProcHeld`) and the voltage model (`EmfObserver_VModel_Proc`) |
@@ -365,7 +366,14 @@ flowchart TB
 
 ```mermaid
 stateDiagram-v2
-    PASSIVE --> SENSORLESS_ALIGN: PWM, direction set, no lock, zero speed
+    state PASSIVE {
+        SENSORLESS_COAST
+    }
+    PASSIVE --> SENSORLESS_COAST: PWM, direction set, no feedback, zero speed, within the coast time
+    PASSIVE --> SENSORLESS_ALIGN: the same, PASSIVE past the coast time
+    SENSORLESS_COAST --> SENSORLESS_ALIGN: PASSIVE's coast time, MOTOR_SENSORLESS_COAST_CYCLES
+    SENSORLESS_COAST --> RUN: feedback
+    SENSORLESS_COAST --> PASSIVE: Z or 0, direction cleared
     state OPEN_LOOP {
         SENSORLESS_ALIGN --> SENSORLESS_START_UP: AlignTime_Cycles
         note right of SENSORLESS_ALIGN
