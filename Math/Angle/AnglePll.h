@@ -66,9 +66,10 @@ static inline fract16_t angle_pll_error_normalized_relative(ufract16_t mag_floor
 typedef struct AnglePll_FilterTuning
 {
     ufract16_t MagFloor;        /* |x| at or below which θ is indeterminate: the error reads 0 */
+    ufract16_t LockMagMin;      /* |x| above which θ̂ tracks θ. At or above MagFloor; at it, the lock takes the floor */
     ufract16_t LockErrTol;      /* |error| within which θ̂ tracks θ */
-    uint16_t LockHoldCount;     /* consecutive ticks above the floor and within tolerance */
-    uint16_t LossHoldCount;     /* consecutive ticks at or below the floor or out of tolerance that the lock holds through. 0 releases on the first */
+    uint16_t LockHoldCount;     /* consecutive ticks above LockMagMin and within tolerance */
+    uint16_t LossHoldCount;     /* consecutive ticks at or below LockMagMin or out of tolerance that the lock holds through. 0 releases on the first */
 }
 AnglePll_FilterTuning_T;
 
@@ -129,6 +130,9 @@ static inline bool AnglePll_IsLocked(const AnglePll_T * p_pll) { return (p_pll->
 /* The last detected vector at or below the floor: θ indeterminate, the error read 0, ω̂ held */
 static inline bool AnglePll_IsIndeterminate(const AnglePll_T * p_pll) { return (p_pll->Magnitude <= p_pll->FilterTuning.MagFloor); }
 
+/* The last detected vector above the floor, at or below the lock's minimum: θ̂ corrected, the lock neither acquired nor held through it */
+static inline bool AnglePll_IsWeak(const AnglePll_T * p_pll) { return (p_pll->Magnitude > p_pll->FilterTuning.MagFloor) && (p_pll->Magnitude <= p_pll->FilterTuning.LockMagMin); }
+
 // static inline void _AnglePll_ProcLock(AnglePll_T * p_pll, ufract16_t magnitude, fract16_t phaseError)
 // {
 //     bool stable = (magnitude > p_pll->FilterTuning.MagFloor) && (fract16_abs(phaseError) < p_pll->FilterTuning.LockErrTol);
@@ -138,11 +142,12 @@ static inline bool AnglePll_IsIndeterminate(const AnglePll_T * p_pll) { return (
 
 /*
     Lock: a strong signal and a tight error, sustained. Held through their loss for LossHoldCount ticks.
+    The signal's threshold, LockMagMin, is the lock's own, at or above the floor. Acquiring and losing share it; the holds are the hysteresis, so |x|'s ripple at it neither acquires nor drops the lock.
     Only the vector entries see the signal: below the floor the error reads 0, as it does at lock.
 */
 static inline void _AnglePll_ProcLock(AnglePll_T * p_pll, ufract16_t magnitude, fract16_t phaseError)
 {
-    bool stable = (magnitude > p_pll->FilterTuning.MagFloor) && (fract16_abs(phaseError) < p_pll->FilterTuning.LockErrTol);
+    bool stable = (magnitude > p_pll->FilterTuning.LockMagMin) && (fract16_abs(phaseError) < p_pll->FilterTuning.LockErrTol);
     p_pll->Magnitude = magnitude;
     if (AnglePll_IsLocked(p_pll) == false)
     {

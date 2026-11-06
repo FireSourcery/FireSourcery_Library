@@ -217,9 +217,9 @@ static const State_T SENSORLESS_START_UP =
 
 /******************************************************************************/
 /*
-    Fallback — from RUN, |ê| fallen below MagRun with the lock still held [Motor_Sensorless_FallbackState].
+    Fallback — from RUN, the lock dropped below LockMagMin, |ê| still above the floor [Motor_Sensorless_FallbackState].
     START_UP's seed reversed: the ramp takes the observer's angle and speed, its current the final value at once. Then START_UP's ramp and hand-off,
-    back to RUN once |ê| holds above MagRun again.
+    back to RUN once the lock holds again.
     The ramp drives toward OpenLoopRampSpeedFinal, whatever the user's command: a speed-held load's fallback, not traction's.
 */
 /******************************************************************************/
@@ -278,12 +278,13 @@ State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor)
 
 /*
     The open-loop fallback, for RUN's feedback loss [Motor_Sensor_FallbackState]: the ramp from θ̂, ω̂ while they are still the rotor's.
-    Locked, |ê| below MagRun: the observer still tracks. A lost lock leaves no angle to seed: NULL, and RUN leaves as without the fallback.
+    |ê| between the floor and the lock's minimum: the observer still tracks [EmfObserver_IsWeak].
+    At the floor no angle is left to seed, above the minimum the lock was lost to the error: NULL, and RUN leaves as without the fallback.
 */
 State_T * Motor_Sensorless_FallbackState(Motor_T * p_motor)
 {
     if (p_motor->P_MOTOR->p_ActiveSensor != &GetSensorless(p_motor)->BASE) { return NULL; }
-    return (EmfObserver_IsLocked(GetSensorless(p_motor)->P_OBSERVER) == true) ? &SENSORLESS_FALLBACK : NULL;
+    return (EmfObserver_IsWeak(GetSensorless(p_motor)->P_OBSERVER) == true) ? &SENSORLESS_FALLBACK : NULL;
 }
 
 

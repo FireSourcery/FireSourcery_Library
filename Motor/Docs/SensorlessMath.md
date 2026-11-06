@@ -12,7 +12,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 | LPF | ê ← ê + a·(z − ê) | A geometric series; the response on a circle | `lpf_step` |
 | Rotor vector | r = −j·sign(ω̂)·ê | A quarter turn back | `foc_rotor_of_emf` |
 | Detector | ‖r‖·sin(θ̂ − θ) = x·sin θ̂ − y·cos θ̂ | The parallelogram of r and d̂ | `angle_pll_error`, `angle_pll_normalize` |
-| Lock | ‖ê‖ > `MagFloor`, \|error\| < `LockErrTol`, for `LockHoldCount` corrections | An annular sector around d̂ | `_AnglePll_ProcLock` |
+| Lock | ‖ê‖ > `LockMagMin`, \|error\| < `LockErrTol`, for `LockHoldCount` corrections | An annular sector around d̂ | `_AnglePll_ProcLock` |
 | PLL | Δ'' + Kp'·cos Δ·Δ' + Ki'·sin Δ = α, Δ = θ − θ̂ | A ball on a washboard | `AnglePll_Correct`, `AnglePll_Predict` |
 
 - **The PLL at the default gains**, the loop alone, with no LPF in it, from the script's printout:
@@ -70,7 +70,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 
 - e leads the flux by a quarter turn, or trails it in reverse. −j·sign(ω̂) turns it back onto the rotor either way.
 - The error is the cross product of r and d̂: the parallelogram's area, for unit vectors its height, sin(θ − θ̂). Dividing by ‖r‖ removes the EMF's size, so the loop gain holds across speed.
-- Below `MagFloor` the vector has no direction, and the error reads 0. Lock is the annular sector beyond the floor, within ±asin(`LockErrTol`) of d̂ (±2.9° at 0.05). The mirrored sector at π reads a small error too, but the loop is repelled from it, and a pass doesn't last `LockHoldCount`.
+- Below `MagFloor` the vector has no direction, and the error reads 0. Lock is the annular sector beyond `LockMagMin`, at or above the floor, within ±asin(`LockErrTol`) of d̂ (±2.9° at 0.05). The mirrored sector at π reads a small error too, but the loop is repelled from it, and a pass doesn't last `LockHoldCount`.
 - The S-curve, sin(θ − θ̂), has one valley at 0 and one hilltop at ±180°.
 
 ## The PLL: a ball on a washboard

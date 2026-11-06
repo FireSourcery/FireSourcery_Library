@@ -75,14 +75,12 @@ typedef struct EmfObserver_Config
     fract16_t LpfCoef;          /* dt / (τ + dt) */
 
     /* The tracker */
-    AnglePll_FilterTuning_T PllFilterTuning;    /* MagFloor is the |ê| floor */
-    PID_Config_T Pll;                           /* loop filter, phase error → ω̂ [angle16/dt] */
-
     /*
-        The closed loop's minimum: |ê| below it reports no feedback while the lock still holds [EmfObserver_IsFeedbackAvailable]. Above MagFloor.
-        The open-loop fallback's runtime control, as IdLimit is field weakening's: 0 releases the minimum, and with it the fallback [MOTOR_OPEN_LOOP_FALLBACK_ENABLE]
+        MagFloor the |ê| floor. LockMagMin the closed loop's minimum: the lock, and IS_FEEDBACK_AVAILABLE, acquire and drop at it.
+        LockMagMin is the open-loop fallback's runtime control, as IdLimit is field weakening's: at MagFloor it releases the fallback [MOTOR_OPEN_LOOP_FALLBACK_ENABLE]
     */
-    ufract16_t MagRun;
+    AnglePll_FilterTuning_T PllFilterTuning;
+    PID_Config_T Pll;                           /* loop filter, phase error → ω̂ [angle16/dt] */
 }
 EmfObserver_Config_T;
 
@@ -99,10 +97,10 @@ EmfObserver_Config_T;
     .K_smo          = (fract16_t)FRACT16(.60F * VBus / v_max),                                                              \
     .SmoSat         = (fract16_t)FRACT16(.15F * I / i_max),         /* 15 % of IMax boundary layer */                       \
     .LpfCoef        = (fract16_t)FRACT16(1.0F / (1.0F + (float)(Freq) / (2.0F * 3.14159265F * 100.0F))), /* ~100 Hz */      \
-    .MagRun         = (ufract16_t)FRACT16(.10F * VBus / v_max),     /* 10 % of VBus, twice the floor */                     \
     .PllFilterTuning =                                                                                                      \
     {                                                                                                                       \
         .MagFloor       = (ufract16_t)FRACT16(.05F * VBus / v_max), /* 5 % of VBus */                                       \
+        .LockMagMin     = (ufract16_t)FRACT16(.10F * VBus / v_max), /* 10 % of VBus, twice the floor */                     \
         .LockErrTol     = (ufract16_t)FRACT16(.05F),                /* 5 % normalized error */                              \
         .LockHoldCount  = (uint16_t)((Freq) / 200U),                /* 5 ms, in samples */                                  \
         .LossHoldCount  = (uint16_t)((Freq) / 100U),                /* 10 ms, in samples */                                 \
@@ -305,53 +303,29 @@ static angle16_t EmfObserver_Eemf_ProcHeld(EmfObserver_T * p_obs, fract16_t i_d,
     return EmfObserver_Eemf_Proc(p_obs, i_d, i_q, v.d, v.q);
 }
 
-
-
-// /* The αβ sample in the frame θ̂, for a caller whose take Parked it at another angle */
-// static inline struct foc_dq EmfObserver_ParkI(const EmfObserver_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
-// {
-//     struct fract16_xy frame = Angle_UnitVector(&p_obs->Pll.Base);
-//     struct foc_dq i = foc_park(i_alpha, i_beta, frame.y, frame.x);
-//     return (struct foc_dq){ .d = fract16_sat(i.d), .q = fract16_sat(i.q) };
-// }
-
-// /* An αβ voltage held across the period the sample closes, in the frame θ̂: Parked at the period's mean angle */
-// static inline struct foc_dq EmfObserver_ParkHold(const EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta)
-// {
-//     struct fract16_xy hold = fract16_vector(_EmfObserver_HoldAngle(p_obs));
-//     struct foc_dq v = foc_park(v_alpha, v_beta, hold.y, hold.x);
-//     return (struct foc_dq){ .d = fract16_sat(v.d), .q = fract16_sat(v.q) };
-// }
-
-// /*
-//     EEMF SMO on the dq sample and an αβ voltage held across the period it closes [EmfObserver_ParkHold].
-//     i_dq the sample at θ̂: the FOC's take, where the FOC Parks at θ̂. Only without [FOC_I_SAMPLE_DELAY]: with it, the take is at θ̂ − ω·delay.
-//     Between the take and the loop, v[k−1] is still the FOC's Valpha/Vbeta [EmfObserver_Eemf_Proc].
-// */
-// static angle16_t EmfObserver_Eemf_ProcVAlphaBeta(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q, fract16_t v_alpha, fract16_t v_beta)
-// {
-//     struct foc_dq v = EmfObserver_ParkHold(p_obs, v_alpha, v_beta);
-//     return EmfObserver_Eemf_Proc(p_obs, i_d, i_q, v.d, v.q);
-// }
-
-
+/* After the write: the command the next sample's period holds. Where several writes share the period, the last before the sample */
+static inline void EmfObserver_HoldV(EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta) { p_obs->VOutAlpha = v_alpha; p_obs->VOutBeta = v_beta; }
 
 /* Bumpless seed: θ̂ and ω̂ from a known reference, e.g. the open-loop ramp */
 static inline void EmfObserver_SeedAngle(EmfObserver_T * p_obs, angle16_t theta, angle16_t delta) { AnglePll_Seed(&p_obs->Pll, theta, delta); }
 
 static inline bool EmfObserver_IsLocked(const EmfObserver_T * p_obs) { return AnglePll_IsLocked(&p_obs->Pll); }
 
+/* |ê| at or below the floor: the correction holds θ̂, ω̂ as they were [AnglePll_IsIndeterminate] */
+static inline bool EmfObserver_IsIndeterminate(const EmfObserver_T * p_obs) { return AnglePll_IsIndeterminate(&p_obs->Pll); }
+
 /*
     Feedback for the closed loop: the lock, and |ê| at or above MagRun.
     |ê| grows with speed: decelerating, it passes MagRun while the lock holds, θ̂ and ω̂ still the rotor's, before the floor drops the lock.
 */
-static inline bool EmfObserver_IsFeedbackAvailable(const EmfObserver_T * p_obs) { return (EmfObserver_IsLocked(p_obs) == true) && (p_obs->Pll.Magnitude >= p_obs->Config.MagRun); }
+// static inline bool EmfObserver_IsFeedbackAvailable(const EmfObserver_T * p_obs) { return (EmfObserver_IsLocked(p_obs) == true) && (p_obs->Pll.Magnitude >= p_obs->Config.MagRun); }
 
-/* |ê| at or below the floor: the correction holds θ̂, ω̂ as they were [AnglePll_IsIndeterminate] */
-static inline bool EmfObserver_IsIndeterminate(const EmfObserver_T * p_obs) { return AnglePll_IsIndeterminate(&p_obs->Pll); }
+/*
+    |ê| between the floor and the lock's minimum: θ̂, ω̂ still corrected, unlocked [AnglePll_IsWeak].
+    |ê| grows with speed: decelerating, the lock drops here, θ̂ and ω̂ still the rotor's, before the floor.
+*/
+static inline bool EmfObserver_IsWeak(const EmfObserver_T * p_obs) { return AnglePll_IsWeak(&p_obs->Pll); }
 
-/* After the write: the command the next sample's period holds. Where several writes share the period, the last before the sample */
-static inline void EmfObserver_HoldV(EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta) { p_obs->VOutAlpha = v_alpha; p_obs->VOutBeta = v_beta; }
 
 
 /******************************************************************************/
@@ -429,7 +403,7 @@ static inline int32_t EmfObserver_GetVar(const EmfObserver_T * p_obs, EmfObserve
         case EMF_OBSERVER_VAR_DIRECTION:    return _EmfObserver_Direction(&p_obs->Pll.Base);
         case EMF_OBSERVER_VAR_LOCK_COUNT:   return p_obs->Pll.LockCount;
         case EMF_OBSERVER_VAR_LOSS_COUNT:   return p_obs->Pll.LossCount;
-        case EMF_OBSERVER_VAR_LOCKED:       return EmfObserver_IsLocked(p_obs); /* the lock alone: IS_FEEDBACK_AVAILABLE also needs MagRun */
+        case EMF_OBSERVER_VAR_LOCKED:       return EmfObserver_IsLocked(p_obs);
         default: return 0;
     }
 }
@@ -442,7 +416,7 @@ typedef enum EmfObserver_ConfigVar
     EMF_OBSERVER_CONFIG_VAR_LOCK_EMF_MIN,
     EMF_OBSERVER_CONFIG_VAR_LOCK_ERR_TOL,
     EMF_OBSERVER_CONFIG_VAR_LOCK_HOLD_COUNT,
-    EMF_OBSERVER_CONFIG_VAR_RUN_EMF_MIN,
+    EMF_OBSERVER_CONFIG_VAR_EMF_FLOOR,
 }
 EmfObserver_ConfigVar_T;
 
@@ -453,10 +427,10 @@ static inline int32_t EmfObserver_Config_Get(const EmfObserver_Config_T * p_conf
         case EMF_OBSERVER_CONFIG_VAR_K_SMO:             return p_config->K_smo;
         case EMF_OBSERVER_CONFIG_VAR_SMO_SAT:           return p_config->SmoSat;
         case EMF_OBSERVER_CONFIG_VAR_LPF_COEF:          return p_config->LpfCoef;
-        case EMF_OBSERVER_CONFIG_VAR_LOCK_EMF_MIN:      return p_config->PllFilterTuning.MagFloor;
+        case EMF_OBSERVER_CONFIG_VAR_LOCK_EMF_MIN:      return p_config->PllFilterTuning.LockMagMin;
         case EMF_OBSERVER_CONFIG_VAR_LOCK_ERR_TOL:      return p_config->PllFilterTuning.LockErrTol;
         case EMF_OBSERVER_CONFIG_VAR_LOCK_HOLD_COUNT:   return p_config->PllFilterTuning.LockHoldCount;
-        case EMF_OBSERVER_CONFIG_VAR_RUN_EMF_MIN:       return p_config->MagRun;
+        case EMF_OBSERVER_CONFIG_VAR_EMF_FLOOR:         return p_config->PllFilterTuning.MagFloor;
         default: return 0;
     }
 }
