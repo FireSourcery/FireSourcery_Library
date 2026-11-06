@@ -230,9 +230,13 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     VBemf of Freewheel
 */
 /******************************************************************************/
+/* The measured terminal voltage in place of the command: Valpha, Vbeta as [FOC_ProcInvClarkePark] writes them, Vd, Vq at the held angle */
 static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
 {
-    struct foc_dq v = foc_clarke_park(va, vb, vc, p_foc->Sine, p_foc->Cosine);
+    struct foc_alphabeta vab = foc_clarke(va, vb, vc);
+    struct foc_dq v = foc_park(vab.alpha, vab.beta, p_foc->Sine, p_foc->Cosine);
+    p_foc->Valpha = fract16_sat(vab.alpha);
+    p_foc->Vbeta = fract16_sat(vab.beta);
     p_foc->Vd = fract16_sat(v.d);
     p_foc->Vq = fract16_sat(v.q);
 }
@@ -493,6 +497,7 @@ static inline void FOC_MatchTheta(FOC_T * p_foc, angle16_t theta)
     p_foc->Vd = fract16_sat(v.d);
     p_foc->Vq = fract16_sat(v.q);
 }
+
 /******************************************************************************/
 /*!
     Capture and process the current feedback in the dq frame.
@@ -578,11 +583,11 @@ static inline fract16_t FOC_Vc(const FOC_T * p_foc) { return p_foc->Vc; }
 /*
     Run-time derived
 */
-/* [0:32767] <=> [0:1]AnalogRefMax */
+/* [0:32767] <=> [0:1] */
 static inline ufract16_t FOC_GetIMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Id, p_foc->Iq); }
 static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Vd, p_foc->Vq); }
 
-/* [-32768:32767] <=> [-1:1]AnalogRefMax */
+/* [-32768:32767] <=> [-1:1] */
 static inline fract16_t FOC_GetIPhase(const FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
 static inline fract16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
 

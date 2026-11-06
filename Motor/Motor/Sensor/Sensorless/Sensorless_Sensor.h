@@ -45,7 +45,7 @@ typedef const struct Sensorless_Sensor
 {
     const RotorSensor_T BASE;
     EmfObserver_T * P_OBSERVER;
-    FOC_T * P_FOC; /* Common */
+    FOC_T * P_FOC;                              /* The motor's FOC, its take and write [CAPTURE_STATOR]. Common to the motor's sensors: RotorSensor_T may hold it once another reads it */
     const Motor_Electrical_T * P_ELECTRICAL;    /* The motor's model, the winding's source [INIT_UNITS] */
     const EmfObserver_Config_T * P_NVM_CONFIG;
 }
@@ -54,10 +54,11 @@ Sensorless_Sensor_T;
 extern const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE;
 
 /* Observer state of static duration, held by the const table entry */
-#define SENSORLESS_SENSOR_INIT(p_RotorState, p_Electrical, p_NvmConfig) (Sensorless_Sensor_T)   \
+#define SENSORLESS_SENSOR_INIT(p_RotorState, p_Foc, p_Electrical, p_NvmConfig) (Sensorless_Sensor_T) \
 {                                                                                               \
     .BASE           = ROTOR_SENSOR_INIT(&SENSORLESS_SENSOR_VTABLE, (p_RotorState)),             \
     .P_OBSERVER     = &(EmfObserver_T){},                                                       \
+    .P_FOC          = (p_Foc),                                                                  \
     .P_ELECTRICAL   = (p_Electrical),                                                           \
     .P_NVM_CONFIG   = (p_NvmConfig),                                                            \
 }

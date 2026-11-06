@@ -322,32 +322,32 @@ static angle16_t EmfObserver_Eemf_ProcHeld(EmfObserver_T * p_obs, fract16_t i_d,
 
 
 
-/* The αβ sample in the frame θ̂, for a caller whose take Parked it at another angle */
-static inline struct foc_dq EmfObserver_ParkI(const EmfObserver_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
-{
-    struct fract16_xy frame = Angle_UnitVector(&p_obs->Pll.Base);
-    struct foc_dq i = foc_park(i_alpha, i_beta, frame.y, frame.x);
-    return (struct foc_dq){ .d = fract16_sat(i.d), .q = fract16_sat(i.q) };
-}
+// /* The αβ sample in the frame θ̂, for a caller whose take Parked it at another angle */
+// static inline struct foc_dq EmfObserver_ParkI(const EmfObserver_T * p_obs, fract16_t i_alpha, fract16_t i_beta)
+// {
+//     struct fract16_xy frame = Angle_UnitVector(&p_obs->Pll.Base);
+//     struct foc_dq i = foc_park(i_alpha, i_beta, frame.y, frame.x);
+//     return (struct foc_dq){ .d = fract16_sat(i.d), .q = fract16_sat(i.q) };
+// }
 
-/* An αβ voltage held across the period the sample closes, in the frame θ̂: Parked at the period's mean angle */
-static inline struct foc_dq EmfObserver_ParkHold(const EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta)
-{
-    struct fract16_xy hold = fract16_vector(_EmfObserver_HoldAngle(p_obs));
-    struct foc_dq v = foc_park(v_alpha, v_beta, hold.y, hold.x);
-    return (struct foc_dq){ .d = fract16_sat(v.d), .q = fract16_sat(v.q) };
-}
+// /* An αβ voltage held across the period the sample closes, in the frame θ̂: Parked at the period's mean angle */
+// static inline struct foc_dq EmfObserver_ParkHold(const EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta)
+// {
+//     struct fract16_xy hold = fract16_vector(_EmfObserver_HoldAngle(p_obs));
+//     struct foc_dq v = foc_park(v_alpha, v_beta, hold.y, hold.x);
+//     return (struct foc_dq){ .d = fract16_sat(v.d), .q = fract16_sat(v.q) };
+// }
 
-/*
-    EEMF SMO on the dq sample and an αβ voltage held across the period it closes [EmfObserver_ParkHold].
-    i_dq the sample at θ̂: the FOC's take, where the FOC Parks at θ̂. Only without [FOC_I_SAMPLE_DELAY]: with it, the take is at θ̂ − ω·delay.
-    Between the take and the loop, v[k−1] is still the FOC's Valpha/Vbeta [EmfObserver_Eemf_Proc].
-*/
-static angle16_t EmfObserver_Eemf_ProcVAlphaBeta(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q, fract16_t v_alpha, fract16_t v_beta)
-{
-    struct foc_dq v = EmfObserver_ParkHold(p_obs, v_alpha, v_beta);
-    return EmfObserver_Eemf_Proc(p_obs, i_d, i_q, v.d, v.q);
-}
+// /*
+//     EEMF SMO on the dq sample and an αβ voltage held across the period it closes [EmfObserver_ParkHold].
+//     i_dq the sample at θ̂: the FOC's take, where the FOC Parks at θ̂. Only without [FOC_I_SAMPLE_DELAY]: with it, the take is at θ̂ − ω·delay.
+//     Between the take and the loop, v[k−1] is still the FOC's Valpha/Vbeta [EmfObserver_Eemf_Proc].
+// */
+// static angle16_t EmfObserver_Eemf_ProcVAlphaBeta(EmfObserver_T * p_obs, fract16_t i_d, fract16_t i_q, fract16_t v_alpha, fract16_t v_beta)
+// {
+//     struct foc_dq v = EmfObserver_ParkHold(p_obs, v_alpha, v_beta);
+//     return EmfObserver_Eemf_Proc(p_obs, i_d, i_q, v.d, v.q);
+// }
 
 
 

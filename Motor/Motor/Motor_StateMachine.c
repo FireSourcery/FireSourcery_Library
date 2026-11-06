@@ -397,9 +397,8 @@ static void Run_Entry(Motor_T * p_motor)
 
     /* Takes the slots before matching, which clamps against them */
     Motor_FOC_ResolveISupplyLimitsOnEntry(p_motor);
-    Motor_ResolveILimits(p_motor->P_MOTOR);
+    Motor_ResolveFeedbackLimits(p_motor);
     Motor_ResolveSpeedLimits(p_motor->P_MOTOR);
-    // Motor_ResolveFeedbackLimits(p_motor->P_MOTOR);
 
     if (Phase_ReadVOut(&p_motor->PHASE) == PHASE_VOUT_Z) /* prev state is freewheel */
     {
@@ -413,14 +412,17 @@ static void Run_Entry(Motor_T * p_motor)
         Motor_FOC_MatchVOutput(p_context);
     }
 
-//#if defined(MOTOR_VOLTAGE_CONTROL_MODE_ENABLE)
-    // if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); } else { Motor_FOC_MatchTorqueVState(p_context); }
+    if (Motor_FeedbackMode_IsVoltage(p_context->FeedbackMode)) { Motor_FOC_MatchTorqueVState(p_context); } else { Motor_FOC_MatchTorqueIState(p_context); }
 
-    Motor_FOC_MatchTorqueIState(p_context);
+    /* UserCmd units follow FeedbackMode, which may have changed since the last user write [Run_InputFeedbackMode]. Held until the next, ~1-50ms */
     if (p_context->FeedbackMode.Speed == 1U)
     {
         Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp));
-        p_context->UserCmd = Motor_GetSpeedFeedback(p_context); /* UserCmd is speed in speed mode */
+        p_context->UserCmd = Motor_GetSpeedFeedback(p_context);
+    }
+    else
+    {
+        p_context->UserCmd = Ramp_GetOutput(&p_context->TorqueRamp); /* Iq or Vq, as matched */
     }
 
     // Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
@@ -429,22 +431,18 @@ static void Run_Entry(Motor_T * p_motor)
 static void Run_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-//#if defined(MOTOR_VOLTAGE_CONTROL_MODE_ENABLE)
-    // if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcAngleV(p_motor); }
+    fract16_t req = (p_context->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_context->PidSpeed) : p_context->UserCmd;
 
-    Motor_FOC_ProcTorqueReq(p_motor, (p_context->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_context->PidSpeed) : p_context->UserCmd);
+    if (Motor_FeedbackMode_IsVoltage(p_context->FeedbackMode)) { Motor_FOC_ProcAngleV(p_motor, req); } else { Motor_FOC_ProcTorqueReq(p_motor, req); }
 
     // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     //     Motor_ExternControl(p_motor);
     // #endif
-    // if (!_Motor_IsAnalogCycle(p_context->ControlTimerBase))
-    // {
-    //   #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    //     FOC_ProcIdFieldWeakening(&p_context->Foc, VBus_Pu(p_motor->P_VBUS));
-    //   #endif
-    //     Ramp_ProcNextOf(&p_context->TorqueRamp, (p_context->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_context->PidSpeed) : p_context->UserCmd);
-    // }
-    // Motor_FOC_AngleControl(p_context, VBus_Pu(p_motor->P_VBUS), Angle_Value(&p_context->SensorState.AngleSpeed), FOC_IdFw(&p_context->Foc), Ramp_GetOutput(&p_context->TorqueRamp));
+
+    // _Motor_FOC_ProcOnInput
+    // RotorSensor_Callback
+    // _Motor_FOC_ProcReqStep
+    // Motor_FOC_ProcIControl
 
     Motor_FOC_WriteDuty(p_motor);
 }
@@ -462,7 +460,7 @@ static void Run_OnSpeed(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_CaptureVSpeed(p_context);
     Motor_FOC_ResolveISupplyLimitsOnSpeed(p_motor);
-    Motor_ResolveILimits(p_context); /* Before the speed loop clamps against them */
+    Motor_ResolveFeedbackLimits(p_motor); /* Before the speed loop clamps against them */
     Motor_ResolveSpeedLimits(p_context);
     if (p_context->FeedbackMode.Speed == 1U) { Motor_ProcSpeedControlOf(p_context, p_context->UserCmd); }
 }

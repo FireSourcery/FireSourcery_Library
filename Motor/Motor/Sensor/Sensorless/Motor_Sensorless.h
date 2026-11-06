@@ -40,7 +40,7 @@
 /*
     Start the sensorless align → ramp → closed-loop handoff chain.
     Enters MOTOR_STATE_OPEN_LOOP at the SENSORLESS_ALIGN substate; the substate
-    chain transitions to SENSORLESS_RUN, the alternate RUN, once the observer reports lock.
+    chain transitions to MOTOR_STATE_RUN once the observer reports lock.
     No-op unless Direction is set and sensorless is the selected sensor.
 */
 extern void Motor_Sensorless_StartRunChain(Motor_T * p_motor);
@@ -49,8 +49,7 @@ extern State_T * Motor_Sensorless_StartUpState(Motor_T * p_motor);
 /* The observer before the FOC proc. Takes the device as a state action does, for an ON_PHASE action table */
 // extern void Motor_Sensorless_CaptureStator(Motor_T * p_motor);
 
-/* The correction on the FOC's take, for a LOOP at θ̂. A: after the write, SENSORLESS_RUN's. B: the torque path with it inside, the caller writes. Not wired */
-extern void Motor_Sensorless_CorrectOnTake(Motor_T * p_motor);
+/* B, not wired: the torque path with the correction between the take and the loop, the caller writes. A is the sensor's CAPTURE_STATOR [Motor_CaptureStator] */
 extern void Motor_Sensorless_ProcTorqueReq(Motor_T * p_motor, fract16_t req);
 
 // extern void Motor_Sensorless_InitWinding(Motor_T * p_motor); /* The sensor's INIT_UNITS resolves the winding */

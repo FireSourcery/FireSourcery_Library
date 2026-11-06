@@ -42,8 +42,7 @@ static void Sensorless_Sensor_Init(Sensorless_Sensor_T * p_sensor)
 }
 
 /*
-    Every control tick: θ̂ += ω̂, then publish. As Hall interpolates between edges, the correction lands once per sample, in the observer's states [Motor_Sensorless.c].
-    In any other state, on the ω̂ the last correction left: SENSORLESS_RUN's exits reset it [ZERO_INITIAL].
+    Every control tick: θ̂ += ω̂, then publish. As Hall interpolates between edges, the correction lands once per sample [CAPTURE_STATOR].
     Once per tick: the only caller is Motor_CaptureSensor.
 */
 static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
@@ -55,14 +54,21 @@ static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
     _RotorSensor_SetDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
 }
 
-/* Idempotent publish — Proc already advances θ̂, ω̂ in the observer's [AnglePll_T];
-   here we forward it to the RotorSensor common interface state. */
-// static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
-// {
-//     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
-//     p_rotor->AngleSpeed.Angle = p_sensor->P_OBSERVER->Pll.Base.Angle;
-//     _RotorSensor_SetDelta(p_rotor, p_sensor->P_OBSERVER->Pll.Base.Delta);
-// }
+/*
+    After the state machine [Motor_CaptureStator]: the correction of ω̂, for the next prediction. P_FOC this tick's take and write, the caller's constraint.
+    i(k) the take's Id, Iq: in the frame θ̂ where the FOC Parked at θ̂, as RUN and INTERVENTION do.
+    Elsewhere in the FOC's frame: the start-up chain's at the ramp, θ̂ itself while re-seeded. A take at another frame Parks Iα, Iβ at θ̂ [EmfObserver_ParkI].
+    Under [FOC_I_SAMPLE_DELAY] the take is at θ̂ − ω·delay: not built for the observer.
+    v(k−1) the command the observer holds [EmfObserver_Eemf_ProcHeld]; then holds v(k), the FOC's write, for the next sample.
+*/
+static void Sensorless_Sensor_CaptureStator(Sensorless_Sensor_T * p_sensor)
+{
+    EmfObserver_T * p_obs = p_sensor->P_OBSERVER;
+    const FOC_T * p_foc = p_sensor->P_FOC;
+
+    EmfObserver_Eemf_ProcHeld(p_obs, FOC_Id(p_foc), FOC_Iq(p_foc));
+    EmfObserver_HoldV(p_obs, p_foc->Valpha, p_foc->Vbeta);
+}
 
 /* Project observer ω̂ → fract16 speed via the configured SpeedPuRef.
    Assumes CAPTURE_ANGLE already published Delta into AngleSpeed this tick. */
@@ -120,6 +126,7 @@ const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE =
     .INIT                  = (RotorSensor_Proc_T)Sensorless_Sensor_Init,
     .INIT_UNITS            = (RotorSensor_Proc_T)Sensorless_Sensor_InitUnits,
     .CAPTURE_ANGLE         = (RotorSensor_Proc_T)Sensorless_Sensor_CaptureAngle,
+    .CAPTURE_STATOR        = (RotorSensor_Proc_T)Sensorless_Sensor_CaptureStator,
     .CAPTURE_SPEED         = (RotorSensor_Proc_T)Sensorless_Sensor_CaptureSpeed,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Sensorless_Sensor_IsFeedbackAvailable,
     .ZERO_INITIAL          = (RotorSensor_Proc_T)Sensorless_Sensor_ZeroInitial,

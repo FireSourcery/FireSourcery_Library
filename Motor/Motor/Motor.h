@@ -175,6 +175,19 @@ static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .
 
 static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(int value) { return (Motor_FeedbackMode_T) { .Value = value }; }
 
+/*
+    Voltage modes, Current = 0: Run on the voltage path [Motor_FOC_ProcAngleV], TorqueRamp and SpeedPid output in V.
+    The one selection point of [MOTOR_VOLTAGE_CONTROL_MODE_ENABLE]. Without it the modes are rejected [Motor_ApplyFeedbackMode], and the voltage path folds out of Run.
+*/
+#if defined(MOTOR_VOLTAGE_CONTROL_MODE_ENABLE)
+#if defined(MOTOR_I_FEEDBACK_ON_PHASE)
+#error "MOTOR_VOLTAGE_CONTROL_MODE_ENABLE with MOTOR_I_FEEDBACK_ON_PHASE: Run's ON_PHASE action runs the current loop in every mode"
+#endif
+static inline bool Motor_FeedbackMode_IsVoltage(Motor_FeedbackMode_T mode) { return (mode.Current == 0U); }
+#else
+static inline bool Motor_FeedbackMode_IsVoltage(Motor_FeedbackMode_T mode) { (void)mode; return false; }
+#endif
+
 
 /******************************************************************************/
 /*
@@ -694,7 +707,11 @@ extern void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value);
     Active Limits — push interface. Unsigned PU in, direction-resolved Ramp limits out.
 */
 extern void Motor_ResolveILimits(Motor_Context_T * p_motor);
+extern void Motor_ResolveVLimits(Motor_T * p_motor);
 extern void Motor_ResolveSpeedLimits(Motor_Context_T * p_motor);
+
+/* TorqueRamp and SpeedPid output units follow FeedbackMode. Run resolves on entry and on its speed tick; Intervention runs the current loop in every mode, [Motor_ResolveILimits] */
+extern void Motor_ResolveFeedbackLimits(Motor_T * p_motor);
 
 extern void Motor_SetILimits(Motor_Context_T * p_motor, uint16_t motoring_pu, uint16_t generating_pu);
 extern void Motor_SetILimitMotoring(Motor_Context_T * p_motor, uint16_t motoring_pu);

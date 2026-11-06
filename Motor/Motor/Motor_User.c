@@ -95,20 +95,19 @@ inline void Motor_ApplyControlState(Motor_T * p_motor, Phase_VOutMode_T state) {
     SetCmd[Value] - Without invoking StateMachine - Sets buffered cmd value, sets on all states even when inactive
 
     Caller handle input state to cmd.
-    Ramp is the only input that stores input state. other input to Motor proc async. Additional handling by caller
 
-    Cmd as ratio of Calibration Ref, clamped by Config.Limit
-    Cmd_Scalar as ratio of Config.Limit
+    Cmd as ratio of Calibration Max, clamped by Config.Limit
+    Cmd_Ratio as ratio of Config.Limit
 */
 /******************************************************************************/
 /*
     User set [FeedbackMode] without starting Run
     Using sync mode. activates the next pwm cycle
-    Voltage modes rejected: Run runs the current loop in every mode, a voltage UserCmd would be read as current.
+    Voltage modes only with the voltage path [Motor_FeedbackMode_IsVoltage]: without it Run runs the current loop in every mode, a voltage UserCmd would be read as current.
 */
 inline void Motor_ApplyFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    if ((mode.Current == 1U) && (mode.Value != p_motor->P_MOTOR->FeedbackMode.Value)) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
+    if (mode.Value != p_motor->P_MOTOR->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 
 

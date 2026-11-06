@@ -127,6 +127,7 @@ static const RotorSensor_VTable_T HALL_VTABLE =
     .INIT = (RotorSensor_Proc_T)Hall_RotorSensor_Init,
     .INIT_UNITS = (RotorSensor_Proc_T)Hall_RotorSensor_InitUnits_ElSpeed,
     .CAPTURE_ANGLE = (RotorSensor_Proc_T)Hall_RotorSensor_CaptureAngle,
+    .CAPTURE_STATOR = (RotorSensor_Proc_T)RotorSensor_CaptureStatorNone,
     .CAPTURE_SPEED = (RotorSensor_Proc_T)Hall_RotorSensor_CaptureSpeed,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Hall_RotorSensor_IsFeedbackAvailable,
     .ZERO_INITIAL = (RotorSensor_Proc_T)Hall_RotorSensor_ZeroInitial,

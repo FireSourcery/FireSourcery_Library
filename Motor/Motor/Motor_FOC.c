@@ -47,25 +47,40 @@ void Motor_FOC_WriteDuty(Motor_T * p_motor)
 */
 /******************************************************************************/
 /*
+    The take: θ, then the I set Clarke-Parked at it. Writes Sine/Cosine, Ialpha/Ibeta, Id/Iq.
+    The set read after the angle, not as arguments to [FOC_CaptureI]: read before SetTheta's out-of-line sin/cos, the 3 values would be held across the call.
+*/
+static inline void Motor_FOC_CaptureI(Motor_Context_T * p_motor, angle16_t theta)
+{
+    FOC_SetTheta(&p_motor->Foc, theta);
+    FOC_ProcClarkePark(&p_motor->Foc, p_motor->PhaseInput.I.A, p_motor->PhaseInput.I.B, p_motor->PhaseInput.I.C); /* The set as it stands, no freshness check: on the trigger it landed before this cycle's top */
+}
+
+/* The loop on the take: PI to Vd/Vq, then Valpha/Vbeta, Va..Vc. Valpha/Vbeta hold the last write until then */
+static inline void Motor_FOC_ProcIControl(Motor_Context_T * p_motor, ufract16_t vBus, fract16_t dReq, fract16_t qReq)
+{
+    FOC_ProcIControl(&p_motor->Foc, vBus, dReq, qReq);
+}
+
+/*
     Current-mode angle control. Req Id/Iq to Vabc.
     Out of line: one copy for every current-mode proc. -O3 otherwise inlines it into each align proc, 364 B each on KE.
 */
 __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 {
     Motor_FOC_CaptureI(p_motor, theta);
-    // FOC_CaptureI(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed), p_motor->PhaseInput.I.A, p_motor->PhaseInput.I.B, p_motor->PhaseInput.I.C);
     Motor_FOC_ProcIControl(p_motor, vBus, dReq, qReq);
 }
 
-#if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)
+// #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)
 /* The divided I loop's take, not built [MOTOR_I_LOOP_FREQ]: the PI only on the set's token, the angle every cycle for the write */
-// __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
-// {
-//     FOC_SetTheta(&p_motor->Foc, theta);  /* update angle only for voutput */
-//     if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
-//     FOC_ProcInvClarkePark(&p_motor->Foc);
-// }
-#endif
+__attribute__((noinline)) void Motor_FOC_AngleControl_Alt(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
+{
+    FOC_SetTheta(&p_motor->Foc, theta);  /* update angle only for voutput */
+    if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
+    FOC_ProcInvClarkePark(&p_motor->Foc);
+}
+// #endif
 
 /*
     Common state machine call for torque
@@ -113,16 +128,6 @@ void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idRe
     _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Pu(p_motor->P_VBUS), angle, idReq);
 }
 
-/*
-    Feed forward voltage angle
-    set once, no feedback
-    SetVAngle
-*/
-void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
-{
-    FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); /* Update for measurements */
-    FOC_SetAngleV(&p_motor->Foc, theta, vd, vq);
-}
 
 /******************************************************************************/
 /*!
@@ -173,38 +178,27 @@ void Motor_FOC_MatchVFreewheel(Motor_Context_T * p_context, ufract16_t vbus)
 void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 {
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* transitioning without release into freewheel, math iq */
-    p_context->UserCmd = FOC_Iq(&p_context->Foc); /* may be ~1-50ms before next user input */
 }
 
 
 /*
-    The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
-    The LOOP steps them [_Motor_FOC_ProcTorqueReq] every control cycle, the I loop's rate as built, which their slopes and gains are scaled to, and the state entries match them.
-    The take Parks at the angle the LOOP last set, the sample's tick.
-    ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
+    Feed forward voltage angle
+    set once, no feedback
+    SetVAngle
 */
-void Motor_FOC_ProcIFeedback(Motor_T * p_motor)
+void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
 {
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
-    // #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    //     return FOC_IdFw(&p_context->Foc);
-    // #else
-    //     (void)p_context; return 0;
-    // #endif
-    //  FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
-    _FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I.Values);
-    FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), FOC_IdFw(&p_context->Foc), Ramp_GetOutput(&p_context->TorqueRamp));
-    FOC_ProcInvClarkePark(&p_context->Foc);
-    // Motor_FOC_WriteDuty(p_motor);
+    FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); /* Update for measurements */
+    FOC_SetAngleV(&p_motor->Foc, theta, vd, vq);
 }
 
 /*
-    Voltage-mode on a separate path
+    Voltage-mode on a separate path [Motor_FeedbackMode_IsVoltage]. req is V: UserCmd, or the speed loop's output.
 */
-void Motor_FOC_ProcAngleV(Motor_T * p_motor)
+void Motor_FOC_ProcAngleV(Motor_T * p_motor, fract16_t req)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    fract16_t vReq = _Ramp_ProcNextOf(&p_context->TorqueRamp, p_context->UserCmd); /* inner loop clips with VLimit. Every control cycle, as the torque path */
+    fract16_t vReq = _Ramp_ProcNextOf(&p_context->TorqueRamp, req); /* inner loop clips with VLimit. Every control cycle, as the torque path */
     FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
     _FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I.Values); /* Still capture I for overcurrent */
     FOC_ProcVControl(&p_context->Foc, fract16_mul(VBus_Pu(p_motor->P_VBUS), FRACT16_1_DIV_SQRT3), 0, vReq);
@@ -214,8 +208,7 @@ void Motor_FOC_ProcAngleV(Motor_T * p_motor)
 
 void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_context)
 {
-    Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Vq(&p_context->Foc)); //different units for now
-    p_context->UserCmd = FOC_Vq(&p_context->Foc);
+    Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Vq(&p_context->Foc)); /* TorqueRamp in V, [Motor_ResolveVLimits] */
 }
 
 
@@ -240,6 +233,27 @@ void Motor_FOC_ClearFeedbackState(Motor_Context_T * p_motor)
     p_motor->UserCmd = 0;
 }
 
+/* Map to StateMachine  */
+static inline void _Motor_FOC_ProcOnInput(Motor_Context_T * p_motor)
+{
+    FOC_CaptureI(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed), p_motor->PhaseInput.I.A, p_motor->PhaseInput.I.B, p_motor->PhaseInput.I.C);
+}
+
+/*
+    The current loop at the I set's completion [MOTOR_I_FEEDBACK_ON_PHASE], on the requests the torque path holds.
+    The LOOP steps them [_Motor_FOC_ProcTorqueReq] every control cycle, the I loop's rate as built, which their slopes and gains are scaled to, and the state entries match them.
+    The take Parks at the angle the LOOP last set, the sample's tick.
+    ON_PHASE of the states whose LOOP runs the torque path. Without it, the LOOP takes the sample.
+*/
+void Motor_FOC_ProcIFeedback(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    //  FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
+    _FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I.Values);
+    FOC_ProcIFeedback(&p_context->Foc, VBus_Pu(p_motor->P_VBUS), FOC_IdFw(&p_context->Foc), Ramp_GetOutput(&p_context->TorqueRamp));
+    FOC_ProcInvClarkePark(&p_context->Foc);
+    // Motor_FOC_WriteDuty(p_motor);
+}
 
 /******************************************************************************/
 /*

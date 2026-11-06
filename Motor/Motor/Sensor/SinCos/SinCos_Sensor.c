@@ -87,6 +87,7 @@ const RotorSensor_VTable_T SIN_COS_VTABLE =
     .INIT                  = (RotorSensor_Proc_T)SinCos_RotorSensor_Init,
     .INIT_UNITS            = (RotorSensor_Proc_T)SinCos_RotorSensor_InitUnits,
     .CAPTURE_ANGLE         = (RotorSensor_Proc_T)SinCos_RotorSensor_CaptureAngle,
+    .CAPTURE_STATOR        = (RotorSensor_Proc_T)RotorSensor_CaptureStatorNone,
     .CAPTURE_SPEED         = (RotorSensor_Proc_T)SinCos_RotorSensor_CaptureSpeed,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)SinCos_RotorSensor_IsFeedbackAvailable,
     .ZERO_INITIAL          = (RotorSensor_Proc_T)SinCos_RotorSensor_ZeroInitial,

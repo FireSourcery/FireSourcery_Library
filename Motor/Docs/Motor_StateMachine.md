@@ -71,7 +71,7 @@ encoder procedures, and encoder start-up, enter `FAULT` from their sub-states. A
 | `INIT` | resets `SysTime_Millis` | — | unchanged |
 | `DEACTIVATED` | float, duties to 50 %, feedback state cleared, direction `NULL`, timer reset | captures the back-EMF angle (`Motor_FOC_ProcCaptureAngleVBemf`) | float |
 | `PASSIVE` | float within the freewheel limit, else V0; feedback state cleared; timer reset | captures the back-EMF angle, so `RUN` can resume at speed | float or V0 |
-| `RUN` | resolves the current and speed limits, then matches the loops to the present output | the current loop on the speed loop's output, or on `UserCmd`; writes the duty | PWM |
+| `RUN` | resolves the current (or voltage) and speed limits, then matches the loops to the present output | the current loop, or the voltage path, on the speed loop's output, or on `UserCmd`; writes the duty | PWM |
 | `INTERVENTION` | resolves the current limits, matches the current loop and the output | in the sub-state | PWM |
 | `OPEN_LOOP` | V0, feedback state cleared | in the sub-state | V0 until a sub-state drives |
 | `CALIBRATION` | V0, feedback state cleared, timer reset | in the sub-state | V0 until a sub-state drives |
@@ -94,8 +94,10 @@ encoder procedures, and encoder start-up, enter `FAULT` from their sub-states. A
 - `RUN` entry matches against the previous output. From float, the voltage is matched to the captured back-EMF
   (`Motor_FOC_MatchVFreewheel`) and the bridge starts at T0. From any other output (V0 in `PASSIVE`, or driven, from
   `INTERVENTION` or `RUN` re-entering itself), the voltage state is matched to the present output
-  (`Motor_FOC_MatchVOutput`). The current loop is then matched (`Motor_FOC_MatchTorqueIState`). In speed mode the
-  speed loop is seeded with the torque ramp's output and `UserCmd` is set to the present speed.
+  (`Motor_FOC_MatchVOutput`). The torque ramp is then matched to the present Iq (`Motor_FOC_MatchTorqueIState`), or
+  Vq in a voltage mode (`Motor_FOC_MatchTorqueVState`). `UserCmd`, whose units follow `FeedbackMode`, is set to the
+  ramp's output; in speed mode the speed loop is seeded with the ramp's output and `UserCmd` is set to the present
+  speed. It holds until the next user write. `INTERVENTION` leaves `UserCmd` as the user wrote it.
 - `RUN` re-enters itself on `FEEDBACK_MODE`, so entry re-matches the loops without passing through `PASSIVE`.
 - `INTERVENTION` runs the current loop whatever `FeedbackMode` says; its sub-state picks the reference.
   `FEEDBACK_MODE` is stored, and `RUN` applies it on resume.
@@ -133,8 +135,12 @@ they take their root's handlers.
 - Release: `Z` or `0` goes to `PASSIVE` within the freewheel limit, else to `INTERVENTION_STATE_SPEED_ZERO`. In
   `SPEED_ZERO` a release above the limit re-enters `SPEED_ZERO`, which re-seeds its speed loop.
 - `PWM` from `TORQUE_ZERO` or `SPEED_ZERO` resumes `RUN` when the sensor reports feedback.
-- `FEEDBACK_MODE` stores a `Motor_FeedbackMode_T`. `Motor_ApplyFeedbackMode` sends only current modes, and only on a
-  change: `RUN` runs the current loop in every mode, so a voltage `UserCmd` would be read as a current.
+- `FEEDBACK_MODE` stores a `Motor_FeedbackMode_T`. `Motor_ApplyFeedbackMode` sends it only on a change, and a voltage
+  mode only with `MOTOR_VOLTAGE_CONTROL_MODE_ENABLE`. Without it `RUN` runs the current loop in every mode, so a
+  voltage `UserCmd` would be read as a current. The selection point is `Motor_FeedbackMode_IsVoltage`: with the
+  option off it is constant false and the voltage path (`Motor_FOC_ProcAngleV`, `Motor_FOC_MatchTorqueVState`,
+  `Motor_ResolveVLimits`) folds out of `RUN`. The option refuses `MOTOR_I_FEEDBACK_ON_PHASE` (`#error`): `RUN`'s
+  `ON_PHASE` action runs the current loop in every mode.
 - `DIRECTION` stores a `Motor_Direction_T` (`CW`, `CCW`, `NULL`); other values are ignored. See
   [Direction](#direction).
 - Branch entry (`OPEN_LOOP`, `CALIBRATION`, `INTERVENTION`): the value is a `State_T *`. A pointer whose `P_TOP` is
@@ -289,7 +295,7 @@ id yet.
 |---|---|---|---|---|
 | `OPEN_LOOP_STATE_ANGLE_ALIGN` | `Motor_OpenLoop.c` | `Motor_OpenLoop_SetAngleAlign`, `Motor_OpenLoop_SetAngleAlign_Phase` | T0, then the align command at the set angle (`Motor_FOC_ProcAlignCmd`) | `OPEN_LOOP` inputs |
 | `OPEN_LOOP_STATE_START_UP_ALIGN` → `OPEN_LOOP_STATE_RUN` | `Motor_OpenLoop.c` | `Motor_OpenLoop_StartRunChain`, direction set | V0, start-up align for `Config.AlignTime_Cycles`, then the open-loop angle ramp | `OPEN_LOOP` inputs |
-| `SENSORLESS_ALIGN` → `SENSORLESS_START_UP` | `Motor_Sensorless.c` | `PWM` on `PASSIVE` without lock at zero speed, or `Motor_Sensorless_StartRunChain`; direction set, sensorless the active sensor | V0, start-up align for `AlignTime_Cycles` with the observer converging; then the open-loop ramp, the observer's PLL seeded at the ramp's angle. Each corrects the observer in its LOOP | `SENSORLESS_RUN`, sensorless's alternate `RUN`, on the observer's lock |
+| `SENSORLESS_ALIGN` → `SENSORLESS_START_UP` | `Motor_Sensorless.c` | `PWM` on `PASSIVE` without lock at zero speed, or `Motor_Sensorless_StartRunChain`; direction set, sensorless the active sensor | V0, start-up align for `AlignTime_Cycles` with the observer converging; then the open-loop ramp, the observer's PLL seeded at the ramp's angle | `RUN` on the observer's lock |
 | `START_UP` → `START_UP_ALIGN` → `START_UP_VALIDATE_ALIGN` → `START_UP_VALIDATE_CLOSED_LOOP` | `Motor_Encoder.c` | `Motor_Encoder_StartUpChain`, a command on `PASSIVE`, at zero speed | align until the shaft settles and capture the encoder zero; open-loop run for twice the align time; closed loop for twice the align time | `RUN`; `FAULT` with `PositionSensor` if the encoder did not move, or on a speed / voltage polarity mismatch |
 | `ALIGN` → `VALIDATE_ALIGN` → `VALIDATE_CLOSED_LOOP` | `Motor_Encoder.c` | `Motor_Encoder_StartAlignZero`, `Motor_Encoder_StartValidateAlign`, `Motor_Encoder_StartValidateClosedLoop` | the same steps, each startable alone | the bare `OPEN_LOOP`; `FAULT` as above |
 
@@ -304,9 +310,8 @@ id yet.
 - `Motor_Sensor_StartUpState` names the selected sensor's start-up chain, for an entry by `PWM` in `PASSIVE`. It is
   `NULL` but for sensorless, and for sensorless unless the adapter is the active sensor: `Config.SensorMode` takes
   effect on reboot. The sensorless hand-off re-Parks the FOC's operating point at θ̂ (`FOC_MatchTheta`) before `RUN`.
-- `SENSORLESS_RUN` (`Motor_Sensorless.c`) is a top state in `RUN`'s place, with `RUN`'s id, entry, torque path and
-  action table. Its LOOP corrects the observer after the write; its own transitions send release and intervention
-  requests to `PASSIVE`, and every exit resets the observer. [Sensorless.md](Sensorless.md#states).
+- The observer corrects after the state machine, on any cycle a state wrote the FOC's command
+  (`Motor_CaptureStator`): no state carries it. [Sensorless.md](Sensorless.md#the-correction).
 
 ### `CALIBRATION`
 

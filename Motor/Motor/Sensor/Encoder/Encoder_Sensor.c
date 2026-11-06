@@ -99,6 +99,7 @@ const RotorSensor_VTable_T ENCODER_VTABLE =
     .INIT = (RotorSensor_Proc_T)Encoder_RotorSensor_Init,
     .INIT_UNITS = (RotorSensor_Proc_T)Encoder_RotorSensor_InitUnits,
     .CAPTURE_ANGLE = (RotorSensor_Proc_T)Encoder_RotorSensor_CaptureAngle,
+    .CAPTURE_STATOR = (RotorSensor_Proc_T)RotorSensor_CaptureStatorNone,
     .CAPTURE_SPEED = (RotorSensor_Proc_T)Encoder_RotorSensor_CaptureSpeed,
     .VERIFY_CALIBRATION = (RotorSensor_Test_T)Encoder_RotorSensor_VerifyCalibration,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Encoder_RotorSensor_IsSensorAvailable,

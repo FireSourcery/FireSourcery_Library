@@ -68,7 +68,7 @@ static void TorqueZero_Entry(Motor_T * p_motor)
 static void TorqueZero_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    /* Filter the (Entry-seeded or user-updated) Target: pass generating-side magnitude only */
+    /* Filter the user's command: pass generating-side magnitude only */
     Motor_FOC_ProcTorqueReq(p_motor, _Motor_GeneratingOnly(p_context, Motor_GetUserICmd(p_context)));
     Motor_FOC_WriteDuty(p_motor);
 }

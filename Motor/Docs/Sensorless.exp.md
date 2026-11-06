@@ -12,7 +12,7 @@ The detail behind [Sensorless.md](Sensorless.md): why the observer has its shape
 ## The front end
 
 - **EEMF on Lq.** Lq on both axes, the extended EMF: one `Stator_Winding_T` for every front end, SPM or IPM. The αβ SMO's G comes from Lq too, not Ls.
-- **The frame θ̂ is the caller's.** The front ends take i_dq, v_dq already in θ̂: i Parked at θ̂, the held command at θ̂ − Δθ̂/2. The observer Parks the held command (`EmfObserver_ParkHold`), and i only when the FOC ran at another angle (`EmfObserver_ParkI`); when it ran at θ̂, i_dq is the FOC's take.
+- **The frame θ̂ is the caller's.** The front ends take i_dq, v_dq already in θ̂: i Parked at θ̂, the held command at θ̂ − Δθ̂/2. The observer Parks the held command (`EmfObserver_ParkHold`); i_dq is the FOC's take. Where the FOC ran at another angle, `EmfObserver_ParkI` Parks Iα, Iβ at θ̂: not wired.
 - **The struct keeps outputs.** An input consumed in the call is not stored, so the observer holds no dq image. The one held input is the command, `VOutAlpha`, `VOutBeta`: it spans the period the next sample closes. A stored dq image of v carried a stale value across `EmfObserver_Reset`.
 - **The SMO step's order follows its v.** The same steps, one call shifted: `EmfObserver_AlphaBeta_ProcHeld` matches `EmfObserver_AlphaBeta_Proc` shifted one call, bit for bit.
 
@@ -68,15 +68,14 @@ A host float RL + EMF plant: SPM, R 0.0665, L 16.62, ψ 1.694 per unit per cycle
 
 ## The wiring
 
-Built 2026-11-05: the correction on the FOC's take, form A, in an alternate RUN. It replaced `Motor_Sensorless_Thread`, which the application called after the PWM thread in every state, returning at once unless the adapter was the active sensor, and which redid the FOC's Clarke, θ̂'s sine and cosine, and i's Park.
+Built 2026-11-05: the correction on the FOC's take, form A, as the sensor's `CAPTURE_STATOR`, after the state machine. It replaced `Motor_Sensorless_Thread`, which the application called after the PWM thread in every state, returning at once unless the adapter was the active sensor, and which redid the FOC's Clarke, θ̂'s sine and cosine, and i's Park.
 
-- **The states own the correction.** Each corrects in its LOOP, after its write: `SENSORLESS_RUN` on the take, the start-up chain on the Clarke. Threads keep the procedures common to every state.
-- **The take is the correction's i_dq when the FOC Parks at the published θ̂**, without `FOC_I_SAMPLE_DELAY` (with it, the take is at θ̂ − ω·delay). The chain's FOC Parks at the ramp, and shares only the Clarke (`EmfObserver_ParkI`).
+- **A sensor procedure, after the state machine.** `Motor_PWM_Thread`: `CAPTURE_ANGLE`, the state machine, then `Motor_CaptureStator`, then the speed poll. The predict before and the correction after are both the active sensor's, through its vtable; Hall, Encoder and SinCos define `CAPTURE_STATOR` empty. No state, and no thread, tests which sensor is active.
+- **Every cycle, on the caller's constraints.** `Motor_CaptureStator` calls the sensor every cycle, in every state. The correction is valid when `Foc` holds this cycle's take and the command just written, as in every state that drives the FOC through `Motor_FOC_WriteDuty`. PASSIVE floating writes nothing, but its V capture writes `Valpha`, `Vbeta` as the command's would be (`FOC_ProcVBemfClarkePark`), with Id, Iq at 0 after the feedback clear: the observer corrects on the terminal EMF, as DETECT would. PASSIVE shorted, FAULT, DEACTIVATED and INIT capture nothing: the observer corrects on the last Vα, Vβ, with Id, Iq at 0. The constraints are commented on `Motor_CaptureStator`.
+- **The take's Id, Iq, in every state.** They are θ̂'s where the FOC Parks at θ̂: RUN and INTERVENTION. Removed 2026-11-05, to return with `FOC_I_SAMPLE_DELAY`: a frame test (`FOC_IsIdqAt`, on `FOC_T.Theta`, the angle `FOC_SetTheta` last held) that Parked Iα, Iβ at θ̂ elsewhere, and a reset of the observer uncorrected past `LossHoldCount` (`EmfObserver_ProcStale`), which the every-cycle call never fired.
 - **The pieces**: `Motor_FOC_CaptureI` (SetTheta, Clarke, Park), `Motor_FOC_ProcIControl` (PI, InvPark), `_Motor_FOC_ProcIdReq`; `Motor_FOC_AngleControl` composes them. `EmfObserver_Eemf_ProcHeld` takes i_dq and Parks the command it holds; `EmfObserver_Eemf_ProcVAlphaBeta` takes the αβ command.
-- **A, `Motor_Sensorless_CorrectOnTake`, after the write.** The LOOP stays every sensor's torque path (`_Motor_Run_Proc`); v(k−1) comes from the hold, then it holds v(k). 32.9 µs against the thread's 39.6, the arm 17.2 µs ahead of its trigger against 10.4.
-- **One copy of the law.** `CorrectDq` is out of line: inlined into the three LOOPs it cost 1,728 B on KE06; out of line, 120 B over the thread.
-- **An alternate RUN, not a RUN substate.** A substate runs into the tree's walk. Action inputs dispatch to the leaf only, so a substate's own `ON_PHASE` drops RUN's `ON_SPEED`, unless the input targets the top state (`_StateMachine_ActionInputRootState`). The LOOP walk is leaf first, so RUN's LOOP would run after the substate's, and the correction before the take. `SENSORLESS_RUN` is a top state with RUN's parts (`_Motor_Run_Entry`, `_Motor_Run_Proc`, `MOTOR_RUN_ACTION_TABLE`, `_Motor_TransitionFault`, `_Motor_TransitionFeedbackLost`, exported by `Motor_StateMachine.c`) and its own transition table. `.ID` is RUN's.
-- **Scope: the acquisition procedure's states only.** The thread also corrected in PASSIVE, floating, and in INTERVENTION. Covering those would take sensorless variants of shared states and a selector at each of ~22 transitions into them. Instead every exit from `SENSORLESS_RUN` resets the observer (`ZERO_INITIAL`), so no state reads a lock nothing corrects, and its release and intervention requests go to PASSIVE. The other transitions into RUN test the lock first, so none reaches the plain RUN with this sensor.
+- **Cost.** 32.9 µs against the thread's 39.6, estimated; the arm 17.2 µs ahead of its trigger against 10.4. KE06 Release 50,568 B.
+- **Not a state's LOOP.** Corrected in the LOOPs, each state that drives at θ̂ needed the call, and an alternate RUN (`SENSORLESS_RUN`) carried it with RUN's parts exported; a RUN substate would run its LOOP before RUN's, the correction before the take. `SENSORLESS_RUN` is kept commented out, for B.
 
 ## Evaluated, not built
 
@@ -93,8 +92,10 @@ The PLL's loop structure, error sign and seeding were checked against NXP's appl
 ## Open
 
 - No hardware run. The start-up fix and the wired front end are checked on float plants only; the state wiring compiles and links, and has not run.
-- **A coasting rotor after `SENSORLESS_RUN`.** The release resets ω̂, so speed feedback reads 0 while the rotor coasts, and a PWM request starts `SENSORLESS_ALIGN` on a turning rotor. Catch-spin and the intervention states are gone for this sensor until the procedure's DETECT and a sensorless intervention are built.
-- **A chain abort keeps ω̂.** `OPEN_LOOP`'s exits are shared and do not reset the observer: PASSIVE then predicts on the ramp's ω̂, and speed feedback holds it. A PWM request waits on zero speed; `Motor_Sensorless_StartRunChain` restarts regardless.
+- **The observer outside a writing state.** PASSIVE floating corrects on the measured EMF: not run, on hardware or a plant. The held v is the last sample's, Parked at θ̂ − Δθ̂/2, Δθ̂/2 off that sample's own angle. Its first cycle holds the last RUN command. PASSIVE shorted (V0, above the freewheel limit), FAULT, DEACTIVATED and INIT correct on the last Vα, Vβ and i = 0: ê reads a fixed vector, ω̂ and speed feedback drift. V0 needs the take of I at θ̂ and v = 0; the others a gate or a clear.
+- **A lock at standstill.** No real EMF lock exists near ω̂ = 0. Proposed, not built: the lock acquires above ω_on and holds to ω_off (≈ `MagFloor`/ψ, with margin), in the lock, so the START_UP handover and RUN's exit take the same rule.
+- **The start-up chain's i is in the ramp's frame.** Once ‖ê‖ holds above the floor and θ̂ leaves the ramp, the correction reads the take off θ̂ by the load angle, while it acquires the lock. `EmfObserver_ParkI` is the fix, deferred with the sample delay.
+- **Calibration and open loop correct too.** They write through `Motor_FOC_WriteDuty`. At standstill with a wrong R, ê = (R − R̂)·i can read above the floor and lock.
 - With `MOTOR_I_FEEDBACK_ON_PHASE`, the take is `ON_PHASE`'s, at the angle the LOOP last set, not this cycle's θ̂.
 - The default PLL crossover is 50 Hz at a 10 kHz control frequency; its comment states 100 Hz, true at 20 kHz.
 - The voltage model's braking, and the αβ SMO's lag: above.

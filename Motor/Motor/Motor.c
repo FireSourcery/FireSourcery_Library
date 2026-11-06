@@ -64,7 +64,7 @@ void Motor_Init(Motor_T * p_dev)
     Motor_ResetSpeedLimit(p_dev->P_MOTOR);
     p_dev->P_MOTOR->ISupplyLimits = interval_symmetric(0, FRACT16_MAX); // call handle
 
-    p_dev->P_MOTOR->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT; /* Voltage modes are not accepted, [Motor_ApplyFeedbackMode] */
+    p_dev->P_MOTOR->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT; /* Voltage modes are accepted only with MOTOR_VOLTAGE_CONTROL_MODE_ENABLE, [Motor_ApplyFeedbackMode] */
 
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     StateMachine_Init(&p_dev->STATE_MACHINE);
@@ -228,23 +228,38 @@ void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
 }
 
 /*
+    Voltage modes: TorqueRamp and SpeedPid output are V, within the Direction half-plane. Selected by [Motor_ResolveFeedbackLimits].
+    The current modes resolve from the inputs [Motor_ResolveILimits], replacing the V limits a voltage mode left.
+*/
+void Motor_ResolveVLimits(Motor_T * p_dev)
+{
+    interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
+    Ramp_SetLimits(&p_dev->P_MOTOR->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
+    PID_SetOutputLimits(&p_dev->P_MOTOR->PidSpeed, v.low, v.high);
+}
+
+void Motor_ResolveFeedbackLimits(Motor_T * p_motor)
+{
+    if (Motor_FeedbackMode_IsVoltage(p_motor->P_MOTOR->FeedbackMode)) { Motor_ResolveVLimits(p_motor); } else { Motor_ResolveILimits(p_motor->P_MOTOR); }
+}
+
+/*
     Push alternative, with [_Motor_SetILimits]: catch-all on a feedback mode update, Run_Entry.
     TorqueRamp and SpeedPid output units follow FeedbackMode.Current
 */
-void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
-{
-    Motor_Context_T * p_motor = p_dev->P_MOTOR;
-    interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
+// void Motor_ResolveFeedbackLimits(Motor_T * p_dev)
+// {
+//     Motor_Context_T * p_motor = p_dev->P_MOTOR;
+//     interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
 
-    /* Current mode: resolve from inputs, TorqueRamp may hold V limits from voltage mode. */
-    if (p_motor->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor); }
-    else
-    {
-        if (p_motor->FeedbackMode.Speed == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
-        Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
-    }
-}
-
+//     /* Current mode: resolve from inputs, TorqueRamp may hold V limits from voltage mode. */
+//     if (p_motor->FeedbackMode.Current == 1U) { Motor_ResolveILimits(p_motor); }
+//     else
+//     {
+//         if (p_motor->FeedbackMode.Speed == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
+//         Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
+//     }
+// }
 /******************************************************************************/
 /*
     Direction - applied voltage direction, and its VLimit half-plane.

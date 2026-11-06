@@ -3,7 +3,7 @@ The sensorless observer on the built current-loop timeline: the value each step 
 the duty it leads to is applied. The ISR timing is ISample's built form ('before': KE06, the 20 kHz PWM, a 100 us control cycle),
 with the observer's prediction in place of the Hall capture. Three forms of its correction:
 
-    A       built: on the FOC's take, in SENSORLESS_RUN's LOOP after the write [Motor_Sensorless_CorrectOnTake]   SensorlessSequenceA.png
+    A       built: on the FOC's take, after the state machine [Motor_CaptureStator, CAPTURE_STATOR]       SensorlessSequenceA.png
     B       on the FOC's take, between the take and the PI [Motor_Sensorless_ProcTorqueReq]. Not wired           SensorlessSequenceB.png
     thread  Motor_Sensorless_Thread, after the write: its own Clarke, sin/cos of θ̂ and Park of i. Removed 2026-11-05,
             drawn with its two fixes by sensorless_sequence_fixed.py
@@ -82,7 +82,7 @@ class SensorlessSim(Sim):
                 yield from self.correction()  # between the take and the loop
             if sg["label"] == "exit":
                 if self.form == "A" and analog:
-                    yield from self.correction()  # the LOOP's, after its write, before the speed poll
+                    yield from self.correction()  # CAPTURE_STATOR, after the state machine, before the speed poll
                 if analog and tick in self.extra:
                     yield self.seg("speed", "theta", self.extra[tick] * self.k)
                 if self.form == "thread" and analog != self.between:
@@ -399,7 +399,7 @@ def main_on_take():
                f"{common}.",
                *arm_lines("A"),
                period_line("A"),
-               f"The LOOP is the other sensors': the take, the PI and the write as Run_Proc's. Foc keeps the take through the loop: i(k) at theta^(k).",
+               f"The LOOP is every sensor's: the take, the PI and the write as Run_Proc's. Foc keeps the take through the loop: i(k) at theta^(k).",
                "The hold stores v(k) for the next sample: the loop has overwritten Foc's v(k-1). Inputs as B's, i(k), theta^(k), omega^(k-1), v(k-1): the same omega^(k).",
                "Not drawn: the sense chain's age, by which the current read lags the current (the board's filter), on top of the same offset."]
     lines_b = [f"The correction between the take and the PI, estimated {take_us:.1f} us at k 1: {b0['correct']:.1f} to {b0['pi']:.1f} us. "
@@ -412,7 +412,7 @@ def main_on_take():
                "No hold: Foc still holds v(k-1) when the correction reads it. The torque path inlines a second copy of the loop. Inputs as A's: the same omega^(k)."]
     correct_label = {"A": "correct: i(k) from the take, v(k−1) held, at θ̂(k) − Δθ̂/2",
                      "B": "correct: i(k) from the take, v(k−1) still in Foc, at θ̂(k) − Δθ̂/2"}
-    titles = {"A": "Sensorless A, built: on the FOC's take after the write, in SENSORLESS_RUN's LOOP: what each step reads and writes, and when the duty is applied",
+    titles = {"A": "Sensorless A, built: on the FOC's take, after the state machine: what each step reads and writes, and when the duty is applied",
               "B": "Sensorless B, on the FOC's take between the take and the PI: what each step reads and writes, and when the duty is applied"}
     for form, lines in (("A", lines_a), ("B", lines_b)):
         plot_timeline(runs[form], os.path.join(HERE, f"SensorlessSequence{form}.png"),

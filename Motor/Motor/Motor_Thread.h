@@ -64,6 +64,23 @@ static inline void Motor_CaptureSensor(Motor_T * p_dev)
     // if (Motor_IsAnalogCycle(p_dev) == true) { Motor_PollSpeed(p_dev); } /* With the requests. The 1 ms poll lands on a fixed cycle, delayed at most 1 */
 }
 
+/*
+    After the state machine: the sensor's take of the stator, from the motor's Foc [FOC_T], which the sensor holds. Every control tick, in every state.
+    The sensorless observer corrects here; a sensor reading the rotor directly does nothing [RotorSensor_CaptureStatorNone].
+    Constraints on the caller, valid only when they hold:
+        Once per control tick, after the state's write [Motor_FOC_WriteDuty]: Foc holds this tick's take, Ialpha/Ibeta, Id/Iq, and the command just written, Valpha/Vbeta.
+        The take Parked at the published θ̂: the observer reads Id/Iq in its own frame.
+        PhaseInput.I is a set sampled while driven [Motor_ADC_MarkPhases].
+    Not held, the observer corrects on what Foc holds:
+        PASSIVE floating: Id/Iq 0 after the feedback clear [Motor_FOC_ClearFeedbackState], Valpha/Vbeta the measured terminal voltage [FOC_CaptureVBemf]: i and v as they are.
+        PASSIVE shorted, FAULT, DEACTIVATED, INIT: no V capture, no write. Valpha/Vbeta the last measured or written, Id/Iq 0 after the feedback clear.
+        A state writing the duty other than through the FOC leaves Foc's command stale.
+*/
+static inline void Motor_CaptureStator(Motor_T * p_dev)
+{
+    RotorSensor_CaptureStator(p_dev->P_MOTOR->p_ActiveSensor);
+}
+
 
 /*
     ~50us
@@ -77,10 +94,10 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
 {
     Motor_CaptureSensor(p_dev);
 
-    _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
-    // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
-    // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
+    _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE); // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, p_dev);
     // Motor_FOC_WriteDuty_Thread(p_dev); // okay if statemachine transitions for Duty0,0,0 state
+
+    Motor_CaptureStator(p_dev);
 
     Motor_PollSpeed(p_dev);
     p_dev->P_MOTOR->ControlTimerBase++;

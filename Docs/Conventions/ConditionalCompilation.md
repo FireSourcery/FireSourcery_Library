@@ -13,6 +13,11 @@ the default build never compiles.
   - prevents a cross product: the callers call `FOC_ProcIFeedback`, so no caller is written once per
     variant;
   - is a configuration case: a build has the decoupling or not.
+- **A runtime mode a build may leave out selects through a predicate.** Where the option enables a
+  choice made at runtime, the `#if` picks the predicate's body and the callers branch on it.
+  `Motor_FeedbackMode_IsVoltage`, `Motor/Motor/Motor.h`, is `Current == 0` with
+  `MOTOR_VOLTAGE_CONTROL_MODE_ENABLE` and constant false without it, so at -O3 the voltage path folds
+  out of `RUN`. At -O0 (S32 DEBUG) the references stay, and the voltage functions link in.
 - **Guard the reference, not the definition.** An optional feature's functions compile in every
   build; the `#if` goes around the call or table row that pulls them in, and the linker drops them
   where it is off: [GuardedCall.md](../Patterns/GuardedCall.md).

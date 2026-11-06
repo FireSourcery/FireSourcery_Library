@@ -56,6 +56,7 @@ typedef void(*RotorSensor_Set_T)(const struct RotorSensor * p_sensor, int value)
 typedef const struct RotorSensor_VTable
 {
     RotorSensor_Proc_T CAPTURE_ANGLE;   /* ~20Khz */
+    RotorSensor_Proc_T CAPTURE_STATOR;  /* ~20Khz, after the state machine, on the FOC's take and write [Motor_CaptureStator]. A sensor reading the rotor directly: [RotorSensor_CaptureStatorNone] */
     RotorSensor_Proc_T CAPTURE_SPEED;   /* ~1Khz */
     RotorSensor_Test_T IS_FEEDBACK_AVAILABLE; /* From Stop and after Align */
     RotorSensor_Proc_T ZERO_INITIAL;
@@ -165,6 +166,10 @@ static inline void RotorSensor_Init(RotorSensor_T * p_sensor)
 
 /* OnControlLoop */
 static inline void RotorSensor_CaptureAngle(RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_ANGLE(p_sensor); }
+/* OnControlLoop, after the FOC's write: its take of the sample and the command it wrote [FOC_T] */
+static inline void RotorSensor_CaptureStator(RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_STATOR(p_sensor); }
+/* CAPTURE_STATOR of a sensor that reads the rotor directly */
+static inline void RotorSensor_CaptureStatorNone(RotorSensor_T * p_sensor) { (void)p_sensor; }
 /* OnSpeedLoop */
 static inline void RotorSensor_CaptureSpeed(RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_SPEED(p_sensor); }
 /* OnStart */

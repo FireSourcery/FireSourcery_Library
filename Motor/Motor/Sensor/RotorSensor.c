@@ -43,6 +43,7 @@ const RotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
 {
     .INIT = (RotorSensor_Proc_T)Empty_Proc,
     .CAPTURE_ANGLE = (RotorSensor_Proc_T)Empty_Proc,
+    .CAPTURE_STATOR = (RotorSensor_Proc_T)Empty_Proc,
     .CAPTURE_SPEED = (RotorSensor_Proc_T)Empty_Proc,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Empty_Test,
     // .SET_DIRECTION = (RotorSensor_Set_T)Empty_Set,
