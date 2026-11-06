@@ -178,6 +178,15 @@ static inline adc_mask_t _ADC_SetStateFrom(ADC_State_T * p_state, adc_mask_t sou
 
 */
 /******************************************************************************/
+// static inline void ADC_ActivateChannels(ADC_T * p_adc, adc_mask_t channels)
+// {
+// p_adc->P_STATE->ChannelMarkers |= channels;
+    // _ADC_SetStateFrom(p_adc->P_STATE, p_adc->P_STATE->ChannelMarkers);
+    // assert(p_adc->P_STATE->ActiveChannelCount > 0U); /* Callers gate on ChannelMarkers, so the selection is never empty */
+    // _ADC_Activate(p_adc);
+// }
+
+
 static inline void _ADC_ActivateMarked(ADC_T * p_adc)
 {
     _ADC_SetStateFrom(p_adc->P_STATE, p_adc->P_STATE->ChannelMarkers);

@@ -257,13 +257,10 @@ const State_T MOTOR_STATE_DEACTIVATED =
 */
 static void Passive_Entry(Motor_T * p_motor)
 {
-    /* check on transition. duplicate */
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
-    // if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_ActivateT0(&p_motor->PHASE); }
-    else { Phase_ActivateV0(&p_motor->PHASE); }
+    if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); } else { Phase_ActivateV0(&p_motor->PHASE); }
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     Motor_ResetControlTimer(p_motor->P_MOTOR); /* ok to reset timer */
- //optionally set backup vspeed
+ // optionally set backup vspeed
 }
 
 static void Passive_Proc(Motor_T * p_motor)
@@ -297,12 +294,6 @@ static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutp
                 if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
                 /* From standstill, the active sensor's start-up chain, a sub-state of OPEN_LOOP. NULL where it has none: no transition */
                 else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { p_nextState = Motor_Sensor_StartUpState(p_motor); }
-                // else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) /* OpenLoop start at 0 speed */
-                // {
-                //     p_nextState = &MOTOR_STATE_OPEN_LOOP;
-                //     /* p_nextState = Motor_Sensor_GetStartUpState(p_motor); */ /* get substate */
-                // }
-                // else no transition
             }
             break;
     }

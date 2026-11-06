@@ -52,10 +52,8 @@ typedef const struct ADC_Sequence
 ADC_Sequence_T;
 
 /* Casts the handler to its registration type. Braces only, so a sequence can nest in a batch's parts */
-#define ADC_SEQUENCE_FIELDS(p_Adc, Channels, CompleteFn, p_Context) \
+#define ADC_SEQUENCE(p_Adc, Channels, CompleteFn, p_Context) \
     { .P_ADC = (p_Adc), .CHANNELS = (Channels), .COMPLETE = (ADC_Callback_T)(CompleteFn), .P_CONTEXT = (void *)(p_Context), }
-
-#define ADC_SEQUENCE(p_Adc, Channels, CompleteFn, p_Context) (ADC_Sequence_T)ADC_SEQUENCE_FIELDS(p_Adc, Channels, CompleteFn, p_Context)
 
 
 /******************************************************************************/
@@ -84,6 +82,13 @@ static inline void ADC_Sequence_ActivateDma(ADC_Sequence_T * p_sequence)
     Completion
 */
 /******************************************************************************/
+// static inline void _ADC_Sequence_OnComplete(ADC_T * p_adc, ADC_Sequence_T * p_completed)
+// {
+//     _ADC_MarkComplete(p_adc, p_completed->CHANNELS);
+//     bool isComplete = ADC_PollComplete(p_adc, p_completed->CHANNELS);
+//     if ((isComplete == true) && (p_completed->COMPLETE != NULL)) { p_completed->COMPLETE(p_completed->P_CONTEXT); }
+// }
+
 static inline bool ADC_Sequence_IsComplete(ADC_Sequence_T * p_sequence) { return ADC_IsComplete(p_sequence->P_ADC, p_sequence->CHANNELS); }
 
 /* All or nothing. A partial set keeps its flags, so a set that straddles 2 ISRs still closes */
@@ -113,8 +118,6 @@ typedef struct ADC_SequenceTrigger
     ADC_Sequence_T * volatile p_NextSequence;
 }
 ADC_SequenceTrigger_T;
-
-#define ADC_SEQUENCE_TRIGGER_ALLOC() (&(ADC_SequenceTrigger_T){})
 
 /* Deferred, 1 store. Any thread. Applied at the completion that follows */
 static inline void ADC_SequenceTrigger_SetNext(ADC_SequenceTrigger_T * p_trigger, ADC_Sequence_T * p_sequence) { p_trigger->p_NextSequence = p_sequence; }

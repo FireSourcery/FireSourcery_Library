@@ -87,13 +87,6 @@ static inline void ADC_ActivateMarked(ADC_T * p_adc)
 #endif
 }
 
-// static inline void ADC_Activate(ADC_T * p_adc, adc_mask_t channels)
-// {
-// p_adc->P_STATE->ChannelMarkers |= channels;
-    // _ADC_SetStateFrom(p_adc->P_STATE, p_adc->P_STATE->ChannelMarkers);
-    // assert(p_adc->P_STATE->ActiveChannelCount > 0U); /* Callers gate on ChannelMarkers, so the selection is never empty */
-    // _ADC_Activate(p_adc);
-// }
 
 /******************************************************************************/
 /*

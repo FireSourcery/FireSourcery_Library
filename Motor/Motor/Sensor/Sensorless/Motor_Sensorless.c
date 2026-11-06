@@ -122,8 +122,6 @@ static void Align_Entry(Motor_T * p_motor)
     Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR); /* zeroes OpenLoopAngle, selects current feedback */
     RotorSensor_ZeroInitial(&GetSensorless(p_motor)->BASE);
 }
-// FOC_SetVLimits(&p_context->Foc, (sign_t)Motor_GetDirectionForward(p_context), VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS));
-
 
 /*
     Observer runs through align even though EMF is ~0 and lock cannot assert:
