@@ -39,6 +39,7 @@
 static void Sensorless_Sensor_Init(Sensorless_Sensor_T * p_sensor)
 {
     EmfObserver_Init(p_sensor->P_OBSERVER, p_sensor->P_NVM_CONFIG);
+
 }
 
 /*
@@ -100,6 +101,7 @@ static void Sensorless_Sensor_ZeroInitial(Sensorless_Sensor_T * p_sensor)
 static bool Sensorless_Sensor_VerifyCalibration(Sensorless_Sensor_T * p_sensor)
 {
     const EmfObserver_Config_T * p_config = &p_sensor->P_OBSERVER->Config;
+    FOC_DisableFieldWeakening(p_sensor->P_FOC);
     return (p_config->K_smo != 0) && (p_config->LpfCoef != 0) && (p_sensor->P_OBSERVER->Winding.G != 0);
 }
 
@@ -111,6 +113,7 @@ static bool Sensorless_Sensor_VerifyCalibration(Sensorless_Sensor_T * p_sensor)
 */
 static void Sensorless_Sensor_InitUnits(Sensorless_Sensor_T * p_sensor)
 {
+    FOC_DisableFieldWeakening(p_sensor->P_FOC);
     if (Motor_Electrical_IsValid(p_sensor->P_ELECTRICAL) == true)
     {
         EmfObserver_InitWinding(p_sensor->P_OBSERVER, p_sensor->P_ELECTRICAL->Rs, Motor_Lq_PuTurn(p_sensor->P_ELECTRICAL));

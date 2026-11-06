@@ -97,7 +97,7 @@ EmfObserver_Config_T;
     {                                                                                                                       \
         .MagFloor       = (ufract16_t)FRACT16(.05F * VBus / v_max), /* 5 % of VMax */                                       \
         .LockErrTol     = (ufract16_t)FRACT16(.05F),                /* 5 % normalized error */                              \
-        .LockHoldCount  = (uint16_t)((Freq) / 100U),                /* 10 ms, in samples */                                 \
+        .LockHoldCount  = (uint16_t)((Freq) / 200U),                /* 10 ms, in samples */                                 \
         .LossHoldCount  = (uint16_t)((Freq) / 100U),                /* 10 ms, in samples */                                 \
     },                                                                                                                      \
     .Pll =                                                                                                                  \

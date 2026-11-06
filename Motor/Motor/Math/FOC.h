@@ -674,7 +674,10 @@ static inline void FOC_MatchIdFieldWeakening(FOC_T * p_foc, ufract16_t vBus)
 //     FOC_ProcIFeedback(p_foc, vBus,   0, iqReq);
 // }
 
-
+static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
+{
+    p_foc->FieldWeakening.IdLimit = 0;
+}
 
 /******************************************************************************/
 /*!
