@@ -312,7 +312,7 @@ static void Ld_Proc(Motor_T * p_motor)
     Motor_ParamsBuffer_T * p_params; /* temp */
     Motor_ElectricalParams_T * p_results;
 
-    FOC_CaptureIabc(&p_runtime->Foc, &p_runtime->PhaseInput.I);
+    FOC_CaptureIData(&p_runtime->Foc, &p_runtime->PhaseInput.I);
     Motor_FOC_ProcAngleFeedforwardV(p_motor, 0, p_params->VdBias + p_params->VdStep, 0);
 
     /* Mark first crossing of the 63% threshold */

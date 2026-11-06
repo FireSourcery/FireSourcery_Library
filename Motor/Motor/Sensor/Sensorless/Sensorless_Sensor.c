@@ -70,13 +70,18 @@ static void Sensorless_Sensor_CaptureStator(Sensorless_Sensor_T * p_sensor)
     EmfObserver_HoldV(p_obs, p_foc->Valpha, p_foc->Vbeta);
 }
 
-/* Project observer ω̂ → fract16 speed via the configured SpeedPuRef.
-   Assumes CAPTURE_ANGLE already published Delta into AngleSpeed this tick. */
+/*
+    Project observer ω̂ → fract16 speed via the configured SpeedPuRef.
+    Assumes CAPTURE_ANGLE already published Delta into AngleSpeed this tick.
+    0 while |ê| is at or below the floor [EmfObserver_IsIndeterminate]: the rotor is not observed, and ω̂ holds where the error stopped.
+    At speed, |ê| clears the floor: a lock lost above it keeps the speed, for the freewheel decision [_Motor_TransitionFeedbackLost].
+*/
 static void Sensorless_Sensor_CaptureSpeed(Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
+    accum32_t speed = (EmfObserver_IsIndeterminate(p_sensor->P_OBSERVER) == true) ? 0 : Angle_ResolveSpeed_Pu(&p_rotor->AngleSpeed, &p_rotor->UnitRef.SpeedPuRef);
 
-    _RotorSensor_SetSpeedPu(p_rotor, Angle_ResolveSpeed_Pu(&p_rotor->AngleSpeed, &p_rotor->UnitRef.SpeedPuRef));
+    _RotorSensor_SetSpeedPu(p_rotor, speed);
 }
 
 static bool Sensorless_Sensor_IsFeedbackAvailable(Sensorless_Sensor_T * p_sensor)

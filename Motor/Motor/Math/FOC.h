@@ -456,8 +456,8 @@ static void FOC_ClearCaptureState(FOC_T * p_foc)
 {
     p_foc->Id = 0;
     p_foc->Iq = 0;
-    // p_foc->Stator.Alpha.I = 0;
-    // p_foc->Stator.Beta.I = 0;
+    p_foc->Ialpha = 0;
+    p_foc->Ibeta = 0;
 }
 
 static void FOC_ClearOutputState(FOC_T * p_foc)
@@ -467,8 +467,8 @@ static void FOC_ClearOutputState(FOC_T * p_foc)
     p_foc->Va = 0;
     p_foc->Vb = 0;
     p_foc->Vc = 0;
-    // p_foc->Stator.Alpha.VOut = 0;
-    // p_foc->Stator.Beta.VOut = 0;
+    p_foc->Valpha = 0;
+    p_foc->Vbeta = 0;
 }
 
 static void FOC_ResetFeedbackState(FOC_T * p_foc)

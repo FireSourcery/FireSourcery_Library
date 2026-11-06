@@ -42,8 +42,7 @@
 /******************************************************************************/
 /* From Iabc to Idq */
 /* optional wrap AB selection */
-// static inline bool FOC_CaptureIData(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
-__attribute__((noinline)) static bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
+__attribute__((noinline)) static bool FOC_CaptureIData(FOC_T * p_foc, volatile Phase_Data_T * p_iabc)
 {
     if (p_iabc->Flags.Bits == PHASE_ID_ABC)  /* alternatively use batch callback */
     {
@@ -51,10 +50,7 @@ __attribute__((noinline)) static bool FOC_CaptureIabc(FOC_T * p_foc, volatile Ph
         p_iabc->Flags.Bits = PHASE_ID_0; /* Clear capture flag after processing */
         return true;
     }
-    else
-    {
-        return false; /* No new data captured */
-    }
+    return false; /* No new data captured */
 }
 
 // caller handle state marker
@@ -63,13 +59,16 @@ static inline void _FOC_CaptureIabc(FOC_T * p_foc, const volatile Phase_Triplet_
     FOC_ProcClarkePark(p_foc, p_iabc->A, p_iabc->B, p_iabc->C);
 }
 
-static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_input)
+/* As [FOC_CaptureIData]: true on a fresh set, then clears its flag */
+static inline bool FOC_CaptureVBemfData(FOC_T * p_foc, volatile Phase_Data_T * p_input)
 {
     if (p_input->Flags.Bits == PHASE_ID_ABC)
     {
         FOC_ProcVBemfClarkePark(p_foc, p_input->Values.A, p_input->Values.B, p_input->Values.C);
         p_input->Flags.Bits = PHASE_ID_0;
+        return true;
     }
+    return false;
 }
 
 

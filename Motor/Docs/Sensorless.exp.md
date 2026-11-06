@@ -92,8 +92,9 @@ The PLL's loop structure, error sign and seeding were checked against NXP's appl
 ## Open
 
 - No hardware run. The start-up fix and the wired front end are checked on float plants only; the state wiring compiles and links, and has not run.
-- **The observer outside a writing state.** PASSIVE floating corrects on the measured EMF: not run, on hardware or a plant. The held v is the last sample's, Parked at θ̂ − Δθ̂/2, Δθ̂/2 off that sample's own angle. Its first cycle holds the last RUN command. PASSIVE shorted (V0, above the freewheel limit), FAULT, DEACTIVATED and INIT correct on the last Vα, Vβ and i = 0: ê reads a fixed vector, ω̂ and speed feedback drift. V0 needs the take of I at θ̂ and v = 0; the others a gate or a clear.
-- **A lock at standstill.** No real EMF lock exists near ω̂ = 0. Proposed, not built: the lock acquires above ω_on and holds to ω_off (≈ `MagFloor`/ψ, with margin), in the lock, so the START_UP handover and RUN's exit take the same rule.
+- **The observer outside a writing state.** PASSIVE takes the set that lands (`Motor_FOC_ProcCaptureAngleVBemf`): floating, the terminal EMF with I cleared; shorted, the current with V cleared. The feedback clear now zeroes the αβ image with the rest, so DEACTIVATED and a state's entry read 0. None of it has run, on hardware or a plant. Accepted: the held v is the last sample's, Parked at θ̂ − Δθ̂/2, Δθ̂/2 off that sample's own angle (5.4° at 300 Hz electrical, 10 kHz); the first PASSIVE cycle holds the last RUN command. FAULT keeps its last image, uncleared, and leaves through DEACTIVATED.
+- **Speed feedback reads 0 while ‖ê‖ is at or below the floor** (`Sensorless_Sensor_CaptureSpeed`), where ω̂ holds where the error stopped. Above it, a lock lost at speed keeps the speed for the freewheel decision. A rotor coasting below the observable speed reads 0, so a PWM request starts `SENSORLESS_ALIGN` on it: the procedure's SETTLE region. During START_UP below the floor, speed reads 0, so a direction input is accepted.
+- **A lock at standstill.** No real EMF lock exists near ω̂ = 0. With PASSIVE's image true, no stale vector feeds one. Proposed, not built, with the procedure: the lock acquires above ω_on and holds to ω_off (≈ `MagFloor`/ψ, with margin), in the lock, so the START_UP handover and RUN's exit take the same rule.
 - **The start-up chain's i is in the ramp's frame.** Once ‖ê‖ holds above the floor and θ̂ leaves the ramp, the correction reads the take off θ̂ by the load angle, while it acquires the lock. `EmfObserver_ParkI` is the fix, deferred with the sample delay.
 - **Calibration and open loop correct too.** They write through `Motor_FOC_WriteDuty`. At standstill with a wrong R, ê = (R − R̂)·i can read above the floor and lock.
 - With `MOTOR_I_FEEDBACK_ON_PHASE`, the take is `ON_PHASE`'s, at the angle the LOOP last set, not this cycle's θ̂.
@@ -103,4 +104,4 @@ The PLL's loop structure, error sign and seeding were checked against NXP's appl
 - K_smo, SmoSat and the PLL gains are not tuned per motor.
 - Config vars are read only: no Set, no NVM map entry. `LossHoldCount` has no var id.
 - `EMF_ALPHA`, `EMF_BETA` read 0 under the EEMF front end.
-- Speed feedback while unlocked.
+- Speed feedback while unlocked above the floor: ω̂ as the PLL holds it, until the lock's loss.

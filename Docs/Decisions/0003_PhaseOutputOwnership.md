@@ -36,5 +36,5 @@ point, so a V0 written in the same ISR reads back as PWM.
 - Started by the user: `Phase_Svpwm_Data` returns a `Phase_Data_T` and `Phase_WriteData` writes it.
   `Phase_Svpwm_Data` must be `static inline` (as a plain header definition the KE06 link fails with
   multiple definitions). Open: whether Flags means gates (the output side) or a consumed fresh-sample
-  mark (as on the input side, cleared by `FOC_CaptureIabc`).
+  mark (as on the input side, cleared by `FOC_CaptureIData`).
 - Naming (VZ / V0 / T0, Config → Nvm, Runtime) is parked.

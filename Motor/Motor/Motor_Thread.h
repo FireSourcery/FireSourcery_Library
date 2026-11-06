@@ -72,8 +72,8 @@ static inline void Motor_CaptureSensor(Motor_T * p_dev)
         The take Parked at the published θ̂: the observer reads Id/Iq in its own frame.
         PhaseInput.I is a set sampled while driven [Motor_ADC_MarkPhases].
     Not held, the observer corrects on what Foc holds:
-        PASSIVE floating: Id/Iq 0 after the feedback clear [Motor_FOC_ClearFeedbackState], Valpha/Vbeta the measured terminal voltage [FOC_CaptureVBemf]: i and v as they are.
-        PASSIVE shorted, FAULT, DEACTIVATED, INIT: no V capture, no write. Valpha/Vbeta the last measured or written, Id/Iq 0 after the feedback clear.
+        PASSIVE: the set that lands [Motor_FOC_ProcCaptureAngleVBemf]. Floating, the terminal EMF with i 0; shorted, the current with v 0: i and v as they are.
+        DEACTIVATED, and states entered through the feedback clear before their first write: 0 [Motor_FOC_ClearFeedbackState]. FAULT: the last, uncleared.
         A state writing the duty other than through the FOC leaves Foc's command stale.
 */
 static inline void Motor_CaptureStator(Motor_T * p_dev)

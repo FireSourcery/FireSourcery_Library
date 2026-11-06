@@ -77,7 +77,7 @@ __attribute__((noinline)) void Motor_FOC_AngleControl(Motor_Context_T * p_motor,
 __attribute__((noinline)) void Motor_FOC_AngleControl_Alt(Motor_Context_T * p_motor, ufract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 {
     FOC_SetTheta(&p_motor->Foc, theta);  /* update angle only for voutput */
-    if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
+    if (FOC_CaptureIData(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
     FOC_ProcInvClarkePark(&p_motor->Foc);
 }
 // #endif
@@ -188,7 +188,7 @@ void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 */
 void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
 {
-    FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); /* Update for measurements */
+    FOC_CaptureIData(&p_motor->Foc, &p_motor->PhaseInput.I); /* Update for measurements */
     FOC_SetAngleV(&p_motor->Foc, theta, vd, vq);
 }
 
@@ -260,13 +260,17 @@ void Motor_FOC_ProcIFeedback(Motor_T * p_motor)
     Passive State
     ProcAngleObserve
     Angle Observe VBemf FreeWheel and Stop State
-    Updates Vd, Vq
+    The stator as it stands, at the sensor's angle: the set the analog thread marked by the phase state [Motor_ADC_MarkPhases], when fresh.
+        floating    V: the terminal EMF into Valpha/Vbeta, Vd/Vq; I cleared, none flows
+        shorted     I: the current the EMF drives into Ialpha/Ibeta, Id/Iq; V cleared, the terminals at 0
+    The set that lands decides, not the phase state: a set marked before a change of state lands once in the other's half, and the next set clears it.
 */
 /******************************************************************************/
 void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor)
 {
     FOC_SetTheta(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed));
-    FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
+    if (FOC_CaptureVBemfData(&p_motor->Foc, &p_motor->PhaseInput.V) == true) { FOC_ClearCaptureState(&p_motor->Foc); }
+    else if (FOC_CaptureIData(&p_motor->Foc, &p_motor->PhaseInput.I) == true) { FOC_ClearOutputState(&p_motor->Foc); }
 }
 
 /******************************************************************************/

@@ -234,8 +234,10 @@ sequenceDiagram
 | RUN, INTERVENTION | θ̂ | the take, `Foc.Id`, `Iq`: the FOC's Clarke, sine and cosine, and Park | the held command, `VOutAlpha`, `VOutBeta` |
 | `SENSORLESS_ALIGN`, `SENSORLESS_START_UP` | the ramp's | the take, in the ramp's frame: θ̂'s while re-seeded, off θ̂ by the load angle once \|ê\| holds above the floor | the held command |
 | Any other state that writes through `Motor_FOC_WriteDuty`: open loop, calibration | its own | the take, in its frame | the held command |
-| PASSIVE, floating | θ̂, the V capture's | Id, Iq 0 after the feedback clear: none flows | the measured terminal voltage, `FOC_CaptureVBemf` writes `Valpha`, `Vbeta`: the EMF |
-| PASSIVE shorted (V0), FAULT, DEACTIVATED, INIT | none, no capture, no write | Id, Iq 0 after the feedback clear | the last measured or written |
+| PASSIVE, floating | θ̂, the V capture's | 0: the V capture clears I, none flows | the measured terminal voltage, `FOC_CaptureVBemfData` writes `Valpha`, `Vbeta`: the EMF |
+| PASSIVE, shorted (V0) | θ̂, the I capture's | the current the EMF drives, `FOC_CaptureIData` | 0: the I capture clears V, the terminals at 0 |
+| DEACTIVATED | none | 0, the feedback clear | 0, the feedback clear |
+| FAULT | none | the last, not cleared | the last, not cleared |
 
 Id, Iq are θ̂'s only where the FOC Parked at θ̂, and only without `FOC_I_SAMPLE_DELAY` (with it, at θ̂ − ω·delay). Elsewhere the observer reads them in the FOC's frame. Parking Iα, Iβ at θ̂ (`EmfObserver_ParkI`) is correct in every state, at a sine and cosine and a Park more; it waits for the sample delay's work. A cycle that writes drives PWM, so the set is I and v is the command.
 

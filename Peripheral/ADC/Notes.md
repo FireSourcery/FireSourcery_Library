@@ -422,7 +422,7 @@ mask of its own. The two paths reach it differently:
   level that stays true until the next request re-marks, and would fire on every later completion.
 
 This is what the Motor layer currently does for itself. `Phase_Data_T.Flags` accumulates
-`Bits |= 1 << channel` per capture, and `FOC_CaptureIabc` gates on `Flags.Bits == PHASE_ID_ABC`,
+`Bits |= 1 << channel` per capture, and `FOC_CaptureIData` gates on `Flags.Bits == PHASE_ID_ABC`,
 carrying the comment *"alternatively use batch callback"* — the same set-completion test, one layer
 up, on a mask the consumer has to clear itself. With `COMPLETE`, the handler runs only when Ia, Ib
 and Ic are all in the buffer, so it can read them unconditionally.
