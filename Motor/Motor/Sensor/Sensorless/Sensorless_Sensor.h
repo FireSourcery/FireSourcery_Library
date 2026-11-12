@@ -27,12 +27,6 @@
     @file   Sensorless_Sensor.h
     @author FireSourcery
     @brief  RotorSensor reading the rotor through the stator [EmfObserver_T].
-
-    Differs from Hall/Encoder/SinCos: the correction is push-driven, it needs the phase sample and the voltage held across
-    its period, not a peripheral. As Hall interpolates between edges, CAPTURE_ANGLE predicts θ̂ += ω̂ every control tick and
-    publishes it [AnglePll_Predict]. Once per sample, after the write, the observer's states push the FOC's take of the sample and the held
-    voltage [Motor_Sensorless.c] → EmfObserver_Eemf_ProcHeld, which corrects ω̂ for the next prediction.
-    The FOC Parks the sample at the θ̂ the tick published, the frame the correction Parks it in. Every state reads the same θ̂.
 */
 /******************************************************************************/
 #include "../../Model/EmfObserver.h"
@@ -40,7 +34,13 @@
 #include "../../Math/FOC.h"
 #include "../../Motor_Electrical.h"
 
-
+/*
+    Differs from Hall/Encoder/SinCos: the correction is push-driven, it needs the phase sample and the voltage held across
+    its period, not a peripheral. As Hall interpolates between edges, CAPTURE_ANGLE predicts θ̂ += ω̂ every control tick and
+    publishes it [AnglePll_Predict]. Once per sample, after the write, the observer's states push the FOC's take of the sample and the held
+    voltage [Motor_Sensorless.c] → EmfObserver_Eemf_ProcHeld, which corrects ω̂ for the next prediction.
+    The FOC Parks the sample at the θ̂ the tick published, the frame the correction Parks it in. Every state reads the same θ̂.
+*/
 typedef const struct Sensorless_Sensor
 {
     const RotorSensor_T BASE;
@@ -53,6 +53,9 @@ Sensorless_Sensor_T;
 
 extern const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE;
 
+/*
+    [p_Foc] must be the same instance mapped to [Motor_Context_T].
+*/
 /* Observer state of static duration, held by the const table entry */
 #define SENSORLESS_SENSOR_INIT(p_RotorState, p_Foc, p_Electrical, p_NvmConfig) (Sensorless_Sensor_T) \
 {                                                                                               \
@@ -63,16 +66,3 @@ extern const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE;
     .P_NVM_CONFIG   = (p_NvmConfig),                                                            \
 }
 
-// #define SENSORLESS_SENSOR_INIT(p_RotorState, p_NvmConfig) (Sensorless_Sensor_T)
-// {
-//     .BASE           = ROTOR_SENSOR_INIT(&SENSORLESS_SENSOR_VTABLE, (p_RotorState)),
-//     .P_OBSERVER     = &(EmfObserver_T){},
-//     .P_NVM_CONFIG   = (p_NvmConfig),
-// }
-
-
-/******************************************************************************/
-/*!
-    Push-driven entry
-*/
-/******************************************************************************/

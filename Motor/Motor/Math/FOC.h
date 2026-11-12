@@ -30,8 +30,6 @@
 */
 /******************************************************************************/
 #include "foc_math.h"
-#include "svpwm_math.h" /* FOC_V_CIRCLE_PER_V_BUS may be set from the modulator's duty limit */
-#include "../Model/Stator.h"
 #include "Math/Fixed/fract16.h"
 #include "Math/PID/PID.h"
 
@@ -40,8 +38,20 @@
 #define FOC_DECOUPLE_DISABLE
 #endif
 
-#if !defined(FOC_CLARKE_AB) && !defined(FOC_CLARKE_ABC)
-#define FOC_CLARKE_ABC
+// #if !defined(FOC_CLARKE_AB) && !defined(FOC_CLARKE_ABC)
+// #define FOC_CLARKE_ABC
+// #endif
+
+/*
+    The v_dq circle radius per V_bus, the current loop's modulation limit. SVPWM is linear to 1/√3.
+    Low-side current sensing reads a phase in its low-side window, (1 − d)·T. Under midclamp at radius r the highest duty is
+    ½ + (√3/2)·r [svpwm_midclamp_duty_peak], the middle ½ + (3/4)·r. At 1/2 that is 93.3 %, leaving the read 3.35 µs at 20 kHz. The window holds to:
+        1/2     midclamp, the 3 phases read
+        0.539   the ceiling √3/2 [svpwm_midclamp_ceiling], the 3 phases read [svpwm_midclamp_ceiling_radius]
+        1/√3    the 2 longest windows read [PHASE_ANALOG_I_SENSOR_LOW_SIDE], the linear limit first
+*/
+#if !defined(FOC_V_CIRCLE_PER_V_BUS)
+#define FOC_V_CIRCLE_PER_V_BUS FRACT16_1_DIV_2
 #endif
 
 /*
@@ -182,22 +192,6 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
 /*
     OutputV
 */
-/* Feedback/Feedforward Control */
-// static inline void FOC_SetVd(FOC_T * p_foc, fract16_t vd) { p_foc->Vd = vd; }
-// static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
-
-/*
-    The v_dq circle radius per V_bus, the current loop's modulation limit. SVPWM is linear to 1/√3.
-    Low-side current sensing reads a phase in its low-side window, (1 − d)·T. Under midclamp at radius r the highest duty is
-    ½ + (√3/2)·r [svpwm_midclamp_duty_peak], the middle ½ + (3/4)·r. At 1/2 that is 93.3 %, leaving the read 3.35 µs at 20 kHz. The window holds to:
-        1/2     midclamp, the 3 phases read
-        0.539   the ceiling √3/2 [svpwm_midclamp_ceiling], the 3 phases read [svpwm_midclamp_ceiling_radius]
-        1/√3    the 2 longest windows read [PHASE_ANALOG_I_SENSOR_LOW_SIDE], the linear limit first
-*/
-#if !defined(FOC_V_CIRCLE_PER_V_BUS)
-#define FOC_V_CIRCLE_PER_V_BUS FRACT16_1_DIV_2
-#endif
-
 static inline ufract16_t _FOC_VCircle(ufract16_t vBus) { return fract16_mul(vBus, FOC_V_CIRCLE_PER_V_BUS); }
 
 /* vPhaseLimit as modulation [0:1/sqrt3] */
@@ -374,7 +368,6 @@ static inline interval_t FOC_VqWindow(const FOC_T * p_foc) { return interval_sym
 
 /* The v_q band at the operating point, [foc_vq_band] */
 static inline interval_t FOC_VqBand(const FOC_T * p_foc, ufract16_t vqCircleLimit) { return foc_vq_band(vqCircleLimit, p_foc->VLimit, FOC_VqWindow(p_foc)); }
-
 
 
 /*

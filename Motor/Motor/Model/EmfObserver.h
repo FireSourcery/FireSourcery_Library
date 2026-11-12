@@ -129,7 +129,6 @@ typedef struct EmfObserver
 {
     Stator_Winding_T Winding;
     EmfObserver_Axis_T Alpha, Beta;
-    /* union optionally */
     /* VModel_Proc and Eemf_Proc, in the frame θ̂ */
     EmfObserver_Axis_T D, Q;
     AnglePll_T Pll;                     /* θ̂, ω̂, |ê|, lock */
@@ -306,6 +305,11 @@ static angle16_t EmfObserver_Eemf_ProcHeld(EmfObserver_T * p_obs, fract16_t i_d,
 /* After the write: the command the next sample's period holds. Where several writes share the period, the last before the sample */
 static inline void EmfObserver_HoldV(EmfObserver_T * p_obs, fract16_t v_alpha, fract16_t v_beta) { p_obs->VOutAlpha = v_alpha; p_obs->VOutBeta = v_beta; }
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 /* Bumpless seed: θ̂ and ω̂ from a known reference, e.g. the open-loop ramp */
 static inline void EmfObserver_SeedAngle(EmfObserver_T * p_obs, angle16_t theta, angle16_t delta) { AnglePll_Seed(&p_obs->Pll, theta, delta); }
 
@@ -315,17 +319,17 @@ static inline bool EmfObserver_IsLocked(const EmfObserver_T * p_obs) { return An
 static inline bool EmfObserver_IsIndeterminate(const EmfObserver_T * p_obs) { return AnglePll_IsIndeterminate(&p_obs->Pll); }
 
 /*
-    Feedback for the closed loop: the lock, and |ê| at or above MagRun.
-    |ê| grows with speed: decelerating, it passes MagRun while the lock holds, θ̂ and ω̂ still the rotor's, before the floor drops the lock.
-*/
-// static inline bool EmfObserver_IsFeedbackAvailable(const EmfObserver_T * p_obs) { return (EmfObserver_IsLocked(p_obs) == true) && (p_obs->Pll.Magnitude >= p_obs->Config.MagRun); }
-
-/*
     |ê| between the floor and the lock's minimum: θ̂, ω̂ still corrected, unlocked [AnglePll_IsWeak].
     |ê| grows with speed: decelerating, the lock drops here, θ̂ and ω̂ still the rotor's, before the floor.
 */
 static inline bool EmfObserver_IsWeak(const EmfObserver_T * p_obs) { return AnglePll_IsWeak(&p_obs->Pll); }
 
+
+/*
+    Feedback for the closed loop: the lock, and |ê| at or above MagRun.
+    |ê| grows with speed: decelerating, it passes MagRun while the lock holds, θ̂ and ω̂ still the rotor's, before the floor drops the lock.
+*/
+// static inline bool EmfObserver_IsFeedbackAvailable(const EmfObserver_T * p_obs) { return (EmfObserver_IsLocked(p_obs) == true) && (p_obs->Pll.Magnitude >= p_obs->Config.MagRun); }
 
 
 /******************************************************************************/

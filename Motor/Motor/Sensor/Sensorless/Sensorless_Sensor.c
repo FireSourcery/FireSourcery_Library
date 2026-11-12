@@ -121,14 +121,6 @@ static void Sensorless_Sensor_InitUnits(Sensorless_Sensor_T * p_sensor)
     }
 }
 
-/* No sensor-local unit state: the observer works entirely in the motor's per-unit
-   basis. UnitRef.SpeedPuRef — the only field CAPTURE_SPEED reads — is held by the
-   RotorSensor base, and the winding needs the motor's electrical model. */
-// static void Sensorless_Sensor_InitUnits(Sensorless_Sensor_T * p_sensor)
-// {
-//     (void)p_sensor;
-// }
-
 
 const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE =
 {

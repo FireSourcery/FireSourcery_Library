@@ -78,7 +78,7 @@ typedef const union State_PathId
 State_PathId_T;
 
 /*
-    .ID = (State_PathId_T){ ROOT_ID, SUB_ID, ... }.Id
+    .ID = (State_PathId_T){ ROOT_ID, SUB_ID, ... }
 */
 #define STATE_ID_BITS     (4U)
 #define STATE_ID_MASK     (0xFU)

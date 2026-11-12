@@ -230,3 +230,29 @@ extern void Motor_SetPositionCmd(Motor_Context_T * p_motor, uint16_t angle);
 extern void Motor_SetActiveCmd_Norm(Motor_T * p_motor, int16_t userCmd);
 
 // extern void Motor_ProcSyncInput(Motor_T * p_motor, Motor_Input_T * p_input);
+
+/*
+    Request. Stored raw; Motor applies the frame key and the envelope each tick.
+    The raw value is what makes "limit active" observable. A request clamped when stored can't report the clamp.
+*/
+// typedef enum Motor_UserCmdFrame
+// {
+//     MOTOR_CMD_FRAME_FORWARD,    /* signed by Config.DirectionForward: [Motor_SetTorqueCmd], [Motor_SetSpeedCmd] */
+//     MOTOR_CMD_FRAME_MOTORING,   /* signed by Direction: [Motor_SetICmd], [Motor_SetSpeedMotoringCmd] */
+// }
+// Motor_UserCmdFrame_T;
+
+// typedef struct Motor_UserCmd
+// {
+//     Motor_FeedbackMode_T Mode;  /* the quantity: V, I, or speed */
+//     Motor_UserCmdFrame_T Frame;
+//     int16_t Value;
+// }
+// Motor_UserCmd_T;
+
+/* [Cw:Ccw] */
+// static inline int32_t Motor_Cmd_Signed(Motor_UserCmd_T cmd, sign_t forward, sign_t motoring) { return ((cmd.Frame == MOTOR_CMD_FRAME_FORWARD) ? forward : motoring) * cmd.Value; }
+
+// static inline Motor_Cmd_T Motor_Cmd_Motoring(int16_t Value) { return (Motor_Cmd_T){ .Frame = MOTOR_CMD_FRAME_MOTORING, .Value = Value, .Mode = MOTOR_FEEDBACK_MODE_CURRENT }; }
+// static inline Motor_Cmd_T Motor_Cmd_Torque(int16_t Value) { return (Motor_Cmd_T){ .Frame = MOTOR_CMD_FRAME_FORWARD, .Value = Value, .Mode = MOTOR_FEEDBACK_MODE_CURRENT }; }
+// static inline Motor_Cmd_T Motor_Cmd_Speed(int16_t Value) { return (Motor_Cmd_T){ .Frame = MOTOR_CMD_FRAME_FORWARD, .Value = Value, .Mode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT }; }

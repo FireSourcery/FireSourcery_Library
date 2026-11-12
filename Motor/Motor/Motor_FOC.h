@@ -159,6 +159,15 @@ static inline void Motor_FOC_ResolveISupplyLimitsOnSpeed(Motor_T * p_motor)
 #endif
 }
 
+// _User
+// typedef struct Motor_FOC_OperatingPoint
+// {
+//     alignas(4) fract16_t Vd, Vq;    /* [V_base] applied, or the back-EMF while freewheeling */
+//     alignas(4) fract16_t Id, Iq;    /* [I_base] */
+//     angle16_t Delta;                /* ω [angle16/Ts], the decoupling basis */
+//     ufract16_t VBus_Pu;             /* V_dc the voltages were produced under */
+// }
+// Motor_FOC_OperatingPoint_T;             /* 12 bytes */
 /******************************************************************************/
 /*!
     Extern

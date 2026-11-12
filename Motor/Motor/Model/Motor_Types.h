@@ -121,38 +121,5 @@ static inline sign_t Motor_Quadrant_Torque(Motor_QuadrantId_T q) { return Motor_
 // typedef struct Motor_Quadrant { sign_t Motion; sign_t Torque; sign_t Power; } Motor_Quadrant_T;
 
 
-/*
-    Request. Stored raw; Motor applies the frame key and the envelope each tick.
-    The raw value is what makes "limit active" observable. A request clamped when stored can't report the clamp.
-*/
-typedef enum Motor_CmdFrame
-{
-    MOTOR_CMD_FRAME_FORWARD,    /* signed by Config.DirectionForward: [Motor_SetTorqueCmd], [Motor_SetSpeedCmd] */
-    MOTOR_CMD_FRAME_MOTORING,   /* signed by Direction: [Motor_SetICmd], [Motor_SetSpeedMotoringCmd] */
-}
-Motor_CmdFrame_T;
-
-// typedef struct Motor_Cmd
-// {
-//     Motor_FeedbackMode_T Mode;  /* the quantity: V, I, or speed */
-//     Motor_CmdFrame_T Frame;
-//     int16_t Value;
-// }
-// Motor_Cmd_T;
-
-/* [Cw:Ccw] */
-// static inline int32_t Motor_Cmd_Signed(Motor_Cmd_T cmd, sign_t forward, sign_t motoring) { return ((cmd.Frame == MOTOR_CMD_FRAME_FORWARD) ? forward : motoring) * cmd.Value; }
-
-// static inline Motor_Cmd_T Motor_Cmd_Motoring(int16_t Value) { return (Motor_Cmd_T){ .Frame = MOTOR_CMD_FRAME_MOTORING, .Value = Value, .Mode = MOTOR_FEEDBACK_MODE_CURRENT }; }
-// static inline Motor_Cmd_T Motor_Cmd_Torque(int16_t Value) { return (Motor_Cmd_T){ .Frame = MOTOR_CMD_FRAME_FORWARD, .Value = Value, .Mode = MOTOR_FEEDBACK_MODE_CURRENT }; }
-// static inline Motor_Cmd_T Motor_Cmd_Speed(int16_t Value) { return (Motor_Cmd_T){ .Frame = MOTOR_CMD_FRAME_FORWARD, .Value = Value, .Mode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT }; }
 
 
-// typedef struct Motor_FOC_OperatingPoint
-// {
-//     alignas(4) fract16_t Vd, Vq;    /* [V_base] applied, or the back-EMF while freewheeling */
-//     alignas(4) fract16_t Id, Iq;    /* [I_base] */
-//     angle16_t Delta;                /* ω [angle16/Ts], the decoupling basis */
-//     ufract16_t VBus_Pu;             /* V_dc the voltages were produced under */
-// }
-// Motor_FOC_OperatingPoint_T;             /* 12 bytes */

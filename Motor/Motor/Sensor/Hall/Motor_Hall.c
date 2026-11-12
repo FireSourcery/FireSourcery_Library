@@ -100,7 +100,7 @@ static void Calibration_AlignV(Motor_T * p_motor, Phase_Id_T id)
     Current-mode align: PID Id -> Vd,  Must run every tick to close the current loop.
     ramp is reset to 0 at every Step boundary.
 */
-static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
+static void Calibration_AlignI(Motor_T * p_motor, Phase_Id_T id)
 {
     // _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Pu(p_motor->P_VBUS), Phase_AngleOf(id), _Motor_GetIAlign(p_motor->P_MOTOR));
     Motor_FOC_ProcAngleAlign(p_motor, Phase_AngleOf(id), _Motor_GetIAlign(p_motor->P_MOTOR));
@@ -119,7 +119,7 @@ static void Calibration_Proc(Motor_T * p_motor)
 
     Phase_Id_T id = CAL_STEP[p_buffer->Step];
 
-    Calibration_Align_I(p_motor, id);
+    Calibration_AlignI(p_motor, id);
     Motor_FOC_WriteDuty(p_motor);
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
@@ -186,7 +186,7 @@ void Motor_Hall_Cmd(Motor_T * p_motor, int varId, int varValue)
 
     switch (varId)
     {
-        case 0:   Motor_Hall_Calibrate(p_motor); break;
+        case 0:   Motor_Hall_Calibrate(p_motor); break; /* only one var cmd for now */
         default:  Motor_Hall_Calibrate(p_motor); break;
     }
 }

@@ -50,7 +50,7 @@ void Motor_Init(Motor_T * p_dev)
     Phase_Polar_ActivateMode(&p_dev->PHASE, p_dev->P_MOTOR->Config.PhasePwmMode);
 #endif
 
-    /* Using Config Id */
+    /* Using Config Id */ /* Sensor update requires reboot. */
     p_dev->P_MOTOR->p_ActiveSensor = RotorSensor_Of(&p_dev->SENSOR_TABLE, p_dev->P_MOTOR->Config.SensorMode);
     RotorSensor_Init(p_dev->P_MOTOR->p_ActiveSensor);
 
@@ -103,9 +103,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
 
     p_motor->Direction = MOTOR_DIRECTION_NULL;
     FOC_SetVAntiPlugging(&p_motor->Foc, SIGN_ZERO, 0U);
-// #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-//     EmfObserver_InitWinding(p_context->SENSOR_TABLE.SENSORLESS.P_OBSERVER, p_electrical->Rs, Motor_Lq_PuTurn(p_electrical));
-// #endif
+
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);
     // Motor_ResetUnitsIabc(p_motor);
@@ -152,13 +150,15 @@ void Motor_ValidateConfig(Motor_T * p_motor)
     Motor_Config_ValidateVAlign(&p_context->Config);
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
     Motor_Config_ValidateFw(&p_context->Config);
+    /* Field weakening disabled for now [FOC_DisableFieldWeakening]: the speed limits, the full scale of [Motor_SetSpeedCmd_Norm], within the rated speed */
+    Motor_Config_ValidateSpeed(&p_context->Config, Motor_SpeedRated_Pu(p_motor));
     // optionally add runtime current limit
 #endif
 }
 
 /******************************************************************************/
 /*
-
+    Propagate Config Parameters
 */
 /******************************************************************************/
 /*
@@ -260,6 +260,7 @@ void Motor_ResolveFeedbackLimits(Motor_T * p_motor)
 //         Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); /* alternatively use Vramp */
 //     }
 // }
+
 /******************************************************************************/
 /*
     Direction - applied voltage direction, and its VLimit half-plane.

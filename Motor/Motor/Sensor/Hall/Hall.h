@@ -24,8 +24,7 @@
 /*!
     @file   Hall.h
     @author FireSourcery
-    @brief
-
+    @brief  Hall sensor decoder base
 */
 /******************************************************************************/
 #ifndef HALL_H
@@ -150,6 +149,7 @@ typedef struct Hall_State
 }
 Hall_State_T;
 
+
 typedef const struct Hall
 {
     Pin_T PIN_A;
@@ -161,6 +161,7 @@ typedef const struct Hall
     // HAL_Hall_Pin_T * P_HAL_PIN_C; uint32_t PIN_C_ID;
     Hall_State_T * P_STATE;
     const Hall_Config_T * P_NVM_CONFIG;
+    /* Alternatively macro guard PulseTimer_T and AngleCounter_T */
 }
 Hall_T;
 

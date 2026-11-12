@@ -142,6 +142,11 @@ static void _RotorSensor_Reset(RotorSensor_State_T * p_state)
 /* θ_e = PolePairs · θ_m. For sensors reporting a mechanical angle */
 static inline angle16_t _RotorSensor_ElectricalAngleOf(const RotorSensor_State_T * p_state, angle16_t mechanical) { return mechanical * p_state->UnitRef.PolePairs; }
 
+/******************************************************************************/
+/*!
+    Publish to the data interface
+*/
+/******************************************************************************/
 /* Both views of one measurement: Δθ for the electrical model, Speed_Pu for the control loop. Rolling two-sample filter */
 static inline void _RotorSensor_SetDelta(RotorSensor_State_T * p_state, int32_t delta) { p_state->AngleSpeed.Delta = delta / 2 + p_state->AngleSpeed.Delta / 2; }
 /* separate for FreqD sensors */

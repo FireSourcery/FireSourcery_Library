@@ -271,7 +271,6 @@ typedef struct Motor_Config
     uint32_t OpenLoopRampSpeedTime_Cycles;      /* Time to reach OpenLoopSpeed. Ticks at CONTROL_FREQ */
     uint16_t OpenLoopRampIFinal_Pu;
     uint32_t OpenLoopRampITime_Cycles;          /* Time to reach OpenLoopI */
-    // uint16_t OpenLoopGain_VHz;
 // #endif
 
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
@@ -390,7 +389,7 @@ typedef struct Motor_Context
 #endif
 
 #if  defined(MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
-    // volatile uint32_t MicrosRef;
+    volatile uint32_t MicrosRef;
     volatile uint32_t DebugCounter;
     volatile uint32_t DebugBuffer[16];
 #endif

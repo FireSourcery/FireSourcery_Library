@@ -46,11 +46,6 @@
     #define STATE_MACHINE_ASYNC_LOCK_FREE   /* No locking. user ensure single threaded ProcState and Input. or Apply InputSyncTransition only */
 #endif
 
-// #if defined(STATE_MACHINE_ASYNC_LOCK_FREE)
-// #define STATE_MACHINE_LOCK_CODE(code, ...) code
-// #else
-// #define STATE_MACHINE_LOCK_CODE(code, ...) __VA_ARGS__
-// #endif
 
 #if     defined(STATE_MACHINE_ASYNC_CRITICAL)
     #define STATE_MACHINE_ASYNC_CRITICAL_CODE(code) code
@@ -127,6 +122,10 @@ static inline void _StateMachine_ReleaseAsyncIsr(StateMachine_Active_T * p_activ
 #endif
 }
 
+
+/*
+    split 2 callers, This way ISR does not have to check lock
+*/
 static inline bool _StateMachine_AcquireAsyncInput(StateMachine_Active_T * p_active)
 {
 #if defined(STATE_MACHINE_ASYNC_CRITICAL)
@@ -152,32 +151,14 @@ static inline void _StateMachine_ReleaseAsyncInput(StateMachine_Active_T * p_act
 #endif
 }
 
-/*
-    split 2 callers, This way ISR does not have to check lock
-*/
 static inline bool _StateMachine_AcquireAsyncTransition(StateMachine_Active_T * p_active)
 {
-// #if defined(STATE_MACHINE_ASYNC_CRITICAL)
-    (void)p_active;
-    _Critical_DisableIrq();
-    return true;
-// #elif defined(STATE_MACHINE_ASYNC_SIGNAL)
-    // return Critical_AcquireLock(&p_active->InputSignal);
-// #else
-//     (void)p_active; return true;
-// #endif
+    return _StateMachine_AcquireAsyncInput(p_active);
 }
 
 static inline void _StateMachine_ReleaseAsyncTransition(StateMachine_Active_T * p_active)
 {
-// #if defined(STATE_MACHINE_ASYNC_CRITICAL)
-    (void)p_active;
-    _Critical_EnableIrq();
-// #elif defined(STATE_MACHINE_ASYNC_SIGNAL)
-    // Critical_ReleaseLock(&p_active->InputSignal);
-// #else
-//     (void)p_active;
-// #endif
+    _StateMachine_ReleaseAsyncInput(p_active);
 }
 
 /******************************************************************************/
