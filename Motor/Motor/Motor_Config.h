@@ -49,6 +49,7 @@ extern bool _Motor_Config_IsValidSpeed(const Motor_Config_T * p_config, uint16_t
 extern void Motor_Config_ValidateSpeed(Motor_Config_T * p_config, uint16_t speedCeiling);
 extern void Motor_Config_ValidateVAlign(Motor_Config_T * p_config);
 extern void Motor_Config_ValidateFw(Motor_Config_T * p_config);
+extern void Motor_Config_ValidateFwSensorMode(Motor_Config_T * p_config);
 
 
 /******************************************************************************/

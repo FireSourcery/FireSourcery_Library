@@ -733,3 +733,12 @@ extern void Motor_ResetSpeedLimit(Motor_Context_T * p_motor);
 /* Derate interface. Ratio of Config */
 extern void Motor_SetILimitDerates(Motor_Context_T * p_motor, ufract16_t motoring, ufract16_t generating);
 extern void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, ufract16_t ratio);
+
+/*
+    Parts - with dependency on Motor_T forward declared
+    This way sub modules contain handling details
+*/
+// #include "Motor_Var.h"
+// #include "Analog/Motor_Analog.h"
+// #include "Sensor/Motor_Sensor.h"
+// #include "Motor_Config.h"

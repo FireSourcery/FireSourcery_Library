@@ -29,9 +29,7 @@
 /******************************************************************************/
 #include "Motor_Sensor.h"
 #include "../Motor_StateMachine.h"
-#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-#include "Sensorless/Motor_Sensorless.h"
-#endif
+
 
 /*
     requires [Motor] StateMachine outside of Sensor Interface

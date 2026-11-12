@@ -3,6 +3,8 @@
 A gate, enable or pause on a state struct is a value of an enum mode that the poll `switch`es on, not
 a single-purpose `bool`.
 
+- **Before a mode, an existing value.** Where a limit or gain already bounds the logic, its 0 is the
+  off and no mode is needed: [ValueOverBool.md](ValueOverBool.md).
 - **Extend an existing mode, direction or state enum first.** `Monitor_T.Direction` carries
   `MONITOR_DISABLED` as one more direction. `_TimerT_Modal_Poll` has `TIMER_MODE_DISABLED` and
   `TIMER_MODE_STOPPED` as states.

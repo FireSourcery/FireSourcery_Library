@@ -45,6 +45,11 @@
 #endif
 
 
+/*
+    Moving state machine context to mutable state makes the state machine testable without HAL
+    static inline   Motor_ (const Motor_Context_T * p_motor)
+*/
+
 /******************************************************************************/
 /*
     Motor State Machine
@@ -135,13 +140,7 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 */
 #define MOTOR_STATE_MACHINE_INIT(p_MotorDev, MotorRuntime) STATE_MACHINE_INIT((p_MotorDev), &MSM_MACHINE, &((MotorRuntime).StateMachine))
 
-/*
-    Moving state machine context to mutable state makes the state machine testable without HAL
-    static inline   Motor_ (const Motor_Context_T * p_motor)
-*/
-
-
-/* select proc composite  */
+/* specialized proc composite placeholder */
 static inline void _Motor_StateMachine(StateMachine_Active_T * p_active, void * p_dev)
 {
     if (_StateMachine_AcquireAsyncIsr(p_active) == true) /* Compile time disabled. Runs in ISR*/

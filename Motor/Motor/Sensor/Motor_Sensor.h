@@ -38,8 +38,13 @@
 #include "Hall/Motor_Hall.h"
 #include "Hall/Motor_HallEncoder.h"
 // #endif
+
 #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
 #include "Encoder/Motor_Encoder.h"
+#endif
+
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+#include "Sensorless/Motor_Sensorless.h"
 #endif
 
 #include "RotorSensor_Table.h"
@@ -56,13 +61,12 @@
 /* Observer state is allocated by the table entry — Motor_Context_T carries none, so the
    sensorless build option costs nothing when unselected. */
 #define MOTOR_SENSOR_TABLE_INIT_SENSORLESS(MotorStateStruct, p_NvmConfig) SENSORLESS_SENSOR_INIT(&((MotorStateStruct).SensorState), &((MotorStateStruct).Foc), &((MotorStateStruct).Config.Electrical), (p_NvmConfig))
-// #define MOTOR_SENSOR_TABLE_INIT_SENSORLESS(MotorStateStruct, p_NvmConfig) SENSORLESS_SENSOR_INIT(&((MotorStateStruct).SensorState), (p_NvmConfig))
-
-/* The selected sensor's start-up chain, NULL where none */
-extern State_T * Motor_Sensor_StartUpState(Motor_T * p_motor);
-extern State_T * Motor_Sensor_FallbackState(Motor_T * p_motor);
 
 
 #if defined(MOTOR_SENSOR_HALL_ENABLE)
 // #define MOTOR_SENSOR_TABLE_OPTION_HALL(MotorStateStruct, HallStruct, TimerStruct, PollingFreq) .HALL = HALL_ROTOR_SENSOR_INIT(HallStruct, TimerStruct, PollingFreq, &((MotorStateStruct).SensorState)),
 #endif
+
+/* The selected sensor's start-up chain, NULL where none */
+extern State_T * Motor_Sensor_StartUpState(Motor_T * p_motor);
+extern State_T * Motor_Sensor_FallbackState(Motor_T * p_motor);

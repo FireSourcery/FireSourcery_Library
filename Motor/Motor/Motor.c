@@ -87,6 +87,8 @@ void Motor_Reset(Motor_Context_T * p_motor)
     /* Limits update on direction set */
     Ramp_Init_Slope(&p_motor->SpeedRamp, p_motor->Config.SpeedRampSlope_PuPerTick);
     Ramp_Init_Slope(&p_motor->TorqueRamp, p_motor->Config.TorqueRampSlope_PuPerTick);
+
+    Motor_Config_ValidateFwSensorMode(&p_motor->Config); /* before the FOC view derives from it [Motor_FOC_InitParams] */
     Motor_FOC_InitParams(p_motor);
     // Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_VRated_Pu());
 
@@ -128,16 +130,21 @@ void Motor_Reinit(Motor_T * p_motor)
     Motor_Reset(p_motor->P_MOTOR);
 }
 
+/* Speed limit ceiling. Field weakening extends past the rated speed, as [_Motor_SpeedLimitCeiling] */
+static uint16_t Motor_SpeedLimitCeiling_Pu(Motor_T * p_motor)
+{
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    return Motor_FieldWeakening_IsEnabled(&p_motor->P_MOTOR->Config.FieldWeakening) ? INT16_MAX : Motor_SpeedRated_Pu(p_motor);
+#else
+    return Motor_SpeedRated_Pu(p_motor);
+#endif
+}
+
 /* Validate config across modules: base Motor config + field-weakening speed-limit consistency */
 bool Motor_IsConfigValid(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
-    uint16_t speedCeiling = Motor_FieldWeakening_IsEnabled(&p_context->Config.FieldWeakening) ? INT16_MAX : Motor_SpeedRated_Pu(p_motor);
-#else
-    uint16_t speedCeiling = Motor_SpeedRated_Pu(p_motor);
-#endif
-    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, speedCeiling);
+    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, Motor_SpeedLimitCeiling_Pu(p_motor));
     // && _Motor_Config_IsValidVoltage(&p_context->Config, VBus_Pu(p_motor->P_VBUS));
 }
 
@@ -150,8 +157,8 @@ void Motor_ValidateConfig(Motor_T * p_motor)
     Motor_Config_ValidateVAlign(&p_context->Config);
 #if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
     Motor_Config_ValidateFw(&p_context->Config);
-    /* Field weakening disabled for now [FOC_DisableFieldWeakening]: the speed limits, the full scale of [Motor_SetSpeedCmd_Norm], within the rated speed */
-    Motor_Config_ValidateSpeed(&p_context->Config, Motor_SpeedRated_Pu(p_motor));
+    /* The speed limits, the full scale of [Motor_SetSpeedCmd_Norm], within the ceiling: rated when IfwLimit is 0, by the user or the sensor mode [Motor_Config_ValidateFwSensorMode] */
+    Motor_Config_ValidateSpeed(&p_context->Config, Motor_SpeedLimitCeiling_Pu(p_motor));
     // optionally add runtime current limit
 #endif
 }

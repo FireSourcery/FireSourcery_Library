@@ -89,7 +89,9 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE); // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, p_dev);
     // Motor_FOC_WriteDuty_Thread(p_dev); // okay if statemachine transitions for Duty0,0,0 state
 
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
     Motor_CaptureStator(p_dev);
+#endif
 
     Motor_PollSpeed(p_dev);
     p_dev->P_MOTOR->ControlTimerBase++;

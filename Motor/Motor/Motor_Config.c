@@ -130,6 +130,9 @@ void Motor_Config_ValidateFw(Motor_Config_T * p_config)
     p_config->ILimitMotoring_Pu = math_min(p_config->ILimitMotoring_Pu, Motor_FieldWeakening_IqLimit(&p_config->FieldWeakening));
 }
 
+/* Sensorless runs without field weakening. IfwLimit 0 is the disabled value [Motor_FieldWeakening_IsEnabled], kept on load and on either write */
+void Motor_Config_ValidateFwSensorMode(Motor_Config_T * p_config) { if (p_config->SensorMode == ROTOR_SENSOR_ID_SENSORLESS) { p_config->FieldWeakening.IfwLimit = 0U; } }
+
 
 
 /*
@@ -141,7 +144,7 @@ void Motor_Config_ValidateFw(Motor_Config_T * p_config)
 */
 /******************************************************************************/
 /* Reboot unless deinit is implemented in HAL */
-void Motor_Config_SetSensorMode(Motor_Config_T * p_config, RotorSensor_Id_T mode) { p_config->SensorMode = mode; }
+void Motor_Config_SetSensorMode(Motor_Config_T * p_config, RotorSensor_Id_T mode) { p_config->SensorMode = mode; Motor_Config_ValidateFwSensorMode(p_config); }
 
 /* Holds the electrical AngleFreqPerVolt. Kv entered after PolePairs, in id order, holds Kv */
 void Motor_Config_SetPolePairs(Motor_Config_T * p_config, uint8_t polePairs) { p_config->Electrical.PolePairs = polePairs; }
@@ -486,6 +489,9 @@ void _Motor_Var_ConfigPid16_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T 
     Electrical configuration interface.
 */
 /******************************************************************************/
+/* Field weakening Id limit, as stored. Held 0 under sensorless [Motor_Config_ValidateFwSensorMode] */
+static void Motor_Config_SetFwIdLimit(Motor_Config_T * p_config, uint16_t id_pu) { p_config->FieldWeakening.IfwLimit = id_pu; Motor_Config_ValidateFwSensorMode(p_config); }
+
 /*
     As stored. ψ, Ld, Lq as rates [angle16/s / V], [angle16/s · A/V]. Rs [V_base / I_base]. Field weakening [I_base]
 */
@@ -513,7 +519,7 @@ void _Motor_Var_ConfigElectrical_Set(Motor_Config_T * p_motor, Motor_Var_ConfigE
         case MOTOR_VAR_ELECTRICAL_LD:   p_motor->Electrical.AngleFreqPerOhmD = varValue;    break;
         case MOTOR_VAR_ELECTRICAL_LQ:   p_motor->Electrical.AngleFreqPerOhmQ = varValue;    break;
         case MOTOR_VAR_ELECTRICAL_RS:   p_motor->Electrical.Rs = varValue;                  break;
-        case MOTOR_VAR_FW_ID_LIMIT:     p_motor->FieldWeakening.IfwLimit = varValue;        break;
+        case MOTOR_VAR_FW_ID_LIMIT:     Motor_Config_SetFwIdLimit(p_motor, varValue);       break;
         case MOTOR_VAR_FW_ID_GAIN:      p_motor->FieldWeakening.IfwGain = varValue;         break;
         default: break;
     }
@@ -546,7 +552,7 @@ void _Motor_Var_ConfigElectricalSi_Set(Motor_Config_T * p_motor, Motor_Var_Confi
         case MOTOR_VAR_ELECTRICAL_LD:   p_motor->Electrical.AngleFreqPerOhmD = _Motor_Electrical_RateOfSi(varValue, 1000000UL);     break;
         case MOTOR_VAR_ELECTRICAL_LQ:   p_motor->Electrical.AngleFreqPerOhmQ = _Motor_Electrical_RateOfSi(varValue, 1000000UL);     break;
         case MOTOR_VAR_ELECTRICAL_RS:   p_motor->Electrical.Rs = rs_pu_of_mohm(Phase_VMaxVolts(), Phase_IMaxAmps(), varValue);      break;
-        case MOTOR_VAR_FW_ID_LIMIT:     p_motor->FieldWeakening.IfwLimit = varValue;        break;
+        case MOTOR_VAR_FW_ID_LIMIT:     Motor_Config_SetFwIdLimit(p_motor, varValue);       break;
         case MOTOR_VAR_FW_ID_GAIN:      p_motor->FieldWeakening.IfwGain = varValue;         break;
         default: break;
     }
@@ -576,7 +582,7 @@ void _Motor_Var_ConfigElectricalPu_Set(Motor_Config_T * p_motor, Motor_Var_Confi
         case MOTOR_VAR_ELECTRICAL_LD:   Motor_SetLd_PuTurn(&p_motor->Electrical, varValue);     break;
         case MOTOR_VAR_ELECTRICAL_LQ:   Motor_SetLq_PuTurn(&p_motor->Electrical, varValue);     break;
         case MOTOR_VAR_ELECTRICAL_RS:   p_motor->Electrical.Rs =  varValue;      break;
-        case MOTOR_VAR_FW_ID_LIMIT:     p_motor->FieldWeakening.IfwLimit = varValue;        break;
+        case MOTOR_VAR_FW_ID_LIMIT:     Motor_Config_SetFwIdLimit(p_motor, varValue);       break;
         case MOTOR_VAR_FW_ID_GAIN:      p_motor->FieldWeakening.IfwGain = varValue;         break;
         default: break;
     }
