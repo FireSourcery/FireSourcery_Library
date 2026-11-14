@@ -94,7 +94,6 @@ extern void MotNvm_Init(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t size);
 extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t address, uint8_t size, void * p_dest);
 extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t address, const void * p_source, uint8_t size);
-extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm);
 
 extern NvMemory_Status_T MotNvm_WritePhaseBoard(const MotNvm_T * p_motNvm, const Phase_Board_T * p_source);

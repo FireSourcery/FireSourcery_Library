@@ -36,12 +36,6 @@
     @brief CalibrateAdc SubState
 */
 /******************************************************************************/
-static inline void SetAdcZero(MotorController_T * p_dev, MotAnalogUser_AinId_T id, uint16_t zero_Adcu)
-{
-    p_dev->AINS[id].PIN.P_STATE->Config.AdcZero = zero_Adcu;
-    UserAIn_ApplyConfig(&p_dev->AINS[id].PIN);
-}
-
 void StartCalibrateAdc(MotorController_T * p_dev)
 {
     MotorController_Context_T * p_mc = p_dev->P_MC;
@@ -81,8 +75,8 @@ static State_T * EndCalibrateAdc(MotorController_T * p_dev)
 
     if (p_mc->StateCounter > TIME)
     {
-        SetAdcZero(p_dev, MOT_AIN_THROTTLE, MovAvg_Running(&p_mc->AvgBuffer0, ADC_Conversion_GetResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION)));
-        SetAdcZero(p_dev, MOT_AIN_BRAKE,    MovAvg_Running(&p_mc->AvgBuffer1, ADC_Conversion_GetResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION)));
+        UserAIn_SetAdcZero(&p_dev->AINS[MOT_AIN_THROTTLE].PIN, MovAvg_Running(&p_mc->AvgBuffer0, ADC_Conversion_GetResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION)));
+        UserAIn_SetAdcZero(&p_dev->AINS[MOT_AIN_BRAKE].PIN,    MovAvg_Running(&p_mc->AvgBuffer1, ADC_Conversion_GetResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION)));
         p_mc->LockOpStatus = 0; /* success */
 
         p_nextState = &MC_STATE_LOCK; /* return to lock state */

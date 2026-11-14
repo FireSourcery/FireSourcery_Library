@@ -377,13 +377,27 @@ static inline uint16_t _Packet_Checksum(const uint8_t * p_src, size_t size)
     return checksum;
 }
 
+/* Field inside the frame: the bytes before it and the bytes after it. Requires checksumStart + checksumSize <= totalSize */
+static inline uint16_t Packet_Checksum_Header(const uint8_t * p_packet, size_t totalSize, size_t checksumStart, size_t checksumSize)
+{
+    return (uint16_t)(_Packet_Checksum(&p_packet[0U], checksumStart) + _Packet_Checksum(&p_packet[checksumStart + checksumSize], totalSize - (checksumStart + checksumSize)));
+}
+
+/* Field as the last bytes: everything before it. Requires checksumSize <= totalSize */
+static inline uint16_t Packet_Checksum_Trailer(const uint8_t * p_packet, size_t totalSize, size_t checksumSize)
+{
+    return _Packet_Checksum(&p_packet[0U], totalSize - checksumSize);
+}
+
+/*
+    Selected by where the frame ends against the field. A frame that does not extend past the field has no bytes after it:
+    it takes the trailer form, ending at the field, so neither span is negative and a short frame never reads unbounded.
+*/
 static inline uint16_t Packet_Checksum(const uint8_t * p_packet, size_t totalSize, size_t checksumStart, size_t checksumSize)
 {
-    const size_t checksumEnd = checksumStart + checksumSize;
-    uint16_t checksum = 0U;
-    checksum += _Packet_Checksum(&p_packet[0U], checksumStart);
-    checksum += _Packet_Checksum(&p_packet[checksumEnd], totalSize - checksumEnd);
-    return checksum;
+    return (totalSize > (checksumStart + checksumSize)) ?
+        Packet_Checksum_Header(p_packet, totalSize, checksumStart, checksumSize) :
+        Packet_Checksum_Trailer(p_packet, checksumStart + checksumSize, checksumSize);
 }
 
 

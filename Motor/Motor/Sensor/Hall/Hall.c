@@ -85,12 +85,6 @@ void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId)
 /*
     Verify
 */
-/* [Hall_Id_T] parameter matches [Config.SensorsTable] storage - verify and store share one conversion. */
-bool Hall_Verify(Hall_Id_T sensorsValue)
-{
-    return ((sensorsValue > HALL_ANGLE_ERROR_0) && (sensorsValue < HALL_ANGLE_ERROR_7));
-}
-
 /* Check wiring */
 bool Hall_IsStateValid(Hall_T * p_hall)
 {

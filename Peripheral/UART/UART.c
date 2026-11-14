@@ -43,13 +43,12 @@
     sw write occur in between hw read/write
     Multithread disable all interrupts for entire duration
     Enter critical section before checking sw buffer
+    Tx sends re-enable TIE from the buffer, not the push: bytes already pending must drain whether or not the push that interrupted them fit.
 */
 static inline void EnterCriticalTx(UART_T * p_uart) { _ENTER_CRITICAL(HAL_UART_DisableTxInterrupt(p_uart->P_HAL_UART), UART_ENTER_CRITICAL(p_uart)); }
-/* EnableTxInterrupt determine by checking of buffer */
 static inline void ExitCriticalTx(UART_T * p_uart) { _EXIT_CRITICAL((void)p_uart, UART_EXIT_CRITICAL(p_uart)); }
 static inline void EnterCriticalRx(UART_T * p_uart) { _ENTER_CRITICAL(HAL_UART_DisableRxInterrupt(p_uart->P_HAL_UART), UART_ENTER_CRITICAL(p_uart)); }
 static inline void ExitCriticalRx(UART_T * p_uart) { _EXIT_CRITICAL(HAL_UART_EnableRxInterrupt(p_uart->P_HAL_UART), UART_EXIT_CRITICAL(p_uart)); }
-
 
 /******************************************************************************/
 /*!
@@ -61,8 +60,8 @@ bool UART_SendN(UART_T * p_uart, const uint8_t * p_srcBuffer, size_t length)
     bool status;
 
     EnterCriticalTx(p_uart);
-    status = RingT_PushBackArray(RING_T_ARGS(p_uart->TX_RING), p_srcBuffer, length);
-    if (status == true) { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
+    status = RingT_PushBackArray(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE, p_srcBuffer, length);
+    if (RingT_IsEmpty(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE) == false) { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
     ExitCriticalTx(p_uart);
 
     return status;
@@ -76,7 +75,7 @@ bool UART_RecvN(UART_T * p_uart, uint8_t * p_destBuffer, size_t length)
     bool status;
 
     EnterCriticalRx(p_uart);
-    status = RingT_PopFrontArray(RING_T_ARGS(p_uart->RX_RING), p_destBuffer, length);
+    status = RingT_PopFrontArray(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE, p_destBuffer, length);
     ExitCriticalRx(p_uart);
 
     return status;
@@ -87,8 +86,8 @@ void UART_Init(UART_T * p_uart)
     HAL_UART_Init(p_uart->P_HAL_UART);
     HAL_UART_WriteTxSwitch(p_uart->P_HAL_UART, true);
     HAL_UART_WriteRxSwitch(p_uart->P_HAL_UART, true);
-    RingT_Clear(RING_T_ARGS(p_uart->TX_RING));
-    RingT_Clear(RING_T_ARGS(p_uart->RX_RING));
+    RingT_Clear(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE);
+    RingT_Clear(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE);
     UART_EnableRxIsr(p_uart);
     UART_EnableTxIsr(p_uart);
 }
@@ -115,8 +114,8 @@ bool UART_ConfigBaudRate(UART_T * p_uart, uint32_t baudRate)
 
 void UART_FlushBuffers(UART_T * p_uart)
 {
-    RingT_Clear(RING_T_ARGS(p_uart->TX_RING));
-    RingT_Clear(RING_T_ARGS(p_uart->RX_RING));
+    RingT_Clear(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE);
+    RingT_Clear(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE);
 }
 
 
@@ -125,8 +124,8 @@ bool UART_SendByte(UART_T * p_uart, uint8_t txChar)
     bool isSuccess;
 
     EnterCriticalTx(p_uart);
-    isSuccess = RingT_PushBack(RING_T_ARGS(p_uart->TX_RING), (void *)&txChar);
-    if (isSuccess == true) { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
+    isSuccess = RingT_PushBack(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE, (void *)&txChar);
+    if (RingT_IsEmpty(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE) == false) { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
     ExitCriticalTx(p_uart);
 
     return isSuccess;
@@ -137,7 +136,7 @@ bool UART_RecvByte(UART_T * p_uart, uint8_t * p_rxChar)
     bool isSuccess;
 
     EnterCriticalRx(p_uart);
-    isSuccess = RingT_PopFront(RING_T_ARGS(p_uart->RX_RING), (void *)p_rxChar);
+    isSuccess = RingT_PopFront(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE, (void *)p_rxChar);
     ExitCriticalRx(p_uart);
 
     return isSuccess;
@@ -151,8 +150,8 @@ size_t UART_SendMax(UART_T * p_uart, const uint8_t * p_srcBuffer, size_t srcSize
     size_t charCount;
 
     EnterCriticalTx(p_uart);
-    charCount = RingT_PushBackMax(RING_T_ARGS(p_uart->TX_RING), p_srcBuffer, srcSize);
-    if (charCount > 0U) { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
+    charCount = RingT_PushBackMax(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE, p_srcBuffer, srcSize);
+    if (RingT_IsEmpty(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE) == false) { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
     ExitCriticalTx(p_uart);
 
     return charCount;
@@ -163,7 +162,7 @@ size_t UART_RecvMax(UART_T * p_uart, uint8_t * p_destBuffer, size_t destSize)
     size_t charCount;
 
     EnterCriticalRx(p_uart);
-    charCount = RingT_PopFrontMax(RING_T_ARGS(p_uart->RX_RING), p_destBuffer, destSize);
+    charCount = RingT_PopFrontMax(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE, p_destBuffer, destSize);
     ExitCriticalRx(p_uart);
 
     return charCount;

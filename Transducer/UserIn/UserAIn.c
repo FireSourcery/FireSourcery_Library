@@ -24,54 +24,15 @@
 /*!
     @file   UserAIn.c
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  User Analog Input handling functions
 */
 /******************************************************************************/
 #include "UserAIn.h"
 
 
-
-
 /******************************************************************************/
 /*
-    Public Functions
-*/
-/******************************************************************************/
-void UserAIn_InitFrom(UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
-{
-    if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
-    if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Init(p_dev->P_EDGE_PIN); }
 
-    /* Linear conversion and edge pin gate follow Config */
-    UserAIn_ApplyConfig(p_dev);
-
-    /* Initialize state */
-    p_dev->P_STATE->RawValue_Adcu = p_dev->P_STATE->Config.AdcZero;
-    p_dev->P_STATE->Value = Linear_Percent16_Sat(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero);
-    p_dev->P_STATE->ValuePrev = p_dev->P_STATE->Value;
-}
-
-void UserAIn_Init(UserAIn_T * p_dev) { UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }
-
-void UserAIn_ReinitScale(UserAIn_T * p_dev) { Linear_Percent16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax); }
-
-/*
-    Resolve Config onto runtime state.
-    UseEdgePin is the AIn's enable for its gate pin — the gate pin carries no config of its own.
-*/
-void UserAIn_ApplyConfig(UserAIn_T * p_dev)
-{
-    UserAIn_ReinitScale(p_dev);
-    if (p_dev->P_EDGE_PIN != NULL)
-    {
-        if (p_dev->P_STATE->Config.UseEdgePin) { UserDIn_Modal_Enable(p_dev->P_EDGE_PIN); }
-        else { UserDIn_Modal_Disable(p_dev->P_EDGE_PIN); }
-    }
-}
-
-/******************************************************************************/
-/*
-    Main Polling Function
 */
 /******************************************************************************/
 static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, uint16_t value)
@@ -86,22 +47,22 @@ static inline void CaptureValue(UserAIn_State_T * p_state, uint16_t filter, uint
     p_state->Value = FilterValue(filter, p_state->Value, Linear_Percent16_Sat(&p_state->Units, value_adcu));
 }
 
-// static inline void _UserAIn_CaptureValue(UserAIn_T * p_dev, uint16_t value_adcu) { CaptureValue(p_dev->P_STATE, p_dev->FILTER_SHIFT, value_adcu); }
-
 void UserAIn_CaptureValue(UserAIn_T * p_dev, uint16_t value_adcu)
 {
     if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Modal_PollEdgeValue(p_dev->P_EDGE_PIN); }
 
-    /* Analog capture stops when pin gate selects disable. filterted value persists... */
-    /* Note: When edge pin blocks, analog value persists (not cleared to 0) */
-    /* This preserves the last valid reading for when pin is re-enabled */
-    /* Gating is handled in the getter functions instead */
+    /*
+        Analog capture stops when pin gate selects disable. filterted value persists.
+        Note: When edge pin blocks, analog value persists (not cleared to 0)
+        This preserves the last valid reading for when pin is re-enabled
+        Gating is handled in the getter functions instead
+    */
     if (_UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) == true) { CaptureValue(p_dev->P_STATE, p_dev->FILTER_SHIFT, value_adcu); }
 }
 
 /******************************************************************************/
 /*
-
+    Polling Functions
 */
 /******************************************************************************/
 bool UserAIn_PollEdge(UserAIn_T * p_dev, uint16_t value_adcu)
@@ -124,3 +85,53 @@ bool UserAIn_PollFallingEdge(UserAIn_T * p_dev, uint16_t value_adcu)
 }
 
 
+/******************************************************************************/
+/*
+    Config
+*/
+/******************************************************************************/
+/* Config in bounds by [UserAIn_Config_Validate] at each input */
+void UserAIn_ReinitScale(UserAIn_T * p_dev)
+{
+    Linear_Percent16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax);
+}
+
+/* Calibration commit */
+void UserAIn_SetAdcZero(UserAIn_T * p_dev, uint16_t zero_adcu)
+{
+    p_dev->P_STATE->Config.AdcZero = zero_adcu;
+    UserAIn_Config_Validate(&p_dev->P_STATE->Config);
+    UserAIn_ReinitScale(p_dev);
+}
+
+/*
+    Resolve Config onto runtime state.
+    UseEdgePin is the AIn's enable for its gate pin — the gate pin carries no config of its own.
+*/
+void UserAIn_ApplyConfig(UserAIn_T * p_dev)
+{
+    UserAIn_ReinitScale(p_dev);
+    if (p_dev->P_EDGE_PIN != NULL)
+    {
+        if (p_dev->P_STATE->Config.UseEdgePin) { UserDIn_Modal_Enable(p_dev->P_EDGE_PIN); }
+        else { UserDIn_Modal_Disable(p_dev->P_EDGE_PIN); }
+    }
+}
+
+
+void UserAIn_InitFrom(UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
+{
+    if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
+    UserAIn_Config_Validate(&p_dev->P_STATE->Config);
+    if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Init(p_dev->P_EDGE_PIN); }
+
+    /* Linear conversion and edge pin gate follow Config */
+    UserAIn_ApplyConfig(p_dev);
+
+    /* Initialize state */
+    p_dev->P_STATE->RawValue_Adcu = p_dev->P_STATE->Config.AdcZero;
+    p_dev->P_STATE->Value = Linear_Percent16_Sat(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero);
+    p_dev->P_STATE->ValuePrev = p_dev->P_STATE->Value;
+}
+
+void UserAIn_Init(UserAIn_T * p_dev) { UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }

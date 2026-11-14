@@ -56,18 +56,6 @@ RingT_T;
 #define RING_T_INIT(UnitSize, Length) { .TYPE = RING_TYPE_INIT(UnitSize, Length), .P_STATE = RING_STATE_ALLOC(UnitSize, Length), }
 #define RING_T_INIT_AS(T, Length)  { .TYPE = RING_TYPE_INIT(sizeof(T), Length), .P_STATE = RING_STATE_ALLOC(sizeof(T), Length), }
 
-/*
-    The (TYPE, P_STATE) argument pair every RingT_ operation takes, drawn from one RingT_T.
-    This is the Correct-Pairing guarantee in practice: a descriptor and a state taken from
-    different rings is a silent corruption the type system cannot catch, and sourcing both
-    from a single RingT_T makes it unrepresentable.
-
-        RingT_PushBack(RING_T_ARGS(p_serial->TX_RING), &txChar);
-*///todo replace
-#define RING_T_ARGS(ring) (ring).TYPE, (ring).P_STATE
-
-
-
 /******************************************************************************/
 /*!
     Status Operations - Compile-Time Optimized

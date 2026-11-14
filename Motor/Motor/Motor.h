@@ -101,6 +101,7 @@
 #define MOTOR_FOC_FIELD_WEAKENING_ENABLE
 #endif
 
+
 /* RUN's feedback loss continues on the open-loop ramp from the sensor's last angle [Motor_Sensor_FallbackState]. Off by default: the ramp imposes speed, not the command */
 #if !defined(MOTOR_OPEN_LOOP_FALLBACK_ENABLE)
 #define MOTOR_OPEN_LOOP_FALLBACK_DISABLE
@@ -588,6 +589,9 @@ static inline int32_t Motor_GetVSpeed_Pu(Motor_T * p_motor) { return fract16_mul
 // static inline uint16_t Motor_GetSpeedFreewheelLimit_Pu(Motor_T * p_motor) { return Motor_SpeedRated_Pu(p_motor); }
 static inline uint16_t Motor_GetSpeedFreewheelLimit_Pu(Motor_T * p_motor) { return VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS) * 2; }
 static inline bool Motor_IsSpeedFreewheelLimitRange(Motor_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor->P_MOTOR)) < Motor_GetSpeedFreewheelLimit_Pu(p_motor)); }
+
+/* The passive output: float within the freewheel limit, V0 above it - there the back-emf exceeds the bus, and a floated bridge rectifies it into the bus */
+static inline void Motor_ActivatePassiveOutput(Motor_T * p_motor) { if (Motor_IsSpeedFreewheelLimitRange(p_motor) == true) { Phase_Deactivate(&p_motor->PHASE); } else { Phase_ActivateV0(&p_motor->PHASE); } }
 
 /*
     bus ratio IS the no-FW speed ceiling, VBus_GetSpeedDerate

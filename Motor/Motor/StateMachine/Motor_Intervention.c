@@ -31,12 +31,13 @@
 
 /******************************************************************************/
 /*
-    Intervention timeout - ticks at PWM frequency (20kHz)
+    Intervention timeout - counts ControlTimerBase, one per control cycle [MOTOR_CONTROL_FREQ],
+    not per PWM period: with KMC_PWM_ISR_DIVIDER 2 a count fixed at 20 kHz ran twice its stated time.
 */
 /******************************************************************************/
-/* Safe stop watchdog - escalate to fault if not stopped within this many ticks */
+/* Safe stop watchdog - escalate to fault if not stopped within this many control cycles */
 #ifndef MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG
-#define MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG (200000U) /* 10 seconds at 20kHz */
+#define MOTOR_INTERVENTION_SAFE_STOP_WATCHDOG MOTOR_CONTROL_CYCLES(10000U) /* 10 seconds */
 #endif
 
 

@@ -142,9 +142,9 @@ static inline int32_t Monitor_GetOutputValue(const Monitor_T * p_monitor)
 }
 
 
-/*  */
-static inline int32_t Monitor_IsUnderNominal(const Monitor_T * p_monitor) { return Monitor_GetLastInputComparable(p_monitor) < p_monitor->Config.Nominal; }
-static inline int32_t Monitor_IsOverNominal(const Monitor_T * p_monitor) { return Monitor_GetLastInputComparable(p_monitor) > p_monitor->Config.Nominal; }
+/* Both sides oriented: over is past nominal toward the limit, in either direction */
+static inline int32_t Monitor_IsUnderNominal(const Monitor_T * p_monitor) { return Monitor_GetLastInputComparable(p_monitor) < (p_monitor->Config.Nominal * p_monitor->Direction); }
+static inline int32_t Monitor_IsOverNominal(const Monitor_T * p_monitor) { return Monitor_GetLastInputComparable(p_monitor) > (p_monitor->Config.Nominal * p_monitor->Direction); }
 
 /* LastOutput = output state of last status hysteresis level. set on status poll, or switch on status */
 
@@ -179,7 +179,9 @@ static inline bool Monitor_IsStatusEdge(const Monitor_T * p_monitor) { return p_
 */
 static inline int32_t Monitor_GetStatusEdge(const Monitor_T * p_monitor) { return math_sign(p_monitor->Status - p_monitor->StatusPrev); }
 
-static inline void Monitor_Enable(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = true; p_monitor->Direction = _Monitor_DirectionOf(&p_monitor->Config.Warning); }
+static inline void _Monitor_Enable(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = true;   }
+static inline void Monitor_Enable_High(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = true; p_monitor->Direction = _Monitor_DirectionOf(&p_monitor->Config.Warning); }
+static inline void Monitor_Enable_Low(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = true; p_monitor->Direction = -_Monitor_DirectionOf(&p_monitor->Config.Warning); }
 static inline void Monitor_Disable(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = false; p_monitor->Direction = MONITOR_DISABLED; }
 
 /******************************************************************************/

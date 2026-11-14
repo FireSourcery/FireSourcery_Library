@@ -98,7 +98,13 @@ HeatMonitor_T;
 /******************************************************************************/
 static inline void HeatMonitor_ToLimitScale(const HeatMonitor_Config_T * p_heat, Linear_T * p_linear)
 {
-    Linear_Fract16_Init(p_linear, p_heat->Fault.Setpoint, p_heat->Warning.Setpoint);
+    /*
+        f(Fault) = 0, f(Warning) = 1. Linear_Fixed_Init divides by the interval, and Monitor_Config_IsValid admits equal
+        setpoints: give the derate one unit above the warning then (equal setpoints read as a high monitor, as in Monitor_InitFrom),
+        the limit is 1 up to the setpoint and 0 past it, where the fault trips anyway.
+    */
+    int32_t fault = (p_heat->Fault.Setpoint != p_heat->Warning.Setpoint) ? p_heat->Fault.Setpoint : (p_heat->Warning.Setpoint + 1);
+    Linear_Fract16_Init(p_linear, fault, p_heat->Warning.Setpoint);
 }
 
 /******************************************************************************/
@@ -121,7 +127,12 @@ static inline uint16_t HeatMonitor_GetDerate(const HeatMonitor_T * p_heat) { ret
 static inline int HeatMonitor_VarId_Get(const HeatMonitor_T * p_context, Monitor_VarId_T id) { return Monitor_VarId_Get(p_context->P_STATE, id); }
 
 static inline int HeatMonitor_ConfigId_Get(const HeatMonitor_T * p_context, Monitor_ConfigId_T id) { return Monitor_ConfigId_Get(p_context->P_STATE, id); }
-static inline void HeatMonitor_ConfigId_Set(const HeatMonitor_T * p_context, Monitor_ConfigId_T id, int value) { Monitor_ConfigId_Set(p_context->P_STATE, id, value); }
+/* The derate follows the thresholds: re-derive with them, as HeatMonitor_InitFrom does */
+static inline void HeatMonitor_ConfigId_Set(const HeatMonitor_T * p_context, Monitor_ConfigId_T id, int value)
+{
+    Monitor_ConfigId_Set(p_context->P_STATE, id, value);
+    if (p_context->P_LIMIT_SCALE != NULL) { HeatMonitor_ToLimitScale(&p_context->P_STATE->Config, p_context->P_LIMIT_SCALE); }
+}
 
 static inline int HeatMonitor_Thermistor_ConfigId_Get(const HeatMonitor_T * p_context, Thermistor_ConfigId_T id) { return Thermistor_ConfigId_Get(&p_context->THERMISTOR, id); }
 static inline void HeatMonitor_Thermistor_ConfigId_Set(const HeatMonitor_T * p_context, Thermistor_ConfigId_T id, int value) { Thermistor_ConfigId_Set(&p_context->THERMISTOR, id, value); }
@@ -161,13 +172,14 @@ HeatMonitor_Group_T;
 static inline uint8_t _HeatMonitor_Group_FindHottest(const HeatMonitor_Group_T * p_group)
 {
     uint8_t index = 0U;
-    int32_t max = 0;
+    int32_t max = INT32_MIN;
     int32_t compare;
 
     for (uint8_t i = 0U; i < p_group->COUNT; i++)
     {
+        /* A disabled instance's comparable is 0 (Direction 0), which would outrank every low-direction instance */
         compare = Monitor_GetLastInputComparable(p_group->P_MONITORS[i].P_STATE);
-        if (compare > max) { max = compare; index = i; }
+        if ((Monitor_IsEnabled(p_group->P_MONITORS[i].P_STATE) == true) && (compare > max)) { max = compare; index = i; }
     }
 
     return index;

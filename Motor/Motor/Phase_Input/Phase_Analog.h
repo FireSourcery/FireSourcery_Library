@@ -69,6 +69,12 @@
 */
 
 static inline fract16_t Phase_Analog_VPuOf(uint16_t adcu) { return adcu * PHASE_ANALOG_V_PU_PER_ADCU; }
+/*
+    Full scale is PHASE_ANALOG_I_MAX_ADCU (2048) counts either side of the zero. No software saturation:
+    past 2047 counts the result wraps to the opposite sign.
+    Hardware provides the dead buffer: the sensor saturates within 2047 counts of its zero, and the zero sits
+    below 2048 counts (also required by the zero-ref calibration [AdcuOf]).
+*/
 static inline fract16_t Phase_Analog_IPuOf(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_PU_PER_ADCU * PHASE_ANALOG_I_POLARITY); }
 
 /******************************************************************************/

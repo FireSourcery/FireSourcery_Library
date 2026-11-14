@@ -84,6 +84,7 @@ flowchart LR
 ## Config interface
 
 - `Module_ConfigId_Get/Set` take `Module_Config_T *`. The holder writes, then re-derives (`VMonitor_ConfigId_Set` = `RangeMonitor_ConfigId_Set` + `RangeMonitor_InitFrom`).
+- The id-keyed functions (`Module_ConfigId_T` and the `Get/Set` that switch on it) serve the protocol mapping only. Internal callers use a typed setter: calibration commits through `UserAIn_SetAdcZero`, not `UserAIn_Config_Set(..., USER_AIN_ZERO_ADCU, ...)`.
 - Derivation never overwrites a value the user set. Invalid thresholds resolve the mode to DISABLED, `Config.IsEnabled` keeps what was written. A mirror field is the exception, rewritten from its source (above).
 - On/off is a mode on an enum, not a dedicated `bool`, unless a value that already bounds the logic carries it as its 0 ([ValueOverBool.md](ValueOverBool.md)). The poll `switch`es on it, and a runtime hold is one more state, never a Config write (written to Config, it would persist on the next NVM save):
 

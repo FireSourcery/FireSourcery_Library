@@ -133,14 +133,13 @@ packet_size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_
 
         // Data packets — set length, await remaining bytes
         default:
-            if (rxCount < offsetof(MotPacket_Header_T, Length))
-            {
-                return 0;
-            }
-            else
-            {
-                return _MotPacket_FrameLength(p_rxPacket);
-            }
+            if (rxCount < (offsetof(MotPacket_Header_T, Length) + sizeof(p_rxPacket->Long.Header.Length))) { return 0; }
+            /*
+                A data frame is at least its own header. A shorter total would wrap the checksum span and
+                the Meta.Length subtraction; return past LENGTH_MAX so the parser's one bound rejects it.
+            */
+            if (p_rxPacket->Long.Header.Length < sizeof(MotPacket_Header_T)) { return MOT_PACKET_LENGTH_MAX + 1U; }
+            return _MotPacket_FrameLength(p_rxPacket);
     }
 }
 
@@ -163,20 +162,22 @@ bool MotProtocol_IsRxValid(const MotPacket_T * p_packet, packet_size_t length)
 */
 void MotProtocol_ParseRxHeader(Packet_Meta_T * p_meta, const MotPacket_T * p_packet)
 {
-
     p_meta->Id = p_packet->Long.Header.Id;   /* offset 1 in both shapes */
 
-    if (IsSyncShape(p_meta->Id) == true)
+    /* Every field is written on every frame: Meta is reused across frames, a field left alone is the previous frame's. */
+    if ((IsSyncShape(p_meta->Id) == true) || (p_packet->Long.Header.Length < sizeof(MotPacket_Header_T)))
     {
-        p_meta->Length = 0U;
+        /* Sync shape carries no payload. A data total under its own header was already refused by PARSE_RX_LENGTH. */
+        p_meta->Length   = 0U;
+        p_meta->Sequence = 0U;
+        p_meta->Flags    = 0U;
     }
-
-    /* A total shorter than its own header describes nothing. Reject before the subtraction. */
-    if (p_packet->Long.Header.Length < sizeof(MotPacket_Header_T)) { return; }
-
-    p_meta->Length   = (packet_size_t)(p_packet->Long.Header.Length - sizeof(MotPacket_Header_T));
-    p_meta->Sequence = p_packet->Long.Header.Sequence;
-    p_meta->Flags    = p_packet->Long.Header.Flags;
+    else
+    {
+        p_meta->Length   = (packet_size_t)(p_packet->Long.Header.Length - sizeof(MotPacket_Header_T));
+        p_meta->Sequence = p_packet->Long.Header.Sequence;
+        p_meta->Flags    = p_packet->Long.Header.Flags;
+    }
 }
 
 /*! Symmetric with PARSE_RX_HEADER. Called after the handler has written its payload. */

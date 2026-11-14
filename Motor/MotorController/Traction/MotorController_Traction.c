@@ -227,13 +227,20 @@ static void Drive_Proc(MotorController_T * p_mc)
 
 }
 
+/*
+    Reverse at standstill only, as the lever [Drive_InputLeverDirection]; the Motor refuses DIRECTION while in RUN.
+    A selector with no neutral position (SHIFTER_PIN_MODE_R) never leaves DRIVE, so this is its only reversal path.
+    While rolling the edge is consumed and Input.Direction holds the request; it is not re-applied when speed reaches zero.
+*/
 static State_T * Drive_InputDirection(MotorController_T * p_mc, state_value_t direction)
 {
     switch (direction)
     {
         case MOTOR_DIRECTION_NULL:       return &STATE_NEUTRAL;
-        case MOTOR_DIRECTION_FORWARD:    return NULL;
-        case MOTOR_DIRECTION_REVERSE:    return NULL;
+        case MOTOR_DIRECTION_FORWARD:
+        case MOTOR_DIRECTION_REVERSE:
+            if (Motor_Table_IsEverySpeedZero(&p_mc->MOTORS) == true) { Motor_Table_ApplyUserDirection(&p_mc->MOTORS, (Motor_Direction_T)direction); }
+            return NULL;
         default:                         return NULL;
     }
 }

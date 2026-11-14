@@ -133,6 +133,14 @@ static inline bool UserAIn_IsRisingEdge(UserAIn_T * p_dev) { return _UserAIn_IsE
 static inline bool UserAIn_IsFallingEdge(UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE); }
 static inline bool UserAIn_IsEdge(UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE); }
 
+/*
+    AdcMax - AdcZero < 2 has no scale (Linear_Fixed_Init divides by the interval, and needs 2 units of it for percent16).
+    The safe reading for such a config is 0 on every sample: repair to an interval above the ADC range, so every reading saturates low.
+*/
+static inline void UserAIn_Config_Validate(UserAIn_Config_T * p_config)
+{
+    if (p_config->AdcMax < p_config->AdcZero + 2U) { p_config->AdcZero = UINT16_MAX - 2U; p_config->AdcMax = UINT16_MAX; }
+}
 
 /******************************************************************************/
 /*
@@ -144,6 +152,7 @@ extern void UserAIn_Init(UserAIn_T * p_dev);
 
 extern void UserAIn_ReinitScale(UserAIn_T * p_dev);
 extern void UserAIn_ApplyConfig(UserAIn_T * p_dev);
+extern void UserAIn_SetAdcZero(UserAIn_T * p_dev, uint16_t zero_adcu);
 
 /* Polling functions */
 extern void UserAIn_CaptureValue(UserAIn_T * p_dev, uint16_t value_adcu);
@@ -153,6 +162,13 @@ extern bool UserAIn_PollFallingEdge(UserAIn_T * p_dev, uint16_t value_adcu);
 
 
 
+
+
+/******************************************************************************/
+/*
+    Id Interface
+*/
+/******************************************************************************/
 // static inline int _UserAIn_Var_Get(UserAIn_T * p_dev, int id)
 // {
 //     int32_t value = 0;
@@ -197,6 +213,7 @@ static inline void _UserAIn_Config_Set(UserAIn_Config_T * p_config, UserAIn_Conf
     }
 }
 
+
 /*
     Config is owned by the device, loaded from P_NVM_CONFIG on init.
     Set propagates: ADC bounds rescale the linear units, UseEdgePin re-gates the edge pin.
@@ -206,6 +223,7 @@ static inline int UserAIn_Config_Get(UserAIn_T * p_dev, UserAIn_ConfigId_T confi
 static inline void UserAIn_Config_Set(UserAIn_T * p_dev, UserAIn_ConfigId_T configId, int value)
 {
     _UserAIn_Config_Set(&p_dev->P_STATE->Config, configId, value);
+    UserAIn_Config_Validate(&p_dev->P_STATE->Config);
     UserAIn_ApplyConfig(p_dev);
 }
 

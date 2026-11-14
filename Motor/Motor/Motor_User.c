@@ -143,16 +143,23 @@ void Motor_ApplySpeedZero(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor-
 void Motor_ApplySafeStop(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_INTERVENTION, (uintptr_t)&INTERVENTION_STATE_SAFE_STOP); }
 
 /******************************************************************************/
-/*
-   Disable control. non StateMachine checked
+/*!
+    Force disable - the output now, then the transition.
+
+    The bridge takes the passive output whether or not the state accepts the release [Motor_ActivatePassiveOutput]:
+    float within the freewheel limit, V0 above it.
+    @note A floated bridge is unsafe above the rated speed: the back-emf exceeds the bus, the body diodes rectify it
+    into the bus, and the braking current is uncontrolled. V0 holds the phases shorted instead.
+
+    The release then moves the state: PASSIVE within the limit, SPEED_ZERO above it, which drives the gates V0 activated.
+    A state that refuses or ignores the release keeps the output written here: SAFE_STOP while rolling, DEACTIVATED, FAULT.
 */
 /******************************************************************************/
 void Motor_ForceDisableControl(Motor_T * p_motor)
 {
-    Phase_Deactivate(&p_motor->PHASE);
-    Motor_ReleaseVZ(p_motor);
+    Motor_ActivatePassiveOutput(p_motor);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
-    // Motor_Disable(p_motor); /* optionally transition to Stop, or stay in current state with control disabled */
+    Motor_ReleaseVZ(p_motor);
 }
 
 /******************************************************************************/

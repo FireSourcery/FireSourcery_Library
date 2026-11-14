@@ -65,9 +65,18 @@ static void Hall_RotorSensor_Init(Hall_RotorSensor_T * p_sensor)
 }
 
 /*
+    Bound the interpolation to the sector the last capture resolved: [centre - 30, centre + 30], its boundaries as entered
+    CCW and as entered CW [_Hall_Angle16BoundaryOf]. Independent of the sign of Delta, which is stale on a reversal.
+*/
+static inline void Hall_RotorSensor_SetSectorLimits(Hall_RotorSensor_T * p_sensor)
+{
+    AngleCounter_SetLimits(p_sensor->P_COUNTER, (angle16_t)Hall_GetAngleAs(p_sensor->HALL.P_STATE, HALL_DIRECTION_CCW), (angle16_t)Hall_GetAngleAs(p_sensor->HALL.P_STATE, HALL_DIRECTION_CW));
+}
+
+/*
     20kHz - Capture angle.
     Base.Angle is the full-rotation accumulator: snapped to the sector boundary
-    on each Hall edge; interpolated toward the next-sector endpoint between edges.
+    on each Hall edge; interpolated toward the far boundary between edges, clamped to the sector.
 */
 static void Hall_RotorSensor_CaptureAngle(Hall_RotorSensor_T * p_sensor)
 {
@@ -75,7 +84,7 @@ static void Hall_RotorSensor_CaptureAngle(Hall_RotorSensor_T * p_sensor)
     {
         PulseTimer_CaptureCount(&p_sensor->TIMER, p_sensor->P_COUNTER, Hall_ResolveDirection(p_sensor->HALL.P_STATE));
         AngleCounter_SetAngle(p_sensor->P_COUNTER, Hall_ResolveAngle(p_sensor->HALL.P_STATE)); /* Snap Base.Angle to exact sector boundary — self-corrects interpolation drift each edge */
-        AngleCounter_SetLimitWindow(p_sensor->P_COUNTER, ANGLE16_PER_REVOLUTION / 6); /* Clamp interpolation to the next sector endpoint (60° ahead in sign(Delta)) */
+        Hall_RotorSensor_SetSectorLimits(p_sensor);
     }
     else /* 20kHz, interpolate toward next sector boundary using Base.Delta */
     {
@@ -106,6 +115,12 @@ static void Hall_RotorSensor_ZeroInitial(Hall_RotorSensor_T * p_sensor)
     Hall_ZeroInitial(&p_sensor->HALL);
     AngleCounter_ZeroCount(p_sensor->P_COUNTER);
     Angle_ZeroCaptureState(&p_sensor->P_COUNTER->Base);
+    /*
+        Seed the counter with the sector centre Hall_ZeroInitial resolved, bounded to its sector.
+        Left at 0, the first interpolate clamped 0 onto the previous window's edge: up to 60 degrees off until the first edge.
+    */
+    AngleCounter_SetAngle(p_sensor->P_COUNTER, (angle16_t)p_sensor->HALL.P_STATE->Angle);
+    Hall_RotorSensor_SetSectorLimits(p_sensor);
     PulseTimer_SetInitial(&p_sensor->TIMER);
 }
 

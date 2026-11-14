@@ -257,7 +257,7 @@ const State_T MOTOR_STATE_DEACTIVATED =
 */
 static void Passive_Entry(Motor_T * p_motor)
 {
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); } else { Phase_ActivateV0(&p_motor->PHASE); }
+    Motor_ActivatePassiveOutput(p_motor);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     Motor_ResetControlTimer(p_motor->P_MOTOR); /* ok to reset timer */
  // optionally set backup vspeed

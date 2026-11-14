@@ -62,13 +62,13 @@ UART_T;
 static inline void UART_RxData_ISR(UART_T * p_uart)
 {
     size_t hwCount = HAL_UART_ReadRxFullCount(p_uart->P_HAL_UART);
-    size_t space   = RingT_GetEmptyCount(RING_T_ARGS(p_uart->RX_RING));
+    size_t space   = RingT_GetEmptyCount(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE);
     size_t count   = (hwCount < space) ? hwCount : space;
 
     for (size_t i = 0U; i < count; i++)
     {
         uint8_t rxChar = HAL_UART_ReadRxChar(p_uart->P_HAL_UART);
-        _RingT_PushBack(RING_T_ARGS(p_uart->RX_RING), (void *)&rxChar);
+        _RingT_PushBack(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE, (void *)&rxChar);
     }
 
     /* Bytes left with nowhere to go. Only then stop the flood: the restart poll waits on overrun */
@@ -81,13 +81,13 @@ static inline void UART_RxData_ISR(UART_T * p_uart)
 static inline void UART_TxData_ISR(UART_T * p_uart)
 {
     size_t hwSpace = HAL_UART_ReadTxEmptyCount(p_uart->P_HAL_UART);
-    size_t pending = RingT_GetFullCount(RING_T_ARGS(p_uart->TX_RING));
+    size_t pending = RingT_GetFullCount(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE);
     size_t count   = (hwSpace < pending) ? hwSpace : pending;
 
     for (size_t i = 0U; i < count; i++)
     {
         uint8_t txChar;
-        _RingT_PopFront(RING_T_ARGS(p_uart->TX_RING), (void *)&txChar);
+        _RingT_PopFront(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE, (void *)&txChar);
         HAL_UART_WriteTxChar(p_uart->P_HAL_UART, txChar);
     }
 
@@ -102,7 +102,7 @@ static inline bool UART_PollRestartRxIsr(const UART_T * p_uart)
 {
     bool isOverrun = false;
     /* Continue waiting for buffer read, before restarting interrupts, if buffer is full */
-    if ((HAL_UART_ReadRxOverrun(p_uart->P_HAL_UART) == true) && (RingT_IsFull(RING_T_ARGS(p_uart->RX_RING)) == false))
+    if ((HAL_UART_ReadRxOverrun(p_uart->P_HAL_UART) == true) && (RingT_IsFull(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE) == false))
     {
         HAL_UART_ClearRxErrors(p_uart->P_HAL_UART);
         HAL_UART_EnableRxInterrupt(p_uart->P_HAL_UART);
@@ -117,8 +117,8 @@ static inline bool UART_PollRestartRxIsr(const UART_T * p_uart)
     Query
 */
 /******************************************************************************/
-static inline size_t UART_GetRxFullCount(const UART_T * p_uart)      { return RingT_GetFullCount(RING_T_ARGS(p_uart->RX_RING)); }
-static inline size_t UART_GetTxEmptyCount(const UART_T * p_uart)     { return RingT_GetEmptyCount(RING_T_ARGS(p_uart->TX_RING)); }
+static inline size_t UART_GetRxFullCount(const UART_T * p_uart)      { return RingT_GetFullCount(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE); }
+static inline size_t UART_GetTxEmptyCount(const UART_T * p_uart)     { return RingT_GetEmptyCount(p_uart->TX_RING.TYPE, p_uart->TX_RING.P_STATE); }
 static inline void UART_EnableTxIsr(const UART_T * p_uart)           { HAL_UART_EnableTxInterrupt(p_uart->P_HAL_UART); }
 static inline void UART_DisableTxIsr(const UART_T * p_uart)          { HAL_UART_DisableTxInterrupt(p_uart->P_HAL_UART); }
 static inline void UART_EnableRxIsr(const UART_T * p_uart)           { HAL_UART_EnableRxInterrupt(p_uart->P_HAL_UART); }
@@ -127,7 +127,7 @@ static inline void UART_DisableRxIsr(const UART_T * p_uart)          { HAL_UART_
 /* Check for Overrun */
 static inline bool UART_IsRxOverrun(const UART_T * p_uart)
 {
-    return ((HAL_UART_ReadRxOverrun(p_uart->P_HAL_UART) == true) && (RingT_IsFull(RING_T_ARGS(p_uart->RX_RING)) == false));
+    return ((HAL_UART_ReadRxOverrun(p_uart->P_HAL_UART) == true) && (RingT_IsFull(p_uart->RX_RING.TYPE, p_uart->RX_RING.P_STATE) == false));
 }
 
 /******************************************************************************/

@@ -43,7 +43,8 @@ Monitor_Status_T _Monitor_EvaluateAsHigh(Monitor_Base_T * p_monitor, int32_t inp
 
         Caller must retain latching fault state after trigger
     */
-    if (Hysteresis_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF) { status = MONITOR_STATUS_NORMAL; }
+    /* Poll here too: a held Output from the last episode would otherwise re-assert WARNING at the resetpoint on the next deadband entry */
+    if (Hysteresis_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF) { (void)Hysteresis_Poll(&p_monitor->Warning, input); status = MONITOR_STATUS_NORMAL; }
 
     /* Check fault condition next (highest priority, no hysteresis) */
     else if (_Monitor_CheckFaultAsHigh(p_monitor, input) == true)    { status = MONITOR_STATUS_FAULT; }
@@ -59,7 +60,7 @@ Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t inpu
 {
     Monitor_Status_T status;
 
-    if (Hysteresis_Inverted_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF)  { status = MONITOR_STATUS_NORMAL; }
+    if (Hysteresis_Inverted_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF)  { (void)Hysteresis_Inverted_Poll(&p_monitor->Warning, input); status = MONITOR_STATUS_NORMAL; }
     else if (_Monitor_CheckFaultAsLow(p_monitor, input) == true)                            { status = MONITOR_STATUS_FAULT; }
     else if (Hysteresis_Inverted_Poll(&p_monitor->Warning, input) == true)                  { status = MONITOR_STATUS_WARNING; }
     else                                                                                    { status = MONITOR_STATUS_NORMAL; }
@@ -105,9 +106,13 @@ void Monitor_InitFrom(Monitor_T * p_monitor, const Monitor_Config_T * p_config)
 {
     if (p_config != NULL) { p_monitor->Config = *p_config; }
     _Monitor_InitFrom(&p_monitor->Base, &p_monitor->Config);
-    if (Monitor_Config_IsValid(&p_monitor->Config) == false) { p_monitor->Config.IsEnabled = false; }
 
-    if (p_monitor->Config.IsEnabled == false) { p_monitor->Direction = MONITOR_DISABLED; }
+    /*
+        Direction is derived; Config is not rewritten. An invalid threshold ordering disables the poll for as long
+        as it lasts - a field-by-field edit passes through one - and the next valid write re-enables it. Writing
+        IsEnabled here persisted the disable through the edit and the following NVM save.
+    */
+    if ((p_monitor->Config.IsEnabled == false) || (Monitor_Config_IsValid(&p_monitor->Config) == false)) { p_monitor->Direction = MONITOR_DISABLED; }
     else
     {
         p_monitor->Direction = (p_monitor->Config.Fault.Setpoint >= p_monitor->Config.Warning.Setpoint) ? MONITOR_THRESHOLD_HIGH : MONITOR_THRESHOLD_LOW;

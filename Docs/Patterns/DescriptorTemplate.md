@@ -26,7 +26,7 @@ typedef const struct TimerT { Timer_Base_T BASE; Timer_State_T * P_STATE; } Time
 |---|---|---|---|
 | Pure | values | `array_index_of_counter`, `void_array_at` | `_Timer_Elapsed(time_prev, time)` |
 | Primitive | descriptor, state, values | `RingT_PushBack(Ring_Type_T type, Ring_State_T * p_ring, const void * p_unit)` | `_TimerT_IsElapsed(const Timer_Base_T * p_base, const Timer_State_T * p_state)` |
-| Handle | the pairing handle | `RING_T_ARGS(ring)`, expanding to `(ring).TYPE, (ring).P_STATE` | `TimerT_IsElapsed(TimerT_T * p_timer)` |
+| Handle | the pairing handle | none: the call site passes `ring.TYPE, ring.P_STATE`, for now. | `TimerT_IsElapsed(TimerT_T * p_timer)` |
 
 - The primitive takes descriptor and state as separate parameters, descriptor first:
   `(p_const, p_state, value)` ([WrapperSurface.md](WrapperSurface.md)). It is the shared layer:
@@ -58,15 +58,16 @@ typedef const struct TimerT { Timer_Base_T BASE; Timer_State_T * P_STATE; } Time
 
 | | Descriptor | Primitive takes it | Handle | Handle passed |
 |---|---|---|---|---|
-| Ring | `Ring_Type_T`, 8 B | by value | `RingT_T`, 12 B | unpacked at the call by `RING_T_ARGS` |
+| Ring | `Ring_Type_T`, 8 B | by value | `RingT_T`, 12 B | unpacked at the call, `ring.TYPE, ring.P_STATE` |
 | Timer | `Timer_Base_T`, 8 B | by `const *` | `TimerT_T`, 12 B | by pointer |
 
 **Open**
 
 1. `_TimerT_*` takes the 8-byte `Timer_Base_T` by pointer; the passing form says by value.
 2. The layer names differ. Timer: `_TimerT_` is the primitive, `TimerT_` the handle. Ring: `_RingT_`
-   is the unchecked primitive and `RingT_` the checked one; the handle layer is only `RING_T_ARGS`,
-   marked `todo replace`. `RingT.h` numbers its layers Level 1 to 3 on a different split.
+   is the unchecked primitive and `RingT_` the checked one; Ring has no handle layer, so the call
+   site draws both members from one `RingT_T` by hand and the pairing is not enforced. `RingT.h`
+   numbers its layers Level 1 to 3 on a different split.
 3. The heavy-descriptor branch has no instance.
 4. A `RING_STATE_ALLOC` state pointer does not fold; a named state does ([Descriptor.md](Descriptor.md)
    § Folding).

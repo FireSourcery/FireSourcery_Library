@@ -93,7 +93,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 */
 static void Calibration_AlignV(Motor_T * p_motor, Phase_Id_T id)
 {
-    Phase_Align_V(&p_motor->PHASE, id, VBus_Pu(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
+    Phase_Align_V(&p_motor->PHASE, id, VBus_Inv_Pu(p_motor->P_VBUS), _Motor_GetVAlign(p_motor->P_MOTOR));
 }
 
 /*

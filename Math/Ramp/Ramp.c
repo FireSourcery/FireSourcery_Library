@@ -147,8 +147,8 @@ void Ramp_SetCoefficient(Ramp_T * p_ramp, uint32_t rate_accum32)
 /* duration_Ticks != 0  */
 void Ramp_SetSlope_Ticks(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range)
 {
-    assert(duration_Ticks != 0U);
-    p_ramp->Accumulator.Coefficient = ((int32_t)range << ACCUMULATOR_SHIFT) / duration_Ticks;
+    /* 0 ticks is a step: the whole range in one tick. The ms setter stores 0 for an unset time, and Motor_Config_IsValid does not refuse it */
+    p_ramp->Accumulator.Coefficient = ((int32_t)range << ACCUMULATOR_SHIFT) / (int32_t)((duration_Ticks != 0U) ? duration_Ticks : 1U);
 }
 
 /*
@@ -156,7 +156,6 @@ void Ramp_SetSlope_Ticks(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t rang
 */
 void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range)
 {
-    assert(duration_Ms != 0U);
     Ramp_SetSlope_Ticks(p_ramp, (updateFreq_Hz * duration_Ms / 1000U), range);
 }
 

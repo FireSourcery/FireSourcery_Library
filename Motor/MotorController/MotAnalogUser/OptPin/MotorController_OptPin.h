@@ -44,9 +44,10 @@ static inline UserDIn_Fn_T _MotorController_OptDinFn(MotorController_OptDinMode_
         [MOTOR_CONTROLLER_OPT_DIN_I_LIMIT]      = (UserDIn_Fn_T)UserDIn_CmdNull, /* Polled by MotorController_IDerate */
         [MOTOR_CONTROLLER_OPT_DIN_STANDBY]      = (UserDIn_Fn_T)MotorController_CallStandbyPin,
         [MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE] = (UserDIn_Fn_T)UserDIn_CmdNull,
-        // [MOTOR_CONTROLLER_OPT_DIN_FORWARD]      = (UserDIn_Fn_T)UserDIn_CmdNull,
-        // [MOTOR_CONTROLLER_OPT_DIN_REVERSE]      = (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_FORWARD]      = (UserDIn_Fn_T)UserDIn_CmdNull, /* No pin handler yet. Every mode below MODE_COUNT must resolve: a NULL slot is called on the first edge */
+        [MOTOR_CONTROLLER_OPT_DIN_REVERSE]      = (UserDIn_Fn_T)UserDIn_CmdNull,
     };
+    _Static_assert(sizeof(OPT_PIN_TABLE) / sizeof(OPT_PIN_TABLE[0U]) == MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT, "OPT_PIN_TABLE must cover every MotorController_OptDinMode_T");
 
     return (mode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT) ? OPT_PIN_TABLE[mode] : (UserDIn_Fn_T)UserDIn_CmdNull;
 }

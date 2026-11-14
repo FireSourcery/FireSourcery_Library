@@ -114,17 +114,6 @@ NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, ui
     with defined parameters
 */
 /******************************************************************************/
-/* eeprom only. Save on first init. */
-NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm)
-{
-#if     defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
-    return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_motNvm->P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
-#elif   defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
-    (void)p_motNvm;
-    return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
-#endif
-}
-
 static NvMemory_Status_T SaveEntry_Blocking(const MotNvm_T * p_motNvm, const MotNvm_Entry_T * p_entry)
 {
     assert(p_entry != NULL);

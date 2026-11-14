@@ -155,7 +155,7 @@ typedef const struct Hall
     Pin_T PIN_A;
     Pin_T PIN_B;
     Pin_T PIN_C;
-    /* configure settings not included in Pin_T, case of seperate interrupt support */
+    /* configure settings not included in Pin_T, case of separate interrupt support */
     // HAL_Hall_Pin_T * P_HAL_PIN_A; uint32_t PIN_A_ID;
     // HAL_Hall_Pin_T * P_HAL_PIN_B; uint32_t PIN_B_ID;
     // HAL_Hall_Pin_T * P_HAL_PIN_C; uint32_t PIN_C_ID;
@@ -165,11 +165,6 @@ typedef const struct Hall
 }
 Hall_T;
 
-#define HALL_STATE_ALLOC() (&(Hall_State_T){})
-
-/*  */
-#define HALL_INIT(PinA, PinB, PinC, p_State, p_Config) (Hall_T) \
-    { .PIN_A = PinA, .PIN_B = PinB, .PIN_C = PinC, .P_NVM_CONFIG = (p_Config), .P_STATE = (p_State), }
 
 /* Init from primitive */
 #define HALL_INIT_FROM(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_State, p_Config) (Hall_T) \
@@ -243,6 +238,9 @@ static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idN
     return _Hall_DirectionOf_Lut(idPrev, idNew);
 }
 
+/* [Hall_Id_T] parameter matches [Config.SensorsTable] storage - verify and store share one conversion. 000 and 111 are not sectors */
+static inline bool Hall_Verify(Hall_Id_T sensorsValue) { return ((sensorsValue > HALL_ANGLE_ERROR_0) && (sensorsValue < HALL_ANGLE_ERROR_7)); }
+
 
 /******************************************************************************/
 /*
@@ -255,7 +253,6 @@ static inline Hall_Id_T _Hall_IdOf(const Hall_State_T * p_hall, uint8_t physical
 /* Capture path resolve mapped Id. Stores calibrated read */
 static inline void _Hall_CaptureSensors(Hall_State_T * p_state, Hall_Sensors_T sensors)
 {
-    // p_state->SensorsPrev.Value = p_state->Sensors.Value;
     p_state->Sensors.Value = sensors.Value;
     p_state->IdPrev = p_state->Id;
     p_state->Id = _Hall_IdOf(p_state, sensors.Value);
@@ -281,12 +278,14 @@ static inline void Hall_CaptureSensors_ISR(Hall_T * p_hall)
 
 /*!
     Capture sensor on Hall edge, angle boundary
+    000 and 111 are an open or shorted wire, not a sector: the table maps them to angle 0. Hold the last valid
+    sector instead; with no further edges the speed capture decays and the feedback timeout follows.
     @return true on every phase edge. i.e 6x per Hall cycle
 */
 static inline bool Hall_PollCaptureSensors(Hall_T * p_hall)
 {
     Hall_Sensors_T sensors = Hall_ReadSensors(p_hall);
-    bool isEdge = (p_hall->P_STATE->Sensors.Value != sensors.Value);
+    bool isEdge = (p_hall->P_STATE->Sensors.Value != sensors.Value) && (Hall_Verify(sensors.Value) == true);
     if (isEdge) { _Hall_CaptureSensors(p_hall->P_STATE, sensors); }
     return isEdge;
 }
@@ -361,7 +360,6 @@ extern void Hall_Init(Hall_T * p_hall);
 extern void Hall_StartCalibrate(Hall_T * p_hall);
 extern void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId);
 
-extern bool Hall_Verify(Hall_Id_T sensorsValue);
 extern bool Hall_IsCalibrationTableValid(const Hall_State_T * p_hall);
 extern bool Hall_IsStateValid(Hall_T * p_hall);
 

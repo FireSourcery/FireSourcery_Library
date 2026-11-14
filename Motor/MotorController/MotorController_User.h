@@ -81,7 +81,7 @@ MotorController_GenericStatus_T;
     Non StateMachine Checked
 */
 /******************************************************************************/
-/* Non StateMachine checked disable motors. Caller ensure non field weakening state */
+/* Disable motors: the passive output by speed, then the release [Motor_ForceDisableControl] */
 /* Update State to prevent input overwrite */
 static inline void MotorController_ForceDisableControl(MotorController_T * p_dev)
 {
