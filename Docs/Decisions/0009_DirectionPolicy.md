@@ -59,7 +59,7 @@ State on 2026-10-17:
 - Including `hysteresis_math.h` in Motor trips `-Werror`: the existing `abs(...) > uint32` at its
   line 170 is a sign-compare.
 - The per-cycle dynamic sides (no-plugging, brake overlay, regen-only, plugging-only) are in
-  `foc_math.h`, unwired; their behaviors are in `Motor/Docs/VLimitPolicy.md`. Steady
+  `foc_math.h`, unwired; their behaviors are in `Motor/Motor/Math/VLimitPolicy.md`. Steady
   i_q = (v_q − e_q) / |Z| maps a v_q band to a reachable i_q band: regen-only caps braking at
   |e_q| / |Z|, plugging-only forces braking ≥ |e_q| / |Z|, and motion-keyed sides cannot hold a hill
   at zero speed.

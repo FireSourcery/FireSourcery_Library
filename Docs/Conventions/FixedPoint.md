@@ -90,8 +90,13 @@ A product's unit is the product of the bases. It is valid when that product is i
 | `fract32_t` | int32, 31 | [-1, 1) | extended fraction |
 | `uq16_t` | uint16, 16 | [0, 1) | percent16, ratios |
 | `fract16e_t` | int16 mantissa, shift | mantissa / 2^shift | coefficients at a 32-bit product |
+| `accumulator_state_t` | int32, 15 (`ACCUMULATOR_SHIFT`) | [-65536, 65536) | the integrator state of `Accumulator` and `Ramp`; `float` under `ACCUMULATOR_FLOAT` |
+| PID gains `Kp`, `Ki`, `Kd` | int32, 15 in `PID_Config_T` (`_Fixed32`, Q17.15); `fract16e_t` at run time; uint16, 7 on the var wire (`_Fixed16`, Q9.7, the stored value `>> 8`) | [0, 2^15) stored | the per-tick gain derived on init |
+| `thermal_t` | int16 under `THERMISTOR_UNITS_LINEAR`, `_LUT` and by default; `float` under `THERMISTOR_UNITS_FLOAT` | | temperature, the one physical quantity held outside pu |
+| `Linear_T` | int32 `Slope` with a per-instance `SlopeShift`, `X0`, `XDelta` | y = (x − X0) · Slope >> SlopeShift | ADC to user-value maps |
 
-A float build ([real.h](../../Math/HAL/real.h)) changes this family alone, to value / base.
+`Math/HAL/real.h` would select `real_float.h` under `FLOATING_POINT` and change this family alone, to value / base;
+no module includes it, so there is no float build (not implemented).
 
 ### Arithmetic
 
@@ -104,6 +109,7 @@ A float build ([real.h](../../Math/HAL/real.h)) changes this family alone, to va
 | coefficient | (m · b) >> shift | 32-bit product at full mantissa | `fract16e_mul` |
 | divide | (a << 15) / b | a < 2.0; the caller guards b = 0 | `fract16_div` |
 | store | clamp to ±FRACT16_MAX | symmetric, so −1 · −1 and abs fit | `fract16_sat` |
+| integrate | state += K · input, the state at `ACCUMULATOR_SHIFT` | clamped to the limits each step; io = state >> 15 | `accumulator`, `Ramp` |
 
 ## Time
 
@@ -216,7 +222,7 @@ Viable. Each family's representation makes its native operation cheap:
 | Time | count, compare | ticks are the count; SI is one operation with F_clk, at the interface |
 | Angle | add mod 2π, look up sin/cos | the overflow is the modulo; the top bits are the index |
 
-The split matches the float HAL: per-unit values become `float`, while angles and ticks stay integer, as wrap and counting are integer by nature.
+The split would match a float HAL (`real_float.h`, not wired): per-unit values become `float`, while angles and ticks stay integer, as wrap and counting are integer by nature.
 
 | Alternative | Cost |
 |---|---|

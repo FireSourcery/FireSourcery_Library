@@ -11,7 +11,7 @@ with the observer's prediction in place of the Hall capture. Three forms of its 
 A and B read the same i(k), θ̂(k), ω̂(k−1) and v(k−1), for the same ω̂(k): they differ in when, and in the hold.
 
     isample_model.py, isample_sequences.py, isample_plots.py   the scheduler, the built sequence, the lanes' drawing (../ISample)
-    Motor/Docs/Sensorless.md, Timeline                         the doc that states the built form's results
+    Motor/Motor/Sensor/Sensorless/Sensorless.md, Timeline                         the doc that states the built form's results
 
 Writes the A and B figures beside this file and prints the checks. Run from any directory.
 """

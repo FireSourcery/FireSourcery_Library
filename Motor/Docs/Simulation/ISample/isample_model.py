@@ -12,7 +12,7 @@ Model
     Batch b is the set the cycle at t = b is scheduled to take: started in it in software, or ahead of it by the trigger.
     ADC: 10 MHz ADCK, VSOURCE then IA, IB, IC; IB samples 4.5 us after the start, the batch completes at 8.5 us.
     NVIC: lower priority value preempts; equal priority does not, and a tie between pending IRQs goes to the lower number (ADC 15, FTM2 19).
-    The sample's place in the period does not change its age through the sense filter (CurrentSenseFilter.md), so the comparison
+    The sample's place in the period does not change its age through the sense filter (Kelly_KMC/Docs/CurrentSenseFilter.md), so the comparison
     is sample -> load. Delay to actuation = age (~96 us at hold tau 10 us) + sample -> load + 50 us (half the 2-period hold).
 
 Durations are estimates at k = 1: instruction counts of the linked KE06 image at ~32 ns each (50 MHz, CPI ~1.6). Measured on the
@@ -55,7 +55,7 @@ BASE = dict(
 CONV = (("VSOURCE", 0.0, 2.5), ("IA", 2.5, 2.0), ("IB", 4.5, 2.0), ("IC", 6.5, 2.0))
 CONV_DONE = 8.5
 SAMPLE_OFFSET = 4.5  # IB, the middle of the set
-AGE_US, HOLD_HALF_US = 96.0, 50.0  # CurrentSenseFilter.md, hold tau 10 us, 300 Hz; the 10 kHz loop's half hold
+AGE_US, HOLD_HALF_US = 96.0, 50.0  # Kelly_KMC/Docs/CurrentSenseFilter.md, hold tau 10 us, 300 Hz; the 10 kHz loop's half hold
 HW_LEAD = CONV_DONE + BASE["adc_entry"] + BASE["vsource"] + BASE["icapture"] + BASE["adc_exit"] + 0.5  # triggered: done before the top
 
 

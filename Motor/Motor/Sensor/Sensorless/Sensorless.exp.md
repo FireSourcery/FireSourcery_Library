@@ -83,11 +83,11 @@ Built 2026-11-05: the correction on the FOC's take, form A, as the sensor's `CAP
 
 **B, `Motor_Sensorless_ProcTorqueReq`.** v(k−1) is still in `Foc.Valpha`, `Vbeta`: no hold. A second copy of the loop. The write comes at 60.9 µs, past the top, and loads at the bottom 25 µs later: sample → load 87 µs, and the modeled voltage leads the applied one by 9.4° at 300 Hz, against A's 6.7°. Same inputs as A, the same ω̂.
 
-Estimates at k = 1 on the sheet's timeline model: [SensorlessSequenceA.png](Simulation/Sensorless/SensorlessSequenceA.png), [SensorlessSequenceB.png](Simulation/Sensorless/SensorlessSequenceB.png), from [sensorless_sequence.py](Simulation/Sensorless/sensorless_sequence.py).
+Estimates at k = 1 on the sheet's timeline model: [SensorlessSequenceA.png](../../../Docs/Simulation/Sensorless/SensorlessSequenceA.png), [SensorlessSequenceB.png](../../../Docs/Simulation/Sensorless/SensorlessSequenceB.png), from [sensorless_sequence.py](../../../Docs/Simulation/Sensorless/sensorless_sequence.py).
 
 ## References
 
-The PLL's loop structure, error sign and seeding were checked against NXP's application notes in [Reference/](Reference/). AN12235 (p. 39) runs its observer on its own estimated position one calculation step delayed, as the hold angle does. A tan⁻¹(−e_d / e_q) detector has period π, a second lock at θ + π; the normalized −y / ‖ê‖ here is sin(θ̂ − θ), period 2π. Its tracking-observer gains, in continuous units: Kp = 4πξf₀, Ki = (2πf₀)².
+The PLL's loop structure, error sign and seeding were checked against NXP's application notes in [Reference/](../../../Docs/Reference). AN12235 (p. 39) runs its observer on its own estimated position one calculation step delayed, as the hold angle does. A tan⁻¹(−e_d / e_q) detector has period π, a second lock at θ + π; the normalized −y / ‖ê‖ here is sin(θ̂ − θ), period 2π. Its tracking-observer gains, in continuous units: Kp = 4πξf₀, Ki = (2πf₀)².
 
 ## Open
 

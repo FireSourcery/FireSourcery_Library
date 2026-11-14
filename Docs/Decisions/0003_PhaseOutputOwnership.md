@@ -10,9 +10,9 @@ point, so a V0 written in the same ISR reads back as PWM.
 **Decision**
 
 - Every state LOOP that produces FOC output calls `Motor_FOC_WriteDuty(p_motor)` right after its
-  producer: Run, Intervention TorqueZero and RampDown, OpenLoop AngleAlign, Run and StartUp, Hall
-  calibration, Sensorless Align and StartUp, the producing cases of electrical calibration, and the
-  Encoder procs.
+  producer: Run, Intervention TorqueZero and SpeedZero (RampDown at the time), OpenLoop AngleAlign, Run
+  and StartUp, Hall calibration, Sensorless Align, StartUp and Fallback, the producing cases of
+  electrical calibration, and the Encoder procs.
 - `Motor_PWM_Thread` writes no duty.
 - Hold states (Fault, Passive, Calibration idle, electrical DONE) write nothing, so
   `Phase_ActivateV0` holds.
@@ -33,8 +33,9 @@ point, so a V0 written in the same ISR reads back as PWM.
   thread transfer first, and buffered inputs as a separate decision. Its open question: is a
   one-period (≤ 50 µs) gate-off delay acceptable for main-thread software faults? Hardware trips
   bypass this path.
-- Started by the user: `Phase_Svpwm_Data` returns a `Phase_Data_T` and `Phase_WriteData` writes it.
-  `Phase_Svpwm_Data` must be `static inline` (as a plain header definition the KE06 link fails with
-  multiple definitions). Open: whether Flags means gates (the output side) or a consumed fresh-sample
-  mark (as on the input side, cleared by `FOC_CaptureIData`).
+- Started by the user, as of 2026-11-14: `Phase_SvpwmVOut` (`Phase_Svpwm.h`, `static inline`; a plain
+  header definition fails the link with multiple definitions) returns a `Phase_Data_T`, and
+  `Phase_WriteData` (`Phase_VOut.h`) writes one. Neither has a caller: the states still write through
+  `Phase_WriteSvpwm` in `Motor_FOC_WriteDuty`. Open: whether Flags means gates (the output side) or a
+  consumed fresh-sample mark (as on the input side, cleared by `FOC_CaptureIData`).
 - Naming (VZ / V0 / T0, Config → Nvm, Runtime) is parked.

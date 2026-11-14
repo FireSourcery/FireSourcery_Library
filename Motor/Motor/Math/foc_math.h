@@ -417,7 +417,7 @@ static inline interval_t foc_vq_band(ufract16_t vq_circle_limit, interval_t v_li
 
 /*
     Dynamic v_q sides, per cycle from the motion (sign of ω·ψ) and the request (sign of i_q).
-    Extents are FRACT16_MAX: the circle bounds the magnitude. Behaviors compared in Motor/Docs/VLimitPolicy.md.
+    Extents are FRACT16_MAX: the circle bounds the magnitude. Behaviors compared in Motor/Motor/Math/VLimitPolicy.md.
 */
 /* v_q never opposes the back-EMF. Standstill takes the request's side, closed without a request */
 static inline interval_t _foc_v_no_plugging(accum32_t omega_psi, int32_t iq_req) { return interval_half_plane(_foc_vmotion_sign(omega_psi, iq_req), FRACT16_MAX); }

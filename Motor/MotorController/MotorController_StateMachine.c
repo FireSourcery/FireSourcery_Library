@@ -36,7 +36,7 @@
 
 /******************************************************************************/
 /*!
-    @brief State diagram: Motor/Docs/MotorController_StateMachine.md. Design rules: Motor/Docs/StateMachineOverview.md
+    @brief State diagram: Motor/MotorController/MotorController_StateMachine.md. Design rules: Motor/StateMachineOverview.md
 */
 /******************************************************************************/
 

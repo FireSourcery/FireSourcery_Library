@@ -5,7 +5,7 @@
 **Context** — Current limits come from the bus (UV, OV, the DC supply window), heat, the user and
 the protocol (CiA 402 0x60E0 / 0x60E1). Each is defined in a different frame, and a limit keyed by
 the wrong frame either swaps sides in reverse or shuts the current loop at standstill. The physics
-behind each bound is in [../Modules/Motor/LimitPhysics.md](../Modules/Motor/LimitPhysics.md).
+behind each bound is in [../Modules/Motor/LimitPhysics.md](../../Motor/Motor/Math/LimitPhysics.md).
 
 **Decision**
 

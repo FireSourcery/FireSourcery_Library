@@ -1,6 +1,6 @@
 # Phase Current Sampling
 
-Where the phase-current sample sits in the PWM period, how its conversion starts, and where the current loop takes it. The duty convention and counter events: [PwmConvention.md](PwmConvention.md). A low-side sensor's window and the modulation limit it sets: [ModulationLimit.md](ModulationLimit.md).
+Where the phase-current sample sits in the PWM period, how its conversion starts, and where the current loop takes it. The duty convention and counter events: [PwmConvention.md](../Phase/PwmConvention.md). A low-side sensor's window and the modulation limit it sets: [ModulationLimit.md](../Math/ModulationLimit.md).
 
 ## Placement in the period
 
@@ -23,7 +23,7 @@ Where the phase-current sample sits in the PWM period, how its conversion starts
 | `MOTOR_I_FEEDBACK_ON_PHASE` | The completion also runs the current loop, in the states whose action table holds `Motor_FOC_ProcTorqueFeedback`. Needs a board completion that calls `Motor_ADC_OnIabc_Thread` |
 | `FOC_I_SAMPLE_DELAY` | Every I Park takes θ − ω·delay, the delay in control periods. Independent of the others |
 
-A state that Parks the set at its completion, at the angle the PWM interrupt that started it set, calls `Motor_FOC_CaptureI` in its ON_PHASE action and takes the set with `Motor_FOC_TakeCapturedI`. Functions, not an option: [ConditionalCompilation.md](../../Docs/Conventions/ConditionalCompilation.md).
+A state that Parks the set at its completion, at the angle the PWM interrupt that started it set, calls `Motor_FOC_CaptureI` in its ON_PHASE action and takes the set with `Motor_FOC_TakeCapturedI`. Functions, not an option: [ConditionalCompilation.md](../../../Docs/Conventions/ConditionalCompilation.md).
 
 ## Not established
 

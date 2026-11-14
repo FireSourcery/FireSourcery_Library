@@ -28,25 +28,27 @@
     @author FireSourcery
     @brief  Adapter mapping CiA 402 Controlword/Statusword onto the Motor SM.
 
-    Mapping summary:
-      Controlword                 → Motor_User function
-        DISABLE_VOLTAGE           → Motor_ReleaseVZ          (full coast / phases off)
-        SHUTDOWN                  → Motor_ReleaseVZ          (no power-stage equivalent — closest)
+    Mapping summary, as the code stands:
+      Controlword                 → Motor_User function      [Motor_Cia402_ProcControl], which nothing calls yet.
+                                                             [Motor_Cia402_WriteControl], the PDO and OD path, stores the word only.
+        DISABLE_VOLTAGE           → Motor_Disable            (PASSIVE at zero speed → DEACTIVATED)
+        SHUTDOWN                  → Motor_ReleaseVZ          (full coast / phases off)
         SWITCH_ON                 → Motor_ReleaseV0          (V0 hold, armed)
-        DISABLE_OPERATION         → Motor_ReleaseV0          (V0 hold, armed)
+        DISABLE_OPERATION         → nothing                  (not in the switch)
         ENABLE_OPERATION          → Motor_ActivateControl    (PWM on)
-        QUICK_STOP                → Motor_Disable               (controlled shutdown via INTERVENTION)
-        FAULT_RESET (rising edge) → Motor_StateMachine_TryClearFaultAll
+        QUICK_STOP                → nothing                  (Motor_Disable commented out; a controlled stop would be Motor_ApplySafeStop)
+        FAULT_RESET (rising edge) → nothing                  (Motor_StateMachine_TryClearFaultAll commented out)
 
-      Motor State                 → Statusword
+      Motor State                 → Statusword               [Motor_Cia402_ReadStatus]
         INIT                      → NOT_READY_TO_SWITCH_ON
-        STOP                      → SWITCH_ON_DISABLED
+        DEACTIVATED               → SWITCH_ON_DISABLED
         PASSIVE  (Phase=Z)        → READY_TO_SWITCH_ON
         PASSIVE  (Phase=V0)       → SWITCHED_ON
         RUN                       → OPERATION_ENABLED
-        INTERVENTION              → QUICK_STOP_ACTIVE
+        INTERVENTION              → OPERATION_ENABLED        (QUICK_STOP_ACTIVE was the intent; not implemented)
         OPEN_LOOP                 → OPERATION_ENABLED + Manufacturer0 (manufacturer-specific marker)
-        CALIBRATION               → SWITCH_ON_DISABLED + Manufacturer0
+        CALIBRATION  (Phase=Z)    → SWITCH_ON_DISABLED
+        CALIBRATION  (Phase≠Z)    → SWITCHED_ON              (the Manufacturer0 marker follows a break and is never set)
         FAULT                     → FAULT
 */
 /******************************************************************************/

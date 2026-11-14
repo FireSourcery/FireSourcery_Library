@@ -1,12 +1,12 @@
 # Motor Control State Machines
 
 Motor control runs two hierarchical state machines on one engine,
-[Framework/StateMachine](../../Framework/StateMachine/Architecture.md): an `MSM_MACHINE` per motor, and one
+[Framework/StateMachine](../Framework/StateMachine/Architecture.md): an `MSM_MACHINE` per motor, and one
 `MCSM_MACHINE` for the controller, which holds the system states and, under `MC_STATE_MAIN`, the app's sub-states.
 This page is the overview and the design decisions. The detail is in:
 
-- [Motor_StateMachine.md](Motor_StateMachine.md): each motor state, input, action, fault and sub-state.
-- [MotorController_StateMachine.md](MotorController_StateMachine.md): the controller's states, lock operations,
+- [Motor_StateMachine.md](Motor/Motor_StateMachine.md): each motor state, input, action, fault and sub-state.
+- [MotorController_StateMachine.md](MotorController/MotorController_StateMachine.md): the controller's states, lock operations,
   faults and write admission, and the Traction app.
 
 ## Layers
@@ -77,7 +77,7 @@ flowchart TB
 
 ## Engine conventions both machines rely on
 
-From [Architecture.md](../../Framework/StateMachine/Architecture.md):
+From [Architecture.md](../Framework/StateMachine/Architecture.md):
 
 - One leaf pointer per machine; the active states are the leaf and its parents. No orthogonal regions, no history.
 - A handler returns `NULL` to stay, which may still change context (an internal transition); the current state, to
@@ -125,7 +125,7 @@ From [Architecture.md](../../Framework/StateMachine/Architecture.md):
 - **Exit policy as data.** The `STANDBY` exit policy, `StandbyExitMode`, is runtime data resolved at init from the
   input topology. That keeps the input mode and the Park input out of the machine. An explicit park latches
   `MANUAL`, so a host that parked holds `STANDBY`; a reboot restores the resolved mode.
-- **Write admission belongs to the controller** ([0001](../../Docs/Decisions/0001_ParameterWriteAdmission.md)).
+- **Write admission belongs to the controller** ([0001](../Docs/Decisions/0001_ParameterWriteAdmission.md)).
   Whether a write is safe now is lifecycle reasoning that applies to any parameter, so the controller decides it
   from its own state. The motor machine gates outputs, the electrical hazard, and nothing else.
 
@@ -202,7 +202,7 @@ From [Architecture.md](../../Framework/StateMachine/Architecture.md):
 - **Direction end state**, deferred 2026-10-17. The direction stays a selectable lock: `Motor_SetDirection` writes
   the field and the FOC voltage half-plane. A symmetric voltage limit plus a window around the back-EMF is the
   likely end; the arming gates, the motoring / generating key and `Motor_UserMotoringOf` must stop reading the
-  direction first. See [VLimitPolicy.md](VLimitPolicy.md).
+  direction first. See [VLimitPolicy.md](Motor/Math/VLimitPolicy.md).
 - **Sub-state ids.** The motor's sub-states and Traction's states carry no ids yet and report their root.
   `MAIN`'s depth-1 id space is shared by `MotorController_MainSubStateId_T` and the app's ids, which can collide;
   `MotorController_App_T` is where a base or range would be allocated.

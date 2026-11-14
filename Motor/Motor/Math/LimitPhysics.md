@@ -1,8 +1,8 @@
 # Limit Physics
 
 Which bound binds where, and why each frame needs its key. The frames and keys themselves are decided
-in [../../Decisions/0005_ILimitFrames.md](../../Decisions/0005_ILimitFrames.md); the V side is in
-`Motor/Docs/VLimitPolicy.md`. Worked numbers use a 72 V / 50 A pack, a 90 mΩ winding and a 200 A
+in [../../Decisions/0005_ILimitFrames.md](../../../Docs/Decisions/0005_ILimitFrames.md); the V side is in
+`Motor/Motor/Math/VLimitPolicy.md`. Worked numbers use a 72 V / 50 A pack, a 90 mΩ winding and a 200 A
 phase rating.
 
 ## Supply (DC) limit → i_q
@@ -39,7 +39,7 @@ Power balance: P = 3/2 · (v_d · i_d + v_q · i_q) = V_dc · I_dc.
 
 Forward torque during rollback needs v_q = R · i_q + E with E < 0. Once |E| > R · i_q the PI pins
 v_q at 0, and the current is |E| / |Z| (90 mΩ: 18 V → 200 A at low speed), outside every I limit.
-A symmetric VLimit keeps the limits enforced ([../../Decisions/0009_DirectionPolicy.md](../../Decisions/0009_DirectionPolicy.md)).
+A symmetric VLimit keeps the limits enforced ([../../Decisions/0009_DirectionPolicy.md](../../../Docs/Decisions/0009_DirectionPolicy.md)).
 
 ## Standstill and stall
 
@@ -61,7 +61,7 @@ A symmetric VLimit keeps the limits enforced ([../../Decisions/0009_DirectionPol
 ## Ramp and speed lead
 
 - Clamping only the ramp input means a limit drop reaches the current loop at the ramp slope
-  ([../../Decisions/0006_RampLimitsOnInput.md](../../Decisions/0006_RampLimitsOnInput.md)).
+  ([../../Decisions/0006_RampLimitsOnInput.md](../../../Docs/Decisions/0006_RampLimitsOnInput.md)).
 - With the torque limit binding, the speed setpoint runs ahead. Model: 2700 rpm/s ramp, the limit
   allows 1000 rpm/s, command 3000 → 1500 rpm at 1.5 s. Overshoot is +386 rpm, settling 0.8 s.
   SINAMICS-style tracking (lead held within a following error while saturated) gives +15 rpm with a

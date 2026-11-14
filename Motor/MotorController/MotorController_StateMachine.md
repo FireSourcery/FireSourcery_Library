@@ -2,7 +2,7 @@
 
 One `MCSM_MACHINE` holds the controller's root states, the sub-states the controller defines itself, and the app's
 sub-states under `MC_STATE_MAIN`. Each motor runs its own machine, detailed in
-[Motor_StateMachine.md](Motor_StateMachine.md). [StateMachineOverview.md](StateMachineOverview.md) has the overview,
+[Motor_StateMachine.md](../Motor/Motor_StateMachine.md). [StateMachineOverview.md](../StateMachineOverview.md) has the overview,
 the layer map and the design decisions.
 
 ## Threads
@@ -12,10 +12,15 @@ the layer map and the design decisions.
 | `LOOP`, then `NEXT`, leaf first | `MotorController_Main_Thread`, `_StateMachine_Branch_ProcSyncOutput` | every 1 ms |
 | State, lock and app inputs | main thread, `_StateMachine_Branch_CallInput`: the handler and the transition run on the call, without a lock, on the proc's own thread | protocol requests; the app's analog input every 1 ms |
 | Fault set and clear | `StateMachine_Tree_InputAsyncTransition`, from the main thread and from the 1 ms timer thread (VBus) | on detection |
-| Monitors, the motor-fault poll, the fault re-send, digital-input commands | main thread | about every 1 s |
+| Digital-input commands, buzzer and meter | main thread, `MOTOR_CONTROLLER_MAIN_DIVIDER_10` | about every 16 ms |
+| The Rx-lost poll, serial input mode | main thread, `MotorController_PollRxLost` | every 1 ms |
+| Monitors, the motor-fault poll, the fault re-send | main thread, `MOTOR_CONTROLLER_MAIN_DIVIDER_1000` | about every 1 s |
 
 - A VBus fault set from the timer thread can be overwritten by a main-thread transition it interrupted. The 1 s
-  poll re-sends any set `FaultFlags`, which re-enters `FAULT`.
+  poll re-sends any set `FaultFlags`, which re-enters `FAULT`. The flag word's bit stores are unguarded
+  read-modify-writes, and a controller entry that fans inputs out to the motors runs its tail with IRQs reopened:
+  [0010](../../Docs/Decisions/0010_SharedWordWrites.md), [0011](../../Docs/Decisions/0011_StateMachineLockNesting.md),
+  both open.
 
 ## Root states
 
@@ -46,6 +51,12 @@ stateDiagram-v2
     MC_STATE_LOCK --> MC_STATE_FAULT: LOCK_EXIT, motors active
     MC_STATE_LOCK --> MC_STATE_MAIN: MOTOR_CMD_MODE
     MC_STATE_LOCK --> MC_STATE_MOTOR_TUNING: MOTOR_TUNING_MODE
+    note right of MC_STATE_LOCK
+        LOCK ids elsewhere: STANDBY maps
+        LOCK_ENTER only, MAIN maps none,
+        FAULT takes NVM_SAVE_CONFIG only.
+        Unmapped or refused answers ERROR
+    end note
 
     MC_STATE_MOTOR_TUNING --> MC_STATE_STANDBY: STOP_MAIN / E_STOP
     MC_STATE_MOTOR_TUNING --> MC_STATE_MOTOR_TUNING: MOTOR_TUNING_RESET
@@ -60,9 +71,13 @@ stateDiagram-v2
 
 - Leaving for a stationary state needs every motor `DEACTIVATED`, or `PASSIVE` at zero speed
   (`Common_IsStandbyReady`): `STOP_MAIN` / `E_STOP` from `MAIN` and `MOTOR_TUNING`, `LOCK_ENTER` from `STANDBY` and
-  `MOTOR_TUNING`. A refused `STOP_MAIN` sounds the standby-error buzzer; a refused `LOCK_ENTER` returns `ERROR`. The
-  entry's `Motor_Disable` takes a `PASSIVE` motor on to `DEACTIVATED`. `E_STOP` is the same as `STOP_MAIN` for now.
-- `LOCK` commands are accepted at the bare `LOCK` only, not from a sub-state. `MOTOR_CMD_MODE` lands on
+  `MOTOR_TUNING`. `STOP_MAIN` / `E_STOP` (`Common_InputStandby`) first release, with `Z`, motors held at zero speed
+  by a `ZeroMode` (`RUN` or `TORQUE_ZERO` at zero speed), then test the guard: it refuses motion, not a hold. A
+  refused `STOP_MAIN` sounds the standby-error buzzer; a refused `LOCK_ENTER` returns `ERROR`. The entry's
+  `Motor_Disable` takes a `PASSIVE` motor on to `DEACTIVATED`. `E_STOP` is the same as `STOP_MAIN` for now.
+- `LOCK` inputs: `STANDBY` maps `LOCK_ENTER` only, the other ids sink; `MAIN` maps none. `MotorController_InputLock`
+  presets `LockOpStatus` to `ERROR`, so an unmapped or refused id answers `ERROR`; the handler, or `Lock_Entry`,
+  sets `OK`. `LOCK` commands are accepted at the bare `LOCK` only, not from a sub-state. `MOTOR_CMD_MODE` lands on
   `MC_STATE_MAIN_MOTOR_CMD`.
 - `LOCK_EXIT` and fault clear always land in `STANDBY`, never live `MAIN`.
 
@@ -158,7 +173,8 @@ topology. It is runtime-only and not persisted.
   writes their `AdcZero`, sets the status to 0 and returns to the bare `LOCK`. `MotorController_Lock_CalibrateAdc`
   enters it alone, as a command on `LOCK`.
 - `MotorController_IsLockOpComplete` is true at the bare `LOCK` with every motor's calibration complete.
-- Every lock input sets `LockOpStatus`; `MotorController_InputLock` returns it.
+- `MotorController_InputLock` presets `LockOpStatus` to `ERROR`, sends the id, and returns the status the handler
+  left: `OK` where it ran, `ERROR` where no state mapped the id or the handler refused it.
 
 ### `FAULT`
 
@@ -173,15 +189,16 @@ topology. It is runtime-only and not persisted.
   3. Every motor is cleared (`Motor_StateMachine_TryClearFaultAll`). `Motors` stays set if any motor stays in
      `FAULT`.
   4. No flag left goes to `STANDBY`.
-- `NVM_SAVE_CONFIG` is accepted, without pausing the VBus monitor or re-initializing the motors; other lock ids are
-  ignored.
+- `NVM_SAVE_CONFIG` is accepted with every motor at zero speed, without pausing the VBus monitor or re-initializing
+  the motors. With a motor still moving (`SPEED_ZERO` after a fault at speed) it answers `ERROR`: the save runs
+  with interrupts off, and the motor would lose its current loop for the flash time. Other lock ids are ignored.
 
 ### Inputs
 
 | `MotorController_StateInput_T` | Value | Handled by |
 |---|---|---|
 | `FAULT` | `MotorController_FaultCmd_T` set / clear deltas | every state but `INIT` |
-| `LOCK` | `MotorController_LockId_T` | `STANDBY` (`LOCK_ENTER`), `MOTOR_TUNING`, `LOCK`; `FAULT` takes `NVM_SAVE_CONFIG` only |
+| `LOCK` | `MotorController_LockId_T` | `STANDBY` (`LOCK_ENTER`; the others sink), `MOTOR_TUNING`, `LOCK`; `FAULT` takes `NVM_SAVE_CONFIG` only; unmapped in `MAIN`. Unmapped or refused answers `ERROR` |
 | `STATE_CMD` | `MotorController_StateCmd_T`: `START_MAIN`, `STOP_MAIN`, `E_STOP` | `STANDBY`, `MAIN` and its sub-states, `MOTOR_TUNING` |
 | `MOTOR_CMD` | — | `MAIN_MOTOR_CMD`, empty handler; sinks in `STANDBY` and `MAIN` |
 | `APP_USER` | the app's input id, `Traction_StateInput_T` | app sub-states only; sinks in `STANDBY` and `MAIN` |
@@ -215,7 +232,7 @@ state ([0001](../../Docs/Decisions/0001_ParameterWriteAdmission.md)).
 | PID tuning I/O | `MOTOR_TUNING` |
 | Config: motor, sensor, heat and voltage monitor, analog user, general, communication, Traction; NVM memory read and write | `LOCK` or `FAULT` (`MotorController_IsConfig`) |
 | General user input | serial or CAN input mode, any state |
-| Traction control | `Config.InitMode` Traction, serial or CAN input mode, any state |
+| Traction control | the app mode Traction (`MotorController_AppTable_Mode`), serial or CAN input mode, any state |
 
 ## Interface
 
@@ -225,7 +242,7 @@ state ([0001](../../Docs/Decisions/0001_ParameterWriteAdmission.md)).
 | `MotorController_InputLock`, `MotorController_EnterLockState`, `MotorController_ExitLockState` | `LOCK`; returns `LockOpStatus` |
 | `MotorController_SaveConfig_Blocking` | `LOCK` `NVM_SAVE_CONFIG`; returns `NvmStatus` |
 | `MotorController_SetFault`, `MotorController_ClearFault`, `MotorController_TryClearFaultAll` | `FAULT` |
-| `MotorController_ForceDisableControl` | every motor force-disabled, unchecked by the machines, then `STOP_MAIN` |
+| `MotorController_ForceDisableControl` | `Motor_ForceDisableControl` on every motor: the passive output written directly, the feedback state cleared, then the `Z` input; then `STOP_MAIN` |
 | `MotorController_CallSystemCmd` | the protocol's system commands: clear fault, force disable, lock input and its status, state command, Rx watchdog, beep |
 
 - Queries: `MotorController_GetStateId`; `MotorController_GetPathId`, the unambiguous form, since a sub-state id is
@@ -454,5 +471,5 @@ sequenceDiagram
     MC->>MC: all clear, STANDBY
 ```
 
-The fault sequence shows the intent. Today a motor already in `FAULT` takes the calibration exit as an entry; see
-[Behaviors to know](#behaviors-to-know).
+A motor already in `FAULT` maps only the `FAULT` input: the entry's `Z` is ignored and it keeps its own output. The
+clear then takes it to `DEACTIVATED` with the others.

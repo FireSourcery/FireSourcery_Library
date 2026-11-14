@@ -46,7 +46,7 @@ Common interface for system-level functions; thin abstraction over remaining har
 - [State machine architecture](Framework/StateMachine/Architecture.md): state tree, transitions, inputs, threading, adding a state
 - [Protocol engine](Framework/Protocol/README.md): receive pipeline and request flow traces
 - [MotVar over CANopen SDO](Motor/MotProtocol/MotCan/README.md): object dictionary contract and frame layout
-- [Fixed-point quantities](Motor/Docs/FixedPoint.md): representation, units, naming
+- [Fixed-point quantities](Docs/Conventions/FixedPoint.md): representation, units, naming
 - [Per-unit electrical bases](Motor/Motor/Math/motor_electrical_math.md): ψ and L scaling
 - [ADC conversion sets](Peripheral/ADC/Notes.md): coordinating conversions across converters
 - [Config, State, Ref](Docs/Conventions/Config_State_Ref.md): one writable copy per persisted value

@@ -1,7 +1,14 @@
 # Batch Join Variants — open decision
 
 Working note, 2026-09-24. Measured, not argued: every result below came from running
-`.Test/ADC_Batch_Test.c`. Background and the layering rationale are in `ADC_Reference.md`.
+`.Test/ADC_Batch_Test.c`. Background and the layering rationale are in `Notes.md` (then `ADC_Reference.md`).
+
+**Names, 2026-11-14.** The code was reworked after this note: `ADC_TriggerState_T` is `ADC_BatchTrigger_T`,
+`ADC_Trigger_OnComplete_ISR` is `ADC_BatchTrigger_OnComplete_ISR`, `ADC_Batch_Select` is
+`ADC_BatchTrigger_Select`, `_ADC_Batch_ActivateEach` is `_ADC_Batch_ActivateEachDma`; `_ADC_Batch_MarkEach`
+and the arm are gone, the join reads the parts' `CompleteFlags` and takes them; a part is an
+`ADC_Sequence_T` keyed by `CHANNELS`, not `SEQUENCE_ID`. The variants below were measured against the
+2026-09 code and keep its names; the decision is still open.
 
 **Question.** Must the join reprogram every part, or can each ADC start its own next sequence at its
 own completion? Non-overlapping sequences per ADC is a given.

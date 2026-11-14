@@ -11,7 +11,7 @@ Composites that need more than one register op (`HAL_ADC_ActivateEach`, `HAL_CAN
 
 A platform's HAL file also holds functions the Peripheral layer never calls: init and routing that only the Board uses. They take the platform prefix instead of `HAL_`, as `S32_PDB_ConfigChannel`, `S32_DMA_ConfigAdcTransferAt` and `KE0x_ADC_InitHwTriggerFtm2` do. They stay in the HAL file for convenience, beside the registers they write. The prefix marks them as outside the interface, so another platform does not have to define them.
 
-When one proves general enough that a wrapper module needs it, rename it `HAL_<Module>_*`, add its prototype to `Peripheral/<Module>/HAL_<Module>.h`, and call it from the module that needs the abstraction. `HAL_ADC_SelectDmaSequence` is that case on S32: it wraps the PDB channel write, and `ADC_Thread.h` calls it under `HAL_ADC_DMA_ENABLE`.
+When one proves general enough that a wrapper module needs it, rename it `HAL_<Module>_*`, add its prototype to `Peripheral/<Module>/HAL_<Module>.h`, and call it from the module that needs the abstraction. `HAL_ADC_SelectDmaSequence` is that case on S32: it wraps the PDB channel write, and `_ADC.h` (`_ADC_ActivateDma`) calls it under `HAL_ADC_DMA_ENABLE`.
 
 ## Binding: direct include
 
@@ -55,13 +55,13 @@ Rule: a table at the boundary where a second implementation enters the image (`[
 
 ## Defaults and overrides
 
-Three mechanisms in use. Only the first gives a default that inlines and can still be replaced.
+Three mechanisms, the first two in use. Only the first gives a default that inlines and can still be replaced.
 
 | mechanism | example | gives |
 |---|---|---|
 | macro-guarded default definition | `HAL_CAN_OVERRIDE_DEFAULT_IMPLEMENTATION` around the `[CAN_Frame_T]` composites; `HAL_ADC_SelectDmaSequence` under `HAL_ADC_DMA_ENABLE` | inline default, platform replaces the whole block |
 | `#ifndef` constant | `HAL_ADC_VALUE_T`, `HAL_ADC_PIN_T`, `HAL_ADC_FIFO_LENGTH_MAX`, `PIN_ID_INIT` | a platform-sized type or count |
-| `__attribute__((weak))` definition | `HAL_CAN_SetRxFilterAcceptNone` (`HAL_CAN.h` line 83) | link-time override, external linkage |
+| `__attribute__((weak))` definition | none today: `HAL_CAN_SetRxFilterAcceptNone` is a `static inline` prototype in `HAL_CAN.h`, and the `WEAK` macro in `HAL_Peripheral.h` is defined but used by no Peripheral file | link-time override, external linkage |
 
 `weak` cannot double as the forward declaration and the overridable default. `weak` applies to external-linkage symbols, so the function is resolved by the linker: it cannot inline, the register base cannot fold, and a `static inline` cannot be weak at all ("weak declaration must be public"). A `static inline` default cannot be overridden either; a second definition in the same TU is a redefinition error. The two properties wanted, folded inline and replaceable, meet only in the macro guard. The weak form is acceptable for cold calls (filter setup), not for anything on a control-loop path.
 

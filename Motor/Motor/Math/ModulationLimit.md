@@ -1,6 +1,6 @@
 # Modulation Limit
 
-The current loop's modulation limit is its v_dq circle radius, `FOC_V_CIRCLE_PER_V_BUS`. SVPWM is linear to Vbus/√3. A current sensor on the low side, a shunt or the low-side switch's R_DS(on), sees a phase only while its low side conducts, and that window can set a tighter limit. Zero-sequence placement is the lever. The PWM convention: [PwmConvention.md](PwmConvention.md). Where the sample sits in the period: [CurrentSampling.md](CurrentSampling.md). The q-axis band inside the circle: [VLimitPolicy.md](VLimitPolicy.md).
+The current loop's modulation limit is its v_dq circle radius, `FOC_V_CIRCLE_PER_V_BUS`. SVPWM is linear to Vbus/√3. A current sensor on the low side, a shunt or the low-side switch's R_DS(on), sees a phase only while its low side conducts, and that window can set a tighter limit. Zero-sequence placement is the lever. The PWM convention: [PwmConvention.md](../Phase/PwmConvention.md). Where the sample sits in the period: [CurrentSampling.md](../ADC/CurrentSampling.md). The q-axis band inside the circle: [VLimitPolicy.md](VLimitPolicy.md).
 
 ## The window sets the modulation limit
 
@@ -9,9 +9,9 @@ The current loop's modulation limit is its v_dq circle radius, `FOC_V_CIRCLE_PER
 - Nothing else in the output path limits duty, so the current loop's circle radius, `FOC_V_CIRCLE_PER_V_BUS`, is the modulation limit.
 - Reading 3 phases at Vbus/√3, the top phase's window stays at or under 0.067·T for the 120° it is on top, and drops under 0.02·T for ±16° around each line-to-line peak.
 - Reading 2 of 3, only the middle duty counts: at Vbus/√3 it is 93.3 %, the window that 3 phases have at Vbus/2.
-- On a track-and-hold sensor, a phase read with too little window shows as a steady Id/Iq offset with 3× electrical ripple ([low_side_hold.py](Simulation/Svpwm/low_side_hold.py)).
+- On a track-and-hold sensor, a phase read with too little window shows as a steady Id/Iq offset with 3× electrical ripple ([low_side_hold.py](../../Docs/Simulation/Svpwm/low_side_hold.py)).
 
-Shortest window at 20 kHz, T = 50 µs, through the integer output path ([low_side_window.py](Simulation/Svpwm/low_side_window.py)):
+Shortest window at 20 kHz, T = 50 µs, through the integer output path ([low_side_window.py](../../Docs/Simulation/Svpwm/low_side_window.py)):
 
 | Placement, radius | 3 phases read | 2 of 3 read |
 |---|---|---|
@@ -22,7 +22,7 @@ Shortest window at 20 kHz, T = 50 µs, through the integer output path ([low_sid
 | ceiling √3/2, 0.539·Vbus | 3.35 µs, for 0.3° of the turn | 6.70 µs |
 | ceiling √3/2, Vbus/√3 | 0 µs | 6.70 µs |
 
-![Low-side window per radius](Simulation/Svpwm/LowSideWindow.png)
+![Low-side window per radius](../../Docs/Simulation/Svpwm/LowSideWindow.png)
 
 Largest radius for a window w, as a fraction of T:
 
@@ -37,7 +37,7 @@ Largest radius for a window w, as a fraction of T:
 
 ## Options
 
-Defined in the board's `Precompile.h`. The placement is selected in `Phase_WriteSvpwm` and `Phase_SvpwmVOut` (`Phase_Svpwm.h`), in the PWM write, so it applies whatever the capture path.
+Defined in the board's `Precompile.h`. The placement is selected in `Phase_WriteSvpwm` (`Phase_Svpwm.h`), the PWM write that `Motor_FOC_WriteDuty` calls, so it applies whatever the capture path. `Phase_SvpwmVOut`, the same selection returning a `Phase_Data_T` for a buffered output image, has no caller yet ([0003](../../../Docs/Decisions/0003_PhaseOutputOwnership.md)).
 
 | Option | Default | What it does |
 |---|---|---|
@@ -70,9 +70,9 @@ Defined in the board's `Precompile.h`. The placement is selected in `Phase_Write
 - A fixed k pays for its window at every radius; the ceiling pays only where the window needs it.
 - The bottom clamp writes 0/0/0 for a zero command, which `Phase_ReadVOut` reports as V0. The ceiling never shifts a zero command.
 
-![Zero-sequence placement](Simulation/Svpwm/LowSideZeroSequence.png)
+![Zero-sequence placement](../../Docs/Simulation/Svpwm/LowSideZeroSequence.png)
 
-From [low_side_zero_sequence.py](Simulation/Svpwm/low_side_zero_sequence.py). The ceiling over one cycle: [SVPWM_Ceiling.png](Simulation/Svpwm/SVPWM_Ceiling.png), from [svpwm_ceiling.py](Simulation/Svpwm/svpwm_ceiling.py); against r, [svpwm_ceiling_analysis.py](Simulation/Svpwm/svpwm_ceiling_analysis.py).
+From [low_side_zero_sequence.py](../../Docs/Simulation/Svpwm/low_side_zero_sequence.py). The ceiling over one cycle: [SVPWM_Ceiling.png](../../Docs/Simulation/Svpwm/SVPWM_Ceiling.png), from [svpwm_ceiling.py](../../Docs/Simulation/Svpwm/svpwm_ceiling.py); against r, [svpwm_ceiling_analysis.py](../../Docs/Simulation/Svpwm/svpwm_ceiling_analysis.py).
 
 ## The radius for a window: `svpwm_math.h`
 

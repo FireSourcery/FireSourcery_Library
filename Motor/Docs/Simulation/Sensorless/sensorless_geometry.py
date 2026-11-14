@@ -1,5 +1,5 @@
 """
-The sensorless math as geometry: one PNG per component, for Motor/Docs/SensorlessMath.md.
+The sensorless math as geometry: one PNG per component, for Motor/Motor/Sensor/Sensorless/SensorlessMath.md.
 
     SensorlessVoltagePolygon.png    the stator equation as a closed polygon, seen from θ and from θ̂
     SensorlessFrames.png            Clarke as projection, Park as a turned frame, the hold angle as an arc's mean

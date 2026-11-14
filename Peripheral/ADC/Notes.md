@@ -1,6 +1,6 @@
 # ADC Set Coordination Reference
 
-Design reference for `ADC.h`, `_ADC.h`, `ADC_Thread.h`, `ADC_Batch.h` and `ADC_Conversion.h`.
+Design reference for `ADC.h`, `_ADC.h`, `ADC_Thread.h`, `ADC_Sequence.h`, `ADC_Batch.h` and `ADC_Conversion.h`.
 
 How a conversion set spread over several converters is described, completed and switched — and what
 keeps the converter driver free of set logic.
@@ -10,6 +10,14 @@ models. They reach into the converters' registers from one motor-specific ISR, s
 boundary to learn from. The one thing they agree on is repeated below, because it is an invariant
 rather than an interface: **one place applies the whole set, and it is the place that consumed the
 previous one.**
+
+**Names, 2026-11-14.** The code was reworked after this note was written. `ADC_TriggerState_T` is
+`ADC_BatchTrigger_T` (`ADC_Batch.h`) and, for one ADC's own selection, `ADC_SequenceTrigger_T`
+(`ADC_Sequence.h`); `CompleteMarkers` is gone, the join reads each part ADC's `CompleteFlags` through
+`ADC_Sequence_IsComplete` and takes them in `_ADC_Batch_TakeEach`; a part is an `ADC_Sequence_T` with
+`CHANNELS` and `P_ADC`, there is no `SEQUENCE_ID`; `ADC_Batch_Select` is `ADC_BatchTrigger_Select`, the
+join ISR `ADC_BatchTrigger_OnComplete_ISR`, the one-ADC completion `ADC_SequenceTrigger_OnCompleteDma_ISR`
+and its selection `ADC_SequenceTrigger_SetNext`. Passages below that describe the earlier form are marked.
 
 ---
 
@@ -83,7 +91,7 @@ interface to copy:
 Linux IIO reaches the same shape in pure software: `iio_trigger` is a first-class object, devices
 attach to it, and the trigger — not any device — holds the fan-out and the completion count (§3.1).
 
-**This module is trigger-owned at the set layer.** [ADC_TriggerState_T] belongs to the trigger, and
+**This module is trigger-owned at the set layer.** [ADC_BatchTrigger_T] belongs to the trigger, and
 the batches that alternate on one trigger share it, so only one is ever in flight. Three properties
 follow, and they are the reason the layer exists:
 
@@ -91,11 +99,12 @@ follow, and they are the reason the layer exists:
 - the **join applies it**, where every part has landed and its ADCs are idle
 - a part of a batch that is no longer active is ignored, so **no join state survives a switch**
 
-Per-ADC selection (`p_NextSequence`, applied by `_ADC_OnCompleteSequenceDma`) remains the mechanism for
-a converter used on its own, without a batch — which is exactly the S32K1 case in §7. The two must
-not be combined on one converter: for a part, applying at that converter's own completion is a
-trigger early. `ADC_Batch_OnCompleteSequence_ISR` asserts `p_NextSequence == p_ActiveSequence` to
-keep them apart.
+Per-trigger selection of one ADC's set ([ADC_SequenceTrigger_T], `p_NextSequence`, applied by
+`ADC_SequenceTrigger_OnCompleteDma_ISR`) remains the mechanism for a converter used on its own,
+without a batch — which is exactly the S32K1 case in §8. The two must not be combined on one
+converter: for a part, applying at that converter's own completion is a trigger early. The earlier
+revision asserted `p_NextSequence == p_ActiveSequence` in the join; `ADC_BatchTrigger_OnComplete_ISR`
+has no such check today, it only ignores a part of a batch that is not the active one.
 
 ---
 
@@ -242,7 +251,8 @@ that can preempt each other there are exactly three ways to get that:
 
 The module uses the second. Note for the third: **ARMv6-M (M0+) has no LDREX/STREX**, so
 `atomic_fetch_or` there becomes a libatomic call that disables interrupts anyway. On an M4/M0+
-library, "atomic" *is* `System/Critical`. The shape is claim inside, act outside:
+library, "atomic" *is* `System/Critical`. The shape, sketched on the earlier revision's `CompleteMarkers`
+word (today each part's `CompleteFlags`), is claim inside, act outside:
 
 ```c
 _Critical_Enter(&state);
@@ -280,9 +290,10 @@ Two naming rules carry the layering:
 
 The Hw and software paths share no protocol, only the type. In the Hw path the sequencer is the
 hardware and the transfer is the DMA, so the ADC has no completion work; in the software path the
-ADC *is* the sequencer. The one `#if ADC_HW_SEQUENCER_ENABLE` that resolves them lives in the leaf,
-`_ADC_SetSequence` and `_ADC_ActivateSequenceDma` are separate leaves, named for the path they serve.
-No function dispatches between them: the Board calls the entry its mode provides.
+ADC *is* the sequencer. `ADC_HW_SEQUENCER_ENABLE` names the Hw path; `ADC_Sequence_Activate` (software,
+through `ADC_ActivateMarked`) and `ADC_Sequence_ActivateDma` (Hw, through `_ADC_ActivateDma` and
+`HAL_ADC_SelectDmaSequence`) are separate leaves, named for the path they serve. No function dispatches
+between them: the Board calls the entry its mode provides.
 
 ```mermaid
 flowchart TB
@@ -293,28 +304,28 @@ flowchart TB
         CV["application handle<br/>1 channel, or 1 batch"]
     end
     subgraph BATCH["ADC_Batch.h - the set"]
-        BT["ADC_Batch_T: parts, ON_COMPLETE<br/>ADC_TriggerState_T: p_Active, p_Next, CompleteMarkers"]
+        BT["ADC_Batch_T: parts, ON_COMPLETE<br/>ADC_BatchTrigger_T: p_Active, p_Next"]
     end
     subgraph ADCN["ADC_T x N - ADC.h, _ADC.h, ADC_Thread.h"]
-        AT["channels, results, sequence table<br/>p_ActiveSequence, p_NextSequence, ChannelMarkers"]
+        AT["channels, results<br/>ChannelMarkers, CompleteFlags"]
     end
     subgraph HALN["HAL_ADC - 1 converter"]
-        HA["slots, results, flags<br/>HAL_ADC_ActivateSequence: Board provided"]
+        HA["slots, results, flags<br/>HAL_ADC_SelectDmaSequence: platform provided"]
     end
     subgraph BRD["Board"]
         BD["trigger route, DMA destination<br/>slot maps, tables, the ISR vectors"]
     end
 
-    MA -- "ADC_Conversion_Request" --> CV
-    CV -- "ADC_Batch_Select" --> BT
+    MA -- "ADC_Conversion_Mark" --> CV
+    BD -- "ADC_BatchTrigger_Select" --> BT
     CV -- "ADC_MarkChannel, software only" --> AT
-    BT -- "_ADC_ActivateSequenceDma, per part, in the join" --> AT
+    BT -- "_ADC_Batch_ActivateEachDma, per part, in the join" --> AT
     AT -- "Hw: channelStart, count" --> HA
     AT -- "software: pins, count" --> HA
     BD -. "DMA destination = P_CHANNEL_RESULTS" .-> HA
     HA -- "results in place" --> AT
-    BD -- "ADC_Batch_OnCompleteSequence_ISR(trigger, adc)" --> BT
-    BT -- "_ADC_OnCompleteSequenceDma" --> AT
+    BD -- "ADC_BatchTrigger_OnComplete_ISR(trigger, adc)" --> BT
+    BT -- "_ADC_MarkComplete, the part's CHANNELS" --> AT
     BT -- "ON_COMPLETE(P_CONTEXT)" --> MA
     MA -- "read by channel" --> AT
 ```
@@ -323,14 +334,14 @@ flowchart TB
 |---|---|---|---|
 | Board | trigger route, DMA destination, slot maps, tables, vectors | — | the completed ADC and its trigger |
 | `HAL_ADC` | one converter's registers and flags | `channelStart, count`, or `pins, count` | raw words, flags |
-| [ADC_T] | channel table, `P_CHANNEL_RESULTS`, sequence table, active / next | sequence activation | the sequence that completed |
-| [ADC_Batch_T] + [ADC_TriggerState_T] | part list, join markers, active / next batch | `_ADC_ActivateSequenceDma` per part | `ON_COMPLETE(P_CONTEXT)` |
-| [ADC_Conversion_T] | nothing, a const view | `ADC_Batch_Select`, `ADC_MarkChannel` | results by channel |
-| Feature | scaling, set choice | `ADC_Conversion_Request` | — |
+| [ADC_T] | channel table, `P_CHANNEL_RESULTS`, `ChannelMarkers`, `CompleteFlags` | activation | the channels that completed |
+| [ADC_Batch_T] + [ADC_BatchTrigger_T] | part list, active / next batch; the join reads the parts' `CompleteFlags` | `_ADC_Batch_ActivateEachDma` per part | `ON_COMPLETE(P_CONTEXT)` |
+| [ADC_Conversion_T] | nothing, a const view | `ADC_Conversion_Mark`, `ADC_MarkChannel` | results by channel |
+| Feature | scaling, set choice | `ADC_Conversion_Mark`; the Board selects with `ADC_BatchTrigger_Select` | — |
 
 **There is no upward link.** [ADC_T] calls nothing above it and holds no pointer to anything above
 it. The Board's ISR is the only place that names both an ADC and the trigger it converts on, and
-[ADC_TriggerState_T] is state the ADC never reads. This is the same boundary Zephyr and AUTOSAR draw,
+[ADC_BatchTrigger_T] is state the ADC never reads. This is the same boundary Zephyr and AUTOSAR draw,
 and the same one IIO draws between a device and a trigger.
 
 ### 5.1 One trigger, one set of 2 parts
@@ -343,17 +354,17 @@ sequenceDiagram
     participant X1 as ADC1, PDB1, DMA
     participant D0 as Board ISR, ADC0
     participant D1 as Board ISR, ADC1
-    participant B as trigger state
+    participant B as ADC_BatchTrigger_T
     participant M as Motor
 
     PWM->>X0: trigger k
     PWM->>X1: trigger k
     X0->>D0: transfer done, IA IB in place
-    D0->>B: OnPartComplete, part 0
-    Note over B: CompleteMarkers 0b01
+    D0->>B: BatchTrigger_OnComplete_ISR, ADC0
+    Note over B: ADC0 CompleteFlags IA IB, part 1 pending
     X1->>D1: transfer done, IC in place
-    D1->>B: OnPartComplete, part 1
-    Note over B: 0b11, join, clear
+    D1->>B: BatchTrigger_OnComplete_ISR, ADC1
+    Note over B: every part complete, join, take the flags
     B->>M: ON_COMPLETE
     M->>M: read Ia Ib Ic by channel
     B->>B: ApplyNext, every part, ADCs idle
@@ -369,14 +380,15 @@ part where all ADCs are idle, and a part of a non-active batch is ignored.
 
 Two things remain open, both from §4:
 
-1. **No arm.** `CompleteMarkers` accumulates from zero and is cleared at the join. Nothing opens a
-   phase, so a lost completion — a dropped RMW, a missed trigger, a DMA error — leaves a residue
-   that the next join consumes, permanently (§4.2).
+1. **No arm.** The parts' `CompleteFlags` accumulate from zero and are taken at the join. Nothing opens
+   a phase. Since the flags are per ADC, a dropped completion leaves the other parts flagged and the
+   join runs one trigger late, on the newest of each result (`ADC_Batch.h`); the permanent skew of the
+   earlier shared-word form (§4.2) no longer follows, but the late join is still uncounted.
 2. **The join is a read-modify-write from N ISRs**, held together by the comment *"Part ISRs must
    share a priority."* That rule is real and load-bearing, and nothing in the code enforces it.
 
-If it stays a rule rather than a mechanism, it can at least be checked once, given the part's `IRQn`
-in the part record:
+If it stays a rule rather than a mechanism, it can at least be checked once, given an `IRQ_N` in the
+part record (not there today):
 
 ```c
 #ifndef NDEBUG
@@ -391,7 +403,7 @@ for (uint8_t iPart = 1U; iPart < p_batch->PART_COUNT; iPart++)
 
 Ordered by how much they buy.
 
-1. **Give the set an arm step** — mechanism 1 or 2 of §4.1. `CompleteMarkers` becomes *pending*,
+1. **Give the set an arm step** — mechanism 1 or 2 of §4.1. The parts' `CompleteFlags` become *pending*,
    armed with every part at the fire point (the existing PWM ISR, one store) or at activation,
    rather than accumulated from zero. This is what makes a lost completion recoverable instead of
    permanent, and it makes overrun observable.
@@ -415,11 +427,12 @@ Ordered by how much they buy.
 `ADC_Sequence_T.COMPLETE` fires once, when the set is complete, so a consumer needs no completion
 mask of its own. The two paths reach it differently:
 
-- **Hw sequenced** — the transfer completing *is* the set completing. `_ADC_OnCompleteSequenceDma`
-  fires it.
+- **Hw sequenced** — the transfer completing *is* the set completing. `ADC_SequenceTrigger_OnCompleteDma_ISR`
+  fires it, through `ADC_Sequence_Poll`.
 - **Software** — the set completes when the last of its channels is captured, which is an edge:
   *this capture held one of the set's channels, and none of them are left*. The remainder alone is a
   level that stays true until the next request re-marks, and would fire on every later completion.
+  Taking the flags (`ADC_Sequence_PollComplete`) is what makes the test an edge today.
 
 This is what the Motor layer currently does for itself. `Phase_Data_T.Flags` accumulates
 `Bits |= 1 << channel` per capture, and `FOC_CaptureIData` gates on `Flags.Bits == PHASE_ID_ABC`,
@@ -427,12 +440,12 @@ carrying the comment *"alternatively use batch callback"* — the same set-compl
 up, on a mask the consumer has to clear itself. With `COMPLETE`, the handler runs only when Ia, Ib
 and Ic are all in the buffer, so it can read them unconditionally.
 
-**One active set per ADC.** `p_ActiveSequence` is a single pointer, so requesting a second sequence
+**One active set per trigger.** `ADC_SequenceTrigger_T.p_ActiveSequence` is a single pointer, so requesting a second sequence
 while the first is in flight replaces it, and the first's `COMPLETE` is dropped. That suits sets
 that *alternate* — currents while the phases are driven, voltages while floating, which is what
 both boards do — and single channels riding along, which carry their own `ADC_Channel_T.CAPTURE`.
 It does not suit two sets genuinely pending at once. That needs per-sequence pending state rather
-than one pointer: a `PendingSequences` mask in [ADC_State_T], set by `ADC_SetSequence` and cleared
+than one pointer: a `PendingSequences` mask in [ADC_State_T], set by `ADC_SequenceTrigger_SetNext` and cleared
 where the set's channels clear, which also removes the need for the edge test.
 
 ---
@@ -447,14 +460,14 @@ where the set's channels clear, which also removes the need for the edge test.
 
 A group *is* a sequence, and the platform hook is the PDB channel write the board already has:
 `S32_PDB_ConfigChannel(p_pdb, channel, offset, count)` and
-`HAL_ADC_ActivateSequence(p_hal, channelStart, count)` are the same function.
+`HAL_ADC_SelectDmaSequence(p_hal, channelStart, count)` are the same function.
 
 | Board, by hand | Through the module |
 |---|---|
-| `BOARD_ADC1_GROUP_I_FIRST` / `_COUNT` | `ADC_SEQUENCE_INIT(ADC_MASK_RANGE(SLOT_IA, 4U))` |
-| `BoardAdc1NextGroup`, written by the PWM ISR | `ADC_SetSequenceDma(&ADC1, SEQUENCE_V)`, 1 store to `p_NextSequence` |
-| `Board_ADC1_IsGroupI()`, reads the PDB register | `ADC_IsSequenceActive(&ADC1, SEQUENCE_I)`, reads state |
-| apply-if-changed in the DMA ISR | `ADC_OnCompleteSequenceDma_ISR` |
+| `BOARD_ADC1_GROUP_I_FIRST` / `_COUNT` | `ADC_SEQUENCE(&ADC1, ADC_MASK_RANGE(SLOT_IA, 4U), handler, context)` |
+| `BoardAdc1NextGroup`, written by the PWM ISR | `ADC_SequenceTrigger_SetNext(&ADC1_TRIGGER, &SEQUENCE_V)`, 1 store to `p_NextSequence` |
+| `Board_ADC1_IsGroupI()`, reads the PDB register | `ADC_SequenceTrigger_IsActive(&ADC1_TRIGGER, &SEQUENCE_I)`, reads state |
+| apply-if-changed in the DMA ISR | `ADC_SequenceTrigger_OnCompleteDma_ISR` |
 | continuous mode, all 8 slots | one sequence, never re-selected |
 | ADC0 free-running scan | one sequence, or software-marked channels |
 
@@ -462,15 +475,15 @@ A group *is* a sequence, and the platform hook is the PDB channel write the boar
 void BOARD_ADC1_DMA_ISR(void)
 {
     Board_ADC1_ClearComplete();
-    ADC_OnCompleteSequenceDma_ISR(&ADCS[1U]);   /* applies the selection, where the ADC is idle */
+    ADC_SequenceTrigger_OnCompleteDma_ISR(&ADC1_TRIGGER);   /* flags the set, runs its handler, applies the selection where the ADC is idle */
 
     Motor_ADC_CaptureIa(&Motors[0U], ADC_ResultOf(&ADCS[1U], BOARD_ADC1_SLOT_IA));
     /* ... */
 }
 ```
 
-Verified by compiling the ADC1 configuration, the ADC0 software path and a 2-ADC batch against the
-real S32K142 platform headers — `arm-none-eabi-gcc 15.2.1`, `-mcpu=cortex-m4 -std=c23 -Wall -Wextra
+Verified, on the 2026-09 revision, by compiling the ADC1 configuration, the ADC0 software path and a
+2-ADC batch against the real S32K142 platform headers — `arm-none-eabi-gcc 15.2.1`, `-mcpu=cortex-m4 -std=c23 -Wall -Wextra
 -O2`, with and without `NDEBUG`. The generated DMA ISR is two loads, a compare, and on change the
 `CH[0].C1` / `CH[0].S` / `SC |= LDOK` writes to PDB1, with the board hook's instance select folded
 away. Not executed — no emulator in that environment.

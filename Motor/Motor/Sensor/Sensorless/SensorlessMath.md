@@ -1,6 +1,6 @@
 # Sensorless math, as geometry
 
-The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call sequence and the structure are in [Sensorless.md](Sensorless.md). Figures: [Simulation/Sensorless/sensorless_geometry.py](Simulation/Sensorless/sensorless_geometry.py), on a float mirror of the C functions, [sensorless_model.py](Simulation/Sensorless/sensorless_model.py). Per unit; values illustrative unless named from `EMF_OBSERVER_CONFIG_DEFAULT`.
+The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call sequence and the structure are in [Sensorless.md](Sensorless.md). Figures: [Simulation/Sensorless/sensorless_geometry.py](../../../Docs/Simulation/Sensorless/sensorless_geometry.py), on a float mirror of the C functions, [sensorless_model.py](../../../Docs/Simulation/Sensorless/sensorless_model.py). Per unit; values illustrative unless named from `EMF_OBSERVER_CONFIG_DEFAULT`.
 
 | Component | Equation | Shape | Code |
 |---|---|---|---|
@@ -28,7 +28,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 
 ## The stator: a closed polygon
 
-![The voltage polygon](Simulation/Sensorless/SensorlessVoltagePolygon.png)
+![The voltage polygon](../../../Docs/Simulation/Sensorless/SensorlessVoltagePolygon.png)
 
 - Kirchhoff's voltage law in vectors: each drop is a side, tip to tail, and v closes the polygon. R·i lies along i. X·J·i, the speed voltage, is i turned a quarter turn and scaled by X. e = ω·ψ stands on q.
 - From θ̂ the polygon is the same, turned by θ − θ̂. The EMF gains a d̂ part, −E·sin(θ − θ̂): the angle error the observer reads.
@@ -36,7 +36,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 
 ## Frames: projections, a turn, an arc
 
-![Clarke, Park and the hold angle](Simulation/Sensorless/SensorlessFrames.png)
+![Clarke, Park and the hold angle](../../../Docs/Simulation/Sensorless/SensorlessFrames.png)
 
 - Clarke reads three shadows of one vector, on axes 120° apart. They sum to zero, so two carry the vector.
 - Park reads the vector from a frame turned by θ̂. At θ̂ = θ the EMF stands on q̂ and every dq quantity is DC, which is why the dq front end's LPF costs no lag.
@@ -44,7 +44,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 
 ## The SMO: a switch, its balance point, its orbit
 
-![The SMO switch, error map and equivalent control](Simulation/Sensorless/SensorlessSmo.png)
+![The SMO switch, error map and equivalent control](../../../Docs/Simulation/Sensorless/SensorlessSmo.png)
 
 - z is a ramp clipped into plateaus at ±K_smo. The model settles where z meets the EMF it stands in for, e − R·σ: σ* = e / (R + K_smo/SmoSat), inside the boundary layer. The offset grows with the layer's width; it is the î − i that crosses through X when the EEMF couples on î, the reason it couples on the measured i.
 - An EMF above the plateau has no crossing: the model loses the current. Hence K_smo above the peak EMF.
@@ -58,7 +58,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 
 ## The LPF: a geometric series and a circle
 
-![The LPF](Simulation/Sensorless/SensorlessLpf.png)
+![The LPF](../../../Docs/Simulation/Sensorless/SensorlessLpf.png)
 
 - Each step closes the share a of the remaining gap, so the gap shrinks as (1 − a)^k: an exponential, built from similar steps.
 - The response, a / (1 − (1 − a)·e^(−jωT)), traces a circle through 0 and 1. The point at ω is the output: its distance the gain, its angle the lag.
@@ -66,7 +66,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 
 ## The detector: a quarter turn and an area
 
-![The rotor vector, the error and the S-curve](Simulation/Sensorless/SensorlessDetector.png)
+![The rotor vector, the error and the S-curve](../../../Docs/Simulation/Sensorless/SensorlessDetector.png)
 
 - e leads the flux by a quarter turn, or trails it in reverse. −j·sign(ω̂) turns it back onto the rotor either way.
 - The error is the cross product of r and d̂: the parallelogram's area, for unit vectors its height, sin(θ − θ̂). Dividing by ‖r‖ removes the EMF's size, so the loop gain holds across speed.
@@ -75,7 +75,7 @@ The math under `EmfObserver_T` and `AnglePll_T`, drawn as shapes. The call seque
 
 ## The PLL: a ball on a washboard
 
-![The PLL as a pendulum](Simulation/Sensorless/SensorlessPll.png)
+![The PLL as a pendulum](../../../Docs/Simulation/Sensorless/SensorlessPll.png)
 
 - The discrete loop, in continuous time: Δ'' + Kp'·cos Δ·Δ' + Ki'·sin Δ = α, with Kp' = Kp·Freq and Ki' = Ki·Freq² in rad per control cycle, α the electrical acceleration. A damped pendulum: the integrator is gravity, the proportional term friction, and the friction turns negative past ±90°.
 - The energy is U = Ki'·(1 − cos Δ) − α·Δ, a washboard. Acceleration tilts it: the ball rests off center, at asin(α/Ki'). Past α = Ki' no valley is left, and the loop slips cycles.

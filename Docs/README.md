@@ -10,15 +10,15 @@ is the map of the code; this folder holds the reasoning behind it.
 | [Patterns/](Patterns/README.md) | Solutions applied when their force is present: architectural, design, idiom | `PatternName.md` |
 | [Decisions/](Decisions/README.md) | What we chose and why; binds later work | `NNNN_Title.md` |
 | [Findings/](Findings/README.md) | What we measured or learned, dated; the evidence behind decisions | `YYYY-MM-DD_Title.md` |
-| [Modules/](Modules/README.md) | Design notes for one module, at the module's source path | the module's path |
+| [Modules/](Modules/README.md) | The placement rule for module notes: they live beside the source they describe, not here | the rule only |
 
 **Placement**
 
 - Our own rules, patterns, decisions and findings live here, tracked with the code they describe.
-- A module's `README.md` stays in the module's folder, as its GitHub landing page.
+- A module's notes live in the module's folder, beside the source they describe (`Motor/Motor/Motor_StateMachine.md` next to `Motor_StateMachine.c`); a stack-wide note at the stack's root (`Motor/StateMachineOverview.md`). A module's `README.md` stays there too, as its GitHub landing page. Adopted 2026-11-14; `Motor/Docs/` keeps simulations, references and the todo.
 - Drafts keep a leading `_` or `.`, beside their topic.
 
 ---
 
 Time as ticks of a named clock, the per-unit suffixes and SI units at the boundary are in
-`Motor/Docs/FixedPoint.md`, which moves to `Conventions/`.
+`Docs/Conventions/FixedPoint.md`, which moves to `Conventions/`.

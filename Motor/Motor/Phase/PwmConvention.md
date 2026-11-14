@@ -1,6 +1,6 @@
 # PWM Convention
 
-The convention the motor layer writes duties in, and the counter events it relies on. Where the phase-current sample sits in the period: [CurrentSampling.md](CurrentSampling.md). The modulation limit a low-side sensor sets: [ModulationLimit.md](ModulationLimit.md).
+The convention the motor layer writes duties in, and the counter events it relies on. Where the phase-current sample sits in the period: [CurrentSampling.md](../ADC/CurrentSampling.md). The modulation limit a low-side sensor sets: [ModulationLimit.md](../Math/ModulationLimit.md).
 
 ## Duty
 
@@ -40,13 +40,13 @@ The convention the motor layer writes duties in, and the counter events it relie
 | low | low side, about 0.7 µs after the falling edge | −i·R_DS(on) |
 | either, Pin ENx low | neither | floats |
 
-![PWM and sample timing, one KE period](Simulation/PwmSampleTiming.png)
+![PWM and sample timing, one KE period](../../Docs/Simulation/PwmSampleTiming.png)
 
-From [pwm_sample_timing.py](Simulation/pwm_sample_timing.py): a KE0x FTM at 20 kHz (MOD 1250), midclamp at Vbus/2 at a line-to-line peak, duties 0.933 / 0.500 / 0.067. Time 0 is the counter top.
+From [pwm_sample_timing.py](../../Docs/Simulation/pwm_sample_timing.py): a KE0x FTM at 20 kHz (MOD 1250), midclamp at Vbus/2 at a line-to-line peak, duties 0.933 / 0.500 / 0.067. Time 0 is the counter top.
 
 - **Counter.** Each phase's CnV = MOD·d. The channel is high while the counter is below CnV, so the highest duty has the highest CnV and the shortest low pulse.
 - **Gates.** Every high pulse is centered on the bottom and every low pulse on the top. The low-side windows here are 3.35, 25 and 46.7 µs. The shaded strip after each falling edge is the low side's turn-on delay, dead time plus the driver's own (0.68 µs in the example). Until the low side is on, the phase node is switching, not at −i·R: the window's usable part starts after it.
 - **Window.** The low side conducts, and a low-side sensor sees the phase, only in the window. The panel labels it as a track-and-hold switch: it tracks in the window and holds outside it. A shunt has no hold; outside the window it carries nothing of that phase.
 - **Ripple.** Each phase's PWM ripple current against its period average, in V_bus·T/L. By symmetry every phase crosses its average at both counter extremes, the center of each low-side window and of each high pulse. The ripple's extremes are at the switching edges.
 - So a read at the top lands on the period average, and each µs away from it adds ripple. The highest duty's window is the shortest: it opens last and closes first.
-- The markers are the reads of two ADC starts: at the top, labelled "today", and at the bottom, labelled "option". A dotted line runs back to the trailing edge a hold froze at. Which start the code uses, and what each reads: [CurrentSampling.md](CurrentSampling.md).
+- The markers are the reads of two ADC starts: at the top, labelled "today", and at the bottom, labelled "option". A dotted line runs back to the trailing edge a hold froze at. Which start the code uses, and what each reads: [CurrentSampling.md](../ADC/CurrentSampling.md).

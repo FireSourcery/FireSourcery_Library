@@ -136,7 +136,7 @@ itself binary, such as a switch or a binary sensor.
 
 **A `_Unit` suffix names the unit or base; the type names the representation.** IAlign_Pu is a
 `fract16_t` per-unit current. Other units: AlignTime_Cycles, Heat_Adcu, SpeedMax_Rpm. See
-[FixedPoint.md](../../Motor/Docs/FixedPoint.md).
+[FixedPoint.md](FixedPoint.md).
 
 **A function suffix after `_` names a variant of the same operation:**
 - unit or representation: `Angle_ResolveSpeed_Pu`, `PID_SetKp_Fixed16`;

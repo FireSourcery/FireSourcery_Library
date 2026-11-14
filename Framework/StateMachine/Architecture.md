@@ -13,7 +13,7 @@ flowchart TB
     end
 
     subgraph RAM["RAM — per instance"]
-        A["StateMachine_Active_T<br/>p_ActiveState<br/>SyncInputMask + SyncInputs<br/>p_SyncNextState<br/>InputSignal"]
+        A["StateMachine_Active_T<br/>p_ActiveState<br/>SyncInputMask + SyncInputs, p_SyncNextState, InputSignal: allocated, unused today"]
     end
 
     SM["StateMachine_T<br/>P_CONTEXT · P_ACTIVE · P_MACHINE"]
@@ -25,7 +25,7 @@ flowchart TB
     A -->|leaf pointer| S
 ```
 
-`[StateMachine_T]` is a const handle. Behavior lives in the state nodes. Mutable machine state is the active pointer plus two input buffers. Domain state lives in `P_CONTEXT`, which every handler receives as `void *`.
+`[StateMachine_T]` is a const handle. Behavior lives in the state nodes. Mutable machine state is the active pointer plus two input buffers, which no caller fills today (the sync input paths and the signal lock are available, not used). Domain state lives in `P_CONTEXT`, which every handler receives as `void *`.
 
 ---
 
@@ -34,17 +34,19 @@ flowchart TB
 ```mermaid
 flowchart LR
     subgraph public["Public — StateMachine.h"]
-        API["Init / Input / InvokeTransition<br/>Tree_Input / RootFirst / RootOnly"]
+        API["called: Init<br/>Tree_Input / Tree_InputAsyncTransition<br/>Tree_InvokeTransition"]
+        APIX["available, not used<br/>flat InputAsync / InputSync / SetInput<br/>ForceTransition / InvokeTransition<br/>Tree_InputSyncTransition / Tree_SetInput<br/>Tree_InputRootFirst / Tree_InputRootOnly"]
     end
 
-    subgraph thread["Thread — StateMachine_Thread.h"]
-        TH["Synchronous_Thread<br/>Synchronous_RootFirst_Thread<br/>Hsm_Thread"]
+    subgraph proc["Proc compositions"]
+        OWN["called: the users' own<br/>Branch_ProcSyncOutput only<br/>AcquireAsyncIsr empty, or not taken"]
+        TH["available, not used: StateMachine_Thread.h<br/>Synchronous_Thread / Synchronous_RootFirst_Thread / Hsm_Thread"]
     end
 
     subgraph engine["Engine"]
-        FLAT["_StateMachine.c<br/>flat: active state only"]
-        TREE["_StateMachine_Tree.c<br/>walk the active path"]
         LOCK["_StateMachine_Lock.h<br/>critical / signal / lock-free"]
+        TREE["_StateMachine_Tree.c<br/>walk the active path"]
+        FLAT["_StateMachine.c<br/>Reset, called by Init<br/>flat proc and input: available, not used"]
     end
 
     subgraph node["Node"]
@@ -53,8 +55,11 @@ flowchart LR
     end
 
     API --> LOCK --> TREE
-    API --> LOCK --> FLAT
-    TH --> LOCK
+    API -->|Init| FLAT
+    OWN --> TREE
+    APIX -.-> LOCK
+    TH -.-> LOCK
+    LOCK -.-> FLAT
     TREE --> ND --> ST
     FLAT --> ST
 ```
@@ -65,13 +70,13 @@ flowchart LR
 | [State_PathId.h](State_PathId.h) | 4-bit × 8 packed path id |
 | [_State.h](_State.h) | Call one state's `LOOP` / `NEXT` / table / entry / exit |
 | [_State_Node.c](_State_Node.c) | Tree relations and the up/down walk |
-| [_StateMachine.c](_StateMachine.c) | Flat machine: the active pointer is the only state consulted |
+| [_StateMachine.c](_StateMachine.c) | Flat machine: the active pointer is the only state consulted. Called today for `_StateMachine_Reset` alone, through `StateMachine_Init` |
 | [_StateMachine_Tree.c](_StateMachine_Tree.c) | Hierarchical machine: walk leaf toward root |
 | [_StateMachine_Lock.h](_StateMachine_Lock.h) | ISR vs input synchronization, selected at compile time |
 | [StateMachine.h](StateMachine.h) | Instance handle and the locked public API |
-| [StateMachine_Thread.h](StateMachine_Thread.h) | Periodic compositions of the proc steps |
+| [StateMachine_Thread.h](StateMachine_Thread.h) | Periodic compositions of the proc steps. None has a caller; the motor and controller compose their own `_StateMachine_Branch_ProcSyncOutput` call |
 
-A flat caller uses `_StateMachine_*`. A hierarchical caller uses `_StateMachine_Branch_*` or `_StateMachine_RootFirst_*`. The public wrappers in [StateMachine.h](StateMachine.h) pick one and add the lock.
+A flat caller uses `_StateMachine_*`. A hierarchical caller uses `_StateMachine_Branch_*` or `_StateMachine_RootFirst_*`. The public wrappers in [StateMachine.h](StateMachine.h) pick one and add the lock. Every caller today is hierarchical and leaf-first: `StateMachine_Tree_Input`, `StateMachine_Tree_InputAsyncTransition`, `StateMachine_Tree_InvokeTransition`, and `_StateMachine_Branch_*` directly. The flat wrappers, the root-first inputs, `SetInput` and the sync-transition inputs are available, not used.
 
 ---
 
@@ -89,9 +94,8 @@ classDiagram
         P_TRANSITION_TABLE
         TRANSITION_MAPPER
         P_ACTION_TABLE
-  <!--       P_CMD_TABLE -->
-  <!--       P_ACCESSOR_TABLE -->
-<!--         P_DATA_VECTOR -->
+        P_CMD_TABLE
+        P_ACCESSOR_TABLE
         P_PARENT
         P_TOP
         DEPTH
@@ -104,6 +108,7 @@ classDiagram
         p_SyncNextState
         InputSignal
     }
+    note for StateMachine_Active_T "Live, p_ActiveState. The other four are allocated and cleared at Init, never written after. SetInput, InputSyncTransition and the signal lock have no caller"
 
     State_T --> State_T : P_PARENT
     State_T --> State_T : P_TOP
@@ -204,18 +209,18 @@ Exit walks up, including the start, excluding the common ancestor. Entry recurse
 
 ```mermaid
 sequenceDiagram
-    participant Leaf as START_UP_ALIGN
+    participant Old as PASSIVE
     participant Root as OPEN_LOOP
-    participant CA as common ancestor
+    participant Leaf as START_UP_ALIGN
     participant New as RUN
 
-    Note over Leaf,New: PASSIVE to START_UP_ALIGN, CA is NULL
-    Leaf->>Leaf: EXIT if enabled
+    Note over Old,New: PASSIVE to START_UP_ALIGN, CA is NULL
+    Old->>Old: EXIT if enabled
     Root->>Root: ENTRY
     Leaf->>Leaf: ENTRY
 
-    Note over Leaf,New: START_UP_ALIGN to OPEN_LOOP_STATE_RUN, CA is OPEN_LOOP
-    Leaf->>Leaf: EXIT
+    Note over Old,New: START_UP_ALIGN to OPEN_LOOP_STATE_RUN, CA is OPEN_LOOP
+    Leaf->>Leaf: EXIT if enabled
     Note over Root: OPEN_LOOP stays, ENTRY not repeated
     New->>New: ENTRY
 ```
@@ -301,7 +306,7 @@ flowchart LR
     end
 ```
 
-Flat exit/entry is one node each. A flat transition into a leaf does not run the ancestors' entries. Hierarchical callers must use the traverse functions. `StateMachine_ForceTransition` is the flat unconditional set; it is for a known top-level target such as a fault root, not for entering a leaf under another root.
+Flat exit/entry is one node each. A flat transition into a leaf does not run the ancestors' entries. Hierarchical callers must use the traverse functions. `StateMachine_ForceTransition` is the flat unconditional set; it is for a known top-level target such as a fault root, not for entering a leaf under another root. It has no caller today.
 
 ---
 
@@ -339,9 +344,9 @@ sequenceDiagram
 | `InputSyncTransition` | on the call | next proc, before `LOOP` | non-`NULL` only; a refuse does not clear a pending transition |
 | `SetInput` | next proc, after `LOOP` | next proc | one slot per id; last write to that id wins; distinct ids all run |
 
-`SetInput` is the one that cannot delay `LOOP`: it only writes a slot and a bit. The proc thread evaluates acceptance, so a state change between set and proc is handled against the state that is active then.
+Only the async form has a caller today; `InputSyncTransition` and `SetInput` are available, not used. `SetInput` is the one that cannot delay `LOOP`: it only writes a slot and a bit. The proc thread evaluates acceptance, so a state change between set and proc is handled against the state that is active then.
 
-`Tree_Input` is leaf-first async. `Tree_InputRootFirst` asks the root before the leaf. `Tree_InputRootOnly` never asks a child — a top-level fault or mode command that must not be shadowed.
+`Tree_Input` is leaf-first async. `Tree_InputRootFirst` asks the root before the leaf. `Tree_InputRootOnly` never asks a child — a top-level fault or mode command that must not be shadowed. Neither root-first form has a caller today.
 
 ### Compile-time commands
 
@@ -383,12 +388,12 @@ sequenceDiagram
 
 ## Threads and the lock
 
-Proc runs at higher priority than input (PWM ISR vs main). The thing being protected is the active pointer and the entry/exit pair, not the domain math inside a handler.
+For the motor instance proc runs at higher priority than input (PWM ISR vs main); for the controller instance both run on the main thread and one input comes from the 1 ms ISR. The thing being protected is the active pointer and the entry/exit pair, not the domain math inside a handler.
 
 ```mermaid
 flowchart LR
     subgraph isr["PWM / proc thread"]
-        P["AcquireAsyncIsr<br/>ProcSyncOutput<br/>ReleaseAsyncIsr"]
+        P["AcquireAsyncIsr, empty under CRITICAL<br/>ProcSyncOutput<br/>ReleaseAsyncIsr"]
     end
 
     subgraph main["main thread"]
@@ -403,16 +408,25 @@ Selected by one define:
 
 | Define | Proc thread | Input thread | If the other side is in a handler |
 | --- | --- | --- | --- |
-| `STATE_MACHINE_ASYNC_CRITICAL` | no extra lock; ISR may still be masked by the input side | disables IRQ for the whole handler + traverse | input waits out the ISR by masking; ISR does not run mid-transition |
+| `STATE_MACHINE_ASYNC_CRITICAL` | no lock: `_StateMachine_AcquireAsyncIsr` is empty unless `STATE_MACHINE_INPUT_MULTITHREADED`, which nothing defines | `__disable_irq` / `__enable_irq` around the handler + traverse, the raw pair of `Critical.h`; the enable is unconditional | an input on a lower-priority thread masks the proc ISR out, except where a handler sends an input to a second machine: the inner release re-enables IRQ for the rest of the outer handler and its publish ([Decision 0011](../../Docs/Decisions/0011_StateMachineLockNesting.md)). A proc on the input's own thread is unlocked, so an input from an ISR can land mid-transition (the controller instance, below) |
 | `STATE_MACHINE_ASYNC_SIGNAL` | skips the cycle if `InputSignal` is held | skips the input if proc holds it | an input can be missed; proc can be skipped |
 | neither (`STATE_MACHINE_ASYNC_LOCK_FREE`) | runs | runs | caller guarantees one thread, or uses `SetInput` only |
 
 `STATE_MACHINE_ASYNC_CRITICAL` is the motor-controller configuration. Signal mode exists so a long input need not mask every IRQ, at the cost of dropped inputs. Lock-free is for a machine whose proc and input are already the same thread.
 
+What the lock covers is the active pointer and the entry/exit pair. Domain values a handler or `LOOP` writes for another thread are stored unguarded; the multi-word ones are listed in [Decision 0010](../../Docs/Decisions/0010_SharedWordWrites.md). Both decisions are open: the lock is the raw disable/enable pair, not a PRIMASK save and restore, and nothing here is nesting-safe.
+
+The two instances sit differently against it:
+
+| Instance | Proc | Inputs | Window |
+| --- | --- | --- | --- |
+| Motor | PWM ISR, `_Motor_StateMachine`, no lock | main thread, IRQ masked | closed, except across a nested input's release (0011) |
+| Controller | main thread, `MotorController_Main_Thread`, no lock | main thread, IRQ masked; the fault input from the 1 ms ISR (`MotorController_SetFault` in `MotorController_Timer1Ms_Thread`), masking IRQ to no effect against main | the 1 ms fault input can land inside a main-thread proc transition; the periodic re-send covers it |
+
 Two narrower locks sit beside that:
 
 - `AcquireSyncInput` guards only the `SetInput` slot write against `ProcSyncInput`. `LOOP` does not take it, so a buffered input cannot stall the periodic output. Default is lock-free; `STATE_MACHINE_SYNC_INPUT_SIGNAL` enables the flag.
-- `AcquireAsyncTransition` always masks IRQ. `ForceTransition` and `InvokeTransition` use it because they change the active pointer without going through the input-acquire path.
+- `AcquireAsyncTransition` is the input lock under another name (`_StateMachine_AcquireAsyncInput`). `ForceTransition` and `InvokeTransition` use it because they change the active pointer without going through the input-accept path.
 
 Inside a critical section the order is entry, then publish:
 
@@ -421,7 +435,7 @@ flowchart LR
     A["mask IRQ"] --> B["EXIT old path"] --> C["ENTRY new path"] --> D["p_ActiveState = leaf"] --> E["unmask"]
 ```
 
-Publishing after entry means the new state's `LOOP` cannot run before its `ENTRY`. The cost, if this ran unlocked, is the old `LOOP` running after the new `ENTRY`. The lock exists so that window is closed. A handler that itself depends on `p_ActiveState` already matching the node being entered is wrong under this order; handlers receive `P_CONTEXT`, not the active pointer.
+Publishing after entry means the new state's `LOOP` cannot run before its `ENTRY`. The cost, if this ran unlocked, is the old `LOOP` running after the new `ENTRY`. The lock exists so that window is closed; where it is not, see the instance table above. A handler that itself depends on `p_ActiveState` already matching the node being entered is wrong under this order; handlers receive `P_CONTEXT`, not the active pointer.
 
 ---
 

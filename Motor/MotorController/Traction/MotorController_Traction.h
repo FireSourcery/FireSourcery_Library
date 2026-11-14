@@ -38,7 +38,7 @@
 /******************************************************************************/
 /*
     State Machine
-    Sub-states of [MC_STATE_MAIN]. Diagram: Motor/Docs/MotorController_StateMachine.md
+    Sub-states of [MC_STATE_MAIN]. Diagram: Motor/MotorController/MotorController_StateMachine.md
 */
 /******************************************************************************/
 typedef enum Traction_StateInput

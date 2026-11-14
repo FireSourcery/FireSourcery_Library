@@ -15,7 +15,7 @@ flowchart LR
 ```
 
 - [foc_vq_band]: circle ∩ static shape, then the window clamped in.
-- [_foc_vdynamicband]: the same, with a dynamic side intersected into the hard band.
+- [_foc_v_dynamic_band]: the same, with a dynamic side intersected into the hard band.
 - Every shape and side holds 0, so the hard band is never empty.
 - The window can miss the circle above base speed. Clamping each bound in, rather than intersecting, then gives the circle edge nearest the back-EMF.
 
@@ -26,7 +26,7 @@ In steady state `i_q = (v_q − e_q) / |Z|`, with `e_q` the back-EMF (ω·ψ + �
 - So a v_q band maps to a reachable i_q band: `[(low − e_q) / |Z| : (high − e_q) / |Z|]`.
 - A request outside it saturates the loop. The current is then set by `e_q`, not by the request or the I limits.
 
-Every behavior below follows from that one relation. The examples use KMC's 90 mΩ.
+Every behavior below follows from that one relation. The examples use a 90 mΩ stator resistance.
 
 ## Static shapes
 
@@ -48,7 +48,7 @@ Evaluated per cycle from the motion and the request:
 
 Measured per case:
 
-| Case | [_foc_vnoplugging] | [_foc_vbrakeoverlay] | [_foc_vregenonly] | [_foc_vpluggingonly] |
+| Case | [_foc_v_no_plugging] | [_foc_v_brake_overlay] | [_foc_v_regen_only] | [_foc_v_plugging_only] |
 |---|---|---|---|---|
 | Motoring | Motion side | Both | Both | Against motion |
 | Braking, including rollback against the request | Motion side | Motion side | Motion side | Against motion |
@@ -63,10 +63,10 @@ Measured per case:
 | Direction lock | Regen only, ≤ \|e_q\|/\|Z\| | Plug-holds, then unenforced past R·I_limit | Braking fades; reversing needs a Direction change | None, static |
 | Symmetric | Any, within the I limits | Holds at any rollback speed | Braking continues into reverse; command policy must stop it | None |
 | Symmetric + window | Any, and ≤ w/\|Z\| as a backstop | Holds while R·i_q ≤ w | As symmetric | None |
-| [_foc_vnoplugging] | Regen only, ≤ \|e_q\|/\|Z\| | Rolls back until \|e_q\| = R·I_hold (100 A hold: 9 V) | Side follows the request at standstill, so it reverses with the request | Side flips with the sign of ω·ψ |
-| [_foc_vbrakeoverlay] | Regen only, ≤ \|e_q\|/\|Z\| | As noplugging | Both sides at standstill | Flips only for a braking request |
-| [_foc_vregenonly] | Regen only, ≤ \|e_q\|/\|Z\| | As noplugging | As noplugging | As noplugging |
-| [_foc_vpluggingonly] | At least \|e_q\|/\|Z\|: never less, outside the I limits once \|e_q\|/\|Z\| > I_limit | Holds, the same as the forward lock | Brakes to zero, then closed | Side flips with the sign of ω·ψ |
+| [_foc_v_no_plugging] | Regen only, ≤ \|e_q\|/\|Z\| | Rolls back until \|e_q\| = R·I_hold (100 A hold: 9 V) | Side follows the request at standstill, so it reverses with the request | Side flips with the sign of ω·ψ |
+| [_foc_v_brake_overlay] | Regen only, ≤ \|e_q\|/\|Z\| | As noplugging | Both sides at standstill | Flips only for a braking request |
+| [_foc_v_regen_only] | Regen only, ≤ \|e_q\|/\|Z\| | As noplugging | As noplugging | As noplugging |
+| [_foc_v_plugging_only] | At least \|e_q\|/\|Z\|: never less, outside the I limits once \|e_q\|/\|Z\| > I_limit | Holds, the same as the forward lock | Brakes to zero, then closed | Side flips with the sign of ω·ψ |
 
 Notes:
 - **noplugging, brakeoverlay and regenonly differ only outside braking.**
@@ -81,23 +81,27 @@ Notes:
 ## Wiring, when taken up
 
 - Initialize `Foc.VWindow` to FRACT16_MAX. Zero, the init value, pins v_q to e_q.
-- Replace the `vqBand` lines in `FOC_ProcIFeedback_Base` and `FOC_ProcIFeedback_Decouple` with [FOC_VqBand], or [_foc_vdynamicband] when a dynamic side is in use. The side needs i_q's request and ω·ψ, both available there.
+- Replace the `vqBand` lines in `FOC_ProcIFeedback_Base` and `FOC_ProcIFeedback_Decouple` with [FOC_VqBand], or [_foc_v_dynamic_band] when a dynamic side is in use. The side needs i_q's request and ω·ψ, both available there.
 - Hold the motion key's previous sign for [hysteresis_sign].
 - Readers of Direction that aren't about the lock move first. The list is in the Direction end-state note: arming, Mot/Gen key, TorqueZero filter, readbacks, [Motor_IsSpeedAligned], and the motoring command frame.
 
 
 ## PID
 
+[FOC_ProcIFeedback] selects [FOC_ProcIFeedback_Decouple] under `FOC_DECOUPLE_ENABLE`, else [FOC_ProcIFeedback_Base]. The presets build the base form; the feed-forward (dotted) is the decouple form only. The circle radius is `vBus · FOC_V_CIRCLE_PER_V_BUS`, ½ by default and raised by the board under its sensing window ([ModulationLimit.md](ModulationLimit.md)).
+
 ```mermaid
 flowchart LR
-    CAP["ω capture, 1 ms"] --> FF["vd_ff = −ω·Lq·iq<br/>vq_ff = ω·Ld·id + ω·ψ"]
-    BUS["vPhaseLimit = vBus / 2"] --> BD["PidId band<br/>±vPhaseLimit − vd_ff"]
-    FF --> BD
-    BD --> PD["PidId: P + I, anchored"] --> VD["Vd = PI + vd_ff"]
-    VD --> CIRC["Vq budget<br/>√(vPhaseLimit² − Vd²)"]
+    subgraph DEC["FOC_DECOUPLE_ENABLE only, not built by the presets"]
+        CAP["ω capture, 1 ms<br/>FOC_CaptureSpeed"] --> FF["vd_ff = −ω·Lq·iq<br/>vq_ff = ω·Ld·id + ω·ψ"]
+    end
+    BUS["vCircle = vBus · FOC_V_CIRCLE_PER_V_BUS<br/>default ½"] --> BD["PidId band<br/>±vCircle, less vd_ff with decoupling"]
+    FF -.-> BD
+    BD --> PD["PidId: P + I, anchored"] --> VD["Vd = PI, plus vd_ff with decoupling"]
+    VD --> CIRC["Vq budget<br/>√(vCircle² − Vd²)"]
     CIRC --> BAND["vqBand = ±budget ∩ VLimit"]
     POL["VLimit policy"] --> BAND
-    BAND --> BQ["PidIq band<br/>vqBand − vq_ff"]
-    FF --> BQ
-    BQ --> PQ["PidIq: P + I, anchored"] --> VQ["Vq = PI + vq_ff"]
+    BAND --> BQ["PidIq band<br/>vqBand, less vq_ff with decoupling"]
+    FF -.-> BQ
+    BQ --> PQ["PidIq: P + I, anchored"] --> VQ["Vq = PI, plus vq_ff with decoupling"]
 ```

@@ -66,7 +66,7 @@ static inline void Motor_CaptureSensor(Motor_T * p_dev)
 /*
     After the state machine: the sensor's take of the stator, from the motor's Foc [FOC_T], which the sensor holds. Every control tick, in every state.
     The sensorless observer corrects here; a sensor reading the rotor directly does nothing [RotorSensor_CaptureStatorNone].
-    The caller's constraints, and what the observer reads where they don't hold: Motor/Docs/Sensorless.md, The correction.
+    The caller's constraints, and what the observer reads where they don't hold: Motor/Motor/Sensor/Sensorless/Sensorless.md, The correction.
 */
 static inline void Motor_CaptureStator(Motor_T * p_dev)
 {
