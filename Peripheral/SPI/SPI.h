@@ -104,8 +104,6 @@ typedef struct SPI_State
 }
 SPI_State_T;
 
-#define SPI_STATE_ALLOC() (&(SPI_State_T){ .Status = SPI_STATUS_IDLE })
-
 typedef const struct SPI
 {
     HAL_SPI_T * P_HAL;

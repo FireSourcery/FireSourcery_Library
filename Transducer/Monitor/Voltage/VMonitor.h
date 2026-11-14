@@ -58,11 +58,6 @@ typedef const struct VMonitor
 }
 VMonitor_T;
 
-#define VMONITOR_LINEAR_ALLOC() (&(Linear_T){0})
-#define VMONITOR_STATE_ALLOC() (&(VMonitor_State_T){0})
-
-
-
 /******************************************************************************/
 /*
 */

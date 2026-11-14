@@ -74,8 +74,6 @@ typedef const struct SinCos
 }
 SinCos_T;
 
-#define SIN_COS_STATE_ALLOC() (&(SinCos_State_T){0})
-
 #define SIN_COS_INIT(p_State, p_Config) (SinCos_T) { .P_STATE = (p_State), .P_NVM_CONFIG = (p_Config), }
 
 

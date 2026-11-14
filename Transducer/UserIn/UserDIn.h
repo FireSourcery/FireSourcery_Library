@@ -110,8 +110,6 @@ typedef const struct UserDIn
 }
 UserDIn_T;
 
-#define USER_DIN_STATE_ALLOC() (&(UserDIn_State_T){})
-
 /*
 */
 static void UserDIn_CmdNull(void * p_context, UserDIn_Edge_T edge) { (void)p_context; (void)edge; }

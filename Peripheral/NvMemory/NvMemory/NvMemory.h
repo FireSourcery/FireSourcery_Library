@@ -234,8 +234,6 @@ NvMemory_T;
     .P_BUFFER           = p_Buffer,                     \
     .BUFFER_SIZE        = BufferSize,
 
-#define NV_MEMORY_STATE_ALLOC() (&(NvMemory_State_T){0})
-
 /*
     ReadOnce must provide buffer here, or in calling function
 */

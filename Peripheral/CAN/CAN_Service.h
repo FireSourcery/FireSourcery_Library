@@ -151,8 +151,6 @@ typedef struct CAN_ServiceState
 }
 CAN_ServiceState_T;
 
-#define CAN_SERVICE_STATE_ALLOC() (&(CAN_ServiceState_T){ 0 })
-
 /*
     proc buffered frame, without isr priority
     poll rx buffer, or call form isr

@@ -65,8 +65,6 @@ typedef struct PulseTimer_State
 }
 PulseTimer_State_T;
 
-#define PULSE_TIMER_STATE_ALLOC() (&(PulseTimer_State_T){0})
-
 /******************************************************************************/
 /*
     Const Instance

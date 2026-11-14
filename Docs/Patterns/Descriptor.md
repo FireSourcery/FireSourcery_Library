@@ -32,7 +32,8 @@ static inline void Module_Op(Module_T * p_module) { HAL_Module_Op(p_module->P_HA
   FLASH.
 - Members are `UPPER_SNAKE_CASE`, pointers prefixed `P_` ([Naming.md](../Conventions/Naming.md)
   § Types).
-- State is allocated at the initializer, `.P_STATE = MODULE_STATE_ALLOC()`
+- State is allocated at the initializer as a compound literal, `.P_STATE = &(Module_State_T){0}`,
+  or by `RING_STATE_ALLOC` where a flexible array member needs sizing
   ([InitMacros.md](../Conventions/InitMacros.md)).
 - Descriptors nest by value: `Hall_T` holds three `Pin_T`, `Motor_T` holds `TimerT_T CONTROL_TIMER`.
   The board's top-level descriptors compose them.
@@ -63,7 +64,7 @@ and the call is inlined.
 - The gain is in the integer members. `TimerT_IsElapsed` has only pointer members and compiles to
   the same instruction count either way.
 - A pointer member folds when it is the address of a named object or of a plain compound literal
-  (`TIMER_STATE_ALLOC()`). `RING_STATE_ALLOC`'s `&(union { … }){ }.State` does not: the descriptor
+  (`&(Timer_State_T){0}`). `RING_STATE_ALLOC`'s `&(union { … }){ }.State` does not: the descriptor
   stays in `.rodata` and each call loads `P_STATE`.
 - Out-of-line module code (`UART.c`, the `Motor` `.c` files) receives its descriptor by pointer and
   pays the right-hand column. The fold is for inline call sites in the unit that defines the

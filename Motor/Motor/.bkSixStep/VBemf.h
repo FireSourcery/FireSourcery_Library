@@ -82,8 +82,6 @@ typedef const struct VBemf
 }
 VBemf_T;
 
-#define VBEMF_STATE_ALLOC() (&(VBemf_State_T){0})
-
 #define VBEMF_INIT(TimerStruct, p_State) (VBemf_T) { .TIMER = TimerStruct, .P_STATE = (p_State), }
 
 

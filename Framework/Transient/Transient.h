@@ -91,7 +91,6 @@ typedef const struct Transient
 }
 Transient_T;
 
-#define TRANSIENT_STATE_ALLOC() (&(Transient_State_T){0})
 #define TRANSIENT_BUFFER_ALLOC(SampleSize, Length) ((uint8_t[(SampleSize) * (Length)]){0})
 
 #define TRANSIENT_INIT(p_SampleVar, SampleSize, p_TriggerVar, TriggerSize, p_Buffer, Length, p_State) \
@@ -108,7 +107,7 @@ Transient_T;
 
 #define TRANSIENT_ALLOC(p_SampleVar, SampleSize, p_TriggerVar, TriggerSize, Length) \
     TRANSIENT_INIT(p_SampleVar, SampleSize, p_TriggerVar, TriggerSize, \
-        TRANSIENT_BUFFER_ALLOC(SampleSize, Length), Length, TRANSIENT_STATE_ALLOC())
+        TRANSIENT_BUFFER_ALLOC(SampleSize, Length), Length, &(Transient_State_T){0})
 
 /******************************************************************************/
 /*

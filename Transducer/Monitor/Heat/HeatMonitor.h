@@ -87,9 +87,6 @@ typedef const struct HeatMonitor
 }
 HeatMonitor_T;
 
-#define HEAT_MONITOR_LINEAR_ALLOC() (&(Linear_T){0})
-#define HEAT_MONITOR_STATE_ALLOC() (&(HeatMonitor_State_T){})
-
 /******************************************************************************/
 /*
     Helpers

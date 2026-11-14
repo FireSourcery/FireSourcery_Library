@@ -128,7 +128,7 @@ typedef const struct CAN
     HAL_CAN_T * P_HAL;
     CAN_State_T * P_STATE;
     void * P_CONTEXT;
-    struct CAN_ServiceState * P_SERVICE_STATE;  /* selection + broadcast timing, CAN_SERVICE_STATE_ALLOC() */
+    struct CAN_ServiceState * P_SERVICE_STATE;  /* selection + broadcast timing, &(CAN_ServiceState_T){ 0 } */
     CAN_Service_T * P_SERVICE;                  /* default */
     CAN_Service_T * const * P_SERVICE_TABLE;    /* selectable protocols. Array of pointers - defined by separate modules */
     uint8_t SERVICE_COUNT;

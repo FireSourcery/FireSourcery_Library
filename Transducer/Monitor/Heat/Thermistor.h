@@ -99,13 +99,11 @@ typedef struct Thermistor_Coeffs
 }
 Thermistor_Coeffs_T;
 
-#define THERMISTOR_COEFF_ALLOC_ZERO() (&(Thermistor_Coeffs_T){})
-
 /*
     PTC / linear silicon sensor characterization (e.g. KTY84).
     Two points define the line: (R0, T0) and (R0 + DeltaR, T0 + DeltaT).
 */
-#define THERMISTOR_COEFF_LINEAR_INIT(R0Value, T0_Kelvin, DeltaROhm, DeltaTKelvin) (Thermistor_Coeffs_T) \
+#define THERMISTOR_COEFF_LINEAR_INIT(R0Value, T0_Kelvin, DeltaROhm, DeltaTKelvin) \
     { .R0 = (R0Value), .T0 = (T0_Kelvin), .DeltaR = (DeltaROhm), .DeltaT = (DeltaTKelvin), .Fit = THERM_FIT_LINEAR, }
 
 /*
@@ -113,11 +111,11 @@ Thermistor_Coeffs_T;
     R(T) = R0 * (1 + Alpha*(T - T0) + Beta*(T - T0)^2), T0 in Kelvin.
     Optionally also set DeltaR/DeltaT for the non-float (linear) build fallback.
 */
-#define THERMISTOR_COEFF_QUADRATIC_INIT(AlphaValue, BetaValue, R0Value, T0_Kelvin) (Thermistor_Coeffs_T) \
+#define THERMISTOR_COEFF_QUADRATIC_INIT(AlphaValue, BetaValue, R0Value, T0_Kelvin) \
     { .R0 = (R0Value), .T0 = (T0_Kelvin), .Alpha = (AlphaValue), .Beta = (BetaValue), .Fit = THERM_FIT_QUADRATIC, }
 
 
-#define THERMISTOR_COEFF_STEINHART_INIT(BValue, R0Value, T0_Kelvin) (Thermistor_Coeffs_T) \
+#define THERMISTOR_COEFF_STEINHART_INIT(BValue, R0Value, T0_Kelvin) \
     { .B = (BValue), .R0 = (R0Value), .T0 = (T0_Kelvin), .Fit = THERM_FIT_STEINHART, }
 
 
@@ -154,15 +152,13 @@ typedef const struct Thermistor
     uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
     uint16_t V_SERIES_MV; /* If VSeries is different than AdcVRef */
 
+    /* Alternatively, nested structs would simplify init macros */
     Thermistor_Coeffs_T * P_COEFFS; /* read access */
     const Thermistor_Coeffs_T * P_CONST_COEFFS; /* Nvm or compile time constant */
 }
 Thermistor_T;
 
 #define THERMISTOR_V_SERIES_MV_NULL (0U) /* Use AdcVRef */
-
-#define THERMISTOR_INIT(RSeries, RParallel, VSeries, p_Coeffs, p_ConstCoeffs) \
-    { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, .P_COEFFS = p_Coeffs, .P_CONST_COEFFS = p_ConstCoeffs, }
 
 /*
     Init as Configurable/Detachable
@@ -179,7 +175,7 @@ Thermistor_T;
     Set guarded by Thermistor_IsFixed (pointer-identity sentinel).
 */
 #define THERMISTOR_FIXED_INIT(RSeries, RParallel, VSeries, p_FixedCoeffs) \
-    THERMISTOR_INIT((RSeries), (RParallel), (VSeries), (Thermistor_Coeffs_T *)(p_FixedCoeffs), (p_FixedCoeffs))
+    { .R_SERIES = (RSeries), .R_PARALLEL = (RParallel), .V_SERIES_MV = (VSeries), .P_COEFFS = (Thermistor_Coeffs_T *)(p_FixedCoeffs), .P_CONST_COEFFS = (p_FixedCoeffs), }
 
 /*
     Pointer-identity sentinel: P_COEFFS == P_CONST_COEFFS ⇒ aliased fixed instance.

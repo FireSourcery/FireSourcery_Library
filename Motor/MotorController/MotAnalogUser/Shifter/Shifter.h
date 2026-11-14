@@ -118,8 +118,6 @@ typedef const struct Shifter
 }
 Shifter_T;
 
-#define SHIFTER_STATE_ALLOC() (&(Shifter_State_T){0})
-
 #define SHIFTER_DIN_INIT(PinHal, PinId, IsInvert, p_State, p_Timer)                                                                         \
     { .PIN = PIN_INIT_INVERT((PinHal), (PinId), (IsInvert)), .P_STATE = (p_State), .P_TIMER = (p_Timer), .DEBOUNCE_TIME = 10U, }
 
