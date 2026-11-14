@@ -13,7 +13,7 @@ Placements, duty = v - v_zero:
 
 The ceiling keeps midclamp's window at Vbus/2 to r = (1/2 + sqrt3/4)/sqrt3 = 0.539 [svpwm_midclamp_ceiling_radius]
 
-Per placement, circle radius, and read (3 phases, or 2 of 3 with the highest duty solved [_Phase_Analog_SolveI]):
+Per placement, circle radius, and read (3 phases, or 2 of 3 with the highest duty solved [_Phase_ADC_SolveI]):
     the shortest low-side window, through the integer output path as in low_side_window.py
     the track-and-hold current-vector error, the model of low_side_hold.py
     the PWM ripple current, RMS over the turn relative to midclamp at the same radius and switching frequency

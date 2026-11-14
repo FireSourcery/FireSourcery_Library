@@ -29,7 +29,7 @@
 /******************************************************************************/
 #include "Motor_Var.h"
 
-#include "Analog/Motor_Analog.h" /* for calibration cmd */
+#include "ADC/Motor_ADC.h" /* for calibration cmd */
 #include "Motor_User.h"
 #include "Motor_Config.h"
 #include "Motor.h"
@@ -196,7 +196,7 @@ void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_
     switch (varId)
     {
         case MOTOR_VAR_CALIBRATION_ENTER:               Motor_Calibration_Enter(p_motor);       break;
-        case MOTOR_VAR_CALIBRATION_CMD_ADC:             Motor_Analog_Calibrate(p_motor);        break;
+        case MOTOR_VAR_CALIBRATION_CMD_ADC:             Motor_ADC_Calibrate(p_motor);        break;
         case MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME:    Motor_Calibration_StartHome(p_motor);   break;
         case MOTOR_VAR_CALIBRATION_CMD_ELECTRICAL:      Motor_Calibration_StartElectrical(p_motor);   break;
         // case MOTOR_VAR_CALIBRATION_CMD_PID_TUNING:      Motor_Calibration_StartPidTuning(p_motor);    break;
@@ -223,12 +223,12 @@ int Motor_Var_Board_Get(Motor_Var_Board_T varId)
         case MOTOR_VAR_BOARD_I_RATED:                 value = Phase_IRatedPeak_Pu();             break;
         case MOTOR_VAR_BOARD_V_MAX:                   value = Phase_VMaxVolts();                      break;
         case MOTOR_VAR_BOARD_I_MAX:                   value = Phase_IMaxAmps();                       break;
-        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_BOARD.V_PHASE_R1;            break;
-        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_BOARD.V_PHASE_R2;            break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ANALOG_BOARD.I_PHASE_R_BASE;        break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_BOARD.I_PHASE_R_MOSFETS;     break;
-        case MOTOR_VAR_BOARD_I_PHASE_R_SHUNT:         value = PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT;       break;
-        case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_BOARD.I_PHASE_GAIN;          break;
+        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ADC_BOARD.V_PHASE_R1;            break;
+        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ADC_BOARD.V_PHASE_R2;            break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ADC_BOARD.I_PHASE_R_BASE;        break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ADC_BOARD.I_PHASE_R_MOSFETS;     break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_SHUNT:         value = PHASE_ADC_BOARD.I_PHASE_R_SHUNT;       break;
+        case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ADC_BOARD.I_PHASE_GAIN;          break;
         // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
         /* Precompile Options */
         case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;                        break;

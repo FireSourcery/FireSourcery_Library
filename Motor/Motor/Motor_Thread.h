@@ -31,7 +31,7 @@
 /******************************************************************************/
 // #include "Motor_Debug.h"
 
-#include "Analog/Motor_Analog.h"
+#include "ADC/Motor_ADC.h"
 #include "Motor_StateMachine.h"
 #include "Motor.h"
 

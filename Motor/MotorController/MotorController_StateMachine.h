@@ -301,6 +301,7 @@ MotorController_LockOpStatus_T;
 /* May transition to substate */
 static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorController_T * p_dev, MotorController_LockId_T id)
 {
+    p_dev->P_MC->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR; /* an input no state maps (MAIN has no LOCK slot) or refuses answers ERROR, not the previous op's status */
     _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_LOCK, id);
     return p_dev->P_MC->LockOpStatus; /* optionally return status, or use getter after */
 }

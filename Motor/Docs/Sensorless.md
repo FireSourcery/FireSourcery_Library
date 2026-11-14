@@ -136,7 +136,7 @@ flowchart TB
         SM["Motor_StateMachine.c<br/>PASSIVE entry, feedback lost"]
         Chain["Motor_Sensorless.c<br/>start-up chain"]
         FOCm["Motor_FOC.c<br/>Motor_FOC_AngleControl, Motor_FOC_WriteDuty marks the tick"]
-        Analog["Analog/Motor_Analog.h<br/>PhaseInput"]
+        Analog["Analog/Motor_ADC.h<br/>PhaseInput"]
     end
     subgraph SensorLayer["Sensor"]
         RS["RotorSensor.h<br/>the vtable, RotorSensor_State_T"]
@@ -180,7 +180,7 @@ sequenceDiagram
     participant St as RUN, the active state
 
     Note over ADC: the set the LOOP takes, placed by the board
-    ADC->>ADC: Motor_Analog_CaptureIabc → PhaseInput.I
+    ADC->>ADC: Motor_ADC_CaptureIabc → PhaseInput.I
     ISR->>Thr: Motor_PWM_Thread, each motor
     Thr->>Sen: RotorSensor_CaptureAngle → CAPTURE_ANGLE
     Sen->>Sen: AnglePll_Predict, θ̂ += ω̂

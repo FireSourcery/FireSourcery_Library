@@ -227,19 +227,19 @@ void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq)
 
 void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32)
 {
-    p_pid->Config.Kp = kp_Fixed32;
-    SetKp_Fixed32(p_pid, kp_Fixed32);
+    _PID_SetKp_Fixed32(&p_pid->Config, kp_Fixed32);
+    SetKp_Fixed32(p_pid, p_pid->Config.Kp);
 }
 
 void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32)
 {
-    p_pid->Config.Ki = ki_Fixed32;
-    SetKi_Fixed32(p_pid, ki_Fixed32);
+    _PID_SetKi_Fixed32(&p_pid->Config, ki_Fixed32);
+    SetKi_Fixed32(p_pid, p_pid->Config.Ki);
 }
 
 void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32)
 {
-    p_pid->Config.Kd = kd_Fixed32; /* todo */
+    _PID_SetKd_Fixed32(&p_pid->Config, kd_Fixed32); /* todo runtime form */
 }
 
 /*!

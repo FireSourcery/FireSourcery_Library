@@ -601,6 +601,7 @@ const State_T MOTOR_STATE_INTERVENTION =
     .PATH_ID            = { .Depth0 = MOTOR_STATE_ID_INTERVENTION },
     .ENTRY              = (State_Action_T)Intervention_Entry,
     .LOOP               = (State_Action_T)Intervention_Proc,
+    .NEXT               = (State_Input0_T)_Motor_TransitionFeedbackLost, /* the substates' NEXT run first; a lost angle ends SPEED_ZERO as it ends RUN */
     .P_TRANSITION_TABLE = &INTERVENTION_TRANSITION_TABLE[0U],
 };
 

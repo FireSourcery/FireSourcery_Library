@@ -24,9 +24,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Phase_Analog.h
+    @file   Phase_ADC.h
     @author FireSourcery
-    @brief  Analog component for every Phase_Input module
+    @brief  ADC component for every Phase_Input module: counts to pu, the channel marks, the capture callbacks
 */
 /******************************************************************************/
 #include "Phase_Input.h"
@@ -44,53 +44,52 @@
 /*
     Common Calibration Max as preprocessor macros
 */
-#ifndef PHASE_ANALOG_V_MAX_ADCU
-#define PHASE_ANALOG_V_MAX_ADCU (4096U)
-#define PHASE_ANALOG_V_PU_PER_ADCU (1L << 3U)
+#ifndef PHASE_ADC_V_MAX_ADCU
+#define PHASE_ADC_V_MAX_ADCU (4096U)
+#define PHASE_ADC_V_PU_PER_ADCU (1L << 3U)
 #endif
 
-#ifndef PHASE_ANALOG_I_MAX_ADCU
-#define PHASE_ANALOG_I_MAX_ADCU (2048U)
-#define PHASE_ANALOG_I_PU_PER_ADCU (1L << 4U)
+#ifndef PHASE_ADC_I_MAX_ADCU
+#define PHASE_ADC_I_MAX_ADCU (2048U)
+#define PHASE_ADC_I_PU_PER_ADCU (1L << 4U)
 #endif
 
-#ifndef PHASE_ANALOG_I_POLARITY
-#ifdef PHASE_ANALOG_I_SENSOR_INVERT
-#define PHASE_ANALOG_I_POLARITY (-1)
+#ifndef PHASE_ADC_I_POLARITY
+#ifdef PHASE_ADC_I_SENSOR_INVERT
+#define PHASE_ADC_I_POLARITY (-1)
 #else
-#define PHASE_ANALOG_I_POLARITY (1)
+#define PHASE_ADC_I_POLARITY (1)
 #endif
 #endif
 
 /*
-    PHASE_ANALOG_I_SENSOR_LOW_SIDE
+    PHASE_ADC_I_SENSOR_LOW_SIDE
     The I sensor reads a phase only while its low-side switch conducts: a low-side shunt, or the switch's R_DS(on).
-    The analog thread converts the 2 phases of the longest low-side windows [Motor_Analog_MarkI], the capture solves the third.
+    The analog thread converts the 2 phases of the longest low-side windows [Motor_ADC_MarkI], the capture solves the third.
 */
 
-static inline fract16_t Phase_Analog_VPuOf(uint16_t adcu) { return adcu * PHASE_ANALOG_V_PU_PER_ADCU; }
+static inline fract16_t Phase_ADC_VPuOf(uint16_t adcu) { return adcu * PHASE_ADC_V_PU_PER_ADCU; }
 /*
-    Full scale is PHASE_ANALOG_I_MAX_ADCU (2048) counts either side of the zero. No software saturation:
-    past 2047 counts the result wraps to the opposite sign.
-    Hardware provides the dead buffer: the sensor saturates within 2047 counts of its zero, and the zero sits
-    below 2048 counts (also required by the zero-ref calibration [AdcuOf]).
+    Full scale is PHASE_ADC_I_MAX_ADCU (2048) counts either side of the zero; past it the result saturates
+    [math_clamp], a sample at the rail reads as the rail. The sensor's own range should sit within 2047 counts
+    of its zero, so the saturation is never the limit in use.
 */
-static inline fract16_t Phase_Analog_IPuOf(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_PU_PER_ADCU * PHASE_ANALOG_I_POLARITY); }
+static inline fract16_t Phase_ADC_IPuOf(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ADC_I_PU_PER_ADCU * PHASE_ADC_I_POLARITY); }
 
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
-#define PHASE_ANALOG_V_MAX_VOLTS(VRef_mV, R1, R2) ((((VRef_mV)*((R1) +(R2))) + ((R2)*1000U/2U)) / ((R2)*1000U))
+#define PHASE_ADC_V_MAX_VOLTS(VRef_mV, R1, R2) ((((VRef_mV)*((R1) +(R2))) + ((R2)*1000U/2U)) / ((R2)*1000U))
 /* (VRef_mV/2 * 1/1000) / (R_shunt_uOhm * 1/1000000 * Gain) */
-#define PHASE_ANALOG_I_MAX_AMPS(VRef_mV, Shunt_uOhm, Gain) (((500U*(VRef_mV)) + ((Shunt_uOhm)*(Gain)/2U)) / ((Shunt_uOhm)*(Gain)))
+#define PHASE_ADC_I_MAX_AMPS(VRef_mV, Shunt_uOhm, Gain) (((500U*(VRef_mV)) + ((Shunt_uOhm)*(Gain)/2U)) / ((Shunt_uOhm)*(Gain)))
 // #define I_MAX_AMPS_(VRef_mV, Shunt_uOhm, Gain)  ((1000U * (VRef_mV)) / ((Shunt_uOhm) * (Gain)))
 
 /*
     optionally store as base ref
 */
-typedef const struct Phase_AnalogBoard
+typedef const struct Phase_AdcBoard
 {
     volatile uint32_t V_PHASE_R1;
     volatile uint32_t V_PHASE_R2;
@@ -99,12 +98,12 @@ typedef const struct Phase_AnalogBoard
     volatile uint16_t I_PHASE_R_SHUNT;      /* uOhm */
     volatile uint16_t I_PHASE_GAIN;         /* x10 */
 }
-Phase_AnalogBoard_T;
+Phase_AdcBoard_T;
 
-extern const Phase_AnalogBoard_T PHASE_ANALOG_BOARD;
+extern const Phase_AdcBoard_T PHASE_ADC_BOARD;
 
-static inline uint16_t Phase_Analog_VMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.V_PHASE_R1, PHASE_ANALOG_BOARD.V_PHASE_R2); }
-static inline uint16_t Phase_Analog_IMax(void) { return PHASE_ANALOG_I_MAX_AMPS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_BOARD.I_PHASE_R_SHUNT, PHASE_ANALOG_BOARD.I_PHASE_GAIN); }
+static inline uint16_t Phase_ADC_VMax(void) { return PHASE_ADC_V_MAX_VOLTS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ADC_BOARD.V_PHASE_R1, PHASE_ADC_BOARD.V_PHASE_R2); }
+static inline uint16_t Phase_ADC_IMax(void) { return PHASE_ADC_I_MAX_AMPS(ADC_REFERENCE.ADC_VREF_MILLIV, PHASE_ADC_BOARD.I_PHASE_R_SHUNT, PHASE_ADC_BOARD.I_PHASE_GAIN); }
 
 
 /******************************************************************************/
@@ -112,7 +111,7 @@ static inline uint16_t Phase_Analog_IMax(void) { return PHASE_ANALOG_I_MAX_AMPS(
 
 */
 /******************************************************************************/
-typedef const struct Phase_Analog
+typedef const struct Phase_ADC
 {
     ADC_Conversion_T VA;
     ADC_Conversion_T VB;
@@ -122,24 +121,24 @@ typedef const struct Phase_Analog
     ADC_Conversion_T IC;
     // Phase_Triplet_T * P_IZERO_REFS_ADCU;
 }
-Phase_Analog_T;
+Phase_ADC_T;
 
 
-static void Phase_Analog_MarkVabc(Phase_Analog_T * p_analog)
+static void Phase_ADC_MarkVabc(Phase_ADC_T * p_analog)
 {
     ADC_Conversion_Mark(&p_analog->VA);
     ADC_Conversion_Mark(&p_analog->VB);
     ADC_Conversion_Mark(&p_analog->VC);
 }
 
-static void Phase_Analog_MarkIabc(Phase_Analog_T * p_analog)
+static void Phase_ADC_MarkIabc(Phase_ADC_T * p_analog)
 {
     ADC_Conversion_Mark(&p_analog->IA);
     ADC_Conversion_Mark(&p_analog->IB);
     ADC_Conversion_Mark(&p_analog->IC);
 }
 
-static inline void Phase_Analog_MarkI(Phase_Analog_T * p_analog, Phase_Bitmask_T phases)
+static inline void Phase_ADC_MarkI(Phase_ADC_T * p_analog, Phase_Bitmask_T phases)
 {
     if (phases.A) { ADC_Conversion_Mark(&p_analog->IA); }
     if (phases.B) { ADC_Conversion_Mark(&p_analog->IB); }
@@ -149,14 +148,14 @@ static inline void Phase_Analog_MarkI(Phase_Analog_T * p_analog, Phase_Bitmask_T
 /*
     alternatively, directly on register state
 */
-static void Phase_Analog_Mark(Phase_Analog_T * p_analog, Phase_Bitmask_T state)
+static void Phase_ADC_Mark(Phase_ADC_T * p_analog, Phase_Bitmask_T state)
 {
     ADC_Conversion_Mark((state.A) ? &p_analog->IA : &p_analog->VA);
     ADC_Conversion_Mark((state.B) ? &p_analog->IB : &p_analog->VB);
     ADC_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
 }
 
-// static inline Phase_Id_T Phase_ADC_IabcCompleted(Phase_Analog_T * p_analog, adc_mask_t landed)
+// static inline Phase_Id_T Phase_ADC_IabcCompleted(Phase_ADC_T * p_analog, adc_mask_t landed)
 // {
 //     return Phase_IdOf((Phase_Bitmask_T)
 //     {
@@ -167,10 +166,10 @@ static void Phase_Analog_Mark(Phase_Analog_T * p_analog, Phase_Bitmask_T state)
 // }
 
 
-// #if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
-// static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Phase_Analog_MarkI(&p_motor->PHASE_ANALOG, Phase_Bitmask(Phase_Inverse(Phase_ReadDutyMax(&p_motor->PHASE)))); }
+// #if defined(PHASE_ADC_I_SENSOR_LOW_SIDE)
+// static inline void Motor_ADC_MarkI(Motor_T * p_motor) { Phase_ADC_MarkI(&p_motor->PHASE_ADC, Phase_Bitmask(Phase_Inverse(Phase_ReadDutyMax(&p_motor->PHASE)))); }
 // #else
-// static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Motor_Analog_MarkIabc(p_motor); }
+// static inline void Motor_ADC_MarkI(Motor_T * p_motor) { Motor_ADC_MarkIabc(p_motor); }
 // #endif
 
 
@@ -179,15 +178,15 @@ static void Phase_Analog_Mark(Phase_Analog_T * p_analog, Phase_Bitmask_T state)
     Capture on [Phase_Input_T]
 */
 
-static inline void Phase_Analog_CaptureV(volatile Phase_Input_T * p_phase, Phase_Index_T channel, adc_result_t adcu)
+static inline void Phase_ADC_CaptureV(volatile Phase_Input_T * p_phase, Phase_Index_T channel, adc_result_t adcu)
 {
-    // assert(adcu <= PHASE_ANALOG_V_MAX_ADCU);
-    Phase_Capture(&p_phase->V, channel, Phase_Analog_VPuOf(adcu));
+    // assert(adcu <= PHASE_ADC_V_MAX_ADCU);
+    Phase_Capture(&p_phase->V, channel, Phase_ADC_VPuOf(adcu));
 }
 
-static inline void Phase_Analog_CaptureVa(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_Analog_CaptureV(p_phase, PHASE_INDEX_A, adcu); }
-static inline void Phase_Analog_CaptureVb(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_Analog_CaptureV(p_phase, PHASE_INDEX_B, adcu); }
-static inline void Phase_Analog_CaptureVc(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_Analog_CaptureV(p_phase, PHASE_INDEX_C, adcu); }
+static inline void Phase_ADC_CaptureVa(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_ADC_CaptureV(p_phase, PHASE_INDEX_A, adcu); }
+static inline void Phase_ADC_CaptureVb(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_ADC_CaptureV(p_phase, PHASE_INDEX_B, adcu); }
+static inline void Phase_ADC_CaptureVc(volatile Phase_Input_T * p_phase, adc_result_t adcu) { Phase_ADC_CaptureV(p_phase, PHASE_INDEX_C, adcu); }
 
 
 /*
@@ -195,7 +194,7 @@ static inline void Phase_Analog_CaptureVc(volatile Phase_Input_T * p_phase, adc_
     Completes the capture on its second phase. A third conversion, where marked, replaces the solved value with its own.
     Out of line: each channel's capture calls it.
 */
-__attribute__((noinline)) static void _Phase_Analog_SolveI(volatile Phase_Data_T * p_i)
+__attribute__((noinline)) static void _Phase_ADC_SolveI(volatile Phase_Data_T * p_i)
 {
     switch (p_i->Flags.Bits)
     {
@@ -207,18 +206,18 @@ __attribute__((noinline)) static void _Phase_Analog_SolveI(volatile Phase_Data_T
     p_i->Flags.Bits = PHASE_ID_ABC;
 }
 
-static inline void Phase_Analog_CaptureI(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, Phase_Index_T channel, adc_result_t adcu)
+static inline void Phase_ADC_CaptureI(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, Phase_Index_T channel, adc_result_t adcu)
 {
-    // assert(adcu <= PHASE_ANALOG_I_MAX_ADCU);
-    Phase_Capture(&p_phase->I, channel, Phase_Analog_IPuOf(p_zeros->Values[channel], adcu));
-#if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
-    _Phase_Analog_SolveI(&p_phase->I);
+    // assert(adcu <= PHASE_ADC_I_MAX_ADCU);
+    Phase_Capture(&p_phase->I, channel, Phase_ADC_IPuOf(p_zeros->Values[channel], adcu));
+#if defined(PHASE_ADC_I_SENSOR_LOW_SIDE)
+    _Phase_ADC_SolveI(&p_phase->I);
 #endif
 }
 
-static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeros, PHASE_INDEX_A, adcu); }
-static inline void Phase_Analog_CaptureIb(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeros, PHASE_INDEX_B, adcu); }
-static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_Analog_CaptureI(p_phase, p_zeros, PHASE_INDEX_C, adcu); }
+static inline void Phase_ADC_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_ADC_CaptureI(p_phase, p_zeros, PHASE_INDEX_A, adcu); }
+static inline void Phase_ADC_CaptureIb(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_ADC_CaptureI(p_phase, p_zeros, PHASE_INDEX_B, adcu); }
+static inline void Phase_ADC_CaptureIc(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t adcu) { Phase_ADC_CaptureI(p_phase, p_zeros, PHASE_INDEX_C, adcu); }
 
 
 static inline Phase_Data_T Phase_Iabc_PuOfAdcu(const Phase_Triplet_T * p_zeros, adc_result_t a, adc_result_t b, adc_result_t c)
@@ -227,9 +226,9 @@ static inline Phase_Data_T Phase_Iabc_PuOfAdcu(const Phase_Triplet_T * p_zeros, 
     {
         .Values =
         {
-            .A = Phase_Analog_IPuOf(p_zeros->Values[PHASE_INDEX_A], a),
-            .B = Phase_Analog_IPuOf(p_zeros->Values[PHASE_INDEX_B], b),
-            .C = Phase_Analog_IPuOf(p_zeros->Values[PHASE_INDEX_C], c),
+            .A = Phase_ADC_IPuOf(p_zeros->Values[PHASE_INDEX_A], a),
+            .B = Phase_ADC_IPuOf(p_zeros->Values[PHASE_INDEX_B], b),
+            .C = Phase_ADC_IPuOf(p_zeros->Values[PHASE_INDEX_C], c),
         },
         .Flags.Bits = PHASE_ID_ABC,
     };
@@ -237,12 +236,12 @@ static inline Phase_Data_T Phase_Iabc_PuOfAdcu(const Phase_Triplet_T * p_zeros, 
 
 /*
     One batch's I set of ADCU: [phases] the phases converted, the others' values stale.
-    Low-side sensing converts 2 of 3 [Motor_Analog_MarkI], and the third is solved. All 3 leave it as converted.
+    Low-side sensing converts 2 of 3 [Motor_ADC_MarkI], and the third is solved. All 3 leave it as converted.
 */
-static inline void Phase_Analog_CaptureIBatch(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases)
+static inline void Phase_ADC_CaptureIBatch(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeros, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases)
 {
-    p_phase->I = Phase_Data(Phase_Analog_IPuOf(p_zeros->A, a), Phase_Analog_IPuOf(p_zeros->B, b), Phase_Analog_IPuOf(p_zeros->C, c), phases);
-    _Phase_Analog_SolveI(&p_phase->I);
+    p_phase->I = Phase_Data(Phase_ADC_IPuOf(p_zeros->A, a), Phase_ADC_IPuOf(p_zeros->B, b), Phase_ADC_IPuOf(p_zeros->C, c), phases);
+    _Phase_ADC_SolveI(&p_phase->I);
 }
 
 
@@ -254,9 +253,9 @@ static inline Phase_Data_T Phase_Vabc_PuOfAdcu(adc_result_t a, adc_result_t b, a
     {
         .Values =
         {
-            .A = Phase_Analog_VPuOf(a),
-            .B = Phase_Analog_VPuOf(b),
-            .C = Phase_Analog_VPuOf(c),
+            .A = Phase_ADC_VPuOf(a),
+            .B = Phase_ADC_VPuOf(b),
+            .C = Phase_ADC_VPuOf(c),
         },
         .Flags.Bits = PHASE_ID_ABC,
     };

@@ -24,7 +24,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Motor_Analog.h
+    @file   Motor_ADC.h
     @author FireSourcery
     @brief  ADC Conversions
             - callbacks on Motor_Context_T
@@ -36,49 +36,49 @@
 
 /* 0 -> 1x, 1 -> 2x, 2 -> 4x, 3 -> 8x */
 /* PHASE_I_SAMPLE_DIVIDER_MASK */
-#ifndef PHASE_ANALOG_DIVIDER_MASK
-#define PHASE_ANALOG_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
+#ifndef PHASE_ADC_DIVIDER_MASK
+#define PHASE_ADC_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
 #endif
 
-static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
+static_assert(PHASE_ADC_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ADC_DIVIDER_MASK is not correct");
 
 /* The control cycle that samples the I set: every one as built, the mask 0. With a divider, 1 in MOTOR_I_LOOP_DIVIDER [MOTOR_I_LOOP_FREQ] */
-static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & (uint32_t)PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
+static inline bool _Motor_IsISampleCycle(uint32_t timerCounter) { return ((timerCounter & (uint32_t)PHASE_ADC_DIVIDER_MASK) == 0UL); }
 
 /*
     The analog cycle by the Motor's own count. As built every control cycle, and nothing gates on it: the requests, the take and the PI
     run every cycle [Motor_FOC_AngleControl]. For a divided I loop: the cycle that steps the requests, its set taken on the next,
     the count kept in step with the controller's [Motor_ResetControlTimer].
 */
-static inline bool Motor_IsAnalogCycle(Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
+static inline bool Motor_IsISampleCycle(Motor_T * p_dev) { return _Motor_IsISampleCycle(p_dev->P_MOTOR->ControlTimerBase); }
 
 /*
     Mappable as callbacks
 */
-/* VBus_Analog_Capture in VBus.h */
-static inline void Motor_Analog_CaptureVa(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
-static inline void Motor_Analog_CaptureVb(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVb(&p_motor->PhaseInput, adcu); }
-static inline void Motor_Analog_CaptureVc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVc(&p_motor->PhaseInput, adcu); }
+/* VBus_ADC_Capture in VBus.h */
+static inline void Motor_ADC_CaptureVa(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_ADC_CaptureVa(&p_motor->PhaseInput, adcu); }
+static inline void Motor_ADC_CaptureVb(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_ADC_CaptureVb(&p_motor->PhaseInput, adcu); }
+static inline void Motor_ADC_CaptureVc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_ADC_CaptureVc(&p_motor->PhaseInput, adcu); }
 /* Motor holds context of IZeroRef */
-static inline void Motor_Analog_CaptureIa(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIa(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
-static inline void Motor_Analog_CaptureIb(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIb(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
-static inline void Motor_Analog_CaptureIc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
+static inline void Motor_ADC_CaptureIa(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_ADC_CaptureIa(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
+static inline void Motor_ADC_CaptureIb(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_ADC_CaptureIb(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
+static inline void Motor_ADC_CaptureIc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_ADC_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 
 /* Collective completetion */
-static inline void Motor_Analog_CaptureIabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.I = Phase_Iabc_PuOfAdcu(&p_motor->Config.IabcZeroRef_Adcu, a, b, c);}
-static inline void Motor_Analog_CaptureVabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.V = Phase_Vabc_PuOfAdcu(a, b, c);}
+static inline void Motor_ADC_CaptureIabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.I = Phase_Iabc_PuOfAdcu(&p_motor->Config.IabcZeroRef_Adcu, a, b, c);}
+static inline void Motor_ADC_CaptureVabc(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c) { p_motor->PhaseInput.V = Phase_Vabc_PuOfAdcu(a, b, c);}
 
 /* Without checking for previous completion. Conversions must complete within the analog cycle */
-static inline void Motor_Analog_MarkVabc(Motor_T * p_motor) { Phase_Analog_MarkVabc(&p_motor->PHASE_ANALOG); }
-static inline void Motor_Analog_MarkIabc(Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
+static inline void Motor_ADC_MarkVabc(Motor_T * p_motor) { Phase_ADC_MarkVabc(&p_motor->PHASE_ADC); }
+static inline void Motor_ADC_MarkIabc(Motor_T * p_motor) { Phase_ADC_MarkIabc(&p_motor->PHASE_ADC); }
 
 
 /* Optionally mark on Start */
 static inline void Motor_ADC_MarkPhases(Motor_T * p_dev)
 {
     /* foc return on first 1. alternatively handle per phase */
-    if (!Phase_IsFloat(&p_dev->PHASE)) {  Phase_Analog_MarkIabc(&p_dev->PHASE_ANALOG);  }
-    else { Phase_Analog_MarkVabc(&p_dev->PHASE_ANALOG);}
+    if (!Phase_IsFloat(&p_dev->PHASE)) {  Phase_ADC_MarkIabc(&p_dev->PHASE_ADC);  }
+    else { Phase_ADC_MarkVabc(&p_dev->PHASE_ADC);}
 }
 
 
@@ -88,26 +88,26 @@ static inline void Motor_ADC_MarkPhases(Motor_T * p_dev)
 // directly from board
 // static inline void Motor_ADC_OnIabc(Motor_T * p_motor, int32_t a_adcu, int32_t b_adcu, int32_t c_adcu)
 // {
-//     Motor_Analog_CaptureIabc(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu);
+//     Motor_ADC_CaptureIabc(p_motor->P_MOTOR, a_adcu, b_adcu, c_adcu);
 //     _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_PHASE);
 // }
 
 
 /*
 */
-extern void Motor_Analog_Calibrate(Motor_T * p_motor);
+extern void Motor_ADC_Calibrate(Motor_T * p_motor);
 
 
-// todo PHASE_ANALOG_I_SENSOR_LOW_SIDE macro in one layer
-// static inline void Motor_Analog_CaptureI2Of3(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_Analog_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
-static inline void Motor_Analog_CaptureIBatch(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_Analog_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
+// todo PHASE_ADC_I_SENSOR_LOW_SIDE macro in one layer
+// static inline void Motor_ADC_CaptureI2Of3(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_ADC_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
+static inline void Motor_ADC_CaptureIBatch(Motor_Context_T * p_motor, adc_result_t a, adc_result_t b, adc_result_t c, Phase_Id_T phases) { Phase_ADC_CaptureIBatch(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, a, b, c, phases); }
 
 /*
     The driven I sample. Before the PWM thread writes this cycle's duties: the duty registers hold those of the window being sampled.
-    Low-side sensing leaves out the highest duty, the shortest window. The capture solves it [_Phase_Analog_SolveI].
+    Low-side sensing leaves out the highest duty, the shortest window. The capture solves it [_Phase_ADC_SolveI].
 */
-#if defined(PHASE_ANALOG_I_SENSOR_LOW_SIDE)
-static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Phase_Analog_MarkI(&p_motor->PHASE_ANALOG, Phase_Bitmask(Phase_Inverse(Phase_ReadDutyMax(&p_motor->PHASE)))); }
+#if defined(PHASE_ADC_I_SENSOR_LOW_SIDE)
+static inline void Motor_ADC_MarkI(Motor_T * p_motor) { Phase_ADC_MarkI(&p_motor->PHASE_ADC, Phase_Bitmask(Phase_Inverse(Phase_ReadDutyMax(&p_motor->PHASE)))); }
 #else
-static inline void Motor_Analog_MarkI(Motor_T * p_motor) { Motor_Analog_MarkIabc(p_motor); }
+static inline void Motor_ADC_MarkI(Motor_T * p_motor) { Motor_ADC_MarkIabc(p_motor); }
 #endif

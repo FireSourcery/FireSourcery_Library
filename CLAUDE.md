@@ -29,7 +29,8 @@
 - **Rows and columns expose symmetry.** Where clauses share a form (the cases of one parameter, a value and its complement, one quantity per phase), set them as rows, one case per row, the shared parts aligned in columns. Apply it unsparingly: two parallel clauses are enough. C comments align with spaces; markdown uses a table. [Docs/Conventions/Comments.md](Docs/Conventions/Comments.md#layout)
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
 - Architecture notes and findings live in `Docs/`: Conventions, Patterns, Decisions, Findings, Modules, References. Index: [Docs/README.md](Docs/README.md).
-- A doc leads with a reference sheet of what is the case: facts, rules, options and their defaults, limits, and what is not measured. Derivations, each experiment, and verification logs go in files of their own. Split an existing doc only when asked.
+- A doc leads with a reference sheet of what is the case: facts, rules, options and their defaults, limits, and what is not measured. Derivations, each experiment, and verification logs go in files of their own.
+- **Keep dated material apart from reference material.** History (logs, results, decisions, finished plans) is kept apart from documents that describe how things are now.
 - Simulations go in `Motor/Docs/Simulation/<topic>/` with their plots; conventions in its [README.md](Motor/Docs/Simulation/README.md).
 
 ### Self-Improvement Loop
@@ -53,7 +54,6 @@
 - **Build System:** Makefile / CMake
 - **C Standard:** C23
 - **No dynamic allocation** — all memory is statically allocated
-<!-- - **No standard library dependencies** beyond `<stdint.h>`, `<stdbool.h>`, `<stddef.h>`, `<string.h>` -->
 
 ## Key Conventions
 
@@ -61,15 +61,13 @@
 - **HAL abstraction**: Hardware access through `HAL_*.h` headers with platform-specific implementations. A platform function the Peripheral layer does not call, used by the Board only, takes the platform prefix (`S32_`, `KE0x_`), and becomes `HAL_` when a Peripheral module needs it. [Peripheral/Notes.md](Peripheral/Notes.md)
 - HAL functions must have focused signatures, few and focused parameters. Split logic into granular blocks.
 - **Thread/ISR separation**: `_Thread.h` files define periodic processing functions; ISR-safe boundaries are explicit
-- **State machines**: Hierarchical state machine framework in `Framework/StateMachine/` used extensively for motor control states
-<!-- - **Fixed-point math**: 16-bit fractional (`fract16`) and Q16 fixed-point arithmetic — no floating point at runtime -->
+- **State machines**: Hierarchical state machine framework in `Framework/StateMachine/` used extensively for motor control states.
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
     This pattern is only for hardware descriptors and static polymorphism. Do not use it for what could be mutable only structs.
 - **Stateless pure functions layer**: function parameter contain the entire state. Reusable pieces, or established, published concepts, physical or not.
 - **Untypedef'd structs are the pure layer's multiple returns**, e.g. `struct foc_dq`, `struct foc_alphabeta`, `struct sta_axis`. A pure function returns one by value, and the caller unpacks it into its own fields at the call.
     The stateful layer never stores one as a field, and never takes or returns one in its functions, private helpers included.
 - Utility functions pass context that is the closest layer the logic requires. No tramp parameters. Don't pass bool.
-<!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
 - **Expression style**: Prefer concise, declarative expressions over procedural manipulation. Use library primitives (`math_clamp`, `fract16_div`, `fract16_mul`, `math_min/max`) composed into single expressions that mirror the domain formula. Avoid early-return ladders and temporaries that break a formula into steps. Function body should look like the equation in its docstring, not reconstruct it.
 - For functions called with known constant values at compile time, input parameter correctness is a part of the API contract. favor `assert` instead of runtime error checking logic
 - No token pasting technique for preprocessor macros. VA_ARGS for generic handling ergonomics is okay.

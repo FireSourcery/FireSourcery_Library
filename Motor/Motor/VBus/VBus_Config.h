@@ -220,14 +220,14 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
     }
 }
 
-#include "../Phase_Input/Phase_Analog.h" /*  */
+#include "../Phase_Input/Phase_ADC.h" /*  */
 /*  */
 static inline uint32_t VBus_BoardId_Get(VDivider_ConfigId_T var_id)
 {
     switch (var_id)
     {
-        case VDIVIDER_BOARD_R1: return PHASE_ANALOG_BOARD.V_PHASE_R1;
-        case VDIVIDER_BOARD_R2: return PHASE_ANALOG_BOARD.V_PHASE_R2;
+        case VDIVIDER_BOARD_R1: return PHASE_ADC_BOARD.V_PHASE_R1;
+        case VDIVIDER_BOARD_R2: return PHASE_ADC_BOARD.V_PHASE_R2;
         default: return 0U;
     }
 }

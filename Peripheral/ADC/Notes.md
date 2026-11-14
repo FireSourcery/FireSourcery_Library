@@ -286,7 +286,7 @@ No function dispatches between them: the Board calls the entry its mode provides
 
 ```mermaid
 flowchart TB
-    subgraph FEAT["Feature - Motor_Analog, VBus"]
+    subgraph FEAT["Feature - Motor_ADC, VBus"]
         MA["capture handlers, scaling<br/>selection policy"]
     end
     subgraph CONV["ADC_Conversion_T"]
@@ -464,7 +464,7 @@ void BOARD_ADC1_DMA_ISR(void)
     Board_ADC1_ClearComplete();
     ADC_OnCompleteSequenceDma_ISR(&ADCS[1U]);   /* applies the selection, where the ADC is idle */
 
-    Motor_Analog_CaptureIa(&Motors[0U], ADC_ResultOf(&ADCS[1U], BOARD_ADC1_SLOT_IA));
+    Motor_ADC_CaptureIa(&Motors[0U], ADC_ResultOf(&ADCS[1U], BOARD_ADC1_SLOT_IA));
     /* ... */
 }
 ```

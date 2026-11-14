@@ -27,7 +27,7 @@
     @brief
 */
 /******************************************************************************/
-#include "Motor_Analog.h"
+#include "Motor_ADC.h"
 #include "../Motor_StateMachine.h"
 #include "Math/Filter/MovAvg.h"
 
@@ -41,15 +41,12 @@ CalibrationBuffer_T;
 
 static_assert(sizeof(CalibrationBuffer_T) <= MOTOR_CALIBRATION_BUFFER_SIZE, "CalibrationBuffer_T must fit within MOTOR_CALIBRATION_BUFFER_SIZE");
 
-/* allow adc module callback to skip storing raw value */
-/* Phase_Input_Get Fract16 performed with 0 as zero reference */
-// todo remove
-static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_I_PU_PER_ADCU * PHASE_ANALOG_I_POLARITY)); }
-
+/*
+    The ADC keeps every channel's last count [ADC_Conversion_GetResult]: the routine averages the counts themselves.
+    The capture's pu set only signals that the three landed [PhaseInput.I.Flags]. Config keeps its zero until the
+    routine completes, so an abort (Z or the controller's fault) leaves the last calibration in place.
+*/
 static CalibrationBuffer_T * GetBuffer(Motor_T * p_motor) { return (CalibrationBuffer_T *)p_motor->P_MOTOR->CalibrationBuffer; }
-static MovAvg_T * GetFilterA(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterA; }
-static MovAvg_T * GetFilterB(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterB; }
-static MovAvg_T * GetFilterC(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterC; }
 
 /******************************************************************************/
 /*!
@@ -65,11 +62,8 @@ static void StartCalibration(Motor_T * p_motor)
     TimerT_OneShot_Start(&p_motor->CONTROL_TIMER, MOTOR_CONTROL_CYCLES(2000U));
     Phase_ActivateT0(&p_motor->PHASE);
 
-    p_context->Config.IabcZeroRef_Adcu.A = 0U;
-    p_context->Config.IabcZeroRef_Adcu.B = 0U;
-    p_context->Config.IabcZeroRef_Adcu.C = 0U;
     p_context->PhaseInput.I.Flags.Bits = PHASE_ID_0;
-    Motor_Analog_MarkIabc(p_motor);
+    Motor_ADC_MarkIabc(p_motor);
 }
 
 
@@ -79,11 +73,11 @@ static void ProcCalibration(Motor_T * p_motor)
 
     if (p_context->PhaseInput.I.Flags.Bits == PHASE_ID_ABC)
     {
-        MovAvg_Running(GetFilterA(p_motor), AdcuOf(p_context->PhaseInput.I.Values.A));
-        MovAvg_Running(GetFilterB(p_motor), AdcuOf(p_context->PhaseInput.I.Values.B));
-        MovAvg_Running(GetFilterC(p_motor), AdcuOf(p_context->PhaseInput.I.Values.C));
+        MovAvg_Running(&GetBuffer(p_motor)->FilterA, ADC_Conversion_GetResult(&p_motor->PHASE_ADC.IA));
+        MovAvg_Running(&GetBuffer(p_motor)->FilterB, ADC_Conversion_GetResult(&p_motor->PHASE_ADC.IB));
+        MovAvg_Running(&GetBuffer(p_motor)->FilterC, ADC_Conversion_GetResult(&p_motor->PHASE_ADC.IC));
         p_context->PhaseInput.I.Flags.Bits = PHASE_ID_0;
-        Motor_Analog_MarkIabc(p_motor);
+        Motor_ADC_MarkIabc(p_motor);
     }
 }
 
@@ -95,9 +89,9 @@ static State_T * EndCalibration(Motor_T * p_motor)
 
     if (TimerT_IsElapsed(&p_motor->CONTROL_TIMER) == true)
     {
-        p_context->Config.IabcZeroRef_Adcu.A = MovAvg_Running(GetFilterA(p_motor), AdcuOf(p_context->PhaseInput.I.Values.A));
-        p_context->Config.IabcZeroRef_Adcu.B = MovAvg_Running(GetFilterB(p_motor), AdcuOf(p_context->PhaseInput.I.Values.B));
-        p_context->Config.IabcZeroRef_Adcu.C = MovAvg_Running(GetFilterC(p_motor), AdcuOf(p_context->PhaseInput.I.Values.C));
+        p_context->Config.IabcZeroRef_Adcu.A = MovAvg_Running(&GetBuffer(p_motor)->FilterA, ADC_Conversion_GetResult(&p_motor->PHASE_ADC.IA));
+        p_context->Config.IabcZeroRef_Adcu.B = MovAvg_Running(&GetBuffer(p_motor)->FilterB, ADC_Conversion_GetResult(&p_motor->PHASE_ADC.IB));
+        p_context->Config.IabcZeroRef_Adcu.C = MovAvg_Running(&GetBuffer(p_motor)->FilterC, ADC_Conversion_GetResult(&p_motor->PHASE_ADC.IC));
         Phase_Deactivate(&p_motor->PHASE);
         p_nextState = &MOTOR_STATE_CALIBRATION; /* return to parent state, idle state */
     }
@@ -120,7 +114,7 @@ static const State_T CALIBRATION_STATE =
 
 static State_T * Calibration_Start(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE; }
 
-void Motor_Analog_Calibrate(Motor_T * p_motor)
+void Motor_ADC_Calibrate(Motor_T * p_motor)
 {
     // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_Start };

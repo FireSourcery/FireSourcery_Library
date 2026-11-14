@@ -95,9 +95,21 @@ static inline uint32_t _PID_GetSampleFreq(const PID_Config_T * p_config) { retur
 static inline int32_t _PID_GetKp_Fixed16(const PID_Config_T * p_config) { return p_config->Kp >> 8; }
 static inline int32_t _PID_GetKi_Fixed16(const PID_Config_T * p_config) { return p_config->Ki >> 8; }
 static inline int32_t _PID_GetKd_Fixed16(const PID_Config_T * p_config) { return p_config->Kd >> 8; }
-static inline void _PID_SetKp_Fixed16(PID_Config_T * p_config, int32_t value) { p_config->Kp = value << 8; }
-static inline void _PID_SetKi_Fixed16(PID_Config_T * p_config, int32_t value) { p_config->Ki = value << 8; }
-static inline void _PID_SetKd_Fixed16(PID_Config_T * p_config, int32_t value) { p_config->Kd = value << 8; }
+/*
+    Config setters, Q17.15. Bounded to what the runtime constructors hold:
+    Kp: fract16e_of takes [0, 2^30), past it the shift is negative.
+    Ki: fract16e_of_ratio needs bit_width(Ki) - bit_width(SampleFreq) <= 15, so Ki < SampleFreq * 2^14 (one bit of margin).
+    The stored value is the bounded one, so a save reads back what the loop runs.
+*/
+static inline int32_t _PID_KpMax_Fixed32(void) { return (int32_t)((1L << 30) - 1L); }
+static inline int32_t _PID_KiMax_Fixed32(const PID_Config_T * p_config) { uint32_t max = p_config->SampleFreq << 14U; return (max < (uint32_t)_PID_KpMax_Fixed32()) ? (int32_t)max : _PID_KpMax_Fixed32(); }
+static inline void _PID_SetKp_Fixed32(PID_Config_T * p_config, int32_t value) { p_config->Kp = math_clamp(value, 0, _PID_KpMax_Fixed32()); }
+static inline void _PID_SetKi_Fixed32(PID_Config_T * p_config, int32_t value) { p_config->Ki = math_clamp(value, 0, _PID_KiMax_Fixed32(p_config)); }
+static inline void _PID_SetKd_Fixed32(PID_Config_T * p_config, int32_t value) { p_config->Kd = value; }
+/* Q9.7 */
+static inline void _PID_SetKp_Fixed16(PID_Config_T * p_config, int32_t value) { _PID_SetKp_Fixed32(p_config, value << 8); }
+static inline void _PID_SetKi_Fixed16(PID_Config_T * p_config, int32_t value) { _PID_SetKi_Fixed32(p_config, value << 8); }
+static inline void _PID_SetKd_Fixed16(PID_Config_T * p_config, int32_t value) { _PID_SetKd_Fixed32(p_config, value << 8); }
 
 /*
 */
@@ -135,6 +147,7 @@ extern void _PID_SetOutputState(PID_T * p_pid, int16_t output);
 extern void PID_SetOutputState(PID_T * p_pid, int16_t output);
 extern void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
 // extern void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq);
+/* Config through the bounded setters [_PID_SetKp_Fixed32], then the runtime form derived from the stored value */
 extern void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32);
 extern void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32);
 extern void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32);

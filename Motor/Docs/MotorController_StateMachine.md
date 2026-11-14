@@ -147,7 +147,7 @@ topology. It is runtime-only and not persisted.
 | `LOCK_EXIT`, a motor in any other state | `Motors` set | ERROR | `FAULT` |
 | `NVM_SAVE_CONFIG` | VBus monitor paused; `MotNvm_SaveConfigAll_Blocking`, which blocks with IRQs disabled; monitor resumed; `Motor_Reinit` every motor | OK, the save's result in `NvmStatus` | — |
 | `NVM_RESTORE_CONFIG` | not implemented | ERROR | — |
-| `CALIBRATE_ADC` | `Motor_Analog_Calibrate` every motor: the phase-current zeros, 2000 ms | OK | `MC_STATE_LOCK_CALIBRATE_ADC` |
+| `CALIBRATE_ADC` | `Motor_ADC_Calibrate` every motor: the phase-current zeros, 2000 ms | OK | `MC_STATE_LOCK_CALIBRATE_ADC` |
 | `CALIBRATE_SENSOR` | reserved | ERROR | — |
 | `REBOOT` | `HAL_Reboot`; no return | — | — |
 | `MOTOR_CMD_MODE` | `Motor_Calibration_Exit` to every motor | OK | `MC_STATE_MAIN_MOTOR_CMD` |

@@ -28,7 +28,7 @@
 */
 /******************************************************************************/
 #include "Motor_FOC.h"
-#include "Analog/Motor_Analog.h"
+#include "ADC/Motor_ADC.h"
 #include "Math/FOC.h"
 
 
@@ -297,6 +297,7 @@ static inline interval_t Motor_VBusILimits_VDerate(Motor_T * p_motor) { return V
 
 /*
     Out of line: one copy for every entry, speed tick and periodic thread.
+    Two words the PWM thread's speed tick reads; the store from the main or 1 ms thread is not guarded: Decision 0010.
 */
 void Motor_FOC_ResolveISupplyLimits(Motor_T * p_motor)
 {

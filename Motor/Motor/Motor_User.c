@@ -103,7 +103,7 @@ inline void Motor_ApplyControlState(Motor_T * p_motor, Phase_VOutMode_T state) {
 /*
     User set [FeedbackMode] without starting Run
     Using sync mode. activates the next pwm cycle
-    Voltage modes only with the voltage path [Motor_FeedbackMode_IsVoltage]: without it Run runs the current loop in every mode, a voltage UserCmd would be read as current.
+    Every mode value is stored. The voltage path is the build's [Motor_FeedbackMode_IsVoltage]: without it Run runs the current loop whatever the flag says.
 */
 inline void Motor_ApplyFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {

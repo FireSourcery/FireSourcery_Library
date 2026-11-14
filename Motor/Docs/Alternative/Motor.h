@@ -75,7 +75,7 @@
 //     Motor_Context_T * P_MOTOR;
 //     const VBus_T * P_VBUS; /* Read-only. static instance. */
 //     Phase_VOut_T PHASE;
-//     Phase_Analog_T PHASE_ANALOG;
+//     Phase_ADC_T PHASE_ADC;
 //     // RotorSensor_T SENSOR; /* Compile time default */
 //     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
 //     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */

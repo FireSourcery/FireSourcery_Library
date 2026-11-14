@@ -139,6 +139,11 @@ static inline bool _StateMachine_AcquireAsyncInput(StateMachine_Active_T * p_act
 #endif
 }
 
+/*
+    Unconditional enable. An input handler that sends an input to another machine (the controller's Fault_Entry and
+    Standby_Entry to each motor) nests two of these; the inner release opens interrupts for the rest of the outer
+    handler. Not changed here: Decision 0011.
+*/
 static inline void _StateMachine_ReleaseAsyncInput(StateMachine_Active_T * p_active)
 {
 #if defined(STATE_MACHINE_ASYNC_CRITICAL)

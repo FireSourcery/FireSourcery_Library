@@ -13,13 +13,13 @@ The convention the motor layer writes duties in, and the counter events it relie
 | State | Duties | Bridge |
 |---|---|---|
 | `Phase_ActivateV0` | 0/0/0 | every low side on: the terminals are shorted to the negative rail, and every low-side window is the whole period |
-| `Phase_ActivateT0` | 50 % | the state `Motor_Analog_Calibrate` measures the zero offsets in |
+| `Phase_ActivateT0` | 50 % | the state `Motor_ADC_Calibrate` measures the zero offsets in |
 | floating (`Phase_IsFloat`) | outputs off | neither side; the marks set V instead of I |
 
 ## Sign
 
 - Phase current is positive from the inverter into the motor.
-- A low-side sensor sees that current as a falling voltage, −i·R across the low-side R_DS(on) or shunt. `PHASE_ANALOG_I_SENSOR_INVERT` maps it back (`PHASE_ANALOG_I_POLARITY` −1). Define it where the sensor's output falls as that current rises.
+- A low-side sensor sees that current as a falling voltage, −i·R across the low-side R_DS(on) or shunt. `PHASE_ADC_I_SENSOR_INVERT` maps it back (`PHASE_ADC_I_POLARITY` −1). Define it where the sensor's output falls as that current rises.
 
 ## Counter events
 

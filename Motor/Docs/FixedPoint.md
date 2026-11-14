@@ -43,7 +43,7 @@ flowchart LR
 
 ### Bases
 
-V_base and I_base are the sensor full scales, [Phase_Board_T] `V_MAX_VOLTS` and `I_MAX_AMPS`, so ADC → pu is a shift (`Phase_Analog_VPuOf`, `Phase_Analog_IPuOf`). Derived bases follow the defining equations, so the pu equations keep their SI form. A base is free of time, or carries time through ω_base.
+V_base and I_base are the sensor full scales, [Phase_Board_T] `V_MAX_VOLTS` and `I_MAX_AMPS`, so ADC → pu is a shift (`Phase_ADC_VPuOf`, `Phase_ADC_IPuOf`). Derived bases follow the defining equations, so the pu equations keep their SI form. A base is free of time, or carries time through ω_base.
 
 #### Time-free
 

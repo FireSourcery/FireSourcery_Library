@@ -318,7 +318,7 @@ id yet.
 | Sub-states | File | Entered by | Does | Ends |
 |---|---|---|---|---|
 | `CALIBRATION_STATE_ELECTRICAL` | `Motor_CalibrationElectrical.c` | `Motor_Calibration_StartElectrical` | Rs, Ld, Lq at standstill: align 500 ms, Rs 200 ms, Ld step 50 ms, Lq by 1 kHz injection 50 ms; commits to `Config.Electrical` and re-inits the FOC parameters; ramps down 100 ms | the bare `CALIBRATION` |
-| `CALIBRATION_STATE` | `Motor_Analog.c` | `Motor_Analog_Calibrate` | T0, averages each phase's ADC for 2000 ms into `Config.IabcZeroRef_Adcu` | float; the bare `CALIBRATION` |
+| `CALIBRATION_STATE` | `Motor_ADC.c` | `Motor_ADC_Calibrate` | T0, averages each phase's ADC for 2000 ms into `Config.IabcZeroRef_Adcu` | float; the bare `CALIBRATION` |
 | `CALIBRATION_STATE_HALL` | `Motor_Hall.c` | `Motor_Hall_Calibrate`, `Motor_Hall_Cmd` | six current-mode align vectors (A, −C, B, −A, C, −B), reading the Hall state at each | float, voltage limit back to no direction; the bare `CALIBRATION`, or `FAULT` with `PositionSensor` on an invalid table |
 | `CALIBRATION_STATE_SIN_COS` | `Motor_SinCos.c` | `Motor_SinCos_Calibrate`, `Motor_SinCos_Cmd` | voltage align on A, captures the angle offset; on −C (+120°), captures the positive direction | float; the bare `CALIBRATION`, `PositionSensor` set if the verify fails |
 | `STATE_ENCODER_HOMING_ALIGN` → `STATE_ENCODER_HOMING` | `Motor_Encoder.c` | `Motor_Encoder_StartHoming`, the `CALIBRATION` input with the leaf | align until settled, capture the zero; then a voltage sweep at the align voltage until the index | float; the bare `CALIBRATION` on the index, `FAULT` with `PositionSensor` when the travel budget is spent |

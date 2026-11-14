@@ -5,7 +5,7 @@ and holds otherwise. Duties from midclamp SVPWM at circle radius r per V_bus. Cu
 
 Reads compared, current-vector error / peak current:
     3 phases:   Clarke of the three holds
-    2 of 3:     the highest-duty phase solved by i_a + i_b + i_c = 0 [_Phase_Analog_SolveI], optionally with handoff hysteresis
+    2 of 3:     the highest-duty phase solved by i_a + i_b + i_c = 0 [_Phase_ADC_SolveI], optionally with handoff hysteresis
 Also reports the error's harmonics in the current's rotating frame, the ripple the current loop sees.
 tau (switch on-resistance x 1 uF) is not measured; 5 and 10 us bracket it.
 Writes LowSideHold.png beside this file.

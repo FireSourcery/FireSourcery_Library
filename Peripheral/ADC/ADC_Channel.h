@@ -34,8 +34,8 @@
 
         static ADC_Channel_T ADC0_CHANNELS[] =
         {
-            [CHANNEL_VSOURCE]     = ADC_CHANNEL_INIT(&ADCS[0U], CHANNEL_VSOURCE, PIN_VSOURCE, &VBus, VBus_Analog_Capture),
-            [CHANNEL_MOTOR0_IA]   = ADC_CHANNEL_INIT(&ADCS[0U], CHANNEL_MOTOR0_IA, PIN_IA, &Motors[0U], Motor_Analog_CaptureIa),
+            [CHANNEL_VSOURCE]     = ADC_CHANNEL_INIT(&ADCS[0U], CHANNEL_VSOURCE, PIN_VSOURCE, &VBus, VBus_ADC_Capture),
+            [CHANNEL_MOTOR0_IA]   = ADC_CHANNEL_INIT(&ADCS[0U], CHANNEL_MOTOR0_IA, PIN_IA, &Motors[0U], Motor_ADC_CaptureIa),
         };
 
         void BOARD_ADC0_ISR(void) { ADC_Channel_OnComplete_ISR(&ADCS[0U], ADC0_CHANNELS); }

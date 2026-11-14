@@ -58,6 +58,7 @@ const StateMachine_Machine_T MCSM_MACHINE =
 
 /* Clear Latching */
 /* Main thread only sets [FaultFlags]. call to check clear. via results of Monitor State */
+/* Bit-field stores are read-modify-write of the word the 1 ms thread ORs into [TransitionFault]; not guarded: Decision 0010 */
 void MotorController_PollFaultFlags(MotorController_T * p_dev)
 {
     MotorController_Context_T * p_mc = p_dev->P_MC;
@@ -102,6 +103,8 @@ static State_T * Common_EnterStandby(MotorController_T * p_dev)
 /* Entry guard for Standby. Motor OpenLoop and Calibration exit on VOut Z, applied by Standby_Entry */
 static State_T * Common_InputStandby(MotorController_T * p_dev)
 {
+    /* Motors held at zero by a ZeroMode (RUN or TORQUE_ZERO at zero speed) release first: the guard refuses motion, not a hold, and Standby_Entry releases anyway */
+    if ((Common_IsStandbyReady(p_dev) == false) && (Motor_Table_IsEverySpeedZero(&p_dev->MOTORS) == true)) { Motor_Table_ApplyControl(&p_dev->MOTORS, PHASE_VOUT_Z); }
     if (Common_IsStandbyReady(p_dev) == false) { MotBuzzer_StandbyError(MotorController_Buzzer(p_dev)); return NULL; }
     return Common_EnterStandby(p_dev);
 }
@@ -531,14 +534,14 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_dev->MOT_NVM); /* NvM function will block + disable interrupts */
                 VBus_ResumeMonitor(p_dev->P_VBUS);
                 Motor_Table_ForEach(&p_dev->MOTORS, Motor_Reinit); /* Reinit from config, which may have been updated by NvM save */
-                opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
+                opStatus = (p_mc->NvmStatus == NV_MEMORY_STATUS_SUCCESS) ? MOTOR_CONTROLLER_LOCK_OP_STATUS_OK : MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
                 break;
 
             case MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG:
                 break;
 
             case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC: /* alternatively split */
-                Motor_Table_ForEach(&p_dev->MOTORS, Motor_Analog_Calibrate); /* Motor handles it own state */
+                Motor_Table_ForEach(&p_dev->MOTORS, Motor_ADC_Calibrate); /* Motor handles it own state */
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_LOCK_CALIBRATE_ADC; /* Enter Calibration SubState */
                 break;
@@ -666,8 +669,13 @@ static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_dev, s
     switch ((MotorController_LockId_T)lockId)
     {
         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
-            p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_dev->MOT_NVM);
-            p_mc->LockOpStatus = p_mc->NvmStatus;
+            /* The save runs with interrupts off: a motor still in SPEED_ZERO after a fault at speed would lose its current loop for the flash time */
+            if (Motor_Table_IsEverySpeedZero(&p_dev->MOTORS) == true)
+            {
+                p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_dev->MOT_NVM);
+                p_mc->LockOpStatus = (p_mc->NvmStatus == NV_MEMORY_STATUS_SUCCESS) ? MOTOR_CONTROLLER_LOCK_OP_STATUS_OK : MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
+            }
+            else { p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR; }
             break;
         default: break;
     }

@@ -31,7 +31,7 @@
 #include "Math/Fixed/fract16.h"
 #include "Phase/Phase_VOut.h"
 #include "Phase_Input/Phase_Input.h"
-#include "Phase_Input/Phase_Analog.h"
+#include "Phase_Input/Phase_ADC.h"
 #include "Phase_Input/Phase_Board.h"
 #include "VBus/VBus.h"
 #include "VBus/VBus_Monitor.h"
@@ -183,7 +183,7 @@ static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(int value) { return (
 
 /*
     Voltage modes, Current = 0: Run on the voltage path [Motor_FOC_ProcAngleV], TorqueRamp and SpeedPid output in V.
-    The one selection point of [MOTOR_VOLTAGE_CONTROL_MODE_ENABLE]. Without it the modes are rejected [Motor_ApplyFeedbackMode], and the voltage path folds out of Run.
+    The one selection point of [MOTOR_VOLTAGE_CONTROL_MODE_ENABLE]. Without it IsVoltage reads false for every mode: the flag is stored, Run runs the current loop, and the voltage path folds out.
 */
 #if defined(MOTOR_VOLTAGE_CONTROL_MODE_ENABLE)
 #if defined(MOTOR_I_FEEDBACK_ON_PHASE)
@@ -408,7 +408,7 @@ typedef const struct Motor
     Motor_Context_T * P_MOTOR;
     const VBus_T * P_VBUS; /* Read-only. static instance. */
     Phase_VOut_T PHASE;
-    Phase_Analog_T PHASE_ANALOG;
+    Phase_ADC_T PHASE_ADC;
     // RotorSensor_T SENSOR; /* Compile time default */
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
     StateMachine_T STATE_MACHINE;
@@ -743,6 +743,6 @@ extern void Motor_SetSpeedLimitDerate(Motor_Context_T * p_motor, ufract16_t rati
     This way sub modules contain handling details
 */
 // #include "Motor_Var.h"
-// #include "Analog/Motor_Analog.h"
+// #include "ADC/Motor_ADC.h"
 // #include "Sensor/Motor_Sensor.h"
 // #include "Motor_Config.h"

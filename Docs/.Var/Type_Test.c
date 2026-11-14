@@ -1,7 +1,7 @@
 
 #include "Motor/Motor/Motor_Var.h"
 
-#include "Motor/Motor/Analog/Motor_Analog.h" /* for calibration cmd */
+#include "Motor/Motor/ADC/Motor_ADC.h" /* for calibration cmd */
 #include "Motor/Motor/Motor_User.h"
 #include "Motor/Motor/Motor_Config.h"
 #include "Motor/Motor/Motor.h"

@@ -38,5 +38,5 @@
 #include "Motor_Config.h"
 #include "Motor.h"
 #include "Sensor/Motor_Sensor.h" /* TABLE INIT */
-#include "Analog/Motor_Analog.h" /* For Callbacks */
+#include "ADC/Motor_ADC.h" /* For Callbacks */
 

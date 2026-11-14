@@ -14,7 +14,6 @@
 // /*
 //     Optionally as Adc callback, per control cycle
 // */
-// static inline void VBus_ADC_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBus_Capture(p_vbus, Phase_Analog_VPuOf(adcu)); }
 // /* optionally separate filter for monitor vs vout scaling  */
 
 // /*  */
@@ -22,8 +21,8 @@
 // {
 //     switch (var_id)
 //     {
-//         case VDIVIDER_BOARD_R1: return PHASE_ANALOG_BOARD.V_PHASE_R1;
-//         case VDIVIDER_BOARD_R2: return PHASE_ANALOG_BOARD.V_PHASE_R2;
+//         case VDIVIDER_BOARD_R1: return PHASE_ADC_BOARD.V_PHASE_R1;
+//         case VDIVIDER_BOARD_R2: return PHASE_ADC_BOARD.V_PHASE_R2;
 //         default: return 0U;
 //     }
 // }

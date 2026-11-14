@@ -447,12 +447,16 @@ static MotVarId_Status_T CheckInputPolicy(MotorController_T * p_dev, MotVarId_T 
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_CALIBRATION):
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_ACTUATION):
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_PID):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_DEBUG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_ELECTRICAL):    /* re-derives the FOC parameters [Motor_FOC_InitParams]: not while RUN */
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_ELECTRICAL_PU):
             if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 
         // Motor Sub-module: Config
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE, MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG):
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE, MOTOR_VAR_TYPE_THERMISTOR_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE, MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG):
             if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 
@@ -476,6 +480,9 @@ static MotVarId_Status_T CheckInputPolicy(MotorController_T * p_dev, MotVarId_T 
         // General: Config
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_GENERAL, MOT_VAR_TYPE_GENERAL_CONFIG):
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_GENERAL, MOT_VAR_TYPE_ANALOG_USER_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_GENERAL, MOT_VAR_TYPE_OPT_DIN_CONFIG):    /* a limit written in DRIVE derates both quadrants within the second */
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_GENERAL, MOT_VAR_TYPE_USER_DIN_CONFIG):   /* CmdId resolves to a function at init only */
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_GENERAL, MOT_VAR_TYPE_USER_AIN_CONFIG):
             if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 

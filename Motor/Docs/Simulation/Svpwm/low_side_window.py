@@ -7,7 +7,7 @@ Low-side current sensing reads a phase only while its low-side switch conducts, 
     2 of 3 read:     the highest duty is left out, the middle sets it, 1/2 + (3/4)*r
 r = 1/2 reading 3 phases and r = 1/sqrt3 reading 2 of 3 both bottom out at 93.3 %.
 
-Also checks the third phase solved by i_a + i_b + i_c = 0 [_Phase_Analog_SolveI] through foc_clarke.
+Also checks the third phase solved by i_a + i_b + i_c = 0 [_Phase_ADC_SolveI] through foc_clarke.
 Writes LowSideWindow.png beside this file.
 """
 import math

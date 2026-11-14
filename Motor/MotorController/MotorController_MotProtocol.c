@@ -212,7 +212,8 @@ static Protocol_ReqCode_T WriteMem_Blocking(MotorController_T * p_dev, Packet_Xf
     if (MotorController_IsConfig(p_dev) == false) { status = NV_MEMORY_STATUS_ERROR_OTHER; }
     else switch ((MotProtocol_MemConfig_T)p_rxPayload->Config)
     {
-        case MOT_PROTOCOL_MEM_CONFIG_ONCE:        status = MotNvm_WriteManufacture_Blocking(&p_dev->MOT_NVM, p_rxPayload->Address, p_rxPayload->ByteData, p_rxPayload->Size); break;
+        /* Size bounds a write-once program and a 64-byte read buffer: never past the payload */
+        case MOT_PROTOCOL_MEM_CONFIG_ONCE:        status = (p_rxPayload->Size <= MOT_PACKET_MEM_WRITE_SIZE_MAX) ? MotNvm_WriteManufacture_Blocking(&p_dev->MOT_NVM, p_rxPayload->Address, p_rxPayload->ByteData, p_rxPayload->Size) : NV_MEMORY_STATUS_ERROR_BOUNDARY; break;
         case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF_0: status = (p_rxPayload->Size == sizeof(Phase_Board_T)) ? MotNvm_WritePhaseBoard(&p_dev->MOT_NVM, (const Phase_Board_T *)p_rxPayload->ByteData) : NV_MEMORY_STATUS_ERROR_BOUNDARY; break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }

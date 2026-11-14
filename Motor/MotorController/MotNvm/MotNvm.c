@@ -167,9 +167,9 @@ NvMemory_Status_T MotNvm_WritePhaseBoard(const MotNvm_T * p_motNvm, const Phase_
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_BOARD, (const void *)p_source, sizeof(Phase_Board_T));
 }
 
-NvMemory_Status_T MotNvm_WritePhaseAnalogBoard(const MotNvm_T * p_motNvm, const Phase_AnalogBoard_T * p_source)
+NvMemory_Status_T MotNvm_WritePhaseAnalogBoard(const MotNvm_T * p_motNvm, const Phase_AdcBoard_T * p_source)
 {
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_BOARD, (const void *)p_source, sizeof(Phase_AnalogBoard_T));
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ADC_BOARD, (const void *)p_source, sizeof(Phase_AdcBoard_T));
 }
 
 
@@ -214,9 +214,9 @@ By Id
 
 // NvMemory_Status_T MotNvm_WritePhaseSensorRefFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
 // {
-//     Phase_AnalogBoard_T buffer = { 0 };
+//     Phase_AdcBoard_T buffer = { 0 };
 //     HAL_Nvm_MapPhaseAnalogCalibration(p_source, &buffer); // callee cast away const
-//     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_BOARD, (const void *)&buffer, sizeof(Phase_AnalogBoard_T));
+//     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ADC_BOARD, (const void *)&buffer, sizeof(Phase_AdcBoard_T));
 // }
 
 // /*  */

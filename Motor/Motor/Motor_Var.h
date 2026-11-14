@@ -147,7 +147,7 @@ Motor_Var_OpenLoopCmd_T;
 typedef enum Motor_Var_CalibrationCmd
 {
     MOTOR_VAR_CALIBRATION_ENTER,    /* Enter first before calling Substate */
-    MOTOR_VAR_CALIBRATION_CMD_ADC,  /* Motor_Analog_Calibrate */
+    MOTOR_VAR_CALIBRATION_CMD_ADC,  /* Motor_ADC_Calibrate */
     MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME,
     MOTOR_VAR_CALIBRATION_CMD_ELECTRICAL,
     MOTOR_VAR_CALIBRATION_CMD_PID_TUNING,

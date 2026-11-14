@@ -21,7 +21,7 @@ flowchart TB
     MSM["Motor_StateMachine.h"]
     FOC["Motor_FOC.h"]
     Config["Motor_Config.h"]
-    Analog["Analog/Motor_Analog.h"]
+    Analog["ADC/Motor_ADC.h"]
     Motor["Motor.h"]
     Parts["Phase · Phase_Input · VBus<br/>Sensor/RotorSensor · Math/FOC<br/>Motor_Clock · Motor_Electrical"]
 

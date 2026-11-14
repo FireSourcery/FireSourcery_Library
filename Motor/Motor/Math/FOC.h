@@ -48,7 +48,7 @@
     ½ + (√3/2)·r [svpwm_midclamp_duty_peak], the middle ½ + (3/4)·r. At 1/2 that is 93.3 %, leaving the read 3.35 µs at 20 kHz. The window holds to:
         1/2     midclamp, the 3 phases read
         0.539   the ceiling √3/2 [svpwm_midclamp_ceiling], the 3 phases read [svpwm_midclamp_ceiling_radius]
-        1/√3    the 2 longest windows read [PHASE_ANALOG_I_SENSOR_LOW_SIDE], the linear limit first
+        1/√3    the 2 longest windows read [PHASE_ADC_I_SENSOR_LOW_SIDE], the linear limit first
 */
 #if !defined(FOC_V_CIRCLE_PER_V_BUS)
 #define FOC_V_CIRCLE_PER_V_BUS FRACT16_1_DIV_2

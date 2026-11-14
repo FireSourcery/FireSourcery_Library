@@ -77,7 +77,7 @@ with no ISR. Its readers pull from the buffer.
 ## 7. Capture in the unit the data lands in
 
 When a set lands at once, its consumer takes it in one call.
-- `Motor_Analog_CaptureIabc` takes the three phase currents.
+- `Motor_ADC_CaptureIabc` takes the three phase currents.
 - Instead of: one capture call per channel. Each call is a separate entry into the consumer, and its
   set is whole only after the last.
 

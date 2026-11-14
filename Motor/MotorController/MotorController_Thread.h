@@ -135,7 +135,7 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
     for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { ADC_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
     ADC_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
 
-    // for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_Heat_Thread(&p_dev->MOTORS.P_DEVS[i]); }
+    for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_Heat_Thread(&p_dev->MOTORS.P_DEVS[i]); } /* marks its channel only while the monitor is enabled */
 }
 
 /******************************************************************************/
@@ -304,7 +304,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_dev)
 static inline void MotorController_PWM_Thread(MotorController_T * p_dev)
 {
     // p_fields->MicrosRef = SysTime_GetMicros();
-    if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true)
+    if (_Motor_IsISampleCycle(p_dev->P_MC->ControlCounter) == true)
     {
         for (uint8_t i = 0U; i < p_dev->MOTORS.LENGTH; i++) { Motor_ADC_MarkPhases(&p_dev->MOTORS.P_DEVS[i]); }
     }

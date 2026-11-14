@@ -31,7 +31,7 @@
 /******************************************************************************/
 #include "Motor/Motor/Motor.h"
 #include "Motor/Motor/Motor_User.h"
-#include "Motor/Motor/Analog/Motor_Analog.h"
+#include "Motor/Motor/ADC/Motor_ADC.h"
 #include "Framework/Type/Array/void_array.h"
 
 
