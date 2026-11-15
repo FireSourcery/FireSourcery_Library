@@ -1,0 +1,17 @@
+{
+    // C/C++ extension (cpptools) IntelliSense. clangd does not read this file.
+    // Inside a product workspace, build flags come from that workspace's C_Cpp.default.compileCommands.
+    "configurations": [
+        {
+            "name": "FireSourcery_Library",
+            "intelliSenseMode": "windows-gcc-arm",
+            "cStandard": "gnu23",
+            "cppStandard": "gnu++23"
+            // "defines": [
+            //     "${default}",
+            //     "__GNUC__",
+            // ],
+        }
+    ],
+    "version": 4
+}

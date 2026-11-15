@@ -1,0 +1,3 @@
+# LF in the repository and in the working tree, on every OS.
+# eol=lf overrides core.autocrlf for every file git detects as text.
+* text=auto eol=lf

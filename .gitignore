@@ -60,6 +60,8 @@ Build/
 .vscode/*
 !.vscode/c_cpp_properties.json
 !.vscode/settings.json
+!.vscode/cspell.json
+!.vscode/project-words.txt
 
 .claude/
 Docs/.notes/

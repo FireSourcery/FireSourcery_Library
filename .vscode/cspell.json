@@ -1,0 +1,8 @@
+{
+    // Code Spell Checker and the cspell CLI. Project words live in project-words.txt; "Add Word to Dictionary" can write there.
+    "version": "0.2",
+    "dictionaryDefinitions": [
+        { "name": "project-words", "path": "./project-words.txt", "addWords": true }
+    ],
+    "dictionaries": ["project-words"],
+}
