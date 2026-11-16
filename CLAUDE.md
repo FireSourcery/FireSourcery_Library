@@ -34,10 +34,9 @@
 - Simulations go in `Motor/Docs/Simulation/<topic>/` with their plots; conventions in its [README.md](Motor/Docs/Simulation/README.md).
 
 ### Self-Improvement Loop
-- After ANY correction from the user: update `.claude/tasks/lessons.md` with the pattern
-- Write rules for yourself that prevent the same mistake
-- Ruthlessly iterate on these lessons until mistake rate drops
-- Review lessons at session start for relevant project
+- After ANY correction from the user: save it as a feedback memory, one fact with its why, written to prevent the same mistake
+- Memory is current state: trim it, and expire what no longer holds
+- A settled rule moves to its `Docs/` entry and leaves memory; one applied every session also gets a bullet here. Map: `E:\Claude\README.md` § Where knowledge goes
 - Research patterns before starting to code.
 
 ## Task Management
@@ -46,12 +45,12 @@
 3. **Track Progress**: Mark items complete as you go
 4. **Explain Changes**: High-level summary at each step
 5. **Document Results**: Add review section to `.claude/tasks/todo.md`
-6. **Capture Lessons**: Update `.claude/tasks/lessons.md` after corrections
+6. **Capture Corrections**: a feedback memory after each correction
 
 ## Build & Toolchain
 - **Compiler:** ARM GCC (`arm-none-eabi-gcc` 15.2.1)
 - **Target Architecture:** ARM Cortex-M4/M0+
-- **Build System:** Makefile / CMake
+- **Build:** none in this repo, sources only (`Build/` is empty, `library.json` is parked). It compiles inside the board project that consumes it; verify a change in that build.
 - **C Standard:** C23
 - **No dynamic allocation** — all memory is statically allocated
 

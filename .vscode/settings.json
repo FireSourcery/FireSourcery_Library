@@ -3,6 +3,9 @@
 
     "files.associations": {
         "*.h": "c",
+        // Both tools read comments; open them as JSON with comments
+        "c_cpp_properties.json": "jsonc",
+        "cspell.json": "jsonc",
     },
     "files.eol": "\n",
     "files.trimTrailingWhitespace": true,

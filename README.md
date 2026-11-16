@@ -2,8 +2,9 @@
 **Embedded C library** with a **Motor Control** stack for bare-metal MCU targets.
 A field-oriented control stack built from layers that also stand alone.
 
-C23, `arm-none-eabi-gcc`, Cortex-M0+ and Cortex-M4. No RTOS, no heap after init, no `stdio`. Fixed-point at runtime. In-tree platform: Kinetis KE0x.
+C23, `arm-none-eabi-gcc`, Cortex-M0+ and Cortex-M4. No RTOS, no heap after init, no `stdio`. Fixed-point at runtime.
 
+## Highlights
 - **Modular** — independently functional modules with minimized coupling.
 - **Portable** — hardware-independent core; chip specifics live behind a HAL.
 - **Reusable** — generic C primitives composed into higher-level behaviors.
@@ -13,14 +14,13 @@ C23, `arm-none-eabi-gcc`, Cortex-M0+ and Cortex-M4. No RTOS, no heap after init,
 ## Architecture
 [ARCHITECTURE.md](ARCHITECTURE.md) covers the full feature set, design patterns, layer and dependency diagrams, and integration.
 
-
 ## Motor Control Features
 - Field-Oriented Control (FOC).
 - Sensor support: Hall, Quadrature Encoder, Sine/Cosine.
 - Speed and current feedback loops.
 - Layered control behaviors built up from shared primitives.
 - Standard wire protocol for GUI / host tooling, with an Arduino-compatible wrapper.
--
+
 ## Layout
 ### Motor — Motor control stack
 - `Motor/Motor` — per-motor functions and state for operating a single motor.

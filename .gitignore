@@ -66,3 +66,6 @@ Build/
 .claude/
 Docs/.notes/
 **/.obsidian/
+
+# graphify knowledge graph output (code-only), rebuilt with `graphify update .`
+graphify-out/

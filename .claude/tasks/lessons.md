@@ -1,7 +1,0 @@
-- Keep FOC interfaces in FOC vocabulary by passing resolved electrical constraints or FOC-side policies, not supervisor terms.
-- Separate static policy from dynamic authority: store static V bands, resolve speed or EEMF keyed overlays inside FOC each control cycle.
-- Keep one-shot workflow progress in its owning state machine or timer; do not add workflow flags or accumulators to an ISR-hot sensor state unless every pulse-path consumer requires them.
-- For ADC architecture questions, reason from the trigger and batch contract directly; treat vendor register guides as hardware context, not as the generic design model.
-- Untypedef'd structs (`struct foc_dq`, `struct sta_axis`) are only a pure function's multiple returns: unpack them into typed fields at the call. Never store one in a stateful struct, or pass or return one through a stateful function, private helpers included.
-- Judge whether a function or type should exist by whether it names an established, published concept (physical, mathematical, control or DSP), not by whether it is physics. A stateful math struct is an equation in a struct, not a physical model (Docs/Patterns/EquationStruct.md).
-- Write each medium's notation for its own highlighter: an entity that exists in code goes in backticks in markdown (`TypeName_T`, `MOTOR_STATE_INIT`, even `INIT`) and in brackets in C comments (`[TypeName_T]`). A convention stated for one medium does not carry into the other.
