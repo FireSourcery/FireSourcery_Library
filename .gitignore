@@ -69,3 +69,13 @@ Docs/.notes/
 
 # graphify knowledge graph output (code-only), rebuilt with `graphify update .`
 graphify-out/
+
+# Understand-Anything graph (.ua/): view it with .ua/dashboard.ps1.
+# Analysis scratch stays local. scan-result.json is kept: incremental /understand starts from it.
+.ua/intermediate/*
+!.ua/intermediate/scan-result.json
+.ua/tmp/
+.ua/.trash-*/
+
+.temp/
+.ignore/

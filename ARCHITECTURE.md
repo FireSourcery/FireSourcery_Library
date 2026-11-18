@@ -137,13 +137,7 @@ Peripheral interrupts (UART, CAN, encoder edges) call their module's `*_ISR` han
 
 ## Directory Map
 
-```mermaid
----
-config:
-  treeView:
-    showIcons: true
----
-treeView-beta
+```text
 ├── Docs/                                      ## architecture notes and findings, index Docs/README.md
 ├── External/                                  ## vendor headers
 │   ├── CMSIS/                                 ## Cortex-M core

@@ -19,8 +19,6 @@
     "editor.formatOnPaste": false,
     "editor.indentSize": "tabSize",
     "editor.detectIndentation": false,
-    // "editor.semanticHighlighting.enabled": "configuredByTheme",
-    // "editor.semanticHighlighting.enabled": false,
     "editor.rulers": [
         80,
         160,

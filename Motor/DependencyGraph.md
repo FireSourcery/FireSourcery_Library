@@ -8,7 +8,6 @@ Include graph of the `Motor/Motor` and `Motor/MotorController` headers. Arrows p
 ---
 config:
   flowchart:
-    wrappingWidth: 600
 ---
 flowchart TB
     Include["Motor_Include.h"]
@@ -45,7 +44,6 @@ flowchart TB
 ---
 config:
   flowchart:
-    wrappingWidth: 600
 ---
 flowchart TB
     Include["MotorController_Include.h"]

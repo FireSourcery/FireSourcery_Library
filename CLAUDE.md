@@ -88,6 +88,7 @@
 - **snake_case** for pure functions on primitives
 - Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `UART_`, etc.
 - Files prefixed with `_` (e.g., `_Motor_Config.h`) are internal/private headers not intended for external inclusion
+- A folder or file whose name starts with `.` is outside the library proper (a sketch, retired code, tool data), and so is a draft note `_*.md`. Skip it unless a task names it: no search, review, metrics, findings or graph nodes, and never cite it as the current design. [Docs/Conventions/LeadingDot.md](Docs/Conventions/LeadingDot.md)
 - Public API headers match the module directory name: `Motor.h`, `StateMachine.h`, `Protocol.h`
 
 ## API Design

@@ -8,7 +8,7 @@ Adopted 2026-11-14 in place of the earlier plan to mirror source paths under `Do
 Rules and patterns that apply across modules go in [../Conventions/](../Conventions/) and
 [../Patterns/](../Patterns/README.md). A module's `README.md` stays in the module's folder, as its
 GitHub landing page. `Motor/Docs/` keeps what is not a module note: `Simulation/`, `Reference/`,
-`Alternative/`, `todo.md`.
+`.Alternative/`, `todo.md`.
 
 Finding a module's notes: `git ls-files '*.md' | grep -v Docs/` lists them; the sheet/detail pair is
 `<Topic>.md` + `<Topic>.exp.md`.

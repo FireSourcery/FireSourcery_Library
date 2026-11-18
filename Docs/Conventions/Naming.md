@@ -272,6 +272,8 @@ typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
 
 ## Module Directory
 
+A leading `.` on a folder or file marks it outside the library proper: [LeadingDot.md](LeadingDot.md).
+
 Subtypes (child depends on parent, child IS-A parent)
 Components (parent depends on child, child is part-of parent)
 Parts (Related group, outer or inner)

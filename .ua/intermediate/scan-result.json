@@ -1,0 +1,4198 @@
+{
+  "name": "FireSourcery_Library",
+  "description": "Embedded C library (C23, arm-none-eabi-gcc, Cortex-M0+/M4) with a field-oriented motor control stack for bare-metal MCU targets: no RTOS, no heap after init, fixed-point at runtime. Generic Math, Framework and Type primitives, a Peripheral abstraction with a per-chip HAL, and Transducer algorithms sit beneath the Motor, MotorController and MotProtocol layers. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
+  "languages": [
+    "c",
+    "json",
+    "markdown",
+    "python"
+  ],
+  "frameworks": [],
+  "contentDigest": "97fa7f65846b835d463ee552a9fcc5601ce6eb0e5bdd17d035a0e1778a95a062",
+  "files": [
+    {
+      "path": "ARCHITECTURE.md",
+      "language": "markdown",
+      "sizeLines": 267,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "sizeLines": 113,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/ApiScoping.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/Comments.md",
+      "language": "markdown",
+      "sizeLines": 62,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/ConditionalCompilation.md",
+      "language": "markdown",
+      "sizeLines": 35,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/ConfigValidity.md",
+      "language": "markdown",
+      "sizeLines": 19,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/Config_State_Ref.md",
+      "language": "markdown",
+      "sizeLines": 102,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/FixedPoint.md",
+      "language": "markdown",
+      "sizeLines": 258,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/HardwareBinding.md",
+      "language": "markdown",
+      "sizeLines": 119,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/InitMacros.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/MergingDuplicates.md",
+      "language": "markdown",
+      "sizeLines": 17,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/ModeOverBool.md",
+      "language": "markdown",
+      "sizeLines": 25,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/Naming.md",
+      "language": "markdown",
+      "sizeLines": 307,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Conventions/ValueOverBool.md",
+      "language": "markdown",
+      "sizeLines": 38,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0001_ParameterWriteAdmission.md",
+      "language": "markdown",
+      "sizeLines": 25,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0002_LinearThrottleLayering.md",
+      "language": "markdown",
+      "sizeLines": 22,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0003_PhaseOutputOwnership.md",
+      "language": "markdown",
+      "sizeLines": 41,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0004_PiSlidingAntiWindup.md",
+      "language": "markdown",
+      "sizeLines": 46,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0005_ILimitFrames.md",
+      "language": "markdown",
+      "sizeLines": 49,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0006_RampLimitsOnInput.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0007_SpeedPuBound.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0008_PersistenceById.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0009_DirectionPolicy.md",
+      "language": "markdown",
+      "sizeLines": 65,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0010_SharedWordWrites.md",
+      "language": "markdown",
+      "sizeLines": 41,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/0011_StateMachineLockNesting.md",
+      "language": "markdown",
+      "sizeLines": 38,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Decisions/README.md",
+      "language": "markdown",
+      "sizeLines": 40,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Findings/2026-10-14_CorruptLooseBlobs.md",
+      "language": "markdown",
+      "sizeLines": 22,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Findings/2026-11-04_HwScanBindingSimplification.md",
+      "language": "markdown",
+      "sizeLines": 52,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Findings/README.md",
+      "language": "markdown",
+      "sizeLines": 29,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Modules/README.md",
+      "language": "markdown",
+      "sizeLines": 14,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/Descriptor.md",
+      "language": "markdown",
+      "sizeLines": 94,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/DescriptorPattern.md",
+      "language": "markdown",
+      "sizeLines": 88,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/DescriptorTemplate.md",
+      "language": "markdown",
+      "sizeLines": 97,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/EdgePollSnapshot.md",
+      "language": "markdown",
+      "sizeLines": 32,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/EnumNamedValues.md",
+      "language": "markdown",
+      "sizeLines": 114,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/EquationStruct.md",
+      "language": "markdown",
+      "sizeLines": 161,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/Facets.md",
+      "language": "markdown",
+      "sizeLines": 40,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/FunctionPointerCasting.md",
+      "language": "markdown",
+      "sizeLines": 47,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/GuardedCall.md",
+      "language": "markdown",
+      "sizeLines": 56,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/HwSequencedScan.md",
+      "language": "markdown",
+      "sizeLines": 72,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/ProtocolStack.md",
+      "language": "markdown",
+      "sizeLines": 52,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/README.md",
+      "language": "markdown",
+      "sizeLines": 57,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Patterns/WrapperSurface.md",
+      "language": "markdown",
+      "sizeLines": 92,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Principles/DominantDecomposition.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Principles/InformationExpert.md",
+      "language": "markdown",
+      "sizeLines": 27,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Principles/InterfaceSegregation.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Principles/README.md",
+      "language": "markdown",
+      "sizeLines": 32,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/Principles/StructSemantics.md",
+      "language": "markdown",
+      "sizeLines": 45,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/README.md",
+      "language": "markdown",
+      "sizeLines": 24,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Docs/References/README.md",
+      "language": "markdown",
+      "sizeLines": 4,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Framework/LimitArray/LimitArray.c",
+      "language": "c",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/LimitArray/LimitArray.h",
+      "language": "c",
+      "sizeLines": 298,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Extension/Datagram.c",
+      "language": "c",
+      "sizeLines": 243,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Extension/Datagram.h",
+      "language": "c",
+      "sizeLines": 196,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Extension/Datagram.md",
+      "language": "markdown",
+      "sizeLines": 32,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Framework/Protocol/Extension/Protocol_DataMode.h",
+      "language": "c",
+      "sizeLines": 522,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Extension/Protocol_FlashLoader.h",
+      "language": "c",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Packet.h",
+      "language": "c",
+      "sizeLines": 470,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Packet_RxParser.h",
+      "language": "c",
+      "sizeLines": 287,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Protocol.h",
+      "language": "c",
+      "sizeLines": 538,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Protocol_Request.h",
+      "language": "c",
+      "sizeLines": 368,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Protocol_Sync.h",
+      "language": "c",
+      "sizeLines": 301,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/README.md",
+      "language": "markdown",
+      "sizeLines": 91,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Framework/Protocol/Socket.c",
+      "language": "c",
+      "sizeLines": 163,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/Socket.h",
+      "language": "c",
+      "sizeLines": 241,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Protocol/comments.md",
+      "language": "markdown",
+      "sizeLines": 54,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Framework/Ring/Ring.c",
+      "language": "c",
+      "sizeLines": 353,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Ring/Ring.h",
+      "language": "c",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Ring/RingT.h",
+      "language": "c",
+      "sizeLines": 268,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Ring/_RingT.h",
+      "language": "c",
+      "sizeLines": 255,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/Architecture.md",
+      "language": "markdown",
+      "sizeLines": 516,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Framework/StateMachine/Extension/StateMachine_Part.h",
+      "language": "c",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/Extension/StateMachine_Sync.h",
+      "language": "c",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/Extension/_StateMachine_FaultState.c",
+      "language": "c",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/Extension/_StateMachine_Linked.c",
+      "language": "c",
+      "sizeLines": 95,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/InputVsLoop.md",
+      "language": "markdown",
+      "sizeLines": 198,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Framework/StateMachine/README.md",
+      "language": "markdown",
+      "sizeLines": 9,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Framework/StateMachine/State.h",
+      "language": "c",
+      "sizeLines": 258,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/StateMachine.c",
+      "language": "c",
+      "sizeLines": 44,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/StateMachine.h",
+      "language": "c",
+      "sizeLines": 310,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/StateMachine_Thread.h",
+      "language": "c",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/State_PathId.h",
+      "language": "c",
+      "sizeLines": 111,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_State.h",
+      "language": "c",
+      "sizeLines": 209,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_StateMachine.c",
+      "language": "c",
+      "sizeLines": 214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_StateMachine.h",
+      "language": "c",
+      "sizeLines": 169,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_StateMachine_Internal.h",
+      "language": "c",
+      "sizeLines": 70,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_StateMachine_Lock.h",
+      "language": "c",
+      "sizeLines": 226,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_StateMachine_Tree.c",
+      "language": "c",
+      "sizeLines": 299,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_StateMachine_Tree.h",
+      "language": "c",
+      "sizeLines": 136,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_State_Node.c",
+      "language": "c",
+      "sizeLines": 411,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/StateMachine/_State_Node.h",
+      "language": "c",
+      "sizeLines": 112,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Timer/Timer.h",
+      "language": "c",
+      "sizeLines": 117,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Timer/TimerT.h",
+      "language": "c",
+      "sizeLines": 117,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Timer/Timer_General.h",
+      "language": "c",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Timer/_TimerT.h",
+      "language": "c",
+      "sizeLines": 318,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Timer/math_counter.h",
+      "language": "c",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Transient/Transient.c",
+      "language": "c",
+      "sizeLines": 193,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Transient/Transient.h",
+      "language": "c",
+      "sizeLines": 145,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Type/Array/Array.h",
+      "language": "c",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Type/Array/void_array.h",
+      "language": "c",
+      "sizeLines": 277,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Type/Bits/bits.h",
+      "language": "c",
+      "sizeLines": 96,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Type/Field/Field.h",
+      "language": "c",
+      "sizeLines": 153,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Type/Word/Version.h",
+      "language": "c",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Type/Word/Word.h",
+      "language": "c",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Type/accessor.h",
+      "language": "c",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Framework/Type/void_pointer.h",
+      "language": "c",
+      "sizeLines": 134,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Accumulator/Accumulator.c",
+      "language": "c",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Accumulator/Accumulator.h",
+      "language": "c",
+      "sizeLines": 172,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Angle/Angle.h",
+      "language": "c",
+      "sizeLines": 252,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Angle/AngleCounter.h",
+      "language": "c",
+      "sizeLines": 206,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Angle/AnglePll.h",
+      "language": "c",
+      "sizeLines": 246,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Angle/Angle_SpeedPu.h",
+      "language": "c",
+      "sizeLines": 109,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Angle/angle_counter_math.h",
+      "language": "c",
+      "sizeLines": 222,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Angle/angle_speed_math.h",
+      "language": "c",
+      "sizeLines": 186,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Filter/MovAvg.h",
+      "language": "c",
+      "sizeLines": 80,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Filter/mov_avg_math.h",
+      "language": "c",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Fixed/angle16.h",
+      "language": "c",
+      "sizeLines": 134,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Fixed/fixed.c",
+      "language": "c",
+      "sizeLines": 251,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Fixed/fixed.h",
+      "language": "c",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Fixed/fract16.c",
+      "language": "c",
+      "sizeLines": 231,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Fixed/fract16.h",
+      "language": "c",
+      "sizeLines": 266,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Fixed/fract16e.h",
+      "language": "c",
+      "sizeLines": 162,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/HAL/interval_fixed.h",
+      "language": "c",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/HAL/math_general_fixed.h",
+      "language": "c",
+      "sizeLines": 85,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/HAL/math_general_float.h",
+      "language": "c",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/HAL/real.h",
+      "language": "c",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/HAL/real_fixed.h",
+      "language": "c",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/HAL/real_float.h",
+      "language": "c",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Hysteresis/Hysteresis.h",
+      "language": "c",
+      "sizeLines": 338,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Hysteresis/hysteresis_math.h",
+      "language": "c",
+      "sizeLines": 199,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Linear/Linear.c",
+      "language": "c",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Linear/Linear.h",
+      "language": "c",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Linear/linear_math.h",
+      "language": "c",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/PID/PID.c",
+      "language": "c",
+      "sizeLines": 255,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/PID/PID.h",
+      "language": "c",
+      "sizeLines": 164,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Ramp/Ramp.c",
+      "language": "c",
+      "sizeLines": 185,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Ramp/Ramp.h",
+      "language": "c",
+      "sizeLines": 156,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Ramp/Ramp_Setpoint.h",
+      "language": "c",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/Threshold/Threshold.h",
+      "language": "c",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/bits_math.h",
+      "language": "c",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/edge_fn.h",
+      "language": "c",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Math/math_general.h",
+      "language": "c",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/DependencyGraph.md",
+      "language": "markdown",
+      "sizeLines": 74,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Docs/Simulation/ISample/isample_model.py",
+      "language": "python",
+      "sizeLines": 373,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/ISample/isample_plots.py",
+      "language": "python",
+      "sizeLines": 227,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/ISample/isample_sequences.py",
+      "language": "python",
+      "sizeLines": 191,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/ISample/pwm_sample_sequences.py",
+      "language": "python",
+      "sizeLines": 144,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/ISample/pwm_sample_sequences.txt",
+      "language": "txt",
+      "sizeLines": 74,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Docs/Simulation/README.md",
+      "language": "markdown",
+      "sizeLines": 35,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Sensorless/sensorless_geometry.py",
+      "language": "python",
+      "sizeLines": 570,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Sensorless/sensorless_model.py",
+      "language": "python",
+      "sizeLines": 114,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Sensorless/sensorless_sequence.py",
+      "language": "python",
+      "sizeLines": 429,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Sensorless/sensorless_sequence_fixed.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/MidClampBlend.md",
+      "language": "markdown",
+      "sizeLines": 27,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/SVPWM_SectorID.py",
+      "language": "python",
+      "sizeLines": 78,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/Saddle384.py",
+      "language": "python",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/low_side_hold.py",
+      "language": "python",
+      "sizeLines": 135,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/low_side_window.py",
+      "language": "python",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/low_side_zero_sequence.py",
+      "language": "python",
+      "sizeLines": 379,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/low_side_zero_sequence_blend.py",
+      "language": "python",
+      "sizeLines": 272,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_blend.py",
+      "language": "python",
+      "sizeLines": 136,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_blend_analysis.py",
+      "language": "python",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_blend_duty.py",
+      "language": "python",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_blend_k.py",
+      "language": "python",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_blend_schedule.py",
+      "language": "python",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_blend_shift.py",
+      "language": "python",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py",
+      "language": "python",
+      "sizeLines": 133,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_analysis.py",
+      "language": "python",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_compare.py",
+      "language": "python",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_duty.py",
+      "language": "python",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_regime.py",
+      "language": "python",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_spread.py",
+      "language": "python",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_clamp_k.py",
+      "language": "python",
+      "sizeLines": 340,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/Svpwm/svpwm_midclamp.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/atan2.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/Simulation/pwm_sample_timing.py",
+      "language": "python",
+      "sizeLines": 162,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Docs/todo.md",
+      "language": "markdown",
+      "sizeLines": 0,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/MotProtocol/CANopen/CANopen.h",
+      "language": "c",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/CANopen/OD.h",
+      "language": "c",
+      "sizeLines": 236,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/CANopen/PDO.c",
+      "language": "c",
+      "sizeLines": 180,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/CANopen/PDO.h",
+      "language": "c",
+      "sizeLines": 283,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/CANopen/SDO.h",
+      "language": "c",
+      "sizeLines": 192,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/Cia402/Cia402.c",
+      "language": "c",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/Cia402/Cia402.h",
+      "language": "c",
+      "sizeLines": 550,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/Cia402/Cia402_Pdo.c",
+      "language": "c",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/Cia402/Cia402_Pdo.h",
+      "language": "c",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/Cia402/MotorController_Cia402.c",
+      "language": "c",
+      "sizeLines": 300,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/Cia402/MotorController_Cia402.h",
+      "language": "c",
+      "sizeLines": 70,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/Cia402/Motor_Cia402.c",
+      "language": "c",
+      "sizeLines": 443,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/Cia402/Motor_Cia402.h",
+      "language": "c",
+      "sizeLines": 141,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotCan/MotCan.h",
+      "language": "c",
+      "sizeLines": 260,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotCan/MotorController_MotCan.h",
+      "language": "c",
+      "sizeLines": 224,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotCan/README.md",
+      "language": "markdown",
+      "sizeLines": 278,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/MotProtocol/MotPacket.c",
+      "language": "c",
+      "sizeLines": 218,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotPacket.h",
+      "language": "c",
+      "sizeLines": 364,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotPacket_Frame.md",
+      "language": "markdown",
+      "sizeLines": 137,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/MotProtocol/MotProtocol.c",
+      "language": "c",
+      "sizeLines": 249,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotProtocol.h",
+      "language": "c",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotVarId/MotVarId.h",
+      "language": "c",
+      "sizeLines": 283,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotVarId/Motor_MotVar.c",
+      "language": "c",
+      "sizeLines": 293,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotVarId/Motor_MotVar.h",
+      "language": "c",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotProtocol/MotVarId/VarIdMap.md",
+      "language": "markdown",
+      "sizeLines": 199,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/ADC/CurrentSampling.md",
+      "language": "markdown",
+      "sizeLines": 30,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/ADC/Motor_ADC.c",
+      "language": "c",
+      "sizeLines": 122,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/ADC/Motor_ADC.h",
+      "language": "c",
+      "sizeLines": 112,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/ControlCycleDataFlow.md",
+      "language": "markdown",
+      "sizeLines": 101,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Extension/Motor_Debug.h",
+      "language": "c",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Extension/Motor_Instance.h",
+      "language": "c",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Extension/Motor_Table.h",
+      "language": "c",
+      "sizeLines": 186,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/LimitChain.md",
+      "language": "markdown",
+      "sizeLines": 101,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Math/FOC.c",
+      "language": "c",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/FOC.h",
+      "language": "c",
+      "sizeLines": 780,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/FOC_Ext.h",
+      "language": "c",
+      "sizeLines": 185,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/LimitPhysics.md",
+      "language": "markdown",
+      "sizeLines": 88,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Math/ModulationLimit.md",
+      "language": "markdown",
+      "sizeLines": 94,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Math/VLimitPolicy.md",
+      "language": "markdown",
+      "sizeLines": 107,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Math/_dq0.h",
+      "language": "c",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/_svpwm_sector.h",
+      "language": "c",
+      "sizeLines": 219,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/foc_math.h",
+      "language": "c",
+      "sizeLines": 446,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/foc_sensorless_math.h",
+      "language": "c",
+      "sizeLines": 237,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/motor_electrical_math.h",
+      "language": "c",
+      "sizeLines": 423,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/motor_electrical_math.md",
+      "language": "markdown",
+      "sizeLines": 322,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Math/smo_math.h",
+      "language": "c",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/stator_math.h",
+      "language": "c",
+      "sizeLines": 104,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Math/svpwm_math.h",
+      "language": "c",
+      "sizeLines": 214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Model/EmfObserver.h",
+      "language": "c",
+      "sizeLines": 457,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Model/Motor_Limits.h",
+      "language": "c",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Model/Motor_Types.h",
+      "language": "c",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Model/Stator.h",
+      "language": "c",
+      "sizeLines": 145,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor.c",
+      "language": "c",
+      "sizeLines": 462,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor.h",
+      "language": "c",
+      "sizeLines": 748,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_Clock.h",
+      "language": "c",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_Config.c",
+      "language": "c",
+      "sizeLines": 628,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_Config.h",
+      "language": "c",
+      "sizeLines": 163,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_Electrical.h",
+      "language": "c",
+      "sizeLines": 237,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_FOC.c",
+      "language": "c",
+      "sizeLines": 398,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_FOC.h",
+      "language": "c",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_Include.h",
+      "language": "c",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_StateMachine.c",
+      "language": "c",
+      "sizeLines": 987,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_StateMachine.h",
+      "language": "c",
+      "sizeLines": 279,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_StateMachine.md",
+      "language": "markdown",
+      "sizeLines": 360,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Motor_StateTree.md",
+      "language": "markdown",
+      "sizeLines": 360,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Motor_Thread.h",
+      "language": "c",
+      "sizeLines": 153,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_User.c",
+      "language": "c",
+      "sizeLines": 421,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_User.h",
+      "language": "c",
+      "sizeLines": 257,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_Var.c",
+      "language": "c",
+      "sizeLines": 348,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Motor_Var.h",
+      "language": "c",
+      "sizeLines": 233,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase/Phase_Polar.c",
+      "language": "c",
+      "sizeLines": 204,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase/Phase_Polar.h",
+      "language": "c",
+      "sizeLines": 79,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase/Phase_Svpwm.h",
+      "language": "c",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase/Phase_Types.h",
+      "language": "c",
+      "sizeLines": 303,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase/Phase_VOut.c",
+      "language": "c",
+      "sizeLines": 182,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase/Phase_VOut.h",
+      "language": "c",
+      "sizeLines": 361,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase/PwmConvention.md",
+      "language": "markdown",
+      "sizeLines": 52,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Phase_Input/Phase_ADC.h",
+      "language": "c",
+      "sizeLines": 264,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase_Input/Phase_Board.h",
+      "language": "c",
+      "sizeLines": 139,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Phase_Input/Phase_Input.h",
+      "language": "c",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Encoder/Encoder_Sensor.c",
+      "language": "c",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Encoder/Encoder_Sensor.h",
+      "language": "c",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Encoder/Motor_Encoder.c",
+      "language": "c",
+      "sizeLines": 563,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Encoder/Motor_Encoder.h",
+      "language": "c",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Hall/Hall.c",
+      "language": "c",
+      "sizeLines": 174,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Hall/Hall.h",
+      "language": "c",
+      "sizeLines": 397,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Hall/Hall_Sensor.c",
+      "language": "c",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Hall/Hall_Sensor.h",
+      "language": "c",
+      "sizeLines": 161,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Hall/Motor_Hall.c",
+      "language": "c",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Hall/Motor_Hall.h",
+      "language": "c",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Hall/Motor_HallEncoder.h",
+      "language": "c",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Motor_Sensor.c",
+      "language": "c",
+      "sizeLines": 74,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Motor_Sensor.h",
+      "language": "c",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/RotorSensor.c",
+      "language": "c",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/RotorSensor.h",
+      "language": "c",
+      "sizeLines": 267,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/RotorSensorInterface.md",
+      "language": "markdown",
+      "sizeLines": 226,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Sensor/RotorSensor_Table.c",
+      "language": "c",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/RotorSensor_Table.h",
+      "language": "c",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Sensorless/Motor_Sensorless.c",
+      "language": "c",
+      "sizeLines": 388,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Sensorless/Motor_Sensorless.h",
+      "language": "c",
+      "sizeLines": 80,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Sensorless/Sensorless.exp.md",
+      "language": "markdown",
+      "sizeLines": 110,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Sensorless/Sensorless.md",
+      "language": "markdown",
+      "sizeLines": 428,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Sensorless/SensorlessMath.md",
+      "language": "markdown",
+      "sizeLines": 83,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.c",
+      "language": "c",
+      "sizeLines": 133,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.h",
+      "language": "c",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/SinCos/Motor_SinCos.c",
+      "language": "c",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/SinCos/Motor_SinCos.h",
+      "language": "c",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/SinCos/SinCos.c",
+      "language": "c",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/SinCos/SinCos.h",
+      "language": "c",
+      "sizeLines": 147,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/SinCos/SinCos_Analog.h",
+      "language": "c",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/SinCos/SinCos_Sensor.c",
+      "language": "c",
+      "sizeLines": 95,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/Sensor/SinCos/SinCos_Sensor.h",
+      "language": "c",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/StateMachine/Motor_Calibration.c",
+      "language": "c",
+      "sizeLines": 391,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/StateMachine/Motor_Calibration.h",
+      "language": "c",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/StateMachine/Motor_CalibrationElectrical.c",
+      "language": "c",
+      "sizeLines": 392,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/StateMachine/Motor_Intervention.c",
+      "language": "c",
+      "sizeLines": 233,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/StateMachine/Motor_Intervention.h",
+      "language": "c",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/StateMachine/Motor_OpenLoop.c",
+      "language": "c",
+      "sizeLines": 320,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/StateMachine/Motor_OpenLoop.h",
+      "language": "c",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/VBus/VBus.c",
+      "language": "c",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/VBus/VBus.h",
+      "language": "c",
+      "sizeLines": 335,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/VBus/VBus_ADC.h",
+      "language": "c",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/VBus/VBus_Config.h",
+      "language": "c",
+      "sizeLines": 232,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/VBus/VBus_FOC.h",
+      "language": "c",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/Motor/VBus/VBus_Monitor.h",
+      "language": "c",
+      "sizeLines": 77,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/AppTable/MotorController_AppTable.c",
+      "language": "c",
+      "sizeLines": 96,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/AppTable/MotorController_AppTable.h",
+      "language": "c",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/ILimitsRouting.md",
+      "language": "markdown",
+      "sizeLines": 91,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/MotorController/MotAnalogUser/MotAnalogUser.h",
+      "language": "c",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotAnalogUser/MotorController_AnalogUser.h",
+      "language": "c",
+      "sizeLines": 180,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotAnalogUser/OptPin/MotorController_OptPin.h",
+      "language": "c",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotAnalogUser/OptPin/MotorController_StandbyPin.h",
+      "language": "c",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotAnalogUser/OptPin/MotorController_SwitchBrake.h",
+      "language": "c",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotAnalogUser/OptPin/OptDin.h",
+      "language": "c",
+      "sizeLines": 191,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotAnalogUser/Shifter/Shifter.c",
+      "language": "c",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotAnalogUser/Shifter/Shifter.h",
+      "language": "c",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotBuzzer/MotBuzzer.h",
+      "language": "c",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotLimits/MotLimits.h",
+      "language": "c",
+      "sizeLines": 92,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotLimits/MotorController_MotLimits.h",
+      "language": "c",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotNvm/MotNvm.c",
+      "language": "c",
+      "sizeLines": 245,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotNvm/MotNvm.h",
+      "language": "c",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController.c",
+      "language": "c",
+      "sizeLines": 214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController.h",
+      "language": "c",
+      "sizeLines": 361,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_Analog.c",
+      "language": "c",
+      "sizeLines": 111,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_Analog.h",
+      "language": "c",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_App.h",
+      "language": "c",
+      "sizeLines": 75,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_Include.h",
+      "language": "c",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_MotProtocol.c",
+      "language": "c",
+      "sizeLines": 285,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_MotProtocol.h",
+      "language": "c",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_StateMachine.c",
+      "language": "c",
+      "sizeLines": 723,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_StateMachine.h",
+      "language": "c",
+      "sizeLines": 365,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_StateMachine.md",
+      "language": "markdown",
+      "sizeLines": 475,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_Thread.h",
+      "language": "c",
+      "sizeLines": 320,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_User.c",
+      "language": "c",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_User.h",
+      "language": "c",
+      "sizeLines": 178,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_Var.c",
+      "language": "c",
+      "sizeLines": 613,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/MotorController_Var.h",
+      "language": "c",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/Traction/MotorController_Traction.c",
+      "language": "c",
+      "sizeLines": 648,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/Traction/MotorController_Traction.h",
+      "language": "c",
+      "sizeLines": 102,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/Traction/MotorController_Traction.md",
+      "language": "markdown",
+      "sizeLines": 330,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/MotorController/Traction/Traction.c",
+      "language": "c",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/MotorController/Traction/Traction.h",
+      "language": "c",
+      "sizeLines": 232,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Motor/StateMachineOverview.md",
+      "language": "markdown",
+      "sizeLines": 216,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/ThreadOwnership.md",
+      "language": "markdown",
+      "sizeLines": 118,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Motor/Version.h",
+      "language": "c",
+      "sizeLines": 74,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/ADC.h",
+      "language": "c",
+      "sizeLines": 231,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/ADC_Batch.h",
+      "language": "c",
+      "sizeLines": 192,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/ADC_Batch_JoinVariants.md",
+      "language": "markdown",
+      "sizeLines": 173,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Peripheral/ADC/ADC_Channel.h",
+      "language": "c",
+      "sizeLines": 135,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/ADC_Conversion.h",
+      "language": "c",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/ADC_Reference.h",
+      "language": "c",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/ADC_Sequence.h",
+      "language": "c",
+      "sizeLines": 175,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/ADC_Thread.h",
+      "language": "c",
+      "sizeLines": 163,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/HAL_ADC.h",
+      "language": "c",
+      "sizeLines": 150,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ADC/Notes.md",
+      "language": "markdown",
+      "sizeLines": 510,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Peripheral/ADC/VariantMap.md",
+      "language": "markdown",
+      "sizeLines": 52,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Peripheral/ADC/_ADC.h",
+      "language": "c",
+      "sizeLines": 239,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/CAN/CAN.c",
+      "language": "c",
+      "sizeLines": 138,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/CAN/CAN.h",
+      "language": "c",
+      "sizeLines": 212,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/CAN/CAN_Frame.h",
+      "language": "c",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/CAN/CAN_Service.h",
+      "language": "c",
+      "sizeLines": 221,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/CAN/HAL_CAN.h",
+      "language": "c",
+      "sizeLines": 171,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/CAN/_CAN.h",
+      "language": "c",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ClockTimer/ClockTimer.h",
+      "language": "c",
+      "sizeLines": 111,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/ClockTimer/HAL_ClockTimer.h",
+      "language": "c",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/HAL_Peripheral.h",
+      "language": "c",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_ADC.h",
+      "language": "c",
+      "sizeLines": 167,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_CAN.h",
+      "language": "c",
+      "sizeLines": 569,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_ClockTimer.h",
+      "language": "c",
+      "sizeLines": 95,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_EEPROM.h",
+      "language": "c",
+      "sizeLines": 77,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_Encoder.h",
+      "language": "c",
+      "sizeLines": 136,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_FastPin.h",
+      "language": "c",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_Flash.h",
+      "language": "c",
+      "sizeLines": 349,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_I2C.h",
+      "language": "c",
+      "sizeLines": 185,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_PWM.h",
+      "language": "c",
+      "sizeLines": 126,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_Pin.h",
+      "language": "c",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_Reboot.h",
+      "language": "c",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_SPI.h",
+      "language": "c",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_Types.h",
+      "language": "c",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_UART.h",
+      "language": "c",
+      "sizeLines": 136,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/HAL_Watchdog.h",
+      "language": "c",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/KE0x.h",
+      "language": "c",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/HAL/Platform/KE0x/KE0x_Clock.h",
+      "language": "c",
+      "sizeLines": 211,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/Notes.md",
+      "language": "markdown",
+      "sizeLines": 89,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Peripheral/NvMemory/EEPROM/EEPROM.c",
+      "language": "c",
+      "sizeLines": 134,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/EEPROM/EEPROM.h",
+      "language": "c",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/EEPROM/HAL_EEPROM.h",
+      "language": "c",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/Flash/Flash.c",
+      "language": "c",
+      "sizeLines": 496,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/Flash/Flash.h",
+      "language": "c",
+      "sizeLines": 121,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/Flash/HAL_Flash.h",
+      "language": "c",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/NvMemory/NvMemory.c",
+      "language": "c",
+      "sizeLines": 471,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/NvMemory/NvMemory.h",
+      "language": "c",
+      "sizeLines": 326,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/NvMemory/NvMemory_Map.h",
+      "language": "c",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/NvMemory/WritePath.md",
+      "language": "markdown",
+      "sizeLines": 143,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Peripheral/NvMemory/_md",
+      "language": "unknown",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/PWM/HAL_PWM.h",
+      "language": "c",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/PWM/PWM.c",
+      "language": "c",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/PWM/PWM.h",
+      "language": "c",
+      "sizeLines": 160,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/Pin/HAL_Pin.h",
+      "language": "c",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/Pin/Pin.h",
+      "language": "c",
+      "sizeLines": 139,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/SPI/HAL_SPI.h",
+      "language": "c",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/SPI/SPI.c",
+      "language": "c",
+      "sizeLines": 151,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/SPI/SPI.h",
+      "language": "c",
+      "sizeLines": 215,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/SPI/SPI_Xcvr.h",
+      "language": "c",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/UART/HAL_UART.h",
+      "language": "c",
+      "sizeLines": 106,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/UART/UART.c",
+      "language": "c",
+      "sizeLines": 171,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/UART/UART.h",
+      "language": "c",
+      "sizeLines": 147,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/UART/UART_Xcvr.h",
+      "language": "c",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Peripheral/Xcvr/Xcvr.h",
+      "language": "c",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 55,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "System/BootRef/BootRef.h",
+      "language": "c",
+      "sizeLines": 92,
+      "fileCategory": "code"
+    },
+    {
+      "path": "System/Critical/Critical.c",
+      "language": "c",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "System/Critical/Critical.h",
+      "language": "c",
+      "sizeLines": 95,
+      "fileCategory": "code"
+    },
+    {
+      "path": "System/Reboot/Reboot.h",
+      "language": "c",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "System/SysTime/SysTime.c",
+      "language": "c",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "System/SysTime/SysTime.h",
+      "language": "c",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Blinky/Blinky.c",
+      "language": "c",
+      "sizeLines": 153,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Blinky/Blinky.h",
+      "language": "c",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Encoder/Encoder.c",
+      "language": "c",
+      "sizeLines": 362,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Encoder/Encoder.h",
+      "language": "c",
+      "sizeLines": 488,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Encoder/Encoder_ISR.h",
+      "language": "c",
+      "sizeLines": 223,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Encoder/Encoder_MT.c",
+      "language": "c",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Encoder/Encoder_MT.h",
+      "language": "c",
+      "sizeLines": 144,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Encoder/Encoder_Reference.md",
+      "language": "markdown",
+      "sizeLines": 318,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Transducer/Encoder/HAL_Encoder.h",
+      "language": "c",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Base/Monitor.c",
+      "language": "c",
+      "sizeLines": 261,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Base/Monitor.h",
+      "language": "c",
+      "sizeLines": 241,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Base/Monitor_Config.h",
+      "language": "c",
+      "sizeLines": 178,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Base/Monitor_Derate.h",
+      "language": "c",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Base/Monitor_Group.h",
+      "language": "c",
+      "sizeLines": 133,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Base/RangeMonitor.c",
+      "language": "c",
+      "sizeLines": 198,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Base/RangeMonitor.h",
+      "language": "c",
+      "sizeLines": 220,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Base/_Monitor_Status.h",
+      "language": "c",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Heat/HeatMonitor.c",
+      "language": "c",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Heat/HeatMonitor.h",
+      "language": "c",
+      "sizeLines": 282,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Heat/Thermistor.c",
+      "language": "c",
+      "sizeLines": 388,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Heat/Thermistor.h",
+      "language": "c",
+      "sizeLines": 286,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/MonitorStatus.md",
+      "language": "markdown",
+      "sizeLines": 85,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Transducer/Monitor/Voltage/Linear_Voltage.c",
+      "language": "c",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Voltage/Linear_Voltage.h",
+      "language": "c",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Voltage/VDivider.c",
+      "language": "c",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Voltage/VDivider.h",
+      "language": "c",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Voltage/VMonitor.c",
+      "language": "c",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Monitor/Voltage/VMonitor.h",
+      "language": "c",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Pulse/PulseEncoder.h",
+      "language": "c",
+      "sizeLines": 132,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Pulse/PulseTimer.h",
+      "language": "c",
+      "sizeLines": 310,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/Pulse/PulseTimer_Counter.h",
+      "language": "c",
+      "sizeLines": 93,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/UserIn/Debounce/Debounce.h",
+      "language": "c",
+      "sizeLines": 122,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/UserIn/UserAIn.c",
+      "language": "c",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/UserIn/UserAIn.h",
+      "language": "c",
+      "sizeLines": 240,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/UserIn/UserDIn.c",
+      "language": "c",
+      "sizeLines": 181,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/UserIn/UserDIn.h",
+      "language": "c",
+      "sizeLines": 238,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Transducer/UserIn/UserDIn_Cmd.h",
+      "language": "c",
+      "sizeLines": 77,
+      "fileCategory": "code"
+    },
+    {
+      "path": "library.json",
+      "language": "json",
+      "sizeLines": 37,
+      "fileCategory": "config"
+    }
+  ],
+  "totalFiles": 451,
+  "filteredByIgnore": 45,
+  "estimatedComplexity": "large",
+  "importMap": {
+    "ARCHITECTURE.md": [],
+    "CLAUDE.md": [],
+    "Docs/Conventions/ApiScoping.md": [],
+    "Docs/Conventions/Comments.md": [],
+    "Docs/Conventions/ConditionalCompilation.md": [],
+    "Docs/Conventions/ConfigValidity.md": [],
+    "Docs/Conventions/Config_State_Ref.md": [],
+    "Docs/Conventions/FixedPoint.md": [],
+    "Docs/Conventions/HardwareBinding.md": [],
+    "Docs/Conventions/InitMacros.md": [],
+    "Docs/Conventions/MergingDuplicates.md": [],
+    "Docs/Conventions/ModeOverBool.md": [],
+    "Docs/Conventions/Naming.md": [],
+    "Docs/Conventions/ValueOverBool.md": [],
+    "Docs/Decisions/0001_ParameterWriteAdmission.md": [],
+    "Docs/Decisions/0002_LinearThrottleLayering.md": [],
+    "Docs/Decisions/0003_PhaseOutputOwnership.md": [],
+    "Docs/Decisions/0004_PiSlidingAntiWindup.md": [],
+    "Docs/Decisions/0005_ILimitFrames.md": [],
+    "Docs/Decisions/0006_RampLimitsOnInput.md": [],
+    "Docs/Decisions/0007_SpeedPuBound.md": [],
+    "Docs/Decisions/0008_PersistenceById.md": [],
+    "Docs/Decisions/0009_DirectionPolicy.md": [],
+    "Docs/Decisions/0010_SharedWordWrites.md": [],
+    "Docs/Decisions/0011_StateMachineLockNesting.md": [],
+    "Docs/Decisions/README.md": [],
+    "Docs/Findings/2026-10-14_CorruptLooseBlobs.md": [],
+    "Docs/Findings/2026-11-04_HwScanBindingSimplification.md": [],
+    "Docs/Findings/README.md": [],
+    "Docs/Modules/README.md": [],
+    "Docs/Patterns/Descriptor.md": [],
+    "Docs/Patterns/DescriptorPattern.md": [],
+    "Docs/Patterns/DescriptorTemplate.md": [],
+    "Docs/Patterns/EdgePollSnapshot.md": [],
+    "Docs/Patterns/EnumNamedValues.md": [],
+    "Docs/Patterns/EquationStruct.md": [],
+    "Docs/Patterns/Facets.md": [],
+    "Docs/Patterns/FunctionPointerCasting.md": [],
+    "Docs/Patterns/GuardedCall.md": [],
+    "Docs/Patterns/HwSequencedScan.md": [],
+    "Docs/Patterns/ProtocolStack.md": [],
+    "Docs/Patterns/README.md": [],
+    "Docs/Patterns/WrapperSurface.md": [],
+    "Docs/Principles/DominantDecomposition.md": [],
+    "Docs/Principles/InformationExpert.md": [],
+    "Docs/Principles/InterfaceSegregation.md": [],
+    "Docs/Principles/README.md": [],
+    "Docs/Principles/StructSemantics.md": [],
+    "Docs/README.md": [],
+    "Docs/References/README.md": [],
+    "Framework/LimitArray/LimitArray.c": [
+      "Framework/LimitArray/LimitArray.h"
+    ],
+    "Framework/LimitArray/LimitArray.h": [
+      "Framework/Type/Array/Array.h",
+      "Math/math_general.h"
+    ],
+    "Framework/Protocol/Extension/Datagram.c": [
+      "Framework/Protocol/Extension/Datagram.h"
+    ],
+    "Framework/Protocol/Extension/Datagram.h": [
+      "Framework/Protocol/Packet.h",
+      "Framework/Protocol/Protocol_Request.h"
+    ],
+    "Framework/Protocol/Extension/Datagram.md": [],
+    "Framework/Protocol/Extension/Protocol_DataMode.h": [
+      "Framework/Protocol/Packet.h",
+      "Framework/Protocol/Protocol_Request.h",
+      "Math/math_general.h"
+    ],
+    "Framework/Protocol/Extension/Protocol_FlashLoader.h": [
+      "Framework/Protocol/Extension/Protocol_DataMode.h",
+      "Peripheral/NvMemory/Flash/Flash.h"
+    ],
+    "Framework/Protocol/Packet.h": [],
+    "Framework/Protocol/Packet_RxParser.h": [
+      "Framework/Protocol/Packet.h"
+    ],
+    "Framework/Protocol/Protocol.h": [
+      "Framework/Protocol/Packet.h",
+      "Framework/Protocol/Packet_RxParser.h",
+      "Framework/Protocol/Protocol_Request.h",
+      "Framework/Protocol/Protocol_Sync.h",
+      "Peripheral/Xcvr/Xcvr.h"
+    ],
+    "Framework/Protocol/Protocol_Request.h": [
+      "Framework/Protocol/Packet.h",
+      "Framework/Protocol/Protocol_Sync.h"
+    ],
+    "Framework/Protocol/Protocol_Sync.h": [
+      "Framework/Protocol/Packet.h"
+    ],
+    "Framework/Protocol/README.md": [],
+    "Framework/Protocol/Socket.c": [
+      "Framework/Protocol/Protocol.h",
+      "Framework/Protocol/Socket.h"
+    ],
+    "Framework/Protocol/Socket.h": [
+      "Framework/Protocol/Protocol.h"
+    ],
+    "Framework/Protocol/comments.md": [],
+    "Framework/Ring/Ring.c": [],
+    "Framework/Ring/Ring.h": [],
+    "Framework/Ring/RingT.h": [
+      "Framework/Ring/_RingT.h"
+    ],
+    "Framework/Ring/_RingT.h": [
+      "Framework/Type/Array/Array.h",
+      "Framework/Type/Array/void_array.h",
+      "System/Critical/Critical.h"
+    ],
+    "Framework/StateMachine/Architecture.md": [],
+    "Framework/StateMachine/Extension/StateMachine_Part.h": [],
+    "Framework/StateMachine/Extension/StateMachine_Sync.h": [
+      "Framework/StateMachine/StateMachine.h"
+    ],
+    "Framework/StateMachine/Extension/_StateMachine_FaultState.c": [],
+    "Framework/StateMachine/Extension/_StateMachine_Linked.c": [],
+    "Framework/StateMachine/InputVsLoop.md": [],
+    "Framework/StateMachine/README.md": [],
+    "Framework/StateMachine/State.h": [
+      "Framework/StateMachine/State_PathId.h"
+    ],
+    "Framework/StateMachine/StateMachine.c": [
+      "Framework/StateMachine/StateMachine.h",
+      "Framework/StateMachine/_State.h",
+      "Framework/StateMachine/_StateMachine.h",
+      "Framework/StateMachine/_State_Node.h"
+    ],
+    "Framework/StateMachine/StateMachine.h": [
+      "Framework/StateMachine/State.h",
+      "Framework/StateMachine/_StateMachine.h",
+      "Framework/StateMachine/_StateMachine_Lock.h",
+      "Framework/StateMachine/_StateMachine_Tree.h"
+    ],
+    "Framework/StateMachine/StateMachine_Thread.h": [
+      "Framework/StateMachine/StateMachine.h",
+      "Framework/StateMachine/_StateMachine.h"
+    ],
+    "Framework/StateMachine/State_PathId.h": [],
+    "Framework/StateMachine/_State.h": [
+      "Framework/StateMachine/State.h"
+    ],
+    "Framework/StateMachine/_StateMachine.c": [
+      "Framework/StateMachine/_State.h",
+      "Framework/StateMachine/_StateMachine.h",
+      "Framework/StateMachine/_State_Node.h"
+    ],
+    "Framework/StateMachine/_StateMachine.h": [
+      "Framework/StateMachine/State.h",
+      "Framework/StateMachine/_State.h",
+      "Framework/StateMachine/_State_Node.h"
+    ],
+    "Framework/StateMachine/_StateMachine_Internal.h": [
+      "Framework/StateMachine/State.h",
+      "Framework/StateMachine/_State.h",
+      "Framework/StateMachine/_StateMachine.h",
+      "Framework/StateMachine/_State_Node.h"
+    ],
+    "Framework/StateMachine/_StateMachine_Lock.h": [
+      "Framework/StateMachine/_StateMachine.h",
+      "System/Critical/Critical.h"
+    ],
+    "Framework/StateMachine/_StateMachine_Tree.c": [
+      "Framework/StateMachine/_StateMachine_Tree.h"
+    ],
+    "Framework/StateMachine/_StateMachine_Tree.h": [
+      "Framework/StateMachine/_StateMachine.h"
+    ],
+    "Framework/StateMachine/_State_Node.c": [
+      "Framework/StateMachine/State.h",
+      "Framework/StateMachine/_State.h",
+      "Framework/StateMachine/_State_Node.h"
+    ],
+    "Framework/StateMachine/_State_Node.h": [
+      "Framework/StateMachine/State.h"
+    ],
+    "Framework/Timer/Timer.h": [
+      "Framework/Timer/TimerT.h",
+      "Framework/Timer/Timer_General.h",
+      "Framework/Timer/math_counter.h"
+    ],
+    "Framework/Timer/TimerT.h": [
+      "Framework/Timer/_TimerT.h"
+    ],
+    "Framework/Timer/Timer_General.h": [
+      "Framework/Timer/_TimerT.h"
+    ],
+    "Framework/Timer/_TimerT.h": [
+      "Framework/Timer/Timer.h"
+    ],
+    "Framework/Timer/math_counter.h": [],
+    "Framework/Transient/Transient.c": [
+      "Framework/Transient/Transient.h"
+    ],
+    "Framework/Transient/Transient.h": [],
+    "Framework/Type/Array/Array.h": [
+      "Framework/Type/Array/void_array.h"
+    ],
+    "Framework/Type/Array/void_array.h": [
+      "Framework/Type/accessor.h",
+      "Framework/Type/void_pointer.h"
+    ],
+    "Framework/Type/Bits/bits.h": [],
+    "Framework/Type/Field/Field.h": [
+      "Framework/Type/accessor.h",
+      "Framework/Type/void_pointer.h"
+    ],
+    "Framework/Type/Word/Version.h": [
+      "Framework/Type/Word/Word.h"
+    ],
+    "Framework/Type/Word/Word.h": [],
+    "Framework/Type/accessor.h": [],
+    "Framework/Type/void_pointer.h": [],
+    "Math/Accumulator/Accumulator.c": [
+      "Math/Accumulator/Accumulator.h"
+    ],
+    "Math/Accumulator/Accumulator.h": [
+      "Math/math_general.h"
+    ],
+    "Math/Angle/Angle.h": [
+      "Math/Angle/angle_speed_math.h",
+      "Math/Fixed/fract16.h"
+    ],
+    "Math/Angle/AngleCounter.h": [
+      "Math/Angle/Angle.h",
+      "Math/Angle/angle_counter_math.h"
+    ],
+    "Math/Angle/AnglePll.h": [
+      "Math/Angle/Angle.h",
+      "Math/PID/PID.h"
+    ],
+    "Math/Angle/Angle_SpeedPu.h": [
+      "Math/Angle/Angle.h",
+      "Math/Angle/angle_speed_math.h",
+      "Math/Fixed/fract16.h"
+    ],
+    "Math/Angle/angle_counter_math.h": [
+      "Math/Angle/angle_speed_math.h",
+      "Math/Fixed/fract16.h"
+    ],
+    "Math/Angle/angle_speed_math.h": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Math/Filter/MovAvg.h": [
+      "Math/Filter/mov_avg_math.h"
+    ],
+    "Math/Filter/mov_avg_math.h": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Math/Fixed/angle16.h": [],
+    "Math/Fixed/fixed.c": [
+      "Math/Fixed/fixed.h",
+      "Math/math_general.h"
+    ],
+    "Math/Fixed/fixed.h": [],
+    "Math/Fixed/fract16.c": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Math/Fixed/fract16.h": [
+      "Math/Fixed/fixed.h",
+      "Math/Fixed/angle16.h",
+      "Math/math_general.h"
+    ],
+    "Math/Fixed/fract16e.h": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Math/HAL/interval_fixed.h": [
+      "Math/math_general.h"
+    ],
+    "Math/HAL/math_general_fixed.h": [
+      "Math/math_general.h"
+    ],
+    "Math/HAL/math_general_float.h": [
+      "Math/math_general.h"
+    ],
+    "Math/HAL/real.h": [
+      "Math/HAL/real_float.h",
+      "Math/HAL/real_fixed.h"
+    ],
+    "Math/HAL/real_fixed.h": [
+      "Math/Fixed/fract16.h",
+      "Math/Fixed/fract16e.h"
+    ],
+    "Math/HAL/real_float.h": [
+      "Math/Fixed/fract16.h",
+      "Math/HAL/math_general_float.h"
+    ],
+    "Math/Hysteresis/Hysteresis.h": [
+      "Math/Hysteresis/hysteresis_math.h"
+    ],
+    "Math/Hysteresis/hysteresis_math.h": [
+      "Math/math_general.h"
+    ],
+    "Math/Linear/Linear.c": [
+      "Math/Linear/Linear.h"
+    ],
+    "Math/Linear/Linear.h": [
+      "Math/Linear/linear_math.h",
+      "Math/math_general.h",
+      "Math/Fixed/fixed.h",
+      "Math/Fixed/fract16.h"
+    ],
+    "Math/Linear/linear_math.h": [],
+    "Math/PID/PID.c": [
+      "Math/PID/PID.h"
+    ],
+    "Math/PID/PID.h": [
+      "Math/Fixed/fract16e.h",
+      "Math/math_general.h"
+    ],
+    "Math/Ramp/Ramp.c": [
+      "Math/Ramp/Ramp.h"
+    ],
+    "Math/Ramp/Ramp.h": [
+      "Math/Accumulator/Accumulator.h",
+      "Math/math_general.h"
+    ],
+    "Math/Ramp/Ramp_Setpoint.h": [
+      "Math/PID/PID.h",
+      "Math/Ramp/Ramp.h"
+    ],
+    "Math/Threshold/Threshold.h": [],
+    "Math/bits_math.h": [],
+    "Math/edge_fn.h": [
+      "Math/math_general.h"
+    ],
+    "Math/math_general.h": [],
+    "Motor/DependencyGraph.md": [],
+    "Motor/Docs/Simulation/ISample/isample_model.py": [],
+    "Motor/Docs/Simulation/ISample/isample_plots.py": [
+      "Motor/Docs/Simulation/ISample/isample_model.py"
+    ],
+    "Motor/Docs/Simulation/ISample/isample_sequences.py": [
+      "Motor/Docs/Simulation/ISample/isample_model.py"
+    ],
+    "Motor/Docs/Simulation/ISample/pwm_sample_sequences.py": [
+      "Motor/Docs/Simulation/ISample/isample_model.py",
+      "Motor/Docs/Simulation/ISample/isample_plots.py",
+      "Motor/Docs/Simulation/ISample/isample_sequences.py"
+    ],
+    "Motor/Docs/Simulation/ISample/pwm_sample_sequences.txt": [],
+    "Motor/Docs/Simulation/README.md": [],
+    "Motor/Docs/Simulation/Sensorless/sensorless_geometry.py": [
+      "Motor/Docs/Simulation/Sensorless/sensorless_model.py"
+    ],
+    "Motor/Docs/Simulation/Sensorless/sensorless_model.py": [],
+    "Motor/Docs/Simulation/Sensorless/sensorless_sequence.py": [],
+    "Motor/Docs/Simulation/Sensorless/sensorless_sequence_fixed.py": [
+      "Motor/Docs/Simulation/Sensorless/sensorless_sequence.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/MidClampBlend.md": [],
+    "Motor/Docs/Simulation/Svpwm/SVPWM_SectorID.py": [],
+    "Motor/Docs/Simulation/Svpwm/Saddle384.py": [],
+    "Motor/Docs/Simulation/Svpwm/low_side_hold.py": [],
+    "Motor/Docs/Simulation/Svpwm/low_side_window.py": [],
+    "Motor/Docs/Simulation/Svpwm/low_side_zero_sequence.py": [],
+    "Motor/Docs/Simulation/Svpwm/low_side_zero_sequence_blend.py": [],
+    "Motor/Docs/Simulation/Svpwm/svpwm_blend.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_blend_analysis.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_blend.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_blend_duty.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_blend.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_blend_analysis.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_blend_k.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_blend.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_blend_analysis.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_blend_schedule.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_blend.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_blend_analysis.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_blend_shift.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_blend.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py": [],
+    "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_analysis.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_compare.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_analysis.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_duty.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_analysis.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_regime.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_analysis.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_spread.py": [
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling.py",
+      "Motor/Docs/Simulation/Svpwm/svpwm_ceiling_analysis.py"
+    ],
+    "Motor/Docs/Simulation/Svpwm/svpwm_clamp_k.py": [],
+    "Motor/Docs/Simulation/Svpwm/svpwm_midclamp.py": [],
+    "Motor/Docs/Simulation/atan2.py": [],
+    "Motor/Docs/Simulation/pwm_sample_timing.py": [],
+    "Motor/Docs/todo.md": [],
+    "Motor/MotProtocol/CANopen/CANopen.h": [],
+    "Motor/MotProtocol/CANopen/OD.h": [],
+    "Motor/MotProtocol/CANopen/PDO.c": [
+      "Motor/MotProtocol/CANopen/PDO.h"
+    ],
+    "Motor/MotProtocol/CANopen/PDO.h": [
+      "Motor/MotProtocol/CANopen/CANopen.h",
+      "Motor/MotProtocol/CANopen/OD.h"
+    ],
+    "Motor/MotProtocol/CANopen/SDO.h": [
+      "Motor/MotProtocol/CANopen/OD.h"
+    ],
+    "Motor/MotProtocol/Cia402/Cia402.c": [
+      "Motor/MotProtocol/Cia402/Cia402.h"
+    ],
+    "Motor/MotProtocol/Cia402/Cia402.h": [
+      "Motor/MotProtocol/CANopen/OD.h"
+    ],
+    "Motor/MotProtocol/Cia402/Cia402_Pdo.c": [
+      "Motor/MotProtocol/Cia402/Cia402.h",
+      "Motor/MotProtocol/Cia402/Cia402_Pdo.h"
+    ],
+    "Motor/MotProtocol/Cia402/Cia402_Pdo.h": [
+      "Motor/MotProtocol/CANopen/PDO.h"
+    ],
+    "Motor/MotProtocol/Cia402/MotorController_Cia402.c": [
+      "Motor/MotProtocol/CANopen/SDO.h",
+      "Motor/MotProtocol/Cia402/Cia402.h",
+      "Motor/MotProtocol/Cia402/Cia402_Pdo.h",
+      "Motor/MotProtocol/Cia402/MotorController_Cia402.h",
+      "Motor/MotProtocol/Cia402/Motor_Cia402.h",
+      "Motor/MotorController/MotorController.h"
+    ],
+    "Motor/MotProtocol/Cia402/MotorController_Cia402.h": [
+      "Motor/MotProtocol/CANopen/CANopen.h",
+      "Motor/MotProtocol/Cia402/Cia402.h",
+      "Motor/MotorController/MotorController_Var.h",
+      "Peripheral/CAN/CAN.h",
+      "Peripheral/CAN/CAN_Service.h"
+    ],
+    "Motor/MotProtocol/Cia402/Motor_Cia402.c": [
+      "Motor/MotProtocol/Cia402/Motor_Cia402.h",
+      "Motor/Motor/Motor_User.h"
+    ],
+    "Motor/MotProtocol/Cia402/Motor_Cia402.h": [
+      "Motor/MotProtocol/CANopen/SDO.h",
+      "Motor/MotProtocol/Cia402/Cia402.h",
+      "Motor/Motor/Motor_User.h"
+    ],
+    "Motor/MotProtocol/MotCan/MotCan.h": [
+      "Motor/MotProtocol/CANopen/CANopen.h",
+      "Motor/MotProtocol/CANopen/OD.h",
+      "Motor/MotProtocol/CANopen/SDO.h",
+      "Motor/MotProtocol/MotPacket.h",
+      "Motor/MotProtocol/MotVarId/MotVarId.h"
+    ],
+    "Motor/MotProtocol/MotCan/MotorController_MotCan.h": [
+      "Motor/MotProtocol/Cia402/MotorController_Cia402.h",
+      "Motor/MotProtocol/MotCan/MotCan.h",
+      "Motor/Motor/Motor_User.h",
+      "Motor/MotorController/MotorController.h",
+      "Motor/MotorController/MotorController_MotProtocol.h",
+      "Motor/MotorController/Traction/MotorController_Traction.h",
+      "Peripheral/CAN/CAN.h",
+      "Peripheral/CAN/CAN_Service.h"
+    ],
+    "Motor/MotProtocol/MotCan/README.md": [],
+    "Motor/MotProtocol/MotPacket.c": [
+      "Framework/Protocol/Packet.h",
+      "Motor/MotProtocol/MotPacket.h",
+      "Motor/Version.h"
+    ],
+    "Motor/MotProtocol/MotPacket.h": [
+      "Framework/Protocol/Packet.h"
+    ],
+    "Motor/MotProtocol/MotPacket_Frame.md": [],
+    "Motor/MotProtocol/MotProtocol.c": [
+      "Motor/MotProtocol/MotPacket.h",
+      "Motor/MotProtocol/MotProtocol.h",
+      "Peripheral/NvMemory/Flash/Flash.h"
+    ],
+    "Motor/MotProtocol/MotProtocol.h": [
+      "Framework/Protocol/Extension/Protocol_FlashLoader.h",
+      "Framework/Protocol/Protocol.h",
+      "Motor/MotProtocol/MotPacket.h",
+      "Peripheral/NvMemory/Flash/Flash.h"
+    ],
+    "Motor/MotProtocol/MotVarId/MotVarId.h": [],
+    "Motor/MotProtocol/MotVarId/Motor_MotVar.c": [
+      "Motor/MotProtocol/MotVarId/Motor_MotVar.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Motor_Var.h",
+      "Motor/Motor/Sensor/Motor_Sensor.h",
+      "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.h"
+    ],
+    "Motor/MotProtocol/MotVarId/Motor_MotVar.h": [
+      "Motor/MotProtocol/MotVarId/MotVarId.h",
+      "Motor/Motor/Motor.h"
+    ],
+    "Motor/MotProtocol/MotVarId/VarIdMap.md": [],
+    "Motor/Motor/ADC/CurrentSampling.md": [],
+    "Motor/Motor/ADC/Motor_ADC.c": [
+      "Math/Filter/MovAvg.h",
+      "Motor/Motor/ADC/Motor_ADC.h",
+      "Motor/Motor/Motor_StateMachine.h"
+    ],
+    "Motor/Motor/ADC/Motor_ADC.h": [
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Peripheral/ADC/ADC_Conversion.h"
+    ],
+    "Motor/Motor/ControlCycleDataFlow.md": [],
+    "Motor/Motor/Extension/Motor_Debug.h": [
+      "System/SysTime/SysTime.h",
+      "Motor/Motor/Motor.h"
+    ],
+    "Motor/Motor/Extension/Motor_Instance.h": [],
+    "Motor/Motor/Extension/Motor_Table.h": [
+      "Framework/Type/Array/void_array.h",
+      "Motor/Motor/ADC/Motor_ADC.h",
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_User.h"
+    ],
+    "Motor/Motor/LimitChain.md": [],
+    "Motor/Motor/Math/FOC.c": [
+      "Motor/Motor/Math/FOC.h"
+    ],
+    "Motor/Motor/Math/FOC.h": [
+      "Math/Fixed/fract16.h",
+      "Math/PID/PID.h",
+      "Motor/Motor/Math/foc_math.h"
+    ],
+    "Motor/Motor/Math/FOC_Ext.h": [
+      "Math/PID/PID.h",
+      "Math/Ramp/Ramp.h",
+      "Motor/Motor/Math/FOC.h",
+      "Motor/Motor/Math/motor_electrical_math.h",
+      "Motor/Motor/Model/EmfObserver.h",
+      "Motor/Motor/Phase/Phase_VOut.h"
+    ],
+    "Motor/Motor/Math/LimitPhysics.md": [],
+    "Motor/Motor/Math/ModulationLimit.md": [],
+    "Motor/Motor/Math/VLimitPolicy.md": [],
+    "Motor/Motor/Math/_dq0.h": [
+      "Motor/Motor/Math/foc_math.h"
+    ],
+    "Motor/Motor/Math/_svpwm_sector.h": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Motor/Motor/Math/foc_math.h": [
+      "Math/Fixed/fract16.h",
+      "Math/Fixed/fract16e.h",
+      "Motor/Motor/Math/motor_electrical_math.h"
+    ],
+    "Motor/Motor/Math/foc_sensorless_math.h": [
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Math/foc_math.h",
+      "Motor/Motor/Math/smo_math.h",
+      "Motor/Motor/Math/stator_math.h"
+    ],
+    "Motor/Motor/Math/motor_electrical_math.h": [
+      "Math/Angle/angle_speed_math.h",
+      "Math/Fixed/fract16.h"
+    ],
+    "Motor/Motor/Math/motor_electrical_math.md": [],
+    "Motor/Motor/Math/smo_math.h": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Motor/Motor/Math/stator_math.h": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Motor/Motor/Math/svpwm_math.h": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Motor/Motor/Model/EmfObserver.h": [
+      "Math/Angle/Angle.h",
+      "Math/Angle/AnglePll.h",
+      "Math/Fixed/fract16.h",
+      "Math/PID/PID.h",
+      "Motor/Motor/Math/foc_sensorless_math.h",
+      "Motor/Motor/Model/Stator.h"
+    ],
+    "Motor/Motor/Model/Motor_Limits.h": [
+      "Math/Fixed/fract16.h",
+      "Math/math_general.h"
+    ],
+    "Motor/Motor/Model/Motor_Types.h": [
+      "Math/Angle/angle_speed_math.h",
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Math/motor_electrical_math.h"
+    ],
+    "Motor/Motor/Model/Stator.h": [
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Math/foc_math.h",
+      "Motor/Motor/Math/stator_math.h"
+    ],
+    "Motor/Motor/Motor.c": [
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_Config.h"
+    ],
+    "Motor/Motor/Motor.h": [
+      "Framework/StateMachine/StateMachine.h",
+      "Framework/StateMachine/_StateMachine.h",
+      "Framework/Timer/Timer.h",
+      "Math/Accumulator/Accumulator.h",
+      "Math/Angle/Angle.h",
+      "Math/Angle/Angle_SpeedPu.h",
+      "Math/Fixed/fixed.h",
+      "Math/Fixed/fract16.h",
+      "Math/Linear/Linear.h",
+      "Math/PID/PID.h",
+      "Math/Ramp/Ramp.h",
+      "Motor/Motor/Math/FOC.h",
+      "Motor/Motor/Motor_Clock.h",
+      "Motor/Motor/Motor_Electrical.h",
+      "Motor/Motor/Phase/Phase_VOut.h",
+      "Motor/Motor/Phase_Input/Phase_ADC.h",
+      "Motor/Motor/Phase_Input/Phase_Board.h",
+      "Motor/Motor/Phase_Input/Phase_Input.h",
+      "Motor/Motor/Sensor/RotorSensor.h",
+      "Motor/Motor/Sensor/RotorSensor_Table.h",
+      "Motor/Motor/VBus/VBus.h",
+      "Motor/Motor/VBus/VBus_FOC.h",
+      "Motor/Motor/VBus/VBus_Monitor.h",
+      "Peripheral/ADC/ADC_Conversion.h",
+      "Transducer/Encoder/Encoder_ISR.h",
+      "Transducer/Encoder/Encoder_MT.h",
+      "Transducer/Monitor/Heat/HeatMonitor.h"
+    ],
+    "Motor/Motor/Motor_Clock.h": [
+      "Math/Angle/angle_speed_math.h"
+    ],
+    "Motor/Motor/Motor_Config.c": [
+      "Motor/Motor/Motor_Config.h"
+    ],
+    "Motor/Motor/Motor_Config.h": [
+      "Motor/Motor/Motor.h"
+    ],
+    "Motor/Motor/Motor_Electrical.h": [
+      "Math/Angle/angle_speed_math.h",
+      "Math/math_general.h",
+      "Motor/Motor/Math/motor_electrical_math.h",
+      "Motor/Motor/Model/Motor_Types.h",
+      "Motor/Motor/Motor_Clock.h",
+      "Motor/Motor/Phase_Input/Phase_Board.h"
+    ],
+    "Motor/Motor/Motor_FOC.c": [
+      "Motor/Motor/ADC/Motor_ADC.h",
+      "Motor/Motor/Math/FOC.h",
+      "Motor/Motor/Motor_FOC.h"
+    ],
+    "Motor/Motor/Motor_FOC.h": [
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Math/FOC.h",
+      "Motor/Motor/Math/FOC_Ext.h",
+      "Motor/Motor/Phase/Phase_Svpwm.h"
+    ],
+    "Motor/Motor/Motor_Include.h": [
+      "Motor/Motor/ADC/Motor_ADC.h",
+      "Motor/Motor/Extension/Motor_Table.h",
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_Config.h",
+      "Motor/Motor/Motor_Thread.h",
+      "Motor/Motor/Motor_User.h",
+      "Motor/Motor/Motor_Var.h",
+      "Motor/Motor/Sensor/Motor_Sensor.h"
+    ],
+    "Motor/Motor/Motor_StateMachine.c": [
+      "Motor/Motor/Motor_Config.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Sensor/Motor_Sensor.h",
+      "Motor/Motor/StateMachine/Motor_Intervention.h",
+      "Motor/Motor/VBus/VBus_Monitor.h"
+    ],
+    "Motor/Motor/Motor_StateMachine.h": [
+      "Framework/StateMachine/StateMachine.h",
+      "Framework/StateMachine/_StateMachine.h",
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_FOC.h",
+      "System/Critical/Critical.h",
+      "System/SysTime/SysTime.h"
+    ],
+    "Motor/Motor/Motor_StateMachine.md": [],
+    "Motor/Motor/Motor_StateTree.md": [],
+    "Motor/Motor/Motor_Thread.h": [
+      "Framework/StateMachine/StateMachine_Thread.h",
+      "Motor/Motor/ADC/Motor_ADC.h",
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Phase/Phase_Types.h"
+    ],
+    "Motor/Motor/Motor_User.c": [
+      "Motor/Motor/Motor_User.h",
+      "Motor/Motor/Phase_Input/Phase_Board.h",
+      "Motor/Motor/StateMachine/Motor_Intervention.h"
+    ],
+    "Motor/Motor/Motor_User.h": [
+      "Motor/Motor/Motor_FOC.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/StateMachine/Motor_Calibration.h",
+      "Motor/Motor/StateMachine/Motor_OpenLoop.h"
+    ],
+    "Motor/Motor/Motor_Var.c": [
+      "Motor/Motor/ADC/Motor_ADC.h",
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_Config.h",
+      "Motor/Motor/Motor_User.h",
+      "Motor/Motor/Motor_Var.h"
+    ],
+    "Motor/Motor/Motor_Var.h": [
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_Config.h"
+    ],
+    "Motor/Motor/Phase/Phase_Polar.c": [
+      "Motor/Motor/Phase/Phase_Polar.h"
+    ],
+    "Motor/Motor/Phase/Phase_Polar.h": [
+      "Motor/Motor/Phase/Phase_VOut.h"
+    ],
+    "Motor/Motor/Phase/Phase_Svpwm.h": [
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Math/svpwm_math.h",
+      "Motor/Motor/Phase/Phase_VOut.h"
+    ],
+    "Motor/Motor/Phase/Phase_Types.h": [],
+    "Motor/Motor/Phase/Phase_VOut.c": [
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Phase/Phase_VOut.h"
+    ],
+    "Motor/Motor/Phase/Phase_VOut.h": [
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Phase/Phase_Types.h",
+      "Peripheral/PWM/PWM.h",
+      "Peripheral/Pin/Pin.h"
+    ],
+    "Motor/Motor/Phase/PwmConvention.md": [],
+    "Motor/Motor/Phase_Input/Phase_ADC.h": [
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Phase/Phase_Types.h",
+      "Motor/Motor/Phase_Input/Phase_Input.h",
+      "Peripheral/ADC/ADC_Conversion.h",
+      "Peripheral/ADC/ADC_Reference.h"
+    ],
+    "Motor/Motor/Phase_Input/Phase_Board.h": [
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Math/motor_electrical_math.h"
+    ],
+    "Motor/Motor/Phase_Input/Phase_Input.h": [
+      "Motor/Motor/Phase/Phase_Types.h"
+    ],
+    "Motor/Motor/Sensor/Encoder/Encoder_Sensor.c": [
+      "Motor/Motor/Sensor/Encoder/Encoder_Sensor.h"
+    ],
+    "Motor/Motor/Sensor/Encoder/Encoder_Sensor.h": [
+      "Motor/Motor/Sensor/RotorSensor.h",
+      "Transducer/Encoder/Encoder.h",
+      "Transducer/Encoder/Encoder_ISR.h",
+      "Transducer/Encoder/Encoder_MT.h"
+    ],
+    "Motor/Motor/Sensor/Encoder/Motor_Encoder.c": [
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_FOC.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Motor_Var.h",
+      "Motor/Motor/Sensor/Encoder/Encoder_Sensor.h",
+      "Motor/Motor/Sensor/Encoder/Motor_Encoder.h",
+      "Motor/Motor/Sensor/RotorSensor.h"
+    ],
+    "Motor/Motor/Sensor/Encoder/Motor_Encoder.h": [
+      "Motor/Motor/Motor.h"
+    ],
+    "Motor/Motor/Sensor/Hall/Hall.c": [
+      "Motor/Motor/Sensor/Hall/Hall.h"
+    ],
+    "Motor/Motor/Sensor/Hall/Hall.h": [
+      "Math/math_general.h",
+      "Peripheral/Pin/Pin.h"
+    ],
+    "Motor/Motor/Sensor/Hall/Hall_Sensor.c": [
+      "Math/Angle/Angle.h"
+    ],
+    "Motor/Motor/Sensor/Hall/Hall_Sensor.h": [
+      "Math/Angle/AngleCounter.h",
+      "Motor/Motor/Sensor/Hall/Hall.h",
+      "Motor/Motor/Sensor/RotorSensor.h",
+      "Transducer/Pulse/PulseTimer_Counter.h"
+    ],
+    "Motor/Motor/Sensor/Hall/Motor_Hall.c": [
+      "Motor/Motor/Motor_FOC.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Sensor/Hall/Hall.h",
+      "Motor/Motor/Sensor/Hall/Motor_Hall.h"
+    ],
+    "Motor/Motor/Sensor/Hall/Motor_Hall.h": [
+      "Motor/Motor/Motor.h"
+    ],
+    "Motor/Motor/Sensor/Hall/Motor_HallEncoder.h": [
+      "Motor/Motor/Motor.h"
+    ],
+    "Motor/Motor/Sensor/Motor_Sensor.c": [
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Sensor/Motor_Sensor.h"
+    ],
+    "Motor/Motor/Sensor/Motor_Sensor.h": [
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Sensor/Hall/Motor_Hall.h",
+      "Motor/Motor/Sensor/Hall/Motor_HallEncoder.h",
+      "Motor/Motor/Sensor/RotorSensor_Table.h",
+      "Motor/Motor/Sensor/Encoder/Motor_Encoder.h",
+      "Motor/Motor/Sensor/Sensorless/Motor_Sensorless.h"
+    ],
+    "Motor/Motor/Sensor/RotorSensor.c": [
+      "Motor/Motor/Sensor/RotorSensor.h"
+    ],
+    "Motor/Motor/Sensor/RotorSensor.h": [
+      "Math/Angle/Angle.h",
+      "Math/Angle/Angle_SpeedPu.h",
+      "Math/Fixed/fract16.h"
+    ],
+    "Motor/Motor/Sensor/RotorSensorInterface.md": [],
+    "Motor/Motor/Sensor/RotorSensor_Table.c": [
+      "Motor/Motor/Sensor/RotorSensor_Table.h"
+    ],
+    "Motor/Motor/Sensor/RotorSensor_Table.h": [
+      "Motor/Motor/Sensor/Encoder/Encoder_Sensor.h",
+      "Motor/Motor/Sensor/Hall/Hall_Sensor.h",
+      "Motor/Motor/Sensor/RotorSensor.h",
+      "Motor/Motor/Sensor/SinCos/SinCos_Sensor.h",
+      "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.h"
+    ],
+    "Motor/Motor/Sensor/Sensorless/Motor_Sensorless.c": [
+      "Motor/Motor/Sensor/Sensorless/Motor_Sensorless.h"
+    ],
+    "Motor/Motor/Sensor/Sensorless/Motor_Sensorless.h": [
+      "Math/Fixed/fract16.h",
+      "Motor/Motor/Motor.h",
+      "Motor/Motor/Motor_FOC.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Sensor/RotorSensor.h",
+      "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.h",
+      "Motor/Motor/StateMachine/Motor_OpenLoop.h"
+    ],
+    "Motor/Motor/Sensor/Sensorless/Sensorless.exp.md": [],
+    "Motor/Motor/Sensor/Sensorless/Sensorless.md": [],
+    "Motor/Motor/Sensor/Sensorless/SensorlessMath.md": [],
+    "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.c": [
+      "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.h"
+    ],
+    "Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.h": [
+      "Motor/Motor/Math/FOC.h",
+      "Motor/Motor/Model/EmfObserver.h",
+      "Motor/Motor/Motor_Electrical.h",
+      "Motor/Motor/Sensor/RotorSensor.h"
+    ],
+    "Motor/Motor/Sensor/SinCos/Motor_SinCos.c": [
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Sensor/SinCos/Motor_SinCos.h",
+      "Motor/Motor/Sensor/SinCos/SinCos_Sensor.h"
+    ],
+    "Motor/Motor/Sensor/SinCos/Motor_SinCos.h": [
+      "Motor/Motor/Motor.h"
+    ],
+    "Motor/Motor/Sensor/SinCos/SinCos.c": [
+      "Motor/Motor/Sensor/SinCos/SinCos.h",
+      "Peripheral/ADC/ADC_Reference.h"
+    ],
+    "Motor/Motor/Sensor/SinCos/SinCos.h": [
+      "Math/Fixed/fract16.h",
+      "Math/Linear/Linear.h"
+    ],
+    "Motor/Motor/Sensor/SinCos/SinCos_Analog.h": [
+      "Peripheral/ADC/ADC_Conversion.h"
+    ],
+    "Motor/Motor/Sensor/SinCos/SinCos_Sensor.c": [
+      "Math/Angle/Angle.h",
+      "Motor/Motor/Sensor/SinCos/SinCos_Sensor.h"
+    ],
+    "Motor/Motor/Sensor/SinCos/SinCos_Sensor.h": [
+      "Motor/Motor/Sensor/RotorSensor.h",
+      "Motor/Motor/Sensor/SinCos/SinCos.h",
+      "Motor/Motor/Sensor/SinCos/SinCos_Analog.h"
+    ],
+    "Motor/Motor/StateMachine/Motor_Calibration.c": [
+      "Motor/Motor/StateMachine/Motor_Calibration.h"
+    ],
+    "Motor/Motor/StateMachine/Motor_Calibration.h": [
+      "Motor/Motor/Motor_StateMachine.h"
+    ],
+    "Motor/Motor/StateMachine/Motor_CalibrationElectrical.c": [
+      "Math/Fixed/fract16.h",
+      "Math/math_general.h",
+      "Motor/Motor/Math/motor_electrical_math.h",
+      "Motor/Motor/Motor_Clock.h",
+      "Motor/Motor/Motor_FOC.h",
+      "Motor/Motor/Phase_Input/Phase_Board.h",
+      "Motor/Motor/StateMachine/Motor_Calibration.h"
+    ],
+    "Motor/Motor/StateMachine/Motor_Intervention.c": [
+      "Motor/Motor/StateMachine/Motor_Intervention.h"
+    ],
+    "Motor/Motor/StateMachine/Motor_Intervention.h": [
+      "Motor/Motor/Motor_StateMachine.h"
+    ],
+    "Motor/Motor/StateMachine/Motor_OpenLoop.c": [
+      "Motor/Motor/StateMachine/Motor_OpenLoop.h"
+    ],
+    "Motor/Motor/StateMachine/Motor_OpenLoop.h": [
+      "Motor/Motor/Motor_StateMachine.h"
+    ],
+    "Motor/Motor/VBus/VBus.c": [
+      "Motor/Motor/VBus/VBus.h",
+      "Transducer/Monitor/Base/Monitor_Config.h"
+    ],
+    "Motor/Motor/VBus/VBus.h": [
+      "Math/Fixed/fract16.h",
+      "Math/Linear/linear_math.h",
+      "Motor/Motor/Phase_Input/Phase_ADC.h",
+      "Motor/Motor/Phase_Input/Phase_Board.h",
+      "Motor/Motor/VBus/VBus_Config.h",
+      "Transducer/Monitor/Voltage/VMonitor.h"
+    ],
+    "Motor/Motor/VBus/VBus_ADC.h": [
+      "Math/Fixed/fract16.h",
+      "Math/Linear/linear_math.h",
+      "Motor/Motor/Math/foc_math.h",
+      "Motor/Motor/Phase_Input/Phase_Board.h",
+      "Motor/Motor/VBus/VBus.h",
+      "Transducer/Monitor/Voltage/VMonitor.h"
+    ],
+    "Motor/Motor/VBus/VBus_Config.h": [
+      "Math/Fixed/fract16.h",
+      "Math/Linear/linear_math.h",
+      "Motor/Motor/Phase_Input/Phase_ADC.h",
+      "Motor/Motor/Phase_Input/Phase_Board.h",
+      "Transducer/Monitor/Voltage/VMonitor.h"
+    ],
+    "Motor/Motor/VBus/VBus_FOC.h": [
+      "Motor/Motor/Math/foc_math.h",
+      "Motor/Motor/VBus/VBus.h"
+    ],
+    "Motor/Motor/VBus/VBus_Monitor.h": [
+      "Motor/Motor/VBus/VBus.h",
+      "Transducer/Monitor/Base/RangeMonitor.h",
+      "Transducer/Monitor/Voltage/VMonitor.h"
+    ],
+    "Motor/MotorController/AppTable/MotorController_AppTable.c": [
+      "Motor/MotorController/AppTable/MotorController_AppTable.h",
+      "Motor/MotorController/MotorController_App.h",
+      "Motor/MotorController/MotorController_User.h"
+    ],
+    "Motor/MotorController/AppTable/MotorController_AppTable.h": [
+      "Framework/StateMachine/StateMachine.h",
+      "Framework/StateMachine/_StateMachine_Tree.h",
+      "Motor/MotorController/MotorController_App.h",
+      "Motor/MotorController/Traction/MotorController_Traction.h"
+    ],
+    "Motor/MotorController/ILimitsRouting.md": [],
+    "Motor/MotorController/MotAnalogUser/MotAnalogUser.h": [],
+    "Motor/MotorController/MotAnalogUser/MotorController_AnalogUser.h": [
+      "Motor/MotorController/MotAnalogUser/MotAnalogUser.h",
+      "Motor/MotorController/MotAnalogUser/OptPin/MotorController_SwitchBrake.h",
+      "Motor/MotorController/MotorController.h",
+      "Motor/MotorController/MotorController_User.h",
+      "Transducer/UserIn/UserAIn.h",
+      "Transducer/UserIn/UserDIn.h"
+    ],
+    "Motor/MotorController/MotAnalogUser/OptPin/MotorController_OptPin.h": [
+      "Motor/MotorController/MotAnalogUser/OptPin/MotorController_StandbyPin.h",
+      "Motor/MotorController/MotAnalogUser/OptPin/MotorController_SwitchBrake.h",
+      "Motor/MotorController/MotorController.h",
+      "Motor/MotorController/MotorController_User.h",
+      "Transducer/UserIn/UserDIn_Cmd.h"
+    ],
+    "Motor/MotorController/MotAnalogUser/OptPin/MotorController_StandbyPin.h": [
+      "Motor/MotorController/MotorController_StateMachine.h"
+    ],
+    "Motor/MotorController/MotAnalogUser/OptPin/MotorController_SwitchBrake.h": [
+      "Motor/MotorController/MotorController_StateMachine.h"
+    ],
+    "Motor/MotorController/MotAnalogUser/OptPin/OptDin.h": [
+      "Math/Fixed/fract16.h",
+      "Transducer/UserIn/UserDIn_Cmd.h"
+    ],
+    "Motor/MotorController/MotAnalogUser/Shifter/Shifter.c": [
+      "Motor/MotorController/MotAnalogUser/Shifter/Shifter.h"
+    ],
+    "Motor/MotorController/MotAnalogUser/Shifter/Shifter.h": [
+      "Transducer/UserIn/UserDIn.h"
+    ],
+    "Motor/MotorController/MotBuzzer/MotBuzzer.h": [
+      "Transducer/Blinky/Blinky.h"
+    ],
+    "Motor/MotorController/MotLimits/MotLimits.h": [],
+    "Motor/MotorController/MotLimits/MotorController_MotLimits.h": [
+      "Motor/MotorController/MotLimits/MotLimits.h",
+      "Motor/MotorController/MotorController.h"
+    ],
+    "Motor/MotorController/MotNvm/MotNvm.c": [
+      "Motor/MotorController/MotNvm/MotNvm.h",
+      "System/Critical/Critical.h"
+    ],
+    "Motor/MotorController/MotNvm/MotNvm.h": [
+      "Motor/Motor/Phase_Input/Phase_ADC.h",
+      "Motor/Motor/Phase_Input/Phase_Board.h",
+      "Peripheral/NvMemory/EEPROM/EEPROM.h",
+      "Peripheral/NvMemory/Flash/Flash.h",
+      "System/BootRef/BootRef.h"
+    ],
+    "Motor/MotorController/MotorController.c": [
+      "Motor/MotorController/MotAnalogUser/OptPin/MotorController_OptPin.h",
+      "Motor/MotorController/MotorController.h"
+    ],
+    "Motor/MotorController/MotorController.h": [
+      "Framework/Protocol/Protocol.h",
+      "Framework/Protocol/Socket.h",
+      "Framework/StateMachine/StateMachine.h",
+      "Framework/Timer/Timer.h",
+      "Framework/Type/Word/Version.h",
+      "Math/Accumulator/Accumulator.h",
+      "Math/Filter/MovAvg.h",
+      "Math/Linear/Linear.h",
+      "Motor/Motor/Extension/Motor_Table.h",
+      "Motor/Motor/Motor_Config.h",
+      "Motor/Motor/Motor_StateMachine.h",
+      "Motor/Motor/Motor_User.h",
+      "Motor/Motor/VBus/VBus.h",
+      "Motor/Motor/VBus/VBus_Monitor.h",
+      "Motor/MotorController/MotAnalogUser/MotAnalogUser.h",
+      "Motor/MotorController/MotAnalogUser/OptPin/OptDin.h",
+      "Motor/MotorController/MotAnalogUser/Shifter/Shifter.h",
+      "Motor/MotorController/MotBuzzer/MotBuzzer.h",
+      "Motor/MotorController/MotNvm/MotNvm.h",
+      "Motor/MotorController/MotorController_App.h",
+      "Peripheral/ADC/ADC.h",
+      "Peripheral/ADC/ADC_Conversion.h",
+      "Peripheral/CAN/CAN.h",
+      "Peripheral/CAN/CAN_Service.h",
+      "Peripheral/NvMemory/EEPROM/EEPROM.h",
+      "Peripheral/NvMemory/Flash/Flash.h",
+      "Peripheral/UART/UART.h",
+      "System/BootRef/BootRef.h",
+      "Transducer/Blinky/Blinky.h",
+      "Transducer/Monitor/Heat/HeatMonitor.h",
+      "Transducer/Monitor/Voltage/VMonitor.h",
+      "Transducer/UserIn/UserAIn.h",
+      "Transducer/UserIn/UserDIn.h",
+      "Transducer/UserIn/UserDIn_Cmd.h"
+    ],
+    "Motor/MotorController/MotorController_Analog.c": [
+      "Motor/MotorController/MotorController_Analog.h"
+    ],
+    "Motor/MotorController/MotorController_Analog.h": [
+      "Motor/MotorController/MotorController.h",
+      "Motor/MotorController/MotorController_StateMachine.h"
+    ],
+    "Motor/MotorController/MotorController_App.h": [
+      "Framework/StateMachine/StateMachine.h"
+    ],
+    "Motor/MotorController/MotorController_Include.h": [
+      "Motor/MotProtocol/MotProtocol.h",
+      "Motor/Motor/Motor_Include.h",
+      "Motor/MotorController/MotorController_App.h",
+      "Motor/MotorController/MotorController_MotProtocol.h",
+      "Motor/MotorController/MotorController_Thread.h",
+      "Motor/MotorController/MotorController_User.h"
+    ],
+    "Motor/MotorController/MotorController_MotProtocol.c": [
+      "Motor/MotProtocol/MotPacket.h",
+      "Motor/MotProtocol/MotProtocol.h",
+      "Motor/MotorController/MotorController_MotProtocol.h",
+      "Motor/MotorController/MotorController_User.h",
+      "Motor/MotorController/MotorController_Var.h"
+    ],
+    "Motor/MotorController/MotorController_MotProtocol.h": [
+      "Framework/Protocol/Protocol.h",
+      "Motor/MotProtocol/MotPacket.h",
+      "Motor/MotProtocol/MotProtocol.h",
+      "Motor/MotorController/MotorController_Var.h"
+    ],
+    "Motor/MotorController/MotorController_StateMachine.c": [
+      "Motor/MotorController/MotorController_Analog.h",
+      "Motor/MotorController/MotorController_App.h",
+      "Motor/MotorController/MotorController_StateMachine.h",
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Motor/MotorController/MotorController_StateMachine.h": [
+      "Framework/StateMachine/StateMachine.h",
+      "Framework/StateMachine/_StateMachine_Tree.h",
+      "Motor/MotorController/MotorController.h",
+      "System/SysTime/SysTime.h"
+    ],
+    "Motor/MotorController/MotorController_StateMachine.md": [],
+    "Motor/MotorController/MotorController_Thread.h": [
+      "Motor/Motor/Motor_Thread.h",
+      "Motor/MotorController/MotAnalogUser/OptPin/MotorController_OptPin.h",
+      "Motor/MotorController/MotorController_StateMachine.h",
+      "Motor/MotorController/MotorController_User.h",
+      "Peripheral/ADC/ADC_Thread.h",
+      "Transducer/Monitor/Voltage/VMonitor.h"
+    ],
+    "Motor/MotorController/MotorController_User.c": [
+      "Motor/MotorController/MotorController_User.h"
+    ],
+    "Motor/MotorController/MotorController_User.h": [
+      "Motor/MotorController/MotorController_StateMachine.h",
+      "Motor/Version.h"
+    ],
+    "Motor/MotorController/MotorController_Var.c": [
+      "Motor/MotProtocol/MotVarId/Motor_MotVar.h",
+      "Motor/Motor/Motor_Var.h",
+      "Motor/Motor/Sensor/Motor_Sensor.h",
+      "Motor/Motor/VBus/VBus.h",
+      "Motor/MotorController/AppTable/MotorController_AppTable.h",
+      "Motor/MotorController/MotAnalogUser/MotorController_AnalogUser.h",
+      "Motor/MotorController/MotorController_StateMachine.h",
+      "Motor/MotorController/MotorController_User.h",
+      "Motor/MotorController/MotorController_Var.h",
+      "System/SysTime/SysTime.h"
+    ],
+    "Motor/MotorController/MotorController_Var.h": [
+      "Motor/MotProtocol/MotVarId/MotVarId.h",
+      "Motor/MotorController/MotorController.h"
+    ],
+    "Motor/MotorController/Traction/MotorController_Traction.c": [
+      "Motor/MotorController/MotAnalogUser/OptPin/MotorController_SwitchBrake.h",
+      "Motor/MotorController/MotorController_StateMachine.h",
+      "Motor/MotorController/MotorController_User.h",
+      "Motor/MotorController/Traction/MotorController_Traction.h"
+    ],
+    "Motor/MotorController/Traction/MotorController_Traction.h": [
+      "Motor/MotorController/MotorController_App.h",
+      "Motor/MotorController/MotorController_StateMachine.h",
+      "Motor/MotorController/Traction/Traction.h"
+    ],
+    "Motor/MotorController/Traction/MotorController_Traction.md": [],
+    "Motor/MotorController/Traction/Traction.c": [
+      "Motor/MotorController/Traction/Traction.h"
+    ],
+    "Motor/MotorController/Traction/Traction.h": [
+      "Motor/Motor/Extension/Motor_Table.h",
+      "Motor/Motor/Motor_Include.h",
+      "Transducer/Blinky/Blinky.h"
+    ],
+    "Motor/StateMachineOverview.md": [],
+    "Motor/ThreadOwnership.md": [],
+    "Motor/Version.h": [],
+    "Peripheral/ADC/ADC.h": [
+      "Peripheral/ADC/HAL_ADC.h",
+      "Peripheral/ADC/_ADC.h"
+    ],
+    "Peripheral/ADC/ADC_Batch.h": [
+      "Peripheral/ADC/ADC_Sequence.h"
+    ],
+    "Peripheral/ADC/ADC_Batch_JoinVariants.md": [],
+    "Peripheral/ADC/ADC_Channel.h": [
+      "Peripheral/ADC/ADC_Thread.h"
+    ],
+    "Peripheral/ADC/ADC_Conversion.h": [
+      "Peripheral/ADC/ADC.h"
+    ],
+    "Peripheral/ADC/ADC_Reference.h": [
+      "Math/Fixed/fract16.h"
+    ],
+    "Peripheral/ADC/ADC_Sequence.h": [
+      "Peripheral/ADC/ADC_Thread.h"
+    ],
+    "Peripheral/ADC/ADC_Thread.h": [
+      "Peripheral/ADC/ADC.h",
+      "Peripheral/ADC/_ADC.h"
+    ],
+    "Peripheral/ADC/HAL_ADC.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/ADC/Notes.md": [],
+    "Peripheral/ADC/VariantMap.md": [],
+    "Peripheral/ADC/_ADC.h": [
+      "Peripheral/ADC/ADC.h"
+    ],
+    "Peripheral/CAN/CAN.c": [
+      "Peripheral/CAN/CAN.h",
+      "Peripheral/CAN/CAN_Service.h"
+    ],
+    "Peripheral/CAN/CAN.h": [
+      "Peripheral/CAN/HAL_CAN.h"
+    ],
+    "Peripheral/CAN/CAN_Frame.h": [],
+    "Peripheral/CAN/CAN_Service.h": [
+      "Peripheral/CAN/CAN.h"
+    ],
+    "Peripheral/CAN/HAL_CAN.h": [
+      "Peripheral/CAN/CAN_Frame.h",
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/CAN/_CAN.h": [],
+    "Peripheral/ClockTimer/ClockTimer.h": [
+      "Peripheral/ClockTimer/HAL_ClockTimer.h"
+    ],
+    "Peripheral/ClockTimer/HAL_ClockTimer.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/HAL/HAL_Peripheral.h": [],
+    "Peripheral/HAL/Platform/KE0x/HAL_ADC.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_CAN.h": [
+      "Math/math_general.h",
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_ClockTimer.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_EEPROM.h": [
+      "Peripheral/HAL/Platform/KE0x/HAL_Flash.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_Encoder.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_FastPin.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_Flash.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_I2C.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_PWM.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_Pin.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_Reboot.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x_Clock.h",
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_SPI.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_Types.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_UART.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/HAL_Watchdog.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/HAL/Platform/KE0x/KE0x.h": [],
+    "Peripheral/HAL/Platform/KE0x/KE0x_Clock.h": [
+      "Peripheral/HAL/Platform/KE0x/KE0x.h"
+    ],
+    "Peripheral/Notes.md": [],
+    "Peripheral/NvMemory/EEPROM/EEPROM.c": [
+      "Peripheral/NvMemory/EEPROM/EEPROM.h"
+    ],
+    "Peripheral/NvMemory/EEPROM/EEPROM.h": [
+      "Peripheral/NvMemory/EEPROM/HAL_EEPROM.h",
+      "Peripheral/NvMemory/NvMemory/NvMemory.h"
+    ],
+    "Peripheral/NvMemory/EEPROM/HAL_EEPROM.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/NvMemory/Flash/Flash.c": [
+      "Peripheral/NvMemory/Flash/Flash.h",
+      "System/Critical/Critical.h"
+    ],
+    "Peripheral/NvMemory/Flash/Flash.h": [
+      "Peripheral/NvMemory/Flash/HAL_Flash.h",
+      "Peripheral/NvMemory/NvMemory/NvMemory.h"
+    ],
+    "Peripheral/NvMemory/Flash/HAL_Flash.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/NvMemory/NvMemory/NvMemory.c": [
+      "Peripheral/NvMemory/NvMemory/NvMemory.h"
+    ],
+    "Peripheral/NvMemory/NvMemory/NvMemory.h": [],
+    "Peripheral/NvMemory/NvMemory/NvMemory_Map.h": [
+      "Peripheral/NvMemory/NvMemory/NvMemory.h"
+    ],
+    "Peripheral/NvMemory/WritePath.md": [],
+    "Peripheral/NvMemory/_md": [],
+    "Peripheral/PWM/HAL_PWM.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/PWM/PWM.c": [
+      "Peripheral/PWM/HAL_PWM.h",
+      "Peripheral/PWM/PWM.h"
+    ],
+    "Peripheral/PWM/PWM.h": [
+      "Peripheral/PWM/HAL_PWM.h"
+    ],
+    "Peripheral/Pin/HAL_Pin.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/Pin/Pin.h": [
+      "Peripheral/Pin/HAL_Pin.h"
+    ],
+    "Peripheral/SPI/HAL_SPI.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/SPI/SPI.c": [
+      "Peripheral/SPI/SPI.h"
+    ],
+    "Peripheral/SPI/SPI.h": [
+      "Peripheral/Pin/Pin.h",
+      "Peripheral/SPI/HAL_SPI.h"
+    ],
+    "Peripheral/SPI/SPI_Xcvr.h": [
+      "Peripheral/SPI/SPI.h",
+      "Peripheral/Xcvr/Xcvr.h"
+    ],
+    "Peripheral/UART/HAL_UART.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Peripheral/UART/UART.c": [
+      "Peripheral/UART/UART.h"
+    ],
+    "Peripheral/UART/UART.h": [
+      "Framework/Ring/RingT.h",
+      "Peripheral/UART/HAL_UART.h"
+    ],
+    "Peripheral/UART/UART_Xcvr.h": [
+      "Peripheral/UART/UART.h",
+      "Peripheral/Xcvr/Xcvr.h"
+    ],
+    "Peripheral/Xcvr/Xcvr.h": [],
+    "README.md": [],
+    "System/BootRef/BootRef.h": [],
+    "System/Critical/Critical.c": [
+      "System/Critical/Critical.h"
+    ],
+    "System/Critical/Critical.h": [],
+    "System/Reboot/Reboot.h": [],
+    "System/SysTime/SysTime.c": [
+      "System/SysTime/SysTime.h"
+    ],
+    "System/SysTime/SysTime.h": [],
+    "Transducer/Blinky/Blinky.c": [
+      "Framework/Timer/Timer.h",
+      "Peripheral/Pin/Pin.h",
+      "Transducer/Blinky/Blinky.h"
+    ],
+    "Transducer/Blinky/Blinky.h": [
+      "Peripheral/Pin/Pin.h",
+      "Framework/Timer/Timer.h"
+    ],
+    "Transducer/Encoder/Encoder.c": [
+      "Math/Angle/AngleCounter.h",
+      "Transducer/Encoder/Encoder.h"
+    ],
+    "Transducer/Encoder/Encoder.h": [
+      "Math/Angle/AngleCounter.h",
+      "Math/Fixed/fixed.h",
+      "Math/math_general.h",
+      "Peripheral/Pin/Pin.h",
+      "Transducer/Encoder/HAL_Encoder.h",
+      "Transducer/Pulse/PulseTimer.h"
+    ],
+    "Transducer/Encoder/Encoder_ISR.h": [
+      "Transducer/Encoder/Encoder.h",
+      "Transducer/Encoder/Encoder_MT.h"
+    ],
+    "Transducer/Encoder/Encoder_MT.c": [
+      "Transducer/Encoder/Encoder_MT.h"
+    ],
+    "Transducer/Encoder/Encoder_MT.h": [
+      "Transducer/Encoder/Encoder.h",
+      "Transducer/Pulse/PulseTimer_Counter.h"
+    ],
+    "Transducer/Encoder/Encoder_Reference.md": [],
+    "Transducer/Encoder/HAL_Encoder.h": [
+      "Peripheral/HAL/HAL_Peripheral.h"
+    ],
+    "Transducer/Monitor/Base/Monitor.c": [
+      "Transducer/Monitor/Base/Monitor.h",
+      "Transducer/Monitor/Base/Monitor_Config.h"
+    ],
+    "Transducer/Monitor/Base/Monitor.h": [
+      "Math/Hysteresis/Hysteresis.h",
+      "Math/Threshold/Threshold.h"
+    ],
+    "Transducer/Monitor/Base/Monitor_Config.h": [
+      "Transducer/Monitor/Base/Monitor.h",
+      "Transducer/Monitor/Base/RangeMonitor.h"
+    ],
+    "Transducer/Monitor/Base/Monitor_Derate.h": [],
+    "Transducer/Monitor/Base/Monitor_Group.h": [],
+    "Transducer/Monitor/Base/RangeMonitor.c": [
+      "Transducer/Monitor/Base/Monitor_Config.h",
+      "Transducer/Monitor/Base/RangeMonitor.h"
+    ],
+    "Transducer/Monitor/Base/RangeMonitor.h": [
+      "Transducer/Monitor/Base/Monitor.h"
+    ],
+    "Transducer/Monitor/Base/_Monitor_Status.h": [],
+    "Transducer/Monitor/Heat/HeatMonitor.c": [
+      "Transducer/Monitor/Heat/HeatMonitor.h"
+    ],
+    "Transducer/Monitor/Heat/HeatMonitor.h": [
+      "Math/Linear/Linear.h",
+      "Transducer/Monitor/Base/Monitor.h",
+      "Transducer/Monitor/Heat/Thermistor.h"
+    ],
+    "Transducer/Monitor/Heat/Thermistor.c": [
+      "Transducer/Monitor/Heat/Thermistor.h"
+    ],
+    "Transducer/Monitor/Heat/Thermistor.h": [
+      "Math/Linear/Linear.h",
+      "Peripheral/ADC/ADC_Reference.h"
+    ],
+    "Transducer/Monitor/MonitorStatus.md": [],
+    "Transducer/Monitor/Voltage/Linear_Voltage.c": [
+      "Transducer/Monitor/Voltage/Linear_Voltage.h"
+    ],
+    "Transducer/Monitor/Voltage/Linear_Voltage.h": [
+      "Math/Linear/Linear.h"
+    ],
+    "Transducer/Monitor/Voltage/VDivider.c": [
+      "Transducer/Monitor/Voltage/VDivider.h"
+    ],
+    "Transducer/Monitor/Voltage/VDivider.h": [
+      "Peripheral/ADC/ADC_Reference.h",
+      "Transducer/Monitor/Voltage/Linear_Voltage.h"
+    ],
+    "Transducer/Monitor/Voltage/VMonitor.c": [
+      "Transducer/Monitor/Voltage/VMonitor.h"
+    ],
+    "Transducer/Monitor/Voltage/VMonitor.h": [
+      "Transducer/Monitor/Base/Monitor_Config.h",
+      "Transducer/Monitor/Base/RangeMonitor.h",
+      "Transducer/Monitor/Voltage/VDivider.h"
+    ],
+    "Transducer/Pulse/PulseEncoder.h": [],
+    "Transducer/Pulse/PulseTimer.h": [
+      "Peripheral/ClockTimer/HAL_ClockTimer.h"
+    ],
+    "Transducer/Pulse/PulseTimer_Counter.h": [
+      "Math/Angle/AngleCounter.h",
+      "Transducer/Pulse/PulseTimer.h"
+    ],
+    "Transducer/UserIn/Debounce/Debounce.h": [],
+    "Transducer/UserIn/UserAIn.c": [
+      "Transducer/UserIn/UserAIn.h"
+    ],
+    "Transducer/UserIn/UserAIn.h": [
+      "Math/Linear/Linear.h",
+      "Transducer/UserIn/UserDIn.h"
+    ],
+    "Transducer/UserIn/UserDIn.c": [
+      "Peripheral/Pin/Pin.h",
+      "Transducer/UserIn/Debounce/Debounce.h",
+      "Transducer/UserIn/UserDIn.h"
+    ],
+    "Transducer/UserIn/UserDIn.h": [
+      "Math/edge_fn.h",
+      "Peripheral/Pin/Pin.h",
+      "Transducer/UserIn/Debounce/Debounce.h"
+    ],
+    "Transducer/UserIn/UserDIn_Cmd.h": [
+      "Transducer/UserIn/UserDIn.h"
+    ],
+    "library.json": []
+  }
+}
