@@ -86,7 +86,7 @@ state does with it. "ignored" is an unmapped slot or a handler that returns `NUL
 | `Standby_Entry`, `Lock_Entry` | `Motor_Table_DisableAll` (`Motor_Disable`) | command on `PASSIVE` | → `DEACTIVATED` at speed 0 | | | | | |
 | `Lock_Entry` | `Motor_Calibration_Enter` | `CALIBRATION` root pointer | ignored (`NULL` slot) | ignored | ignored | ignored | ignored | `DEACTIVATED` at speed 0 → bare `CALIBRATION`; `CALIBRATION` re-enters the bare root; `FAULT` ignores |
 | `LOCK_EXIT`, `MOTOR_CMD_MODE`, `MOTOR_TUNING_MODE` | `Motor_Calibration_Exit` | `CALIBRATION` `NULL` | ignored | ignored | ignored | ignored | ignored | `CALIBRATION` → `PASSIVE`; others ignore |
-| `Fault_Entry` on overvoltage | `Motor_StateMachine_SetFault` `RequestV0` | `FAULT` set | → `FAULT`, V0 | → `FAULT` | → `FAULT` | → `FAULT` | → `FAULT` | `DEACTIVATED`, `CALIBRATION` → `FAULT`; `FAULT` accumulates |
+| `Fault_Entry` on overvoltage | `Motor_StateMachine_SetFault` `RequestV0` | `FAULT` set | → `FAULT`, V0 above the freewheel limit, else float | → `FAULT` | → `FAULT` | → `FAULT` | → `FAULT` | `DEACTIVATED`, `CALIBRATION` → `FAULT`; `FAULT` accumulates |
 | `Fault_InputFault` clear | `Motor_StateMachine_TryClearFaultAll` | `FAULT` clear | ignored | ignored | ignored | ignored | ignored | `FAULT` → `DEACTIVATED` once no flag remains |
 
 ## Sequences
@@ -262,7 +262,7 @@ sequenceDiagram
     actor U as Host
     alt motor fault (Overheat from Motor_Heat_Thread, SAFE_STOP watchdog, PositionSensor)
         M->>M: FAULT input or NEXT
-        Note over M: FAULT, V0 above the freewheel limit or with RequestV0, else floating
+        Note over M: FAULT, V0 above the freewheel limit, else floating until the speed passes it
         C->>C: 1 s poll, Motor_Table_IsAnyState FAULT, MotorController_SetFault Motors (locked)
     else VBus over or under voltage
         T->>C: MotorController_SetFault VBusLimit from the 1 ms ISR (locked, Fault_Entry runs in the ISR)
@@ -273,7 +273,7 @@ sequenceDiagram
     Note over C: FAULT. DRIVE or NEUTRAL left without an exit action
     alt VBus overvoltage
         C->>M: FAULT set RequestV0 to every motor (Motor_StateMachine_SetFault)
-        Note over M: FAULT, V0
+        Note over M: FAULT, V0 above the freewheel limit, else floating
     else otherwise
         C->>M: PHASE_OUTPUT Z to every motor (Motor_ReleaseVZ)
         Note over M: RUN to PASSIVE or SPEED_ZERO, PASSIVE floats within the limit, CALIBRATION to PASSIVE, FAULT unchanged

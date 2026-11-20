@@ -178,7 +178,8 @@ topology. It is runtime-only and not persisted.
 
 ### `FAULT`
 
-- Entry on overvoltage sets `RequestV0` on every motor, so each enters `FAULT` and holds V0. Otherwise every motor
+- Entry on overvoltage sets `RequestV0` on every motor, so each enters `FAULT`: V0 above the freewheel limit, float
+  within it, where the back-EMF is below the bus and V0 would only short the windings. Otherwise every motor
   gets `Z`, which also takes `CALIBRATION` to `PASSIVE`; a motor in `FAULT` keeps its own output. The buzzer sounds
   periodically.
 - `LOOP` stops the buzzer once no flag remains.

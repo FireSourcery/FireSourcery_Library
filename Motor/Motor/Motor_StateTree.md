@@ -280,7 +280,7 @@ target; the leaf's `ON_SPEED` and `ON_PHASE` actions; the input slots the state 
 | `INTERVENTION` (root) | | | `Motor_FOC_ResolveISupplyLimitsOnEntry`, `Motor_ResolveILimits`, `Motor_FOC_MatchTorqueIState`, `Motor_FOC_MatchVOutput` | empty | no | `_Motor_TransitionFeedbackLost`, after the leaf's `NEXT` | | | `FAULT`; `PHASE_OUTPUT` (`Z`, `0` → `PASSIVE` within the limit, else `SPEED_ZERO`; `PWM` → `RUN` with feedback); `FEEDBACK_MODE` stored (field write, applied by `Run_Entry`); `INTERVENTION` pointer |
 | `OPEN_LOOP` (root) | V0 | | feedback state cleared | empty | no | | | | `FAULT`; `PHASE_OUTPUT` `Z`, `0` → `PASSIVE`; `FEEDBACK_MODE` stored; `OPEN_LOOP` pointer (`NULL` → `PASSIVE`, root → re-enter, own leaf → leaf, other → `PASSIVE`); `DIRECTION` at speed 0 (`NULL` → `PASSIVE`, else stored); `CALIBRATION` `NULL` |
 | `CALIBRATION` (root) | V0 | CTB | feedback state cleared | empty | no | | | | `FAULT`; `PHASE_OUTPUT` (`Z` floats → `PASSIVE`; `0`, `PWM` V0, stay); `CALIBRATION` pointer (as `OPEN_LOOP`); `DIRECTION` at speed 0; `FEEDBACK_MODE`, `OPEN_LOOP` `NULL` |
-| `FAULT` | V0 with `RequestV0` or above the freewheel limit, else Z | | | empty | no | | | | `FAULT` (set accumulates; clear removes, `Motor_PollFaultFlags`, no flag left → `DEACTIVATED`); `CALIBRATION`, `DIRECTION` `NULL` |
+| `FAULT` | Z within the freewheel limit, else V0, for every flag (`RequestV0` included) | | | Z → V0 once the speed passes the limit | no | | | | `FAULT` (set accumulates; clear removes, `Motor_PollFaultFlags`, no flag left → `DEACTIVATED`); `CALIBRATION`, `DIRECTION` `NULL` |
 
 ### Leaves of PASSIVE and INTERVENTION
 

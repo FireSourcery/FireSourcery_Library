@@ -82,7 +82,7 @@ and encoder procedures, and encoder start-up, enter `FAULT` from their sub-state
 | `INTERVENTION` | resolves the current limits, matches the current loop and the output | in the sub-state | PWM |
 | `OPEN_LOOP` | V0, feedback state cleared | in the sub-state | V0 until a sub-state drives |
 | `CALIBRATION` | V0, feedback state cleared, timer reset | in the sub-state | V0 on entry; after a procedure, what it left |
-| `FAULT` | V0 if `RequestV0` is set or above the freewheel limit, else float | — | V0 or float |
+| `FAULT` | float within the freewheel limit, else V0, for every flag, `RequestV0` included | a float passing the limit goes to V0 | float or V0 |
 
 - `INIT` waits `MOTOR_STATE_MACHINE_INIT_WAIT` (1500 ms, so the 1 s speed and heat polls run twice). Then
   `Motor_ValidateConfig` limits the align voltage and field weakening, `Motor_IsConfigValid` failing sets
@@ -122,13 +122,16 @@ and encoder procedures, and encoder start-up, enter `FAULT` from their sub-state
 
 **Phase output ownership.** A state whose `LOOP` produces a voltage writes its duty there, right after computing it
 (`Motor_FOC_WriteDuty`). Hold states (`DEACTIVATED`, `PASSIVE`, `FAULT`, the bare `OPEN_LOOP` and `CALIBRATION`)
-write nothing, so the V0 or float set on entry, or left by a returning sub-state, holds. The PWM thread writes no
-duty.
+write nothing, so the V0 or float set on entry, or left by a returning sub-state, holds; `FAULT`'s `LOOP` writes
+only V0, when a float passes the freewheel limit. The PWM thread writes no duty.
 
 **Freewheel limit.** `Motor_IsSpeedFreewheelLimitRange`: |speed| below `Motor_GetSpeedFreewheelLimit_Pu`, twice the
 bus's SVPWM phase reference (`2 · VBus_GetVPhaseRefSvpwm`, VBus/√3 in pu) read in the speed base; the rated-speed
 form (`Motor_SpeedRated_Pu`) is kept commented out. Above it a floating bridge rectifies the back-EMF into the bus,
-so `PASSIVE` and `FAULT` hold V0 instead, and a release decelerates through `SPEED_ZERO`.
+so `PASSIVE` and `FAULT` hold V0 instead, and a release decelerates through `SPEED_ZERO`. Within it V0 gains the bus
+nothing and shorts the windings through the low sides with no current control, so `FAULT` floats there for every
+flag. `FAULT` re-checks each cycle and moves a float to V0 if the speed passes the limit; `PASSIVE` checks on entry
+only (its `LOOP` form is commented out).
 
 ## Inputs
 
@@ -246,7 +249,7 @@ own safe state. `DEACTIVATED` resets it to `NULL`.
 | `Overheat` | `Motor_Heat_Thread`. `Motor_PollFaultFlags` writes it 0, so a clear always removes it |
 | `PositionSensor` | `INIT`, sensor calibration not verified. Feedback lost above the freewheel limit (`_Motor_TransitionFeedbackLost`), Hall table invalid, encoder homing out of travel, encoder start-up validation: each also enters `FAULT`. SinCos verify after its calibration: flag only |
 | `InitCheck` | `INIT`, config invalid |
-| `RequestV0` | the controller on overvoltage. Non-latching, held by the requester; the controller's clear removes it |
+| `RequestV0` | the controller on overvoltage. Non-latching, held by the requester; the controller's clear removes it. A request: `FAULT` resolves it by speed like any flag, V0 above the freewheel limit, float within |
 | `SafeStopTimeout` | `SAFE_STOP`'s watchdog, with its transition to `FAULT`. After `RequestV0`, so the earlier bits keep their place |
 
 - Set: every state but `INIT` and `FAULT` ORs the set delta and enters `FAULT` if any flag is set. In `FAULT` a set

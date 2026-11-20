@@ -21,7 +21,8 @@ point, so a V0 written in the same ISR reads back as PWM.
 **Consequences**
 
 - A new driving state must call `Motor_FOC_WriteDuty` in its LOOP; a hold state must not.
-  `Fault_Entry`'s `FaultFlags.RequestV0` path (OV) relies on this.
+  `Fault_Entry`'s V0 above the freewheel limit relies on this, and so does `Fault_Proc`'s move from float to V0
+  (since 2026-11-20 `RequestV0`, the OV path, resolves by speed like any flag instead of V0 at any speed).
 - V0, the static low-side short, is the safety short. T0 (50 %) is not equivalent: dead-time bus
   pumping and switching loss.
 - Open: resuming from Z at speed enables the gates before the new duty loads (stale CnV, then T0).

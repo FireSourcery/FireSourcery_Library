@@ -70,7 +70,7 @@ StateMachine_TransitionCmd_T;
     StateMachine_Def / StateMachine_VTable
     Common def for multiple instances sharing the same transition pattern.
     Stateless Machine
-    Interface VTable Analogous
+    Interface VTable
 */
 /******************************************************************************/
 typedef const struct StateMachine_Machine
@@ -80,8 +80,6 @@ typedef const struct StateMachine_Machine
     /* Optional */
     // State_T * P_STATE_FAULT; /* Optional. for base fault functions */
     // const State_T STATES[]; /* Root states. auto assign a stateid this way */
-    // alternatively, simplified  implementation
-    // const State_Input_T * const * const PP_TRANSITION_TABLE; [state_t][state_input_t]
 }
 StateMachine_Machine_T;
 

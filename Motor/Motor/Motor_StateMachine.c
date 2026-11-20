@@ -784,26 +784,20 @@ const State_T MOTOR_STATE_CALIBRATION =
     @brief  State
 */
 /******************************************************************************/
+/*
+    The passive output for every flag, RequestV0 included: float within the freewheel limit, V0 above it.
+    Within the limit the back-EMF is below the bus, so a floated bridge feeds it nothing,
+    while V0 would short the windings through the low sides with no current control.
+*/
 static void Fault_Entry(Motor_T * p_motor)
 {
-    // Phase_Deactivate(&p_motor->PHASE);
-    // if (VBus_Status(p_motor->P_VBUS) == VMONITOR_STATUS_FAULT_OVERVOLTAGE)
-    // {
-    // }
-    if (p_motor->P_MOTOR->FaultFlags.RequestV0 != 0U)
-    {
-        Phase_ActivateV0(&p_motor->PHASE);
-    }
-    else
-    {
-        if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
-        else { Phase_ActivateV0(&p_motor->PHASE); }
-    }
+    Motor_ActivatePassiveOutput(p_motor);
 }
 
+/* Escalate only: a floated bridge pushed past the freewheel limit rectifies into the bus. V0 then holds until the clear */
 static void Fault_Proc(Motor_T * p_motor)
 {
-    // Phase_Deactivate(&p_motor->PHASE);
+    if ((Motor_IsSpeedFreewheelLimitRange(p_motor) == false) && (Phase_IsFloat(&p_motor->PHASE) == true)) { Phase_ActivateV0(&p_motor->PHASE); }
 }
 
 /* Fault State: Set accumulates (latches), Clear removes flags and re-verifies */
@@ -839,149 +833,3 @@ const State_T MOTOR_STATE_FAULT =
     .LOOP               = (State_Action_T)Fault_Proc,
 };
 
-
-/******************************************************************************/
-/*
-    Fault interface functions
-*/
-/******************************************************************************/
-
-// // inline bool Motor_IsClosedLoop(Motor_T * p_motor)
-// // {
-// //     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
-// // }
-
-// Orthogonal Composition
-// The critical architectural point: State objects naturally compose as orthogonal regions because each provides an independent behavioral filter over shared canonical data.
-///The key is: States don't hold independent data — they provide a behavioral lens over canonical data.
-// typedef state_value_t(*State_Data_T)(void * context);
-// typedef State_Data_T State_DataVector_T[];
-
-/* Alternatively orthogonal state  */
-// static State_T * Ccw_Input(Motor_T * p_motor, state_value_t value)
-// {
-
-// }
-
-// static void Ccw_Process(Motor_T * p_motor, state_value_t value)
-// {
-//     // uint16_t iLimitCcw = p_motor->P_MOTOR->ILimitMotoring_Pu;
-//     // uint16_t iLimitCw = p_motor->P_MOTOR->ILimitGenerating_Pu;
-// }
-
-// const State_T CCW_STATE =
-// {
-//     // .ENTRY = (State_Action_T)Ccw,
-//     // .LOOP = (State_Action_T)Ccw,
-// .GetPhaseSign = _Forward_GetPhaseSign,     // returns +1
-// .GetCommandSign = _Forward_GetCommandSign,
-
-// };
-
-// const State_T FORWARD_MOTORING_STATE =
-// {
-// };
-
-// transition using user value alone.
-// typedef struct
-// {
-//     // State_T Base;
-//     // State_Input0_T ProcRamp;
-// }
-// FeedbackState_T;
-
-// const State_T SPEED_FEEDBACK_STATE =
-// {
-//     // .ENTRY = (State_Action_T)Ccw,
-//     // .LOOP = (State_Action_T)Ccw,
-// };
-
-/* State X State */
-// static inline fract16_t  FeedbackProc(Motor_T * p_motor, State_T * p_DirectionState, State_T * p_FeedbackState)
-// {
-//     p_FeedbackState->ProcRamp(p_motor, p_DirectionState->CwValue(), p_DirectionState->CcwValue());
-// }
-// state_value_t Torque0_Ramp(Motor_T * p_motor) { return 0; }
-
-// // State_DataVector_T TORQUE_0_DATA_VECTOR =
-// // {
-// //     (State_Data_T)Torque0_Ramp,
-// //     (State_Data_T)Torque0_Ramp,
-// // };
-
-// typedef struct RunState_Vector
-// {
-//     // State_T BASE;
-//     int(*TorqueCmd)(Motor_T * p_motor);
-//     // State_Data_T * p_DataVector;
-// } RunState_Vector_T;
-
-// const RunState_Vector_T TORQUE_0_DATA_VECTOR =
-// {
-//     .TorqueCmd = Torque0_Ramp,
-// };
-
-// const RunState_Vector_T USER_CMD_DATA_VECTOR =
-// {
-//     .TorqueCmd = Torque0_Ramp,
-// };
-
-// static void Run_ProcOrthogonal(Motor_T * p_motor)
-// {
-//     RunState_Vector_T * p_state = (RunState_Vector_T *)p_motor->P_MOTOR->StateMachine.p_Orthogonal;
-//     fract16_t cmd = (p_state->TorqueCmd)(p_motor);
-//     // Motor_FOC_ProcInnerFeedback(p_motor->P_MOTOR, 0, cmd);
-//     // Motor_FOC_ProcAngleOutput(p_motor->P_MOTOR);
-// }
-
-
-// typedef struct State_VTable
-// {
-//     State_T * (*InputControl)(Motor_T * p_motor, state_value_t value);
-//     State_T * (*InputDirection)(Motor_T * p_motor, state_value_t direction);
-//     State_T * (*InputFeedbackMode)(Motor_T * p_motor, state_value_t feedbackMode);
-//     State_T * (*InputOpenLoop)(Motor_T * p_motor, state_value_t statePtr);
-//     State_T * (*InputCalibration)(Motor_T * p_motor, state_value_t statePtr);
-// } State_VTable_T;
-
-/* Orthgonal States */
-// typedef struct Motor_StateIntervention
-// {
-//     State_T BASE;
-//     struct
-//     {
-//         // state_value_t(*Condition)(const Motor_Context_T *);
-//         state_value_t(*REQ_OVERRIDE) (const Motor_Context_T *);
-//     };
-// }
-// Motor_StateIntervention_T;
-
-// pass top state return?
-// static void Torque0_Proc(Motor_Context_T * p_motor)
-// {
-
-// }
-
-// static state_value_t Torque0_Ramp(const Motor_Context_T * p_motor) { return 0; }
-
-// Motor_StateIntervention_T MOTOR_STATE_TORQUE_ZERO =
-// {
-//     .BASE =
-//     {
-//         // .ENTRY = (State_Action_T)Torque0_Entry,
-//         .LOOP = (State_Action_T)Torque0_Proc,
-//         // .P_DATA_VECTOR = (State_Data_T[])
-//         // {
-//         //     [0] = (State_Data_T)Torque0_Ramp,
-//         // },
-//     },
-//     // .Condition = Motor_IsSpeedFreewheelLimitRange,
-//     .REQ_OVERRIDE =  Torque0_Ramp,
-// };
-
-// static void ProcTorque0(Motor_Context_T * p_motor)
-// {
-//  int a =   MOTOR_STATE_TORQUE_ZERO.DataVector[1](p_motor);
-//     // Motor_FOC_ProcInnerFeedback(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, Motor_IRampOf(p_motor, 0));
-//     // Motor_FOC_ProcAngleOutput(p_motor);
-// }
