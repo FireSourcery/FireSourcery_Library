@@ -20,7 +20,7 @@ No function pointer virtualization. Directly include inline definitions.
 `Peripheral/<Module>/HAL_<Module>.h` declares the operation set as `static inline` prototypes, then includes the platform file through `HAL_PERIPHERAL_PATH(File)` (`Peripheral/HAL/HAL_Peripheral.h`). The platform is one of:
 
 - `HAL_PERIPHERAL_PATH_PLATFORM` -> `Peripheral/HAL/Platform/<Platform>/` (`KE0x`)
-- `HAL_PERIPHERAL_PATH_DIRECTORY` -> any directory on the include path (`Source/HAL/Peripheral/S32`; host tests: `.Test/HAL`)
+- `HAL_PERIPHERAL_PATH_DIRECTORY` -> any directory on the include path (`HAL/Peripheral/S32`; host tests: `.Test/HAL`)
 
 ```mermaid
 flowchart LR

@@ -1,7 +1,7 @@
 """
 KE current-loop sequences: where the I sample is captured, Parked and run through the PI, and when its output loads.
 The record of how the built sequence, one set per control cycle on the trigger, was chosen: CurrentLoopSequencing.exp.md
-(Kelly_KMC/Docs), Derivation. The forms and their ids: isample_sequences.py. The model and the scheduler: isample_model.py.
+(Kelly_KMC/Docs/Design), Derivation. The forms and their ids: isample_sequences.py. The model and the scheduler: isample_model.py.
 The figures: isample_plots.py.
 
 Run from this directory. Writes one timeline per sequence (PwmSampleSequence_<name>.png), the panels (LoadTopPanels: the built

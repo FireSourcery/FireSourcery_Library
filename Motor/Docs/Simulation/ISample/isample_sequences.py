@@ -1,6 +1,6 @@
 """
 The sequences the current loop was chosen from, by the ids the docs use. Until 2026-11-04 the record numbered them; the old ids
-in brackets, mapped in CurrentLoopSequencing.exp.md (Kelly_KMC/Docs), Derivation:
+in brackets, mapped in CurrentLoopSequencing.exp.md (Kelly_KMC/Docs/Design), Derivation:
 
     Software start          the PWM ISR starts the set at its top; it lands during the LOOP
         1a                  the take finds the set: the ADC ISR, above, preempts before it
@@ -139,7 +139,7 @@ SEQ_BOTTOM_V.notes = [f"FTM2 starts the ADC {start_text(SEQ_BOTTOM_V.lead)}: the
                       f"A slower cycle, from k {k_range(SEQ_BOTTOM_V)[1] + 0.01:.2f}, misses the bottom: the cliff to the next top. A faster one finds the set sooner. Never built."]
 
 # One set per PWM period. S32's form; its durations are unmeasured, so it runs at half KE's (k 0.5), on KE's ADC timing. Loads at the bottom.
-# KE runs this placement at 100 us: 'before', the control cycle on every 2nd PWM ISR. Measured on the board: Kelly_KMC/Docs/CurrentLoopSequencing.exp.md, hardware log
+# KE runs this placement at 100 us: 'before', the control cycle on every 2nd PWM ISR. Measured on the board: Kelly_KMC/Docs/Design/CurrentLoopSequencing.exp.md, hardware log
 K_EVERY = 0.5
 SEQ_EVERY = Seq("every", "Triggered, one set per PWM period: loads at the bottom. S32's form at half KE's durations", "EveryCycle", PRIO_HIGH, True, "loop", "loop", "default", "hw", [], divider=1)
 SEQ_EVERY.lead = latest_lead(SEQ_EVERY, K_EVERY, LOAD)
@@ -149,7 +149,7 @@ SEQ_EVERY.notes = [f"At half KE's durations (k = {K_EVERY}), a stand-in for S32'
                    f"FTM2 starts the ADC {start_text(SEQ_EVERY.lead)}: the latest start whose set the take finds, at that k. The write makes the bottom with time to spare,",
                    "so the take, not the write, sets the start. Every PWM cycle takes a set, and arms the next.",
                    f"No busy wait. 'every, wait' waits, and its latest start for the bottom is {start_text(LEAD_EVERY_W)}.",
-                   "KE06 runs this placement at 100 us, the control cycle on every 2nd PWM ISR ('before'): measured on the board (Kelly_KMC/Docs/CurrentLoopSequencing.exp.md)."]
+                   "KE06 runs this placement at 100 us, the control cycle on every 2nd PWM ISR ('before'): measured on the board (Kelly_KMC/Docs/Design/CurrentLoopSequencing.exp.md)."]
 
 # The LOOP's order: the requests before the take (default), or after the write (FOC first, the PI on requests 1 tick old; removed 2026-11-01).
 # The off cycle plays no part, so 'before' and 'before+V' give the same rows
