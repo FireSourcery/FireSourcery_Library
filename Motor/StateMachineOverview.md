@@ -1,13 +1,21 @@
 # Motor Control State Machines
 
-Motor control runs two hierarchical state machines on one engine,
+The quick reference. Motor control runs two hierarchical state machines on one engine,
 [Framework/StateMachine](../Framework/StateMachine/Architecture.md): an `MSM_MACHINE` per motor, and one
 `MCSM_MACHINE` for the controller, which holds the system states and, under `MC_STATE_MAIN`, the app's sub-states.
-This page is the overview and the design decisions. The detail is in:
+The detail is in:
 
-- [Motor_StateMachine.md](Motor/Motor_StateMachine.md): each motor state, input, action, fault and sub-state.
-- [MotorController_StateMachine.md](MotorController/MotorController_StateMachine.md): the controller's states, lock operations,
-  faults and write admission, and the Traction app.
+- [Motor_StateMachine.md](Motor/Motor_StateMachine.md): each motor state, input, action, fault and sub-state;
+  [Motor_StateTree.md](Motor/Motor_StateTree.md): every leaf, each hand-off and what each state owns.
+- [MotorController_StateMachine.md](MotorController/MotorController_StateMachine.md): the controller's states, lock
+  operations, faults and write admission, and the Traction app.
+- [StateMachineOverview.exp.md](StateMachineOverview.exp.md): the engine conventions both machines rely on, and the
+  design decisions.
+
+State names drop their prefix (`MC_STATE_`, `MOTOR_STATE_`, `INTERVENTION_STATE_`, `STATE_`). Phase output: `Z`
+floats every phase, `0` turns every low side on (V0), `PWM` drives the bridge. The freewheel limit
+(`Motor_IsSpeedFreewheelLimitRange`) is the speed above which a floating bridge rectifies the back-EMF into the bus:
+above it the hold states apply V0 and a release decelerates. Zero speed is an exact test.
 
 ## Layers
 
@@ -39,8 +47,129 @@ flowchart TB
   same thread, and its inputs arrive as `MC_STATE_INPUT_APP_USER`.
 - Each motor runs on its own. The controller reaches them all through `Motor_Table_T`: a command goes to every
   motor, and a guard requires every motor.
+- Commands go down as inputs. The controller and the app never set a motor's state; they send motor inputs and
+  transition commands, and the motor's own guards decide. Command values (`UserCmd`) bypass both machines; the
+  active motor state reads them.
+- Status goes up by polling. Controller guards read every motor's state and speed when an input arrives. Motor
+  faults reach the controller on its 1 s poll.
 
-## Across the layers: Traction
+## The tree
+
+Roots at the first level, sub-states below; `→` is a chain the sub-states run on their own. Names are shortened,
+and some sub-states exist only under a build option: [Motor_StateTree.md](Motor/Motor_StateTree.md) has them all.
+
+```text
+MCSM_MACHINE · one per controller · main thread, 1 ms
+├── INIT                 boot checks: board, VBus, every motor DEACTIVATED
+├── STANDBY              parked: motors DEACTIVATED, direction NULL, float
+├── MAIN                 motors enabled, V0 on entry
+│   ├── MAIN_MOTOR_CMD   direct motor commands: the default app, and LOCK's MOTOR_CMD_MODE
+│   ├── NEUTRAL          Traction: float, brake only, direction retained
+│   └── DRIVE            Traction: FORWARD / REVERSE, throttle, brake, release
+├── MOTOR_TUNING         live PID writes with the motors running
+├── LOCK                 motors CALIBRATION: calibration, NVM save, reboot
+│   └── CALIBRATE_ADC    throttle and brake zeros, 2000 ms
+└── FAULT                latched flags, buzzer until cleared
+
+MSM_MACHINE · one per motor · PWM thread, 20 kHz
+├── INIT                 1.5 s, then the config and sensor checks
+├── DEACTIVATED          float, direction NULL; the only door to CALIBRATION
+├── PASSIVE              float, or V0 above the freewheel limit
+│   └── SENSORLESS_COAST holds a PWM request until PASSIVE has lasted 1 s
+├── RUN                  closed loop
+├── INTERVENTION         active control, the user's command out of the loop
+│   ├── TORQUE_ZERO      inhibits motoring; never ends on its own
+│   └── SPEED_ZERO       decelerates, then PASSIVE at zero speed
+│       └── SAFE_STOP    SPEED_ZERO's loop, PWM refused, FAULT after 10 s
+├── OPEN_LOOP            entered at zero speed; V0 until a sub-state drives
+│   ├── ANGLE_ALIGN · START_UP_ALIGN → OPEN_LOOP_STATE_RUN
+│   ├── SENSORLESS_ALIGN → SENSORLESS_START_UP → RUN · SENSORLESS_FALLBACK → RUN
+│   └── encoder START_UP → … → RUN · ALIGN → VALIDATE_ALIGN → VALIDATE_CLOSED_LOOP
+├── CALIBRATION          V0 on entry; each procedure returns to the bare root
+│   └── ELECTRICAL · ADC zero · HALL · SIN_COS · ENCODER_HOMING_ALIGN → ENCODER_HOMING
+└── FAULT                float, or V0 above the freewheel limit
+```
+
+## Motor
+
+```mermaid
+stateDiagram-v2
+    [*] --> INIT
+    INIT --> DEACTIVATED: checks pass
+    INIT --> FAULT: a flag set
+    DEACTIVATED --> PASSIVE: Motor_Enable
+    PASSIVE --> DEACTIVATED: Motor_Disable, zero speed
+    DEACTIVATED --> CALIBRATION: CALIBRATION, zero speed
+    CALIBRATION --> PASSIVE: exit, or Z
+    PASSIVE --> RUN: PWM, direction and feedback
+    PASSIVE --> OPEN_LOOP: OPEN_LOOP, or PWM without feedback, zero speed
+    OPEN_LOOP --> RUN: start-up chain locked
+    OPEN_LOOP --> PASSIVE: release, exit
+    RUN --> PASSIVE: release
+    RUN --> INTERVENTION: release above the freewheel limit, or an INTERVENTION target
+    INTERVENTION --> RUN: PWM, not from SAFE_STOP
+    INTERVENTION --> PASSIVE: zero speed, or release
+    FAULT --> DEACTIVATED: cleared
+    note right of FAULT
+        A fault set enters FAULT
+        from every state but INIT
+    end note
+```
+
+| State | Is | Phase output |
+|---|---|---|
+| `INIT` | waits 1.5 s, then checks the config and the sensor calibration; takes no input | unchanged |
+| `DEACTIVATED` | quiescent: nothing runs until `Motor_Enable` or `CALIBRATION`; direction reset to `NULL` | float |
+| `PASSIVE` | freewheel or hold; captures the back-EMF angle so `RUN` can resume at speed | float; V0 above the freewheel limit, or on `0` |
+| `RUN` | the current loop, on the speed loop's output or on `UserCmd`, by `FeedbackMode` | PWM |
+| `INTERVENTION` | the current loop on the sub-state's reference, whatever `FeedbackMode` says | PWM |
+| `OPEN_LOOP` | align, start-up and open-loop run; the sensor chains hand off to `RUN` | V0 until a sub-state drives |
+| `CALIBRATION` | one procedure at a time | V0; after a procedure, what it left |
+| `FAULT` | latches `Motor_FaultFlags_T`: `Overheat`, `PositionSensor`, `InitCheck`, `RequestV0`, `SafeStopTimeout` | float; V0 above the freewheel limit |
+
+- Release is `Z` or `0`: `PASSIVE` within the freewheel limit, else `SPEED_ZERO`.
+- Feedback lost in `RUN` or `INTERVENTION`: the sensor's fallback where it has one (sensorless, as a build option),
+  else `PASSIVE` within the freewheel limit, else `FAULT` with `PositionSensor`.
+- A fault clear removes its flags, re-polls the conditions, and leaves for `DEACTIVATED` once none remain.
+
+## Controller
+
+```mermaid
+stateDiagram-v2
+    [*] --> INIT
+    INIT --> STANDBY: checks pass
+    INIT --> FAULT: a flag set
+    STANDBY --> MAIN: START_MAIN, or AUTO
+    MAIN --> STANDBY: STOP_MAIN / E_STOP, motors stopped
+    STANDBY --> LOCK: LOCK_ENTER, motors stopped
+    LOCK --> STANDBY: LOCK_EXIT
+    LOCK --> MAIN: MOTOR_CMD_MODE
+    LOCK --> MOTOR_TUNING: MOTOR_TUNING_MODE
+    MOTOR_TUNING --> STANDBY: STOP_MAIN / E_STOP, motors stopped
+    MOTOR_TUNING --> LOCK: LOCK_ENTER, motors stopped
+    FAULT --> STANDBY: cleared
+    note right of FAULT
+        A fault set enters FAULT
+        from every state but INIT
+    end note
+```
+
+| State | Is | Motor states |
+|---|---|---|
+| `INIT` | waits 1.55 s, then checks the board, VBus, and that every motor is `DEACTIVATED`; takes no input | `INIT`, `DEACTIVATED` |
+| `STANDBY` | parked; takes state commands and `LOCK_ENTER` only, motor and app inputs are buffered. Left by `START_MAIN`, or by itself under `StandbyExitMode` `AUTO` | `DEACTIVATED` |
+| `MAIN` | normal operation; the app's mounting point | `PASSIVE`, `RUN`, `INTERVENTION`, `OPEN_LOOP` |
+| `MOTOR_TUNING` | live PID tuning; an exit to `STANDBY` discards the live gains, `LOCK_ENTER` keeps them for an NVM save | `PASSIVE`, `RUN` |
+| `LOCK` | operations committed to as risky. Ids at the bare `LOCK` only: `LOCK_EXIT`, `NVM_SAVE_CONFIG`, `CALIBRATE_ADC`, `REBOOT`, `MOTOR_CMD_MODE`, `MOTOR_TUNING_MODE` | `CALIBRATION`; `DEACTIVATED` if moving at entry |
+| `FAULT` | latches `MotorController_FaultFlags_T`: `VBusLimit`, `PcbOverheat`, `MosfetsOverheat`, `VAccsLimit`, `VAnalogLimit`, `Motors`, `RxLost`, `InitCheck`. Overvoltage sends `RequestV0`; buzzer until cleared | `FAULT` for a motor fault; else released |
+
+- "Motors stopped" is every motor `DEACTIVATED`, or `PASSIVE` at zero speed. `STOP_MAIN` releases a motor held at
+  zero speed first; a refusal sounds the standby-error buzzer, or answers `ERROR` for `LOCK_ENTER`.
+- `LOCK_EXIT` with a motor outside `DEACTIVATED` / `CALIBRATION` sets `Motors` and goes to `FAULT`.
+- Writes by state: motor commands in `MAIN_MOTOR_CMD` or `MOTOR_TUNING`, calibration commands in `LOCK`, PID I/O in
+  `MOTOR_TUNING`, config in `LOCK` or `FAULT`.
+
+## Traction
 
 | Controller | App | Motor states | Motor direction | Phase output |
 |---|---|---|---|---|
@@ -53,12 +182,49 @@ flowchart TB
 - Direction has two frames. The user frame, `FORWARD` / `REVERSE`, is what Traction buffers and sends. The motor
   maps it to `CW` / `CCW` through `Config.DirectionForward`; `Motor_Context_T.Direction` and the FOC voltage
   half-plane hold the result.
-- Commands go down as inputs. The controller and the app never set a motor's state; they send motor inputs
-  (`PHASE_OUTPUT`, `DIRECTION`, `FEEDBACK_MODE`, `INTERVENTION`, `CALIBRATION`, `FAULT`) and transition commands
-  (`Motor_Enable`, `Motor_Disable`), and the motor's own guards decide. Command values (`UserCmd`) bypass both
-  machines; the active motor state reads them.
-- Status goes up by polling. Controller guards read every motor's state and speed when an input arrives. Motor
-  faults reach the controller on its 1 s poll.
+- Traction's inputs, as `APP_USER` values: `DIRECTION`, `DRIVE_CMD` (the throttle / brake / release edge),
+  `THROTTLE_VALUE`, `BRAKE_VALUE`, `LEVER_DIRECTION`, `LEVER_VALUE`.
+
+| From | Input | Motors | Result |
+|---|---|---|---|
+| `STANDBY` | `START_MAIN` with `FORWARD` / `REVERSE` buffered | stopped | `DRIVE`, the direction applied |
+| `STANDBY` | `START_MAIN` | moving, or stopped with `NULL` buffered | `NEUTRAL` |
+| `NEUTRAL` | `FORWARD` / `REVERSE` | stopped, or already that way at any speed | `DRIVE` |
+| `NEUTRAL` | `FORWARD` / `REVERSE` | moving the other way | stays `NEUTRAL`, buzzer blinks; send again once stopped |
+| `DRIVE` | `NULL` | any | `NEUTRAL`, direction retained |
+| `DRIVE` | `FORWARD` / `REVERSE` | any | no change |
+| `MAIN` | `STOP_MAIN` | stopped | `STANDBY`: motors `DEACTIVATED`, motor direction `NULL`; Traction's buffered direction stays |
+
+| In `DRIVE` | Motor |
+|---|---|
+| throttle edge | the feedback mode by `ThrottleMode` (`SPEED`, `TORQUE`), then `PWM`: `PASSIVE` → `RUN`. A held throttle at `DRIVE` entry gives no edge |
+| throttle value | a speed or current command, `UserCmd` |
+| brake edge, also in `NEUTRAL` | `BrakeMode` `TORQUE`: an opposing current, then `SPEED_ZERO` once no motor turns along its direction, `PASSIVE` at zero. `BrakeMode` `PASSIVE`: released, braking is mechanical |
+| release, `ZeroMode` `FLOAT` | `Z`: `PASSIVE`, or `SPEED_ZERO` above the freewheel limit. `REGEN`, not implemented, acts as `FLOAT` |
+| release, `ZeroMode` `IZERO` | `TORQUE_ZERO` |
+| release, `ZeroMode` `ZERO` | a command of 0, stays `RUN`: in speed mode it holds standstill, energized |
+
+## Inputs
+
+| Motor, `Motor_StateInput_T` | Value | Sent by |
+|---|---|---|
+| `PHASE_OUTPUT` | `Z`, `0`, `PWM` | `Motor_ActivateControl` (`PWM`), `Motor_ReleaseVZ`, `Motor_ReleaseV0` |
+| `FEEDBACK_MODE` | `Motor_FeedbackMode_T` | `Motor_ApplyFeedbackMode`, on a change |
+| `DIRECTION` | `CW`, `CCW`, `NULL` | `Motor_ApplyUserDirection` (the user frame), `Motor_ApplyVirtualDirection` |
+| `INTERVENTION` | the sub-state, a `State_T *` | `Motor_ApplyTorqueZero`, `Motor_ApplySpeedZero`, `Motor_ApplySafeStop` |
+| `OPEN_LOOP`, `CALIBRATION` | the root or a sub-state; `NULL` exits | `Motor_OpenLoop_Enter` / `_Exit`, `Motor_Calibration_Enter` / `_Exit` |
+| `FAULT` | `Motor_FaultCmd_T`: set and clear deltas | `Motor_StateMachine_SetFault`, `_ClearFault`, `_TryClearFaultAll` |
+| transition commands | — | `Motor_Enable` (`DEACTIVATED` → `PASSIVE`), `Motor_Disable` (`PASSIVE` → `DEACTIVATED`, zero speed) |
+
+| Controller, `MotorController_StateInput_T` | Value | Sent by |
+|---|---|---|
+| `STATE_CMD` | `START_MAIN`, `STOP_MAIN`, `E_STOP` | `MotorController_InputStateCommand`, `_EnterMain`, `_ExitMain` |
+| `LOCK` | `MotorController_LockId_T`; answers `LockOpStatus` | `MotorController_InputLock`, `_EnterLockState`, `_ExitLockState` |
+| `FAULT` | `MotorController_FaultCmd_T`: set and clear deltas | `MotorController_SetFault`, `_ClearFault`, `_TryClearFaultAll` |
+| `MOTOR_CMD` | — | `MAIN_MOTOR_CMD` only; motor commands arrive as var writes |
+| `APP_USER` | the app's input id, `Traction_StateInput_T` | the `MotorController_Traction_*` user layer |
+
+## Interlocks
 
 | Interlock | Enforced by |
 |---|---|
@@ -75,142 +241,13 @@ flowchart TB
 | Serial input loss safe-stops every motor, then faults | controller |
 | A motor fault stops that motor at once; the controller follows within 1 s | motor, controller |
 
-## Engine conventions both machines rely on
+## Sequences
 
-From [Architecture.md](../Framework/StateMachine/Architecture.md):
-
-- One leaf pointer per machine; the active states are the leaf and its parents. No orthogonal regions, no history.
-- A handler returns `NULL` to stay, which may still change context (an internal transition); the current state, to
-  re-enter it; or another state, to exit up to the common ancestor and enter down from it.
-- Inputs walk from the leaf to the root. An unmapped slot defers to the parent. A child that maps an input and
-  returns `NULL` refuses it for its whole branch.
-- `NEXT` is the clock transition, run after `LOOP`, leaf first: while a node's `NEXT` returns `NULL`, its parent's
-  `LOOP` and `NEXT` run in the same cycle. That is how `SAFE_STOP` runs `SPEED_ZERO`'s loop.
-- Actions (`P_ACTION_TABLE`) reach the leaf only; a child that needs its parent's action shares the table.
-- Sub-states are `const State_T` in the file that owns them, with `P_TOP` set to a published root. The machine
-  definition does not list them.
-- `EXIT` is compiled out (`STATE_MACHINE_EXIT_FUNCTION_ENABLE` is not defined), so transition work is in `ENTRY`.
-  Returning from a leaf to its own root does not re-run the root's `ENTRY`.
-- A sub-state id is unique only among its siblings; `*_GetPathId` packs the whole path, 4 bits per level.
-
-## Design decisions
-
-### State design rules
-
-- A new state is justified by a different safety envelope, not a different purpose.
-- One-shot automated procedures get a state; interactive parameter adjustment does not, unless it changes the
-  safety envelope: `MOTOR_TUNING` admits PID writes with the motors running, and its exits keep or reload the live
-  gains.
-- Orthogonal concerns get orthogonal mechanisms: what control structure is running is a separate concern from
-  what input source is connected. So the feedback mode is data (`Motor_FeedbackMode_T`), not a state, and so are the
-  input source (`Config.InputMode`) and the `STANDBY` exit policy (`StandbyExitMode`).
-- `LOCK` is for operations the operator must commit to and acknowledge as risky, outside normal operation.
-- The operator's use case does not conflate with the system's state.
-
-### Controller
-
-- **The root does not know app states or inputs.** An app mounts its sub-states under `MC_STATE_MAIN` through
-  `MotorController_App_T`: `ENTER_MAIN` picks the entry sub-state, `PROC_ANALOG_USER` maps the analog inputs,
-  `INIT` loads its config. Its inputs share one id, `MC_STATE_INPUT_APP_USER`, whose value is the app's own enum.
-  The app runs in the controller's machine rather than a nested one, so its sub-states inherit `MAIN`'s handlers
-  for state commands and faults. A nested machine on a narrower context (`Motor_Table_T`) would give the app its
-  own input alphabet; it remains the alternative. The app is chosen at compile time (`P_APP`), in a shape that
-  allows a runtime choice later.
-- **One parked state.** `STANDBY` belongs to the root, so every app shares it.
-- **Inputs are buffered, not events.** The user may select a direction while parked; the controller stores it, and
-  entering `MAIN` uses it. A direction selection does not cause a transition. `STANDBY` accepts state commands
-  only: motor and app inputs are buffered by their callers and consumed when `MAIN` is entered.
-- **Safe landings.** `LOCK` exit and fault clear always land in `STANDBY`, never in live `MAIN`, and `MAIN` is left
-  only with the motors stopped.
-- **Exit policy as data.** The `STANDBY` exit policy, `StandbyExitMode`, is runtime data resolved at init from the
-  input topology. That keeps the input mode and the Park input out of the machine. An explicit park latches
-  `MANUAL`, so a host that parked holds `STANDBY`; a reboot restores the resolved mode.
-- **Write admission belongs to the controller** ([0001](../Docs/Decisions/0001_ParameterWriteAdmission.md)).
-  Whether a write is safe now is lifecycle reasoning that applies to any parameter, so the controller decides it
-  from its own state. The motor machine gates outputs, the electrical hazard, and nothing else.
-
-### Motor
-
-- **Direction does not drive transitions.** A layer above must be able to store a direction while it holds its own
-  safe state: a state is left on the loss of any one condition, but entering one can take more than one. So setting
-  a direction never starts the motor; `PWM` does, given a direction and feedback. `DEACTIVATED` resets the
-  direction. `NULL` could double as a disable, but no other value could act as an enable, so it does not.
-- **Intervention is a motor-level supervisor**: active control on its own path, with the user's command taken out
-  of the loop. Its states are named by the quantity forced to zero, not by the mechanism; `SPEED_RAMP_ZERO` was
-  rejected because the ramp's slope is a parameter. The nearest standard stop functions:
-
-| Here | Nearest standard stop function |
+| Sequence | Path |
 |---|---|
-| `PASSIVE`, floating | Safe Torque Off (IEC 61800-5-2), without a safety-rated channel |
-| `PASSIVE` or `FAULT` holding V0 above the freewheel limit | active short circuit |
-| `SPEED_ZERO` | CiA 402 Halt: decelerate, stay enabled, resumable |
-| `SAFE_STOP` | SS1-d (IEC 61800-5-2), CiA 402 Quick Stop option 1; no safety-rated monitoring channel |
-| `TORQUE_ZERO` | none: it never converges, it inhibits motoring |
-
-- **The freewheel limit is the rated speed**, where the back-EMF reaches the nominal voltage. Below it a floating
-  bridge is safe; above it the back-EMF rectifies into the bus, uncontrolled. So above it a release decelerates
-  through `SPEED_ZERO`, and `PASSIVE` and `FAULT` hold V0.
-- **Fault is an ordinary root**, not the engine's fault-state template. Its input carries the set and clear deltas
-  in one value (`Motor_FaultCmd_T`, `MotorController_FaultCmd_T`), so no caller reads, modifies and passes back the
-  whole flag word. Flags alone are inert outside `INIT`: the transition into `FAULT` is what stops the motor, so a
-  procedure that finds a fault returns `FAULT` itself. A clear re-polls the conditions before leaving.
-- **Each driving state writes its own duty**, in its `LOOP`, right after computing it. Hold states write nothing,
-  and the PWM thread writes no duty. A thread-level write had overwritten V0 with the last vector, so a `FAULT`
-  entry above rated speed re-applied the last `RUN` voltage; deciding in the thread by reading the duty back is
-  racy, since a duty written in the same ISR loads only at the next load point.
-- **Bumpless entry.** `RUN` and `INTERVENTION` resolve their limits first, then match the loops to the present
-  output. A feedback-mode change re-enters `RUN` instead of passing through `PASSIVE`, so the loops re-match
-  without coasting.
-- **Feedback mode as data.** `RUN` reads the feedback mode; open loop is a branch of its own (`OPEN_LOOP`). `RUN`
-  runs the current loop in every mode, so voltage modes are not sent.
-
-### Inputs and threads
-
-- **One input per subtree.** A sub-state entered from many sources is reached through its subtree's input, which
-  carries a `State_T *` (`OPEN_LOOP`, `CALIBRATION`, `INTERVENTION`). The tree does the acceptance: sources that
-  share a parent take the parent's handler, which checks `P_TOP`, and an exception overrides at the child
-  (`SAFE_STOP` refuses). A target already on the active branch is a no-op, so repeated requests hold without
-  re-entry; the brake hold sends `Motor_ApplySpeedZero` with every brake value. `NULL` is the branch's exit, taken
-  inside the branch only; every handler outside it refuses `NULL`. Rejected:
-  - engine-iterated source lists of `StateMachine_TransitionCmd_T`: acceptance moves out of the states, exclusions
-    must be listed, and every handler needs a repeat guard;
-  - a request enum: it only renames the sub-states. Inside the firmware the pointer is the id; enums belong at the
-    wire, as the var ids;
-  - a whitelist of pointers: it loses to the structural `P_TOP` check;
-  - one generic target-state input for every subtree: it brings the whitelist back into `PASSIVE` and
-    `DEACTIVATED`.
-- **Transition commands for single sources.** A `StateMachine_TransitionCmd_T` names its start state, acts only
-  while that state is on the active path, and needs no input id. `Motor_Enable`, `Motor_Disable`, and every
-  procedure started from inside its branch use one.
-- **The controller's inputs run on its proc thread**, so they need no lock. The motor's inputs cross from the main
-  thread to the PWM thread, so they apply under the engine's lock: `STATE_MACHINE_ASYNC_CRITICAL` masks IRQs for
-  the handler and the transition, and the PWM ISR never runs between an exit and an entry. `Motor_StateMachine.h`
-  refuses a lock-free build: the engine runs the new entry before it moves the leaf, so the old `LOOP` could run once
-  more and overwrite a `FAULT` entry's V0 with the last `RUN` duty. A fault set from the controller's 1 ms timer
-  thread can be lost to a transition it interrupted; the 1 s re-send of the latched flags covers it.
-- **Motors are polled, not notified.** A motor stops on its own fault at once; the controller's poll only moves the
-  system state.
-
-### Layering
-
-- **The app sends the motor signed commands in the motor's frames and never sets its state.** The motor owns
-  continuity through zero speed: its direction limits the voltage to a half-plane, which blocks plugging. How much
-  plugging to allow near zero is the motor's to decide, behind the same contract.
-
-## Open and deferred
-
-- **Direction end state**, deferred 2026-10-17. The direction stays a selectable lock: `Motor_SetDirection` writes
-  the field and the FOC voltage half-plane. A symmetric voltage limit plus a window around the back-EMF is the
-  likely end; the arming gates, the motoring / generating key and `Motor_UserMotoringOf` must stop reading the
-  direction first. See [VLimitPolicy.md](Motor/Math/VLimitPolicy.md).
-- **Sub-state ids.** The motor's sub-states and Traction's states carry no ids yet and report their root.
-  `MAIN`'s depth-1 id space is shared by `MotorController_MainSubStateId_T` and the app's ids, which can collide;
-  `MotorController_App_T` is where a base or range would be allocated.
-- **Safe stop gaps.** Against SS1 and Quick Stop, `SAFE_STOP` ends in `PASSIVE`, not a restart-interlocked state
-  like CiA 402 Switch On Disabled; its standstill test is exact zero; and without sub-state ids a CiA 402 adapter
-  cannot report Quick Stop Active.
-- **Output image.** A buffered phase-output image, written by the states and transferred by the PWM thread as the
-  only register writer, was considered and deferred.
-
-Ideas from the first draft, not designed: app modes such as crawl, sport, eco and hill hold; per-motor traction
-control and torque vectoring; automated parking; launch control.
+| Boot | controller `INIT` and motor `INIT` check → motors `DEACTIVATED` → `STANDBY` → `START_MAIN`, or `AUTO` → `MAIN`: motors `PASSIVE`, V0 → `NEUTRAL`, or `DRIVE` by the buffered direction |
+| Drive | `NEUTRAL`, `FORWARD` with the motors stopped → `DRIVE` → throttle edge: `PASSIVE` → `RUN` → release: by `ZeroMode` |
+| Park | `STOP_MAIN`, motors stopped → `STANDBY`: `Z`, `Motor_Disable`, motors `DEACTIVATED`, direction `NULL` |
+| Calibrate | `STANDBY` → `LOCK_ENTER`: motors `CALIBRATION` → a calibration command, `NVM_SAVE_CONFIG` → `LOCK_EXIT` → `STANDBY` |
+| Fault | a motor `FAULT`, at once → controller `FAULT` on the 1 s poll → clear: re-poll, motors `DEACTIVATED` → `STANDBY` |
+| Serial loss | `RxLost`: every motor `SAFE_STOP`, `PASSIVE` at zero speed → controller `FAULT` within 1 s |

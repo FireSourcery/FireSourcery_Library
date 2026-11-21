@@ -1,10 +1,10 @@
 # Hardware Binding
 
 Rules for the code that binds a peripheral to the application: the HAL functions, the board's setup,
-its binding header, and the library modules they compose. Drawn from the ADC scan on an S32K1 board
-(PDB, eDMA). Each rule names what it replaces. The evidence is in
-[2026-11-04_HwScanBindingSimplification.md](../Findings/2026-11-04_HwScanBindingSimplification.md),
-and the shape the rules produce for a sequenced scan is [HwSequencedScan.md](../Patterns/HwSequencedScan.md).
+its binding header, and the library modules they compose. Drawn from a rewrite of the ADC scan
+binding on an S32K1 board (PDB, eDMA), between 2026-09-25 and 2026-11-04. Each rule names what it
+replaces. The rewritten binding has not run on hardware, and its ISR's cost is not measured. The
+shape the rules produce for a sequenced scan is [HwSequencedScan.md](../Patterns/HwSequencedScan.md).
 
 | # | Rule | Replaces | Backed by |
 |---|---|---|---|

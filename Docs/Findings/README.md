@@ -26,5 +26,4 @@ finding may supersede an earlier one; say so in both.
 | Record | About |
 |---|---|
 | [2026-10-14_CorruptLooseBlobs.md](2026-10-14_CorruptLooseBlobs.md) | Three corrupt loose blobs break history searches; refetch fix |
-| [2026-11-04_HwScanBindingSimplification.md](2026-11-04_HwScanBindingSimplification.md) | A Hw scan binding, 2026-09-25 vs 2026-11-04: one ISR from two, and which binding rules did it |
 | [2026-11-17_KnowledgeGraphOpenFindings.md](2026-11-17_KnowledgeGraphOpenFindings.md) | First knowledge graph of the library: layering the includes contradict, 4 defects, stale docs, files with no live code; all open |

@@ -3,7 +3,8 @@
 One `MSM_MACHINE` per motor, on the engine in [Framework/StateMachine](../../Framework/StateMachine/Architecture.md).
 States run on the PWM thread; inputs arrive from the main thread. The machine knows nothing of `STANDBY`,
 `NEUTRAL`, `DRIVE` or the other motors. [MotorController_StateMachine.md](../MotorController/MotorController_StateMachine.md) covers
-the layers above; [StateMachineOverview.md](../StateMachineOverview.md) has the overview and the design decisions.
+the layers above; [StateMachineOverview.md](../StateMachineOverview.md) is the quick reference, and
+[StateMachineOverview.exp.md](../StateMachineOverview.exp.md) has the design decisions.
 
 Phase output values, `Phase_VOutMode_T`, are written by their suffix: `Z` floats every phase, `0` turns every low
 side on (V0), `PWM` drives the bridge. T0 is 50 % duty on every phase (`Phase_ActivateT0`).

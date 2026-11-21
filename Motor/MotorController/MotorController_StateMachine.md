@@ -2,8 +2,8 @@
 
 One `MCSM_MACHINE` holds the controller's root states, the sub-states the controller defines itself, and the app's
 sub-states under `MC_STATE_MAIN`. Each motor runs its own machine, detailed in
-[Motor_StateMachine.md](../Motor/Motor_StateMachine.md). [StateMachineOverview.md](../StateMachineOverview.md) has the overview,
-the layer map and the design decisions.
+[Motor_StateMachine.md](../Motor/Motor_StateMachine.md). [StateMachineOverview.md](../StateMachineOverview.md) is the quick
+reference and the layer map; [StateMachineOverview.exp.md](../StateMachineOverview.exp.md) has the design decisions.
 
 ## Threads
 

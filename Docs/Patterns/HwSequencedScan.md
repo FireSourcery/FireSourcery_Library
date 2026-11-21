@@ -56,6 +56,8 @@ void SCAN_COMPLETE_ISR(void) { ClearTransferFlag(); ADC_SequenceTrigger_OnComple
   asserts it. Order the slot table so each set is one range.
 - A request applies at the next completion, and converts on the trigger after it.
 - The map runs through a function pointer from the ISR.
+- The protocol moved more than it shrank: the board's binding header lost 32 live lines, and
+  `ADC_Sequence.h` holds 68, with one user.
 
 **Rejected**
 
@@ -69,4 +71,3 @@ void SCAN_COMPLETE_ISR(void) { ClearTransferFlag(); ADC_SequenceTrigger_OnComple
 
 **Source** — table-driven methods (McConnell, *Code Complete*, 2nd ed., ch. 18) for the set records;
 none recorded for the whole. The rules it follows: [HardwareBinding.md](../Conventions/HardwareBinding.md).
-How it was reached: [2026-11-04_HwScanBindingSimplification.md](../Findings/2026-11-04_HwScanBindingSimplification.md).
