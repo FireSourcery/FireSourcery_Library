@@ -6,13 +6,14 @@
 ## Core Principles
 - **Expression through code**: Use code as the language to express what its doing. Favor code that expresses itself over extensive comments.
 - **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization. Function body should look like the equation in its docstring, not reconstruct it.
-- **Simplicity First**: Make every change as simple as possible. Impact minimal code. Favor regularity.
+- **Simplicity First**: Make every change as simple as possible. Impact minimal code. Favor regularity. Simplicity is measured on the resulting design (fewer concepts and adapters), not on the diff. Minimal Impact keeps unrelated code untouched; it does not veto the general form.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
 ### Demand Elegance
 - For non-trivial changes: pause and ask "is there a more elegant way?"
-- Consider established or published design patterns first to eliminate code duplication
+- **Find the general form.** Before adding a type, layer or adapter, ask which existing interface or published pattern it is an instance of: the framework's (`State_T`, `Packet_Codec_T`, a `HAL_*.h` contract) or another module's. If conforming lets existing consumers apply unchanged, propose that form beside the minimal one and name what it unlocks. Instance: the Mot protocol is a `Packet_Codec_T` (`MOT_PACKET_CODEC`), so the `Framework/Protocol` engine runs it unchanged. [Docs/Principles/GeneralForm.md](Docs/Principles/GeneralForm.md)
+- The sign: an adapter from a framework type to a module's own, or a parallel struct beside one the framework already defines, means the two are one interface.
 - If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
 - Skip this for simple, obvious fixes – don't over-engineer
 - Challenge your own work before presenting it

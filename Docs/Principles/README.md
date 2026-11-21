@@ -30,3 +30,4 @@ One file per principle, named for what it is (`InformationExpert.md`).
 | [InterfaceSegregation.md](InterfaceSegregation.md) | A signature states what a function depends on: the narrowest struct that holds what it reads or writes |
 | [DominantDecomposition.md](DominantDecomposition.md) | A tree carries one axis of a classification; choose which mechanism carries each of the others |
 | [StructSemantics.md](StructSemantics.md) | A struct's kind, set by who writes it, when, where it lives and how it is passed, decides its storage, passing form and API; its shape does not |
+| [GeneralForm.md](GeneralForm.md) | A new type first asks which existing interface it is an instance of; conforming lets every consumer apply unchanged |
