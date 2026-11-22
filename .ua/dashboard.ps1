@@ -19,7 +19,7 @@
     update it with /understand in Claude Code.
 
     Installing Node.js:
-        winget install OpenJS.NodeJS.LTS    # into C:\Program Files\nodejs
+        winget install OpenJS.NodeJS.LTS    # into %ProgramFiles%\nodejs
     Alternative with uv (nodejs-wheel is an unofficial PyPI repackaging of
     Node.js LTS):
         uv tool install nodejs-wheel        # node, npm, npx into %USERPROFILE%\.local\bin

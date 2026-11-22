@@ -29,15 +29,17 @@
   - Older docs still use `[Name]` in markdown; convert them only when asked.
 - **Rows and columns expose symmetry.** Where clauses share a form (the cases of one parameter, a value and its complement, one quantity per phase), set them as rows, one case per row, the shared parts aligned in columns. Apply it unsparingly: two parallel clauses are enough. C comments align with spaces; markdown uses a table. [Docs/Conventions/Comments.md](Docs/Conventions/Comments.md#layout)
 - Extensive descriptions go in a separate markdown file, such as architecture notes.
-- Architecture notes and findings live in `Docs/`: Conventions, Patterns, Decisions, Findings, Modules, References. Index: [Docs/README.md](Docs/README.md).
+- Architecture notes and findings live in `Docs/`: Principles, Conventions, Patterns, Decisions, Findings, References. Index: [Docs/README.md](Docs/README.md).
+- A module's notes live beside its source, not in `Docs/`: `<Topic>.md` is the sheet, `<Topic>.exp.md` its detail and record. [Docs/Modules/README.md](Docs/Modules/README.md)
 - A doc leads with a reference sheet of what is the case: facts, rules, options and their defaults, limits, and what is not measured. Derivations, each experiment, and verification logs go in files of their own.
 - **Keep dated material apart from reference material.** History (logs, results, decisions, finished plans) is kept apart from documents that describe how things are now.
 - Simulations go in `Motor/Docs/Simulation/<topic>/` with their plots; conventions in its [README.md](Motor/Docs/Simulation/README.md).
+- Tracked files carry no absolute paths: relative to the repo or a sibling checkout, or a `<placeholder>` for a machine's tool.
 
 ### Self-Improvement Loop
 - After ANY correction from the user: save it as a feedback memory, one fact with its why, written to prevent the same mistake
 - Memory is current state: trim it, and expire what no longer holds
-- A settled rule moves to its `Docs/` entry and leaves memory; one applied every session also gets a bullet here. Map: `E:\Claude\README.md` § Where knowledge goes
+- A settled rule moves to its `Docs/` entry and leaves memory; one applied every session also gets a bullet here. Map: § Where knowledge goes in `README.md` of the Claude home, the folder that holds `.claude/memory/` (`autoMemoryDirectory`)
 - Research patterns before starting to code.
 
 ## Task Management
@@ -77,7 +79,7 @@
 ### Important Rules
 - **No heap allocation** (`malloc`/`free` are never used)
 - **No floating point** in runtime code paths — all math is integer/fixed-point
-- **ISR-safe**: Shared data between ISR and thread contexts uses volatile and critical sections
+- **ISR-safe**: Shared data between ISR and thread contexts uses volatile and critical sections. A torn read or two-sided write found in review is not closed with a new lock; it is an open decision: [0010](Docs/Decisions/0010_SharedWordWrites.md), [0011](Docs/Decisions/0011_StateMachineLockNesting.md)
 - **Const-correctness**: Config/calibration data is `const` qualified and stored in non-volatile memory regions
 - **Reentrant-safe**: Module functions operate on explicit instance pointers, no hidden global state
 
