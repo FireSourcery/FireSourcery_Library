@@ -19,3 +19,7 @@ holds the same rules under "API Scoping".
   a narrower-scope public API.
 - **Promote to a wider scope only on demand:** add a thin forwarder taking the wider handle only when
   a real caller holds it often enough that the extra typing matters.
+
+Related: [ParameterizedFunction.md](../Patterns/ParameterizedFunction.md), the same rules for a
+parameter that merges variants: on the API every caller passes a real argument; behind the API an
+internal may take optional slots no caller sees.

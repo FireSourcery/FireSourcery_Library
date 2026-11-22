@@ -188,6 +188,20 @@ void Motor_Encoder_CalibrateIndexAngleOffset(Motor_T * p_motor)
     Encoder_CalibrateIndexAngleOffset(GetEncoderState(p_motor));
 }
 
+void Motor_Encoder_Cmd(Motor_T * p_motor, int varId, int varValue)
+{
+    (void)varValue;
+    if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_ENCODER)) return;
+    if (p_motor->P_MOTOR->Config.SensorMode != ROTOR_SENSOR_ID_ENCODER) return;
+
+    switch ((Motor_Encoder_Cmd_T)varId)
+    {
+        case MOTOR_ENCODER_CMD_HOMING:                  Motor_Encoder_StartHoming(p_motor);                 break;
+        case MOTOR_ENCODER_CMD_CALIBRATE_INDEX_OFFSET:  Motor_Encoder_CalibrateIndexAngleOffset(p_motor);   break;
+        default: break;
+    }
+}
+
 /*
     Virtual home is a read frame, not a datum - Config.VirtualHomeOffset shifts the reported zero
     and needs no acquisition of its own. Moving to it is a position command once homed,

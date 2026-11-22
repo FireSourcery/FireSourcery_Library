@@ -194,7 +194,7 @@ void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, 
         case MOTOR_VAR_TYPE_HALL_STATE:                  break;
         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
         case MOTOR_VAR_TYPE_ENCODER_CONFIG:   _Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId, varValue);   break;
-        case MOTOR_VAR_TYPE_ENCODER_CMD:                 break;
+        case MOTOR_VAR_TYPE_ENCODER_CMD:      Motor_Encoder_Cmd(p_motor, varId, varValue);                                                  break;
         case MOTOR_VAR_TYPE_ENCODER_STATE:               break;
         #endif
         default: break;

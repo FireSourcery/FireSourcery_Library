@@ -11,7 +11,7 @@ step re-derives the design.
 block — **Status**, **Context**, **Design** (drawn), **Sketch**, **Done already**, **Open for you** (the owner's
 boxes) — written when the block is deferred, the plan's seed at pickup, moved to the dated log when it lands.
 
-**Here** — instances live in `Docs/planned/`, created with its first deferred block; its `README.md` indexes every
+**Here** — instances live in `Docs/Proposals/`, created with its first deferred block (named `planned/` until 2026-11-22); its `README.md` indexes every
 entry with what each waits on. The app consumer keeps its own instances in its `doc/planned/`.
 
 **Source** — none published; grown from this project's fill-out decision forms (2026-11-20) and their drift.

@@ -27,4 +27,4 @@ static inline angle_freq_t _Motor_Electrical_RateOfSi(int32_t si, uint32_t scale
   where it was, and keeps the variant later work may need.
 
 Related: [ConfigValidity.md](ConfigValidity.md), where conversions and derives carry no guards;
-[MergingDuplicates.md](MergingDuplicates.md), the reverse case, when two functions may become one.
+[ParameterizedFunction.md](../Patterns/ParameterizedFunction.md), the reverse case, when two functions may become one.

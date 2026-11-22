@@ -15,7 +15,7 @@ parameter sits decides it: on the API, or behind it.
 
 | The parameter sits | It buys | Accepted when | Instance |
 |---|---|---|---|
-| On the API, header-visible | A smaller API: one function in place of one per value | the value is data through one body, with no branch picking the logic; a constant call folds to its variant when inlined | `_Phase_WriteGates(p_phase, id)`, over the eight gate states |
+| On the API, header-visible | A smaller API: one function in place of one per value | the value is data through one body, with no branch picking the logic, and every caller passes a real argument; a constant call folds to its variant when inlined | `_Phase_WriteGates(p_phase, id)`, over the eight gate states |
 | Behind the API: file `static`, or reached only through a table | One implementation under several API functions, none of which shows the parameter | always: each API function still takes only what it uses | `ApplyUpUntil` under the `State_*Up` functions; `StartCmdWritePage`, `StartCmdEraseSector` as `START_CMD` |
 | On the API, picking which logic runs | — | never: a flag | `Phase_Unipolar_ActivateOutput`, `Phase_Bipolar_ActivateOutput`; the `PolarMode` switch over them is commented out |
 
@@ -49,9 +49,20 @@ The second block is simplified: `State_AcceptInputUp` goes through `ApplyUp`, th
   flash, `Flash_Erase_Blocking(p_flash, address, size)` takes no data and `Flash_EraseAll_Blocking(p_flash)`
   nothing, though every `START_CMD` target takes all four. The HAL under them keeps its focused
   signature, `HAL_Flash_StartCmdEraseSector(p_regs, destAddress)`.
-- A placeholder argument at a direct call misstates the quantity to the reader of the call
-  ([MergingDuplicates.md](../Conventions/MergingDuplicates.md)). Behind the API no call site shows the
-  slot: `NULL` as the end of the path and a `(void)`ed slot are internal details.
+- **Merging near-duplicates on the API** is honest only when every caller passes a real argument:
+  the quantities share a dimension. Before proposing a collapse, check every caller. If one would pass
+  a constant 1, 0 or `NULL` only to fit the shape, keep the functions separate and name each by its
+  quantity. A placeholder makes the call misstate the quantity (ψ has no current base), and it hides
+  that the bases differ: Z_base is V_base for ψ and V_base / I_base for L. A tramp parameter fails the
+  same test ([ApiScoping.md](../Conventions/ApiScoping.md): a signature states what the function
+  depends on).
+  - Accepted: one SI pair serves ψ and L, `_Motor_Electrical_SiOf` / `_Motor_Electrical_RateOfSi`
+    over `angle16_arc_radius` / `angle16_of_arc`. ψ per volt and L per ohm are both [s/rad], so no
+    call passes an extra argument.
+  - Rejected: `pu_tau_of_angle_freq(base, v_base, i_base, rate)`, where ψ passed `i_base = 1`. Kept
+    separate: `psi_pu_of_angle_freq` (no `i_base`), `l_pu_of_angle_freq` and `angle_freq_of_l_pu`.
+- Behind the API no call site shows the slot, so the placeholder test does not apply there: `NULL` as
+  the end of the path and a `(void)`ed slot are internal details.
 - Folding is expected, not measured. `_Phase_WriteGates` carries "Let the compiler optimize/expand
   into the 8 derived functions". `ApplyUpUntil` reaches its visitor through a pointer that is
   constant once inlined. Neither is checked in the disassembly.
@@ -65,12 +76,15 @@ The second block is simplified: `State_AcceptInputUp` goes through `ApplyUp`, th
   `_State_Node.h`.
 - The `START_CMD` targets in `Peripheral/NvMemory/Flash/Flash.c`, typed by `HAL_NvMemory_StartCmd_T`
   (`Peripheral/NvMemory/NvMemory/NvMemory.h`), under the `Flash_*_Blocking` functions of `Flash.h`.
+- Merges: `_Motor_Electrical_SiOf`, `_Motor_Electrical_RateOfSi` in `Motor/Motor/Motor_Electrical.h`,
+  called for ψ, Ld and Lq in `Motor_Config.c`; the split kept in `Motor/Motor/Math/motor_electrical_math.h`.
 
 **Rejected**
 
 | Alternative | Why not |
 |---|---|
 | A function per value on the API, `_Phase_WriteGatesA(p_phase)` | Eight entries of one body; a runtime id needs a `switch` at the caller |
+| A merge one caller feeds a placeholder, `pu_tau_of_angle_freq(..., i_base = 1, ...)` | The call misstates the quantity and hides that the bases differ |
 | A mode argument over different operations, the super function | The callers pass literals and the body branches: the call no longer says what runs, and every caller depends on every path |
 | Exposing the internal's shape, `State_AcceptInputUp(p_start, NULL, NULL, id)` | The API takes what it does not use: the optional parameter API scoping refuses |
 | An implementation per API function: a traversal per bound and visitor, a `START_CMD` type per command shape | The same loop several times; the NvMemory engine dispatches one slot, and a type per shape needs a dispatch per shape (the alternative noted at `HAL_NvMemory_StartCmd_T`) |

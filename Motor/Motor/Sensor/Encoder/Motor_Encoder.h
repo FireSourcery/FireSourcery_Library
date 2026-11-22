@@ -35,6 +35,16 @@
 /*!
 */
 /******************************************************************************/
+/* [MOTOR_VAR_TYPE_ENCODER_CMD] ids */
+typedef enum Motor_Encoder_Cmd
+{
+    MOTOR_ENCODER_CMD_HOMING,                   /* Align, then search the index. Ends in MOTOR_STATE_CALIBRATION */
+    MOTOR_ENCODER_CMD_CALIBRATE_INDEX_OFFSET,   /* Commit the index HOMING found as the commutation offset */
+}
+Motor_Encoder_Cmd_T;
+
+void Motor_Encoder_Cmd(Motor_T * p_motor, int varId, int varValue);
+
 void Motor_Encoder_StartHoming(Motor_T * p_motor);
 void Motor_Encoder_CalibrateIndexAngleOffset(Motor_T * p_motor);
 

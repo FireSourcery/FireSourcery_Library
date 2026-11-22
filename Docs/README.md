@@ -11,6 +11,7 @@ is the map of the code; this folder holds the reasoning behind it.
 | [Decisions/](Decisions/README.md) | What we chose and why; binds later work | `NNNN_Title.md` |
 | [Findings/](Findings/README.md) | What we measured or learned, dated; the evidence behind decisions | `YYYY-MM-DD_Title.md` |
 | [Modules/](Modules/README.md) | The placement rule for module notes: they live beside the source they describe, not here | the rule only |
+| [Proposals/](Proposals/README.md) | Deferred blocks, one self-contained brief each, until they land ([PlannedItemBrief](Patterns/PlannedItemBrief.md)) | `PascalCase.md` |
 
 **Entry contract** — every entry, in every category:
 

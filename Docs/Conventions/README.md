@@ -55,7 +55,6 @@ before this shape converts when next touched.
 | [HardwareBinding.md](HardwareBinding.md) | The rules for binding a peripheral to the application — HAL, board setup, binding header — each naming what it replaces |
 | [InitMacros.md](InitMacros.md) | An `*_INIT` macro earns its place only doing what a designated initializer cannot: cast, size, or derive |
 | [LeadingDot.md](LeadingDot.md) | A leading `.` marks a folder or file outside the library proper; tools and reviews skip it |
-| [MergingDuplicates.md](MergingDuplicates.md) | Near-duplicates merge only when honest for every caller: a shared dimension, real arguments at every call |
 | [ModeOverBool.md](ModeOverBool.md) | A gate, enable or pause is a value of an enum mode the poll `switch`es on, not a single-purpose `bool` |
 | [Naming.md](Naming.md) | An underscore separates scope segments, case separates the words inside one: `Motor_FOC_ProcAngleV` reads Motor › FOC › ProcAngleV |
 | [ValueOverBool.md](ValueOverBool.md) | An on/off a value parameter already decides is that value; the off is its degenerate case, 0 |
