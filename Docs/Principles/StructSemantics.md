@@ -35,11 +35,38 @@ contract from the type, and each kind takes the storage and passing form that su
 - **Same shape, different kind:** an argument bundle that is never persisted is a Ref, not a Config
   (`AngleCounter_Ref_T`); the Config holds the published coefficients and the runtime the derived
   ones (Kp, Ki, Kd in the Config, Kp and KiPerTick in `PID_T`).
+- **A second place is not a second kind.** The Config's NVM image and its RAM working copy are one
+  type in two places. A second type is due when the operations differ: persisted and written by the
+  user, or rebuilt at Init and never persisted. Simonyi's test: if the same operations apply, the
+  types are the same.
+- **What a second type buys.** Distinct tags are distinct types (C11 §6.7.2.3p5), so the compiler
+  rejects a Ref where a Config is expected. The write rules of a kind (Init only, written by the
+  user, stepped by its module) it never sees: they hold only inside the owning module. For the data
+  transfer kinds a second type prevents mix-ups; it guards no invariant.
+- **The converse: one meaning, several shapes.** A Config field and the `{MotVarId, Value16}` pair
+  that writes it over the wire are two types joined by a conversion, `MotorController_WriteVar16s`,
+  not one type in two places.
 - Names carry the kind where a suffix exists: [Naming.md](../Conventions/Naming.md) § Types.
 - Open: whether runtime configuration holds user units or internal units. Both occur today:
-  `VBus_Config_T.VSupplyNominal_V` is in volts, the `Motor_Config_T` limits are `_Pu`.
+  `VBus_Config_T.VSupplyNominal_V` is in volts, the `Motor_Config_T` limits are `_Pu`. Prior art:
+  AUTOSAR and ASAM A2L store the representation the code consumes and carry the unit as metadata
+  (CompuMethod, `COMPU_METHOD`).
 
-**Source** — Entity and Value Object (Evans, *Domain-Driven Design*, 2003): the runtime model and the
-value kind. Data Transfer Object (Fowler, *Patterns of Enterprise Application Architecture*, 2002):
-the data transfer kinds. Data-only interfaces, temporal firewalls (Kopetz and Nossal, FTDCS 1997).
-Result return, *Procedure Call Standard for the Arm Architecture* (Arm IHI 0042).
+**Source**
+
+| For | Source |
+|---|---|
+| Shape and meaning apart, the meaning owned by one module | Parnas, "On the Criteria To Be Used in Decomposing Systems into Modules", *CACM* 15(12), 1972; Morris, "Protection in Programming Languages", *CACM* 16(1), 1973, §5; Cardelli and Wegner, "On Understanding Types, Data Abstraction, and Polymorphism", *Computing Surveys* 17(4), 1985, §1.1–1.2 |
+| Same shape, different type | Ada 83 LRM §3.3: two type definitions are distinct "even if they are textually identical"; sparse `__bitwise` (Torvalds, linux-kernel, 2004) |
+| One meaning, several shapes | Ada 83 LRM §13.6: packed and unpacked descriptors, two types joined by a conversion |
+| A name alone guards no invariant | King, "Names are not type safety", 2020: a newtype is safe only inside its home module |
+| The kind in the type name | Simonyi, "Hungarian Notation", MSDN, 1999 reprint: a structure's operations are independent of the fields that set its representation, and each structure takes its own tag; Spolsky, "Making Wrong Code Look Wrong", 2005, for the word *kind* |
+| The kind on the instance, not the type | AUTOSAR Classic R22-11: structure fixed on the type, implementation policy set per prototype (TPS_SWCT_01273); memory section by data kind (SWS_MemoryMapping §7.2.1.2); configuration passed to `<Mip>_Init()` by const pointer (SWS_BSW_00160) |
+| Runtime model, value | Entity and Value Object (Evans, *Domain-Driven Design*, 2003) |
+| Data transfer kinds | Data Transfer Object (Fowler, *Patterns of Enterprise Application Architecture*, 2002) |
+| Data-only interfaces | Temporal firewalls (Kopetz and Nossal, FTDCS 1997); state and event information (Kopetz, "Time-Triggered Real-Time Computing", IFAC 2002, §3.3) |
+| Result return | *Procedure Call Standard for the Arm Architecture* (Arm IHI 0042) |
+
+Not published, as far as found: the kind table itself, and binding the kind to the type. The
+standards that classify data by writer and binding time (AUTOSAR, A2L, IEC 61131-3) attach the
+kind to the instance.
