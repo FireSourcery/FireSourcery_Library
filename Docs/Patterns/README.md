@@ -52,6 +52,8 @@ diagram where the structure is not obvious from the shape.
 | [EnumNamedValues.md](EnumNamedValues.md) | Idiom | An enum classifies a quantity: its enumerators are the quantity's values (range bounds, or a signed level), so the conversion is a mask, sign or `abs` |
 | [GuardedCall.md](GuardedCall.md) | Idiom | An optional feature: compile its definitions in every build, guard the one reference, and the linker drops them |
 | [HwSequencedScan.md](HwSequencedScan.md) | Design | A Hw trigger converts one of several channel sets and a transfer copies them: sets as records, the selection in the library, one completion ISR |
+| [WriterOwns.md](WriterOwns.md) | Design | A value crossing threads is held by the module whose thread writes it, with the only mutable path; a module on another thread holds a `const` pointer, `volatile` where the write is asynchronous to its reads |
+| [ParameterizedFunction.md](ParameterizedFunction.md) | Idiom | A parameter earns its place in two ways: on the API it trims the surface, one function over the values of one body; behind the API it lets internals reuse one implementation, its optional slots never reaching a caller. A parameter that picks which logic runs is a flag, and its variants stay separate functions |
 | [PlannedItemBrief.md](PlannedItemBrief.md) | Process | A block is deferred: one self-contained brief per block — context, a drawn design, a code sketch, and the owner's boxes — that seeds the implementation |
 
 ---

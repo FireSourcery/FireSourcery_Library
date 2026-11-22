@@ -4,6 +4,17 @@ Rules followed every time: naming, notation, parameter order, API scoping, fixed
 A convention keeps a change the size of its reason. Record one once the owner rules it, or once a
 third instance follows it.
 
+Each convention is backed by one of two things, and names which:
+
+| Backed by | The rule's authority | A violation costs | Instance |
+|---|---|---|---|
+| Coordination | that there is one: an alternative followed everywhere would serve as well | a surprise to a reader who expected the shared way | [LeadingDot.md](LeadingDot.md) |
+| A principle | the principle, stated in this repo's terms: its convention-side view | something in itself, even to a reader who expected it | [ApiScoping.md](ApiScoping.md), of [InterfaceSegregation.md](../Principles/InterfaceSegregation.md) |
+
+A principle-backed convention links its principle's file. One whose principle has no file yet marks
+a principle to write. The coordination sense is Lewis's (*Convention*, 1969): a regularity that
+solves a coordination problem, where another would have served had everyone adopted it.
+
 ---
 
 ## Entry shape
@@ -16,6 +27,7 @@ A single rule:
 # <Rule>
 
 **Rule** — the rule, in a sentence; the index quotes it.
+**Backed by** — the principle it applies, by link, or coordination.
 **Instead of** — what it replaces.
 **Instance** — a real instance in code, by path.
 **From** — the ruling or the published source, dated.

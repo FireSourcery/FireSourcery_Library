@@ -40,5 +40,6 @@ Link the findings a decision rests on, in [../Findings/](../Findings/README.md).
 | [0009_DirectionPolicy.md](0009_DirectionPolicy.md) | Direction stays a selectable lock policy; the symmetric-VLimit end state comes later | Proposed, deferred |
 | [0010_SharedWordWrites.md](0010_SharedWordWrites.md) | Multi-word cross-thread values stay unguarded for now; each site carries the pointer here | Proposed, open |
 | [0011_StateMachineLockNesting.md](0011_StateMachineLockNesting.md) | The state-machine lock stays the raw disable/enable pair; decide with 0010 | Proposed, open |
+| [0012_VarEnumNaming.md](0012_VarEnumNaming.md) | The runtime var set is `Module_Var_T`; the config var set is proposed as `Module_ConfigVar_T`, the struct it indexes first and the kind last | Proposed, open |
 
 Pending: `Peripheral/ADC/ADC_Batch_JoinVariants.md`, an open decision.

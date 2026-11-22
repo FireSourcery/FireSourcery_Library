@@ -3,6 +3,8 @@
 An on/off that a value parameter already decides is that value, not a `bool` beside it. The off
 value is the parameter's degenerate case: given it, the unchanged logic produces the off behavior.
 
+**Backed by** — [BooleanBlindness.md](../Principles/BooleanBlindness.md).
+
 - **A value first, then a mode.** A limit, gain or rating of 0 is the off where the logic clamps or
   scales by it. Where no value carries the on/off, it is a mode: [ModeOverBool.md](ModeOverBool.md).
 - **The question is a derived function, never a stored field.** A caller that asks reads

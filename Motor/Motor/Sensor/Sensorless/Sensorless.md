@@ -372,6 +372,35 @@ flowchart TB
 
 ## States
 
+### Overview
+```mermaid
+stateDiagram-v2
+    PASSIVE --> SENSORLESS_ALIGN: PWM, direction set, no lock, zero speed
+    PASSIVE --> RUN: PWM, direction set, locked
+    state OPEN_LOOP {
+        SENSORLESS_ALIGN --> SENSORLESS_START_UP: AlignTime_Cycles
+        note right of SENSORLESS_ALIGN
+            ZERO_INITIAL, EmfObserver_Reset
+            V0, then the align current at angle 0
+        end note
+        note right of SENSORLESS_START_UP
+            EmfObserver_SeedAngle at the ramp's angle and speed
+            the open-loop ramp
+        end note
+    }
+    SENSORLESS_START_UP --> RUN: lock, FOC_MatchTheta
+    OPEN_LOOP --> PASSIVE: Z or 0, DIRECTION NULL
+    RUN --> PASSIVE: lock lost, within the freewheel limit
+    RUN --> FAULT: lock lost above it, PositionSensor
+    INTERVENTION --> PASSIVE: lock lost, within the freewheel limit
+    INTERVENTION --> FAULT: lock lost above it
+    note left of PASSIVE
+        The observer runs in every state while selected
+        floating, it tracks the terminal EMF
+    end note
+```
+
+### Implementation
 ```mermaid
 stateDiagram-v2
     state PASSIVE {

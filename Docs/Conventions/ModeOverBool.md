@@ -3,6 +3,8 @@
 A gate, enable or pause on a state struct is a value of an enum mode that the poll `switch`es on, not
 a single-purpose `bool`.
 
+**Backed by** — [BooleanBlindness.md](../Principles/BooleanBlindness.md).
+
 - **Before a mode, an existing value.** Where a limit or gain already bounds the logic, its 0 is the
   off and no mode is needed: [ValueOverBool.md](ValueOverBool.md).
 - **Extend an existing mode, direction or state enum first.** `Monitor_T.Direction` carries

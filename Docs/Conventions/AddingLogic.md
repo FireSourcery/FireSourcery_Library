@@ -15,6 +15,8 @@ written, and what the new logic is decides where it goes:
 static inline angle_freq_t _Motor_Electrical_RateOfSi(int32_t si, uint32_t scale) { return (si > 0) ? angle16_of_arc(scale, si) : 0; }
 ```
 
+**Backed by** — [OpenClosed.md](../Principles/OpenClosed.md).
+
 ## Why
 
 - A working function's body is the equation in its docstring, checked at a glance. A guard folded into it turns the
