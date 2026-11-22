@@ -1,13 +1,15 @@
 # Patterns
 
 How this codebase solves a recurring problem, and when to apply the solution. Each entry is marked
-with one of the three levels from *Pattern-Oriented Software Architecture* (Buschmann et al., 1996):
+with a level: the three from *Pattern-Oriented Software Architecture* (Buschmann et al., 1996),
+plus `Process`, this project's own addition:
 
 | Level | Scope | Example |
 |---|---|---|
 | Architectural | The structure of the whole system | Pure math layer, const descriptors |
 | Design | A component and how it works with others | Equation in a struct, Config / State / Ref |
 | Idiom | A shape the C language itself forces | Snapshot before an edge poll, cast at the function pointer |
+| Process | How the work itself is carried, not a shape in code | The planned-item brief |
 
 Record a pattern once it is decided and has at least one instance in code.
 
@@ -20,7 +22,9 @@ One file per pattern, named for what it is (`EquationStruct.md`).
 ```markdown
 # <Pattern>
 
-**Level** — architectural, design or idiom.
+The force and the answer in one sentence; the index's Use when column quotes it.
+
+**Level** — architectural, design, idiom or process.
 **Force** — what varies, what must stay still.
 **Shape** — the minimal C form.
 **In code** — `Name` of each real instance, with its path.
@@ -48,6 +52,7 @@ diagram where the structure is not obvious from the shape.
 | [EnumNamedValues.md](EnumNamedValues.md) | Idiom | An enum classifies a quantity: its enumerators are the quantity's values (range bounds, or a signed level), so the conversion is a mask, sign or `abs` |
 | [GuardedCall.md](GuardedCall.md) | Idiom | An optional feature: compile its definitions in every build, guard the one reference, and the linker drops them |
 | [HwSequencedScan.md](HwSequencedScan.md) | Design | A Hw trigger converts one of several channel sets and a transfer copies them: sets as records, the selection in the library, one completion ISR |
+| [PlannedItemBrief.md](PlannedItemBrief.md) | Process | A block is deferred: one self-contained brief per block — context, a drawn design, a code sketch, and the owner's boxes — that seeds the implementation |
 
 ---
 

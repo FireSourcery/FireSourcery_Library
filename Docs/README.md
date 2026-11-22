@@ -6,11 +6,29 @@ is the map of the code; this folder holds the reasoning behind it.
 | Folder | Holds | Entry |
 |---|---|---|
 | [Principles/](Principles/README.md) | Why: the reasons the conventions, patterns and decisions derive from | `PrincipleName.md` |
-| [Conventions/](Conventions/) | Rules followed every time: naming, notation, parameter order, API scoping, fixed point, units | free-form |
+| [Conventions/](Conventions/README.md) | Rules followed every time: naming, notation, parameter order, API scoping, fixed point, units | `RuleName.md` |
 | [Patterns/](Patterns/README.md) | Solutions applied when their force is present: architectural, design, idiom | `PatternName.md` |
 | [Decisions/](Decisions/README.md) | What we chose and why; binds later work | `NNNN_Title.md` |
 | [Findings/](Findings/README.md) | What we measured or learned, dated; the evidence behind decisions | `YYYY-MM-DD_Title.md` |
 | [Modules/](Modules/README.md) | The placement rule for module notes: they live beside the source they describe, not here | the rule only |
+
+**Entry contract** — every entry, in every category:
+
+- The H1 is the name. The first paragraph under it is one sentence that stands alone, and the
+  category index quotes it verbatim, so entry and index cannot drift. Where the shape's first
+  field is itself the claim in a sentence — a principle's **Statement**, a convention's **Rule** —
+  that field is the summary.
+- Fields are bold labels, `**Label** — text`, set once in the category README and named by the
+  category's published source. A new category derives its fields from the general form — the
+  claim, its grounds, where it lands in code, its provenance — and names its source, or says none.
+- Grounded: an instance in code by path, or the evidence a decision rests on.
+- Provenance: the published source, or the owner's ruling with its date.
+
+An entry written before this contract gains its summary line when next touched. Entries follow
+this repo's code style, `PascalCase.md`. No YAML
+frontmatter: the folder is the type, the filename the date or number, the first bold line the
+status — frontmatter would restate all three. Revisit if these docs gain a machine consumer (an
+Obsidian overlay, generated indexes); the summary line is the `description` property, positionally.
 
 **Placement**
 

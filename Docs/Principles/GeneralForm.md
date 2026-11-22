@@ -19,10 +19,13 @@ interface that already exists with consumers; it does not invent one for a singl
   beside one the framework already defines. Either means the two are one interface.
 - The general form is proposed beside the minimal change, naming what it unlocks, and the owner
   chooses. Minimal impact keeps unrelated code untouched; it does not veto the general form.
-- The Mot protocol is a `Packet_Codec_T` (`MOT_PACKET_CODEC`), so the `Framework/Protocol` engine
-  parses and frames it unchanged. See [ProtocolStack.md](../Patterns/ProtocolStack.md).
 - A function given an interface table's shape, context first, sits in the row without an adapter
   wrapper: the API Design rule on interface tables in `CLAUDE.md`.
+
+**Instances**
+
+- The Mot protocol is a `Packet_Codec_T` (`MOT_PACKET_CODEC`), so the `Framework/Protocol` engine
+  parses and frames it unchanged. See [ProtocolStack.md](../Patterns/ProtocolStack.md).
 
 **Source** — "Program to an interface, not an implementation" (Gamma, Helm, Johnson and Vlissides,
 *Design Patterns*, 1994). The Open–Closed Principle (Meyer, *Object-Oriented Software

@@ -46,7 +46,7 @@ Offsets 0 and 1 coincide in both shapes, so `Meta.Id` is read from offset 1 befo
 | Meaning | Total bytes on the wire, header included | Payload bytes only |
 | Control frame | No field. The size, 4, comes from the id | 0 |
 | Data frame, Rx | Read by `MotPacket_ParseLength` to size the frame | `Header.Length − 8`, written by `MotProtocol_ParseRxHeader`; `Sequence`, `Flags` copied, `Source`/`Dest` untouched |
-| Data frame, Tx | `payload + 8`, written by `MotPacket_BuildHeader`; `Sequence` and `Flags` written 0 | Set by the handler; `MotProtocol_BuildTxHeader` converts |
+| Data frame, Tx | `payload + 8`, written by `MotPacket_BuildHeader`; `Sequence` echoes the request's (`Meta.Sequence`, carried Rx→Tx by the engine; 0 when answering a control frame), `Flags` written 0 | Set by the handler; `MotProtocol_BuildTxHeader` converts |
 | Range | 8..40 accepted | 0..32, `MOT_PACKET_PAYLOAD_LENGTH_MAX` |
 
 The conversion happens only in the codec. A handler sees `Meta.Length` and `Packet_PayloadOf(buffer, FRAME_FORMAT)`, where the row's `FRAME_FORMAT` is `MOT_FRAME_SYNC` (header 4) or `MOT_FRAME_DATA` (header 8), both with `BODY_LENGTH` 0, variable.

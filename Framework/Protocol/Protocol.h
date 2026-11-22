@@ -413,6 +413,11 @@ static inline Protocol_ReqCode_T Protocol_ProcRequest(Protocol_T * p_protocol, P
     Packet_FrameFormat_T * p_reqFormat  = Protocol_ReqId(&p_state->Req)->FRAME_FORMAT;
     Packet_FrameFormat_T * p_respFormat = Protocol_ReqRespId(&p_state->Req)->FRAME_FORMAT;
 
+    /* The response answers the frame that caused this call: carry its sequence across for
+       BUILD_TX_FRAME to echo. A control frame parsed Sequence 0 - "unsequenced" - and a
+       retransmission resends the staged Meta unchanged. */
+    p_protocol->P_TX_BUFFER->Meta.Sequence = p_protocol->P_RX_BUFFER->Meta.Sequence;
+
     /* PROTOCOL_REQ_RESPOND or PROTOCOL_REQ_DONE unbinds the request Id */
     Protocol_ReqCode_T reqCode = _Protocol_ProcReq(&p_state->Req, p_binding->P_APP_CONTEXT, &p_protocol->PACKET_XFER,
         Packet_PayloadOf(p_protocol->P_RX_BUFFER, p_reqFormat), Packet_PayloadOf(p_protocol->P_TX_BUFFER, p_respFormat));

@@ -62,12 +62,12 @@ uint8_t MotPacket_BuildControl(MotPacket_Control_T * p_txPacket, MotPacket_Id_T 
     @brief  Set header and build checksum. call last.
     @return size of full packet. Header + Payload
 */
-uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength)
+uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength, uint8_t sequence)
 {
     p_packet->Long.Header.Start = MOT_PACKET_START_BYTE;
     p_packet->Long.Header.Id = headerId;
     p_packet->Long.Header.Length = payloadLength + sizeof(MotPacket_Header_T);
-    p_packet->Long.Header.Sequence = 0U;
+    p_packet->Long.Header.Sequence = sequence;
     p_packet->Long.Header.Flags = 0U;
     p_packet->Long.Header.Checksum = MotPacket_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
     return p_packet->Long.Header.Length;
@@ -189,7 +189,8 @@ void MotProtocol_BuildTxHeader(const Packet_Meta_T * p_meta, MotPacket_T * p_buf
     }
     else
     {
-        (void)MotPacket_BuildHeader((MotPacket_T *)p_buffer, (MotPacket_Id_T)p_meta->Id, p_meta->Length);
+        /* The request's sequence, carried across on Meta by the engine - the response names the frame it answers */
+        (void)MotPacket_BuildHeader((MotPacket_T *)p_buffer, (MotPacket_Id_T)p_meta->Id, p_meta->Length, (uint8_t)p_meta->Sequence);
     }
 }
 
