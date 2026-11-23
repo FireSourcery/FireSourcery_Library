@@ -2,6 +2,22 @@
 
 `Config_T` is declarative data: persisted, written by the user or protocol, read back as written. Runtime state is a separate concern. Each persisted value has **one writable copy**, at the address its NVM partition maps. Anything else derived from it is written only by an Init/Reinit.
 
+## What the device stores
+
+The remote app can, in principle, compute any derived configuration: it holds the user's figures and the same conversions. It computes as much of it as it can, so that the device's concern is execution. Config holds each value in the form the control loop runs on, and the user's units are the app's: no speed is stored in rpm. `Motor_Electrical_T` stores 1/ψ as `AngleFreqPerVolt` [angle16/s / V], which `MOTOR_VAR_ELECTRICAL_PSI` writes raw; Kv, rpm and µH are views at the user boundary.
+
+The exception is a user value that several derived values come from. The device keeps that value and derives the rest itself, so the derived values stay consistent with each other. Written one by one from the app, they could disagree after a partial write or a write from an older app.
+
+| A user value gives | Computed by | The device stores |
+|---|---|---|
+| one value the device runs on | the app | that value |
+| several | the device, in Init/Reinit | the user value, in its stored form |
+
+- `AngleFreqPerVolt` gives FOC's ψ (`Motor_Psi_PuTurn`, in `Motor_FOC_InitParams`), the speed base (`Motor_SpeedBase_AngleFreq`) and the rated speed (`Motor_Speed_AngleFreqOfVBus`).
+- `IfwLimit` gives both `Motor_FieldWeakening_IdLimit` and `Motor_FieldWeakening_IqLimit`.
+
+The split is [InformationExpert.md](../Principles/InformationExpert.md): execution is the device's question; units and presentation are the app's.
+
 ## Duplication conditions
 
 Two writable copies appear when both hold:
@@ -86,7 +102,7 @@ flowchart LR
 - `Module_ConfigId_Get/Set` take `Module_Config_T *`. The holder writes, then re-derives (`VMonitor_ConfigId_Set` = `RangeMonitor_ConfigId_Set` + `RangeMonitor_InitFrom`).
 - The id-keyed functions (`Module_ConfigId_T` and the `Get/Set` that switch on it) serve the protocol mapping only. Internal callers use a typed setter: calibration commits through `UserAIn_SetAdcZero`, not `UserAIn_Config_Set(..., USER_AIN_ZERO_ADCU, ...)`.
 - Derivation never overwrites a value the user set. Invalid thresholds resolve the mode to DISABLED, `Config.IsEnabled` keeps what was written. A mirror field is the exception, rewritten from its source (above).
-- On/off is a mode on an enum, not a dedicated `bool`, unless a value that already bounds the logic carries it as its 0 ([ValueOverBool.md](ValueOverBool.md)). The poll `switch`es on it, and a runtime hold is one more state, never a Config write (written to Config, it would persist on the next NVM save):
+- On/off is a mode on an enum, not a dedicated `bool`, unless a value that already bounds the logic carries it as its 0 ([BooleanState.md](BooleanState.md)). The poll `switch`es on it, and a runtime hold is one more state, never a Config write (written to Config, it would persist on the next NVM save):
 
 ```mermaid
 stateDiagram-v2

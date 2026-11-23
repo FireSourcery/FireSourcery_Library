@@ -1,6 +1,6 @@
 # Monitor status
 
-The single-direction monitor `Monitor_T` (`Transducer/Monitor/Base`): its status NORMAL, WARNING, FAULT; the warning hysteresis band between `Warning.Resetpoint` and `Warning.Setpoint`; the fault limit without hysteresis; the OFF-region fast path, which since 2026-11-13 also polls the hysteresis; and the derate the heat monitor derives from the same thresholds. The two-sided `RangeMonitor_T` composes two of these; its mode diagram is not redrawn here: [Config_State_Ref.md, Config interface](../../Docs/Conventions/Config_State_Ref.md#config-interface).
+The single-direction monitor `Monitor_T` (`Transducer/Monitor/Base`): its status NORMAL, WARNING, FAULT; the warning hysteresis band between `Warning.Resetpoint` and `Warning.Setpoint`; the fault limit without hysteresis; the OFF-region fast path, which since 2026-11-13 also polls the hysteresis; and the derate the heat monitor derives from the same thresholds. The two-sided `RangeMonitor_T` composes two of these; its mode diagram is not redrawn here: [ConfigStateRef.md, Config interface](../../Docs/Conventions/ConfigStateRef.md#config-interface).
 
 ## Status, every Poll
 

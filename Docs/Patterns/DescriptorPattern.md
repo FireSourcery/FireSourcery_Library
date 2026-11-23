@@ -25,7 +25,7 @@ RAM or state in FLASH. What stays still is the binding, and the one handle every
 - `Module_T` is `const`, so it lives in FLASH and the compiler folds its fields at inline call sites
   ([Descriptor.md](Descriptor.md) § Folding).
 - `Module_State_T` holds the working copy of its `Config`, Option 1 in
-  [Config_State_Ref.md](../Conventions/Config_State_Ref.md). Init copies `*P_NVM_CONFIG` into it.
+  [ConfigStateRef.md](../Conventions/ConfigStateRef.md). Init copies `*P_NVM_CONFIG` into it.
 - A binding with no runtime state has no `P_STATE`: `Pin_T`, `PWM_T`.
 - `Module_Config_T` includes its transport interface through an enum-id mapping; optionally a schema
   descriptor, or one id per value.

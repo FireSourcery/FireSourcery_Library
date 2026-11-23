@@ -33,7 +33,7 @@ enum over its fields needs another, as `Motor_StateId_T` does beside `State_T`. 
 | Sorts beside | `Module_Config_T` | `Module_Config_T` and the `Module_Config_*` functions | `Module_Var_T` |
 | Id-keyed functions | `Module_ConfigId_Get(const Module_Config_T *, id)`, as today | `Module_ConfigVar_Get(const Module_Config_T *, id)`: the prefix names the struct taken | `Module_VarConfig_Get(const Module_Config_T *, id)` |
 | Members by [Naming.md](../Conventions/Naming.md) § Types | `MODULE_CONFIG_ID_*`, 2 of 16 today | `MODULE_CONFIG_VAR_*` | `MODULE_VAR_CONFIG_*`, inside the runtime set's `MODULE_VAR_` prefix |
-| Precedent | 16 enums; [Config_State_Ref.md](../Conventions/Config_State_Ref.md), 0008 | `EmfObserver_ConfigVar_T` | the facet groups; the app's own `MotVarConfig*` classes |
+| Precedent | 16 enums; [ConfigStateRef.md](../Conventions/ConfigStateRef.md), 0008 | `EmfObserver_ConfigVar_T` | the facet groups; the app's own `MotVarConfig*` classes |
 | Renames past `VarId` to `Var` | none | 16 enums, their functions, the app table | as B |
 
 All three rename the 9 `Module_VarId_T`, their `_VarId_Get` functions and VBus's `VBUS_VAR_ID_*`
@@ -75,7 +75,7 @@ case is no config rename; it loses the pairing, `Hall_Var_T` beside `Hall_Config
   wait for the same table (`VBUS_VAR_ID_*_FRACT16/32`, `MOTOR_VAR_V_SPEED_RATED_FRACT16`,
   `OPT_DIN_CONFIG_ID_*_FRACT16`). Values and order stay, so the wire ids do not change; the image
   should be byte-identical, checked on both boards.
-- Docs updated with it: Naming.md § Types gains the var set row; Config_State_Ref.md § Config
+- Docs updated with it: Naming.md § Types gains the var set row; ConfigStateRef.md § Config
   interface renames `Module_ConfigId_Get/Set`. 0008 stays as written.
 - Unchanged: the facet groups `Motor_Var_<Group>_T` and `MotorController_Var_<Group>_T`, the
   `MotVarId` type rows (`MOTOR_VAR_TYPE_*`), and the holder-level setter that takes the runtime

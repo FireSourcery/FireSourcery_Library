@@ -63,7 +63,7 @@ A direction of ±1 is the signed form with a single level, and the value is used
   with it, and an index where the enum indexes an array.
 - **Zero is the neutral case**: `ANGLE16_QUADRANT_I`, `RANGE_MONITOR_STATUS_NORMAL`,
   `MOTOR_QUADRANT_IDLE`, `MOTOR_DIRECTION_NULL`. A zero-initialized field is then neutral, the same
-  reasoning as `DISABLED = 0` in [ModeOverBool.md](../Conventions/ModeOverBool.md).
+  reasoning as `DISABLED = 0` in [BooleanState.md](../Conventions/BooleanState.md).
 - **Derive values from the base, not from repeated literals.** `RangeMonitor_Status_T` is built from
   `Monitor_Status_T`, and `MOTOR_DIRECTION_REVERSE` is defined as `MOTOR_DIRECTION_CW`.
   `angle16_quadrant_t` repeats `0x4000U` because `ANGLE16_90` is a `static const` object, which

@@ -6,6 +6,30 @@ delimiter, which leaves the underscore free to mark scope.
 
 ---
 
+## What a name says
+
+**A name says what the thing is, not how it relates to something else.** A qualifier names a
+relation: the rate a value is measured against, a direction, where the thing is used. It may come
+after the name to refine it, but never takes the name's place. Names then sort by concept, the way
+an object's methods sit under the object.
+
+**Backed by** a principle that has no file yet ([README.md](README.md)).
+
+| A name for | Says what it is | Instead of |
+|---|---|---|
+| A quantity's unit or base | `_pu_turn`, `_pu_rad`: the angle per Ts at ω_pu = 1.0, in turns or in radians (2026-10-15) | `_pu_nyquist`, a qualifier; `_pu_tick`, which names time for an angle base |
+| Each of two asymmetric operations | what triggers it, whether it answers a request, what goes in and what comes out | a direction pair: Tx/Rx, Producer/Consumer (2026-09-27) |
+| A function | its group before the verb, its variant after ([§ Functions](#functions)) | `StateMachine_CallInput_Branch` |
+| A compound | the noun first, then its qualifiers ([§ Word order](#word-order)) | a qualifier first: MinOutput |
+
+**Asymmetric operations get asymmetric names.** For the CAN handlers, the Rx handler takes a peer's
+frame as a request and may answer it. The Tx builder turns node state into a frame on the node's
+own clock, unsolicited. A direction pair would name them as mirror images, and they are not. Look
+in the library's vocabulary first (`Protocol_Req_T`, `Protocol_ProcReqResp_T`). Then try standard
+terms: J1939-21 Request, Command and Broadcast-Response, or OSI confirmed and unconfirmed services.
+
+---
+
 ## Case
 
 | Kind | Form | Example |
@@ -33,12 +57,88 @@ delimiter, which leaves the underscore free to mark scope.
   upper case marks what is always `const`.
 - **An enum member** is the type name in UPPER_SNAKE, then the member: `Motor_StateId_T` →
   `MOTOR_STATE_ID_OPEN_LOOP`, `PID_Mode_T` → `PID_MODE_PI`.
-- **A value typedef** is snake_case with `_t`, as `stdint.h` does: `fract16_t`, `angle16_t`,
-  `accumulator_state_t` (`module_type_t`).
-- **An untypedef'd `struct snake_case`** is only a pure function's multiple return, unpacked at the
-  call: `struct foc_dq`. It never becomes a field, parameter or return in the stateful layer.
-- **Role suffixes** (`_Config_T`, `_State_T`, `_Ref_T`) are in [Config_State_Ref.md](Config_State_Ref.md).
--
+
+### Value or object
+
+**A type name's case says how the type is passed and which functions it takes.** What the type
+means decides the form, not its size alone. The kinds behind these forms are in
+[StructSemantics.md](../Principles/StructSemantics.md).
+
+| Form | Is | Passed | Its functions | Example |
+|---|---|---|---|---|
+| `snake_case_t` | a value type: a named scalar, a "fat register", at most 64 bits. A record, not a descriptor. No pointers, callbacks, ownership or lifecycle | by value, in and out | snake_case: `module_verb(type_t a, type_t b)` returns `type_t` | `fract16_t`, `angle16_t`, `accumulator_state_t`: `module_type_t`, as in `stdint.h` |
+| `struct snake_case`, no typedef | a pure function's multiple return values | returned by value; the caller unpacks it into its own fields at the call | the pure function that returns it | `struct foc_dq`, `struct foc_abc` |
+| `Module_Name_T` | an aggregate over 64 bits, or a type that has behavioral functions: runtime state, descriptors, configs, interfaces | by pointer: `Module_Verb(Module_T * p_module)` | `_Init`, `_Capture`, `_Set`, `_Get` ([§ Functions](#functions)) | `PID_T`, `Motor_Config_T` |
+| `Module_Name_T` with UPPER_SNAKE fields | a descriptor that is constant at compile time | by pointer | as above | `Encoder_T` |
+
+- **A value type is at most 64 bits.** AAPCS returns a fundamental type of up to 64 bits in
+  r0–r1. A struct of plain values within that size may also take the snake_case form, as long as
+  it has no pointer-based API and no state to manage: `fract_xy_t`. A struct, though, returns in r0
+  only up to 4 bytes; a larger one returns through memory. So passing a struct by value means
+  `static inline` ([StructSemantics.md](../Principles/StructSemantics.md)).
+- **`struct snake_case` stays in the pure layer.** It is never a field of a `Module_Name_T`, and
+  never a parameter or return of a `Module_Verb` function. Known exception: `Angle_UnitVector`
+  ([Angle.h](../../Math/Angle/Angle.h)) returns `struct fract16_xy` to `AnglePll_ProcVector`.
+- The representations, such as `fract16_t` as Q1.15, are in [FixedPoint.md](FixedPoint.md).
+
+### Role suffixes
+
+The suffix after the type's noun names its role. Suffixes come in two families, matching
+[StructSemantics.md](../Principles/StructSemantics.md). Objects have a module that keeps their
+invariants. Data objects have no invariants, so every field is writable.
+
+**Objects**
+
+| Suffix | Means | Lifetime | Written by | Example |
+|---|---|---|---|---|
+| `Module_T` | the primary object, the struct the module's functions take: either a stateful object with behavioral functions, or the `const` descriptor that is the module's full context | the program | its functions; a descriptor's initializer | `PID_T`, `FOC_T`; `Encoder_T`, `Motor_T` |
+| `Module_State_T`, `Module_Context_T` | the mutable runtime a descriptor points to | the program | its module | `Encoder_State_T` at `Encoder_T.P_STATE`; `Motor_Context_T` at `Motor_T.P_MOTOR` |
+| `Module_Config_T` | persisted parameters that can be stored in NVM | persistent | the user, the protocol, an NVM load | `Motor_Config_T` |
+| `Module_Ref_T` | values precomputed from a Config | rebuilt at Init and Reinit | the Init function | `AngleCounter_Ref_T` |
+| `Module_Status_T` | an enum: a function's result, or the condition a module reports | one return; or as long as the module | the function; the module | `NvMemory_Status_T`, `Monitor_Status_T` |
+| `Module_Flags_T` | a bitfield of status or control bits | as long as the module | the module | `Version_Flags_T`, `Motor_FaultFlags_T` |
+
+Config and Ref are detailed in [ConfigStateRef.md](ConfigStateRef.md). A `switch` dispatches on a
+`State_T` node of the state machine, on its id `Module_StateId_T`, or on a mode
+([BooleanState.md](BooleanState.md)). Whether `_State_T` may also name that state is open
+([§ Not decided](#not-decided)).
+
+**Data objects**
+
+| Suffix | Means | Written by | Read by | Example |
+|---|---|---|---|---|
+| `Module_Data_T` | plain data with no invariants | its producer | its consumer | `Phase_Data_T` |
+| `Module_Input_T` | data another module writes for this one | the other module | this module | `Phase_Input_T`, `Traction_Input_T` |
+| `Module_Output_T` | data this module writes for another | this module | the other module | none yet |
+| `Module_Packet_T` | a wire format | the wire, or a builder | a parser | none by suffix: the Mot protocol's packets take its module prefix, `MotPacket_Header_T` |
+
+In `Module_Var_<Group>_T`, such as `MotorController_Var_Output_T`, the word is a var group, an enum
+of ids, not a data object ([0012](../Decisions/0012_VarEnumNaming.md)).
+
+### Not decided
+
+- **The suffix for runtime state.** `_State_T` names two things today. One is the mutable runtime a
+  descriptor points to, in about two dozen types such as `Encoder_State_T`. The other is the state
+  a `switch` dispatches on, as in the state machine's `State_T` and the enum `Cia402_State_T`.
+  Motor and MotorController use `_Context_T` instead.
+
+  | Word | For it | Against it |
+  |---|---|---|
+  | State | most of the library uses it today | the collision above |
+  | Context | already used: `Motor_Context_T`, `MotorController_Context_T` | |
+  | Runtime | mutable at runtime, in contrast with Config | too qualitative |
+  | Object | the struct with an invariant interface | |
+
+- **A state within a state:** Stage, as the note proposed, or Substate, as the code has it
+  (`StateMachine_Branch_EnterSubstate`, `MotorController_LockSubStateId_T`). The ids are in
+  [SubStateIds.md](../Proposals/SubStateIds.md).
+
+### Not taken
+
+| Option | Why not |
+|---|---|
+| `Module_Calib_T`, parameters persisted in the user's units | user units belong to the app; the device stores values in the form it runs on ([ConfigStateRef.md](ConfigStateRef.md#what-the-device-stores)) |
+
 ---
 
 ## Variables
@@ -79,6 +179,16 @@ effect and names what it returns:
 - `Get` plus the value, or the value alone: `PID_GetOutput`, `FOC_Vd`, `Motor_RotorSensor`.
 - `Of` when the value depends on an argument: `Linear_InvOf`, `Hall_CommutationIdOf`.
 - `Is` for a yes/no answer: `AnglePll_IsLocked`, `Accumulator_IsSaturated`. Never `GetIs`.
+
+**A segment before the verb names a group; a segment after it names a variant.**
+
+| Segment | Names | How callers use it | Example | Instead of |
+|---|---|---|---|---|
+| before the verb: `Module_Group_Verb` | an API group, one use case independent of the module's other groups | take the group's functions as a set, without the others | `StateMachine_Branch_CallInput`, `StateMachine_Branch_ProcSyncInput` | `StateMachine_CallInput_Branch` |
+| after the verb: `Module_Verb_Variant` | a variant of one operation, an overload ([§ Units and variants](#units-and-variants)) | call any of the variants, side by side | `Motor_GetSpeed_Rpm`; `Motor_GetSpeedVNominalRef_Pu` beside `_Rpm` | |
+
+A group reads as an object and its method, `branch.CallInput()`. The scope prefixes in
+[ApiScoping.md](ApiScoping.md) are one kind of group: the scope is the struct the function takes.
 
 ### Suffixes and prefixes for the kind of function
 
@@ -185,125 +295,44 @@ variants: `MOTOR_FOC_FIELD_WEAKENING_ENABLE`, `MOTOR_V_MATCH_SENSOR`.
 `Motor/Motor/Motor.h` does. An overridable constant uses `#ifndef` and keeps its own name:
 `MOTOR_CALIBRATION_BUFFER_SIZE`.
 
-
 ---
 
+## Module directory
 
-todo
+A folder is a module, and its public header takes the folder's name: `Motor.h`, `StateMachine.h`.
+A leading `.` marks a folder or file outside the library proper ([LeadingDot.md](LeadingDot.md)). A
+leading `_` marks a file private to its module: `_StateMachine_Tree.h`.
 
-## Types
+What sits under a module relates to it in one of four ways:
 
+| Relation | Depends | Is | Instance |
+|---|---|---|---|
+| Subtype | the child on the parent | the child IS-A parent: a variant, a specialization | `Motor/Motor/Sensor/Hall/` of `RotorSensor` |
+| Component | the parent on the child | the child is part of the parent | `Motor/Motor/VBus/` of `Motor` |
+| Part | either way: inner or outer | a related group of the module's own functions, in a `Module_Part` file | `Motor_Electrical.h`, `Motor_Var.h` |
+| Extension | neither: the module works without it | an optional feature | `Framework/StateMachine/Extension/` |
 
-Module_T             — Primary stateful object (has behavioral functions) OR Full descriptor context
-Module_State_T or Module_Context_T     — mutable runtime.
-     naming collision with State_T. alternatively:
-        runtime - runtime mutable, contract with config, too qualitative
-        object - has invariant interface
+- **A part is either inner or outer.** The core includes an inner part and depends on it: `Motor.h`
+  includes `Motor_Electrical.h`. An outer part includes the core, and the core does not need to know
+  about it: `Motor_Var.h` includes `Motor.h`.
+- **An extension is opt-in.** The core neither includes it nor calls it. A build opts in, and a
+  guard, if any, goes on the call only ([ConditionalCompilation.md](ConditionalCompilation.md)):
+  `_StateMachine_FaultState.c` under `STATE_MACHINE_FAULT_STATE_ENABLE`.
 
-Module_State_T       — switch() to determine processing. either as StateMachine module State_T or enum id
-    Stage - Substate
+### Not decided: the plain folder
 
-Module_Status_T      — Enum return
-Module_Flags_T       — Bitfield status/control
-Module_Config_T      — Persistent parameters (NVM-storable)
+A plain folder name can carry only one relation, so the other one needs a marker. Under both
+options, `Extension/` marks an extension and the file name marks a part.
 
-Module_Calib_T       — User-unit parameters
-Module_Ref_T         — Precomputed/derived from Config
+| | A: subtypes unmarked | B: components unmarked |
+|---|---|---|
+| `SomeModule.h` | the public API, and the base | the public API |
+| `Name/` | a subtype: a specialization of this module | a component: a dependency of this module |
+| `_Name/` | a private component | not used |
+| `Base/` | not used | the base of a module that has subtypes, each subtype a folder beside it |
+| `Extension/` | opt-in features | opt-in features |
+| `SomeModule_Part.h` | a part | a part |
+| In the tree today | `Motor/Motor/Sensor/`: `RotorSensor.h` at the root, one folder per sensor | `Motor/Motor/`: `Phase/`, `VBus/`, `Sensor/`. `Transducer/Monitor/`: `Base/`, `Heat/`, `Voltage/` |
 
-alternatively for data objects:
-Module_Data_T        — Pure passive data (no invariants)
-Module_Input_T       — Data written by external, read by module
-Module_Output_T      — Data written by module, read by external
-Module_Packet_T      — Wire/serialization format
-
-Suffix	Meaning	Lifetime	Who writes
-_Ref	Derived/precomputed	Computed at init	Init function
-_Data suffix = no behavioral invariants, any field writeable.
-// "_Data" suffix — signals "this is a passive data container, not a stateful object"
-// "_Input" suffix — this module reads from it, another module writes to it
-// "_Output" suffix — this module writes to it, another module reads from it
-<!-- _Calib	User-facing units	Persistent (NVM)	User/host tool -->
-
-Function Prefixes by API group, use case independent from other group.
-StateMachine_Branch_ProcInput() rather than StateMachine_ProcInput_Branch
-Function Suffixes by overload, concurrent use.
-GetSpeed_Rpm
-
-Naming by what it is not qualifiers.
-organizes by concept axis, consistent with OOP
-
-Semantic names:
-- Asymmetric operations get asymmetric names: what triggers each, whether it answers a request, what goes in and comes out. Not a direction pair.
-  Tx/Rx and Producer/Consumer were rejected for the CAN handlers (2026-09-27): the Rx handler is request → optional response on a peer's frame, the Tx builder is node state → frame on the node's own clock, unsolicited.
-  Check the library's vocabulary first (`Protocol_Req_T`, `Protocol_ProcReqResp_T`), then standard terms (J1939-21 Request / Command / Broadcast-Response; OSI confirmed vs unconfirmed services).
-- A quantity is named by what it physically is: `_pu_turn`, `_pu_rad`, the angle per Ts at ω_pu = 1.0 (2026-10-15).
-  Rejected: `_pu_nyquist`, a qualifier; `_pu_tick`, which names time for an angle base.
-
-
-typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
-typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
-typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
-
-    `snake_case_t`: Value types, ≤ 64 bits (ARM r0+r1), no behavioral functions.
-        - Returned and passed by value.
-        - Conceptually a "fat register" or "named scalar".
-        - Functions use snake_case: module_verb(type_t a, type_t b) -> type_t
-        - No pointers, callbacks, ownership, or lifecycle.
-        - Records, not descriptors
-
-    `struct snake_case`, no typedef: a pure function's multiple returns, e.g. `struct foc_dq`, `struct sta_axis`.
-        - Returned by value from a snake_case function, unpacked into the caller's fields at the call.
-        - Never a field of a `CamelCase_T`, never a parameter or return of a `Module_Verb` function.
-        - Known exception: `Angle_UnitVector` (Angle.h) returns `struct fract16_xy` to `AnglePll_ProcVector`.
-
-    `CamelCase_T`: Aggregate types, > 64 bits, OR has associated behavioral functions.
-        - Passed by pointer: Module_Verb(Module_T * p_module)
-        - May have _Init, _Capture, _Set, _Get functions.
-        - Used for runtime state, descriptors, config objects, interfaces.
-
-    `CamelCast_T.CAPS`: compile time constant descriptors.
-
-    Boundary: 64 bits hard limit (ARM AAPCS returns r0+r1).
-        Structs ≤ 64 bits MAY use snake_case IF they are pure values
-        with no pointer-based API and no associated state management.
-        Size alone does not decide naming; semantics do.
-
-
-
-## Module Directory
-
-A leading `.` on a folder or file marks it outside the library proper: [LeadingDot.md](LeadingDot.md).
-
-Subtypes (child depends on parent, child IS-A parent)
-Components (parent depends on child, child is part-of parent)
-Parts (Related group, outer or inner)
-Extensions (optional, guarded by #ifdef)
-
-Subtypes as the unmarked case.
-
-    SomeModule/
-    ├── SomeModule.h            # Module public API
-    ├── [_Internal]/            # _ = private component, dependency OF this module
-    ├── [Variant]/              # plain = specialization/subtype OF this module
-    └── Extension/              # opt-in features, #ifdef guarded
-    ├── SomeModule_Part         # Part, dependent or independent of SomeModule core
-        Dependent Part -> Include by core
-        Independent Part -> Core does not need to know
-
-    alternatively Components as the unmarked case.
-    ├── SomeModule.h            # Module public API
-    ├── [Component]/            # private component, dependency OF this module
-    └── Extension/              # opt-in features, #ifdef guarded
-    ├── SomeModule_Part         # Part, dependent or independent of SomeModule core
-
-    Subtyped use Base
-    SomeModule/
-    ├── Base/
-    ├── [Variant]/            # plain = specialization/subtype OF this module
-    └── Extension/            # opt-in features, #ifdef guarded
-
-
-
-
-
-
+`Peripheral/NvMemory/` follows neither option. Its base sits in `NvMemory/NvMemory/`, beside
+`EEPROM/`, `Flash/` and `FlashOnce/`. No `_Name/` folder exists yet.

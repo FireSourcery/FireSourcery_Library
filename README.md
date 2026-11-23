@@ -49,7 +49,7 @@ Common interface for system-level functions; thin abstraction over remaining har
 - [Fixed-point quantities](Docs/Conventions/FixedPoint.md): representation, units, naming
 - [Per-unit electrical bases](Motor/Motor/Math/motor_electrical_math.md): ψ and L scaling
 - [ADC conversion sets](Peripheral/ADC/Notes.md): coordinating conversions across converters
-- [Config, State, Ref](Docs/Conventions/Config_State_Ref.md): one writable copy per persisted value
+- [Config, State, Ref](Docs/Conventions/ConfigStateRef.md): one writable copy per persisted value
 
 ## License
 GPL-3.0-or-later. See [LICENSE](LICENSE).

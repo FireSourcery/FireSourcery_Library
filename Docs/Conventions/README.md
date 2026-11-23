@@ -47,14 +47,13 @@ before this shape converts when next touched.
 |---|---|
 | [AddingLogic.md](AddingLogic.md) | Adding logic to a working function is a decision; what the logic is decides where it goes — in place, an `assert`, or a wrapping function |
 | [ApiScoping.md](ApiScoping.md) | A parameter is the narrowest struct containing every field the function reads or writes; scope-named where scopes share a namespace |
+| [BooleanState.md](BooleanState.md) | An on/off is the 0 of a value that already bounds the logic, else a value of a mode enum the poll `switch`es on; never a `bool` beside either |
 | [Comments.md](Comments.md) | A comment holds only the why the code cannot state; one that restates a declaration is duplicated code |
 | [ConditionalCompilation.md](ConditionalCompilation.md) | Variants are named functions compiled in every build; one `#if` selection point only dispatches |
+| [ConfigStateRef.md](ConfigStateRef.md) | `Config_T` is declarative persisted data with one writable copy, in the form the device runs on; anything derived is written only by an Init/Reinit |
 | [ConfigValidity.md](ConfigValidity.md) | Validity is a config invariant checked once at the config layer; conversions and derives carry no guards |
-| [Config_State_Ref.md](Config_State_Ref.md) | `Config_T` is declarative persisted data with one writable copy; anything derived is written only by an Init/Reinit |
 | [FixedPoint.md](FixedPoint.md) | A stored integer stands for q = n·u/2^k: the type names the representation, the suffix names the unit |
 | [HardwareBinding.md](HardwareBinding.md) | The rules for binding a peripheral to the application — HAL, board setup, binding header — each naming what it replaces |
 | [InitMacros.md](InitMacros.md) | An `*_INIT` macro earns its place only doing what a designated initializer cannot: cast, size, or derive |
 | [LeadingDot.md](LeadingDot.md) | A leading `.` marks a folder or file outside the library proper; tools and reviews skip it |
-| [ModeOverBool.md](ModeOverBool.md) | A gate, enable or pause is a value of an enum mode the poll `switch`es on, not a single-purpose `bool` |
-| [Naming.md](Naming.md) | An underscore separates scope segments, case separates the words inside one: `Motor_FOC_ProcAngleV` reads Motor › FOC › ProcAngleV |
-| [ValueOverBool.md](ValueOverBool.md) | An on/off a value parameter already decides is that value; the off is its degenerate case, 0 |
+| [Naming.md](Naming.md) | A name says what the thing is, and a qualifier only refines it. An underscore separates scope segments, case separates the words inside one: `Motor_FOC_ProcAngleV` reads Motor › FOC › ProcAngleV |

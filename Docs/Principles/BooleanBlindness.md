@@ -22,10 +22,10 @@ passed, not what a question answers.
 
 | The on/off | Carried by | Rule |
 |---|---|---|
-| A value already bounds the logic | the value's 0, its degenerate case | [ValueOverBool.md](../Conventions/ValueOverBool.md) |
-| No value carries it | a value of an existing mode or state enum, else a new enum with `DISABLED = 0` | [ModeOverBool.md](../Conventions/ModeOverBool.md) |
+| A value already bounds the logic | the value's 0, its degenerate case | [BooleanState.md](../Conventions/BooleanState.md), rule 1 |
+| No value carries it | a value of an existing mode or state enum, else a new enum with `DISABLED = 0` | [BooleanState.md](../Conventions/BooleanState.md), rules 2–4 |
 | A parameter selects behavior | two functions, each named for its behavior | "Don't pass bool", `CLAUDE.md`; [AddingLogic.md](../Conventions/AddingLogic.md), a different behavior |
-| A caller asks | a derived predicate, `*_IsEnabled`, never a stored field | [ValueOverBool.md](../Conventions/ValueOverBool.md) |
+| A caller asks | a derived predicate, `*_IsEnabled`, never a stored field | [BooleanState.md](../Conventions/BooleanState.md), rule 5 |
 
 - The sign in a draft: a struct gaining an `Is*` field beside a value or a mode; a
   `*_Set*(…, bool isEnabled)`.
