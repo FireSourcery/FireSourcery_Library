@@ -36,6 +36,7 @@
 #include "../Motor/Sensor/Motor_Sensor.h"
 
 #include "System/SysTime/SysTime.h"
+#include HAL_PERIPHERAL_PATH(HAL_Reboot.h)
 
 #include "MotAnalogUser/MotorController_AnalogUser.h"
 
@@ -61,6 +62,7 @@ int MotorController_Var_Output_Get(MotorController_T * p_dev, MotorController_Va
         // case MOT_VAR_SYSTEM_STATUS_FLAGS:       value = MotorController_GetStatusFlags(p_dev).Value;               break;
         case MOT_VAR_SYSTEM_STATUS_FLAGS: break; /* not yet implemented */
         case MOT_VAR_SYSTEM_DIRECTION:          value = MotorController_GetDirection(p_dev);                        break;
+        // case MOT_VAR_SYSTEM_RESET_SOURCE:       value = HAL_Reboot_ReadResetSource();                               break;
     }
     return value;
 }
@@ -89,10 +91,8 @@ int MotorController_Var_OutputDebug_Get(MotorController_T * p_dev, MotorControll
     switch (id)
     {
         case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC->ControlLoopProfile;            break;
-        // case MOT_VAR_DEBUG0: value = Angle_Value(&p_motorState->OpenLoopAngle) - Angle_Value(&p_motorState->FocSensorless.AngleSpeed);             break;
-        // case MOT_VAR_DEBUG1: value = Angle_Delta(&p_motorState->OpenLoopAngle);             break;
-        // case MOT_VAR_DEBUG2: value = Angle_Delta(&p_motorState->FocSensorless.AngleSpeed);      break;
-        case MOT_VAR_DEBUG0: value = p_dev->P_MC->ISequenceProfile;             break; /* [us] The I set's completion to the end of the LOOP that takes it */
+        case MOT_VAR_DEBUG0: value = HAL_Reboot_ReadResetSource();                               break;
+        // case MOT_VAR_DEBUG0: value = p_dev->P_MC->ISequenceProfile;             break; /* [us] The I set's completion to the end of the LOOP that takes it */
         case MOT_VAR_DEBUG1: value = 0;             break;
         case MOT_VAR_DEBUG2: value = 0;             break;
         case MOT_VAR_DEBUG3: value = 0;             break;

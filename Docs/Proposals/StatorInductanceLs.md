@@ -13,10 +13,10 @@ identification routine, or a front end other than the EEMF observer. The outcome
 - `Motor_Ls_PuTurn` ([Motor_Electrical.h:99](../../Motor/Motor/Motor_Electrical.h#L99)) returns (Ld + Lq) / 2,
   computed from `Motor_Ld_PuTurn` and `Motor_Lq_PuTurn`. Line 100 records the alternative in a comment.
 - The todo names `Motor_Electrical_LsTick`, read by `FOC_Sensorless_InitG`. Both names are gone. The observer now
-  takes Lq on both axes, the extended EMF:
+  takes Lq on both axes, the active-flux EMF:
   - the call is `EmfObserver_InitWinding(..., Motor_Lq_PuTurn(...))`
     ([Sensorless_Sensor.c:118](../../Motor/Motor/Sensor/Sensorless/Sensorless_Sensor.c#L118))
-  - the reasoning is "EEMF on Lq" in [Sensorless.exp.md](../../Motor/Motor/Sensor/Sensorless/Sensorless.exp.md)
+  - the reasoning is "Lq on both axes" in [Sensorless.exp.md](../../Motor/Motor/Sensor/Sensorless/Sensorless.exp.md)
   - [Stator.h:63](../../Motor/Motor/Model/Stator.h#L63) notes that Ls = (Ld + Lq) / 2 leaves a 2θ error
 
   Nothing reads `Motor_Ls_PuTurn`.
@@ -47,7 +47,7 @@ The self-inductance definition cannot be derived from Ld and Lq alone. It would 
 
 ## Done already
 
-- The observer reads Lq, not Ls (see Sensorless.exp.md, "EEMF on Lq").
+- The observer reads Lq, not Ls (see Sensorless.exp.md, "Lq on both axes").
 
 ## Open for you
 

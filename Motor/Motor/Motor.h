@@ -415,14 +415,14 @@ typedef const struct Motor
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */
     const Motor_Config_T * P_NVM_CONFIG;
-    /* may move to parallel array or Instance wrap, along with phase mosfets  */
+    /* may move to parallel array or Instance wrap */
     HeatMonitor_T HEAT_MONITOR;
     ADC_Conversion_T HEAT_MONITOR_CONVERSION;
     void * P_EXTENSION;
 }
 Motor_T;
 
-// #define MOTOR_CONTROL_TIMER_INIT(p_MotorContext, MotorState) TIMER_T_ALLOC(
+// #define MOTOR_CONTROL_TIMER_INIT(p_MotorDev, MotorState) TIMER_T_ALLOC(
 
 static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
 {

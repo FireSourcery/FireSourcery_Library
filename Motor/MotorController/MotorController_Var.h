@@ -56,6 +56,7 @@ typedef enum MotorController_Var_Output
     MOT_VAR_SYSTEM_FAULT_FLAGS,
     MOT_VAR_SYSTEM_STATUS_FLAGS, /* Resv */
     MOT_VAR_SYSTEM_DIRECTION,
+    // MOT_VAR_SYSTEM_RESET_SOURCE,    /* Sources of the last reset, HAL_Reboot_ReadResetSource. LVD 0x2, LOC 0x4, WDOG 0x20, PIN 0x40, POR 0x80, LOCKUP 0x200, SW 0x400 */
 }
 MotorController_Var_Output_T;
 

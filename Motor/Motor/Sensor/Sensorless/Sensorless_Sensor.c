@@ -106,7 +106,7 @@ static bool Sensorless_Sensor_VerifyCalibration(Sensorless_Sensor_T * p_sensor)
 }
 
 /*
-    The winding, the observer's one unit: the plant from the motor's model, on the same view as FOC's [Motor_FOC_InitParams]: Lq on both axes, the extended EMF.
+    The winding, the observer's one unit: the plant from the motor's model, the one FOC's view derives from [Motor_FOC_InitParams]: Rs, and Lq on both axes, the active-flux EMF [stator_math.h].
     With the other sensor units, on Motor_Reset: an electrical var applies to the FOC at once, to the winding on Motor_Reinit, as ψ does to the speed base.
     An invalid model keeps the prior winding, as it keeps FOC's view; VERIFY_CALIBRATION then fails on G == 0.
     UnitRef.SpeedPuRef, the only field CAPTURE_SPEED reads, is the RotorSensor base's.

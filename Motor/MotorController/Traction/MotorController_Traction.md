@@ -7,6 +7,10 @@ admission are in [MotorController_StateMachine.md](../MotorController_StateMachi
 the motor's `CW` / `CCW` by `Config.DirectionForward` in `Motor_ApplyUserDirection`. "Standby ready" is
 `Common_IsStandbyReady`: every motor `DEACTIVATED`, or every motor `PASSIVE` at speed 0.
 
+Traction's own functions (`Traction.c`) act on one motor, through the motor's interface. The leaves run them over the motor
+table and keep the decisions that read every motor: the brake hold once no motor advances (`ApplyBrakeValue`), a direction
+change at standstill (`Motor_Table_IsEverySpeedZero`).
+
 ## Tree
 
 `STATE_NEUTRAL` and `STATE_DRIVE` (`MotorController_Traction.c`) mount under `MC_STATE_MAIN` beside `MC_STATE_MAIN_MOTOR_CMD`;
@@ -74,11 +78,11 @@ state does with it. "ignored" is an unmapped slot or a handler that returns `NUL
 | Caller | Motor call | Motor input | `PASSIVE` | `RUN` | `TORQUE_ZERO`, `SPEED_ZERO` | `SAFE_STOP` | `OPEN_LOOP` branch | `DEACTIVATED`, `CALIBRATION`, `FAULT` |
 |---|---|---|---|---|---|---|---|---|
 | `Drive_Entry`; `Neutral_InputDirection` at standstill; `Drive_InputDirection`, `Drive_InputLeverDirection` at standstill | `Motor_Table_ApplyUserDirection` → `Motor_ApplyVirtualDirection`, on a change | `DIRECTION` | stored at speed 0, VLimit half-plane set | ignored | ignored | ignored | at speed 0: `NULL` → `PASSIVE`, else stored | `DEACTIVATED` stores at any speed; `CALIBRATION` at speed 0; `FAULT` ignores |
-| `Traction_StartThrottleMode`, `Traction_StartBrakeMode` | `Motor_Table_ApplyFeedbackMode`, on a change | `FEEDBACK_MODE` | stored | stored, `RUN` re-entered, loops re-matched | stored, applied by `Run_Entry` on resume | as its parent | stored | `DEACTIVATED` stores; `CALIBRATION`, `FAULT` ignore |
-| `Traction_StartThrottleMode` (`SPEED`, `TORQUE`), `Traction_StartBrakeMode` (`TORQUE`) | `Motor_Table_ApplyControl` `PWM` | `PHASE_OUTPUT` `PWM` | → `RUN` with direction and feedback; the start-up chain at speed 0 without feedback; else nothing | nothing | → `RUN` with feedback | refused | nothing | `CALIBRATION` V0; others ignore |
-| `Neutral_Entry`, `Neutral_InputCmdStart` release, `Traction_StartDriveZero` `FLOAT` / `REGEN`, `Traction_Start*Mode` `VOLTAGE` / `PASSIVE`, `Common_InputStandby`, `Standby_Entry`, `Fault_Entry` (`Motor_ReleaseVZ`) | `Motor_Table_ApplyControl` `Z` | `PHASE_OUTPUT` `Z` | floats within the freewheel limit | → `PASSIVE` within the limit, else `SPEED_ZERO` | → `PASSIVE` within the limit, else `SPEED_ZERO` (re-entry) | → `PASSIVE` at speed 0, else refused | → `PASSIVE` | `CALIBRATION` floats → `PASSIVE`; `DEACTIVATED`, `FAULT` ignore |
+| `Traction_StartThrottleMode`, `Traction_StartBrakeMode`, each motor | `Motor_ApplyFeedbackMode`, on a change | `FEEDBACK_MODE` | stored | stored, `RUN` re-entered, loops re-matched | stored, applied by `Run_Entry` on resume | as its parent | stored | `DEACTIVATED` stores; `CALIBRATION`, `FAULT` ignore |
+| `Traction_StartThrottleMode` (`SPEED`, `TORQUE`), `Traction_StartBrakeMode` (`TORQUE`), each motor | `Motor_ApplyControlState` `PWM` | `PHASE_OUTPUT` `PWM` | → `RUN` with direction and feedback; the start-up chain at speed 0 without feedback; else nothing | nothing | → `RUN` with feedback | refused | nothing | `CALIBRATION` V0; others ignore |
+| `Neutral_Entry`, `Neutral_InputCmdStart` release, `Traction_StartDriveZero` `FLOAT` / `REGEN`, `Traction_Start*Mode` `VOLTAGE` / `PASSIVE`, `Common_InputStandby`, `Standby_Entry`, `Fault_Entry` (`Motor_ReleaseVZ`) | `Motor_Table_ApplyControl` `Z`; `Motor_ApplyControlState` `Z` from the `Traction_` functions, each motor | `PHASE_OUTPUT` `Z` | floats within the freewheel limit | → `PASSIVE` within the limit, else `SPEED_ZERO` | → `PASSIVE` within the limit, else `SPEED_ZERO` (re-entry) | → `PASSIVE` at speed 0, else refused | → `PASSIVE` | `CALIBRATION` floats → `PASSIVE`; `DEACTIVATED`, `FAULT` ignore |
 | `Main_Entry`, `MotorCmd_Entry` | `Motor_Table_ApplyControl` `0` | `PHASE_OUTPUT` `0` | V0 | as `Z` | as `Z` | as `Z` | → `PASSIVE` | `CALIBRATION` V0; others ignore |
-| `Traction_ProcBrakeHold` (no motor `Motor_IsSpeedAligned`) | `Motor_ApplySpeedZero` | `INTERVENTION` `SPEED_ZERO` | ignored | → `SPEED_ZERO` | → `SPEED_ZERO`; nothing when already active | refused | ignored | ignored |
+| `ApplyBrakeValue` once no motor `Motor_IsSpeedAligned`, then `Traction_ApplyBrakeHold` (`TORQUE`) each motor | `Motor_ApplySpeedZero` | `INTERVENTION` `SPEED_ZERO` | ignored | → `SPEED_ZERO` | → `SPEED_ZERO`; nothing when already active | refused | ignored | ignored |
 | `Traction_StartDriveZero` `IZERO` | `Motor_ApplyTorqueZero` | `INTERVENTION` `TORQUE_ZERO` | ignored | → `TORQUE_ZERO` | → `TORQUE_ZERO`; nothing when already active | refused | ignored | ignored |
 | `MotorController_Main_Thread`, serial `RxLost` | `Motor_ApplySafeStop` | `INTERVENTION` `SAFE_STOP` | ignored | → `SAFE_STOP` | → `SAFE_STOP` | refused | ignored | ignored |
 | `Traction_ApplyThrottleValue`, `Traction_ApplyBrakeValue`, `Traction_ApplyLeverValue`, `Traction_StartDriveZero` `ZERO` | `Motor_SetSpeedMotoringCmd_Norm`, `Motor_SetICmd_Norm`, `Motor_SetSpeedCmd_Norm`, `Motor_SetTorqueCmd_Norm` | none: `UserCmd` written in any state | held; `Run_Entry` overwrites it from the matched ramp | followed by the loop | `TORQUE_ZERO` takes the generating half; `SPEED_ZERO` ignores | ignored | ignored | held |
@@ -153,12 +157,12 @@ sequenceDiagram
     end
     loop each brake value, TORQUE mode
         U->>C: brake value
-        C->>C: APP_USER BRAKE_VALUE, Traction_ApplyBrakeValue
+        C->>C: APP_USER BRAKE_VALUE, ApplyBrakeValue, Traction_ApplyBrakeValue each motor
         C->>M: UserCmd = minus value / 2 (Motor_SetICmd_Norm)
         Note over M: RUN, generating current, decelerating
-        C->>C: Traction_ProcBrakeHold, any motor still Motor_IsSpeedAligned
+        C->>C: ApplyBrakeValue, any motor still Motor_IsSpeedAligned
         opt no motor advancing along its direction
-            C->>M: INTERVENTION SPEED_ZERO (Motor_ApplySpeedZero), repeats are nothing
+            C->>M: INTERVENTION SPEED_ZERO (Traction_ApplyBrakeHold, Motor_ApplySpeedZero), repeats are nothing
             Note over M: INTERVENTION SPEED_ZERO, speed loop toward 0, UserCmd not read
         end
     end

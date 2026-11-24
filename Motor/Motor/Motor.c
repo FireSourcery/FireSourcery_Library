@@ -186,6 +186,7 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
     FOC params, derived. FOC and the observer hold no config: views of [Motor_Electrical_T] at the turn base, and the field weakening limit within the board FW rating.
     Re-resolve on a change of the model, the tuning, or the board base. An invalid model keeps the prior view.
 */
+/* alternatively handle in state machine init, motor.c remains core functions only */
 void Motor_FOC_InitParams(Motor_Context_T * p_context) /* optionally cal from state machine init to keep in Motor_FOC.h */
 {
     const Motor_Electrical_T * p_electrical = &p_context->Config.Electrical;

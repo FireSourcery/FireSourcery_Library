@@ -80,4 +80,10 @@ static inline void HAL_Reboot()
     NVIC_SystemReset();
 }
 
+/*
+    Sources of the last reset, SIM_SRSID[15:0]: LVD 0x2, LOC 0x4, WDOG 0x20, PIN 0x40, POR 0x80, LOCKUP 0x200, SW 0x400, MDMAP 0x800, SACKERR 0x2000.
+    Held until the next reset. The upper half is the device id.
+*/
+static inline uint16_t HAL_Reboot_ReadResetSource(void) { return (uint16_t)(SIM->SRSID & 0xFFFFU); }
+
 #endif

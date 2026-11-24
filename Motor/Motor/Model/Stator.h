@@ -60,7 +60,7 @@ static inline fract16_t Stator_Axis_IDelta(const Stator_Axis_T * p_axis) { retur
 
 
 /*
-    Per phase. L = Lq resolves the extended EMF E = ω·(ψ + (Ld − Lq)·i_d) of a salient rotor. Ls = (Ld + Lq) / 2 leaves a 2θ error.
+    Per phase. L = Lq leaves the active-flux EMF of a salient rotor, ω·(ψ + (Ld − Lq)·i_d) at steady state [stator_math.h]. Ls = (Ld + Lq) / 2 leaves a 2θ error.
 */
 typedef struct Stator_Winding
 {

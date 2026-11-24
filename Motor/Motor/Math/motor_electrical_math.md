@@ -100,7 +100,7 @@ L takes the shape of ψ. The rate is the speed at which the reactance X = ω · 
 | ψ_pu at a base | | | `psi_pu_of_angle_freq(F_base, V_base, rate)` |
 
 - int32 holds L ≥ 4.86 µH: 31 bits at 5 µH, 27 at 80 µH, 16.7 at 100 mH. µH reads back exactly (80 → 130,379,729 → 80).
-- Identification stays in samples, at the turn base. `Motor_SetLd_PuTurn` and `Motor_SetLq_PuTurn` convert on commit. The observer reads `Motor_Lq_PuTurn`: Lq on both αβ axes, the extended EMF.
+- Identification stays in samples, at the turn base. `Motor_SetLd_PuTurn` and `Motor_SetLq_PuTurn` convert on commit. The observer reads `Motor_Lq_PuTurn`: Lq on both αβ axes, the active-flux EMF.
 - The ratio of the two rates is a current: AngleFreqPerOhmD / AngleFreqPerVolt = ψ / Ld [A], the short-circuit current. 122,710,328 / 1,310,720 = 93.6 A on the debug motor (Kv 150, 4 pole pairs, Ld 85 µH).
 - Ldelta = Lq − Ld has no rate form, since its reciprocal diverges at Ld = Lq. Each axis is stored on its own.
 

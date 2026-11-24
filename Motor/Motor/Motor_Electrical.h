@@ -58,6 +58,8 @@
         The rates are free of rpm, rad/s, Fs, and the board base.
         Rs [V_base / I_base].
     Kv, rpm, and µH are views at the user boundary.
+
+    stay as a generic model to unify origin for derived values.
 */
 /******************************************************************************/
 typedef struct
@@ -96,7 +98,7 @@ static inline uint32_t Motor_Lq_PuTurn(const Motor_Electrical_T * p_electrical) 
 static inline void Motor_SetLd_PuTurn(Motor_Electrical_T * p_electrical, uint32_t ld_turn) { p_electrical->AngleFreqPerOhmD = angle_freq_of_l_pu(MOTOR_ANGLE_FREQ_MAX, Phase_VMaxVolts(), Phase_IMaxAmps(), ld_turn); }
 static inline void Motor_SetLq_PuTurn(Motor_Electrical_T * p_electrical, uint32_t lq_turn) { p_electrical->AngleFreqPerOhmQ = angle_freq_of_l_pu(MOTOR_ANGLE_FREQ_MAX, Phase_VMaxVolts(), Phase_IMaxAmps(), lq_turn); }
 
-/* Ls = (Ld + Lq) / 2, the αβ average. The observer takes Lq on both axes, the extended EMF. */
+/* Ls = (Ld + Lq) / 2, the αβ average. The observer takes Lq on both axes, the active-flux EMF [stator_math.h]. */
 // alternatively, Ls as the per-phase inductance, the phase to neutral winding self-inductance in the abc frame
 static inline uint32_t Motor_Ls_PuTurn(const Motor_Electrical_T * p_electrical) { return ((uint64_t)Motor_Ld_PuTurn(p_electrical) + Motor_Lq_PuTurn(p_electrical)) / 2U; }
 

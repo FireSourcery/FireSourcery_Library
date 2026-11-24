@@ -29,7 +29,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Motor/Motor/Extension/Motor_Table.h"
 #include "Motor/Motor/Motor_Include.h"
 
 #include "Transducer/Blinky/Blinky.h"
@@ -195,6 +194,21 @@ Traction_T;
 */
 /******************************************************************************/
 extern void Traction_InitFrom(Traction_T * p_traction, const Traction_Config_T * p_config);
+
+/******************************************************************************/
+/*!
+    Per motor, on the Motor's own interface.
+    The MotorController Traction states run these over the motor table, and keep the decisions that read every motor.
+*/
+/******************************************************************************/
+extern void Traction_StartThrottleMode(const Traction_T * p_vehicle, Motor_T * p_motor);
+extern void Traction_ApplyThrottleValue(const Traction_T * p_vehicle, Motor_T * p_motor, uint16_t userCmdThrottle);
+extern void Traction_ApplyLeverValue(const Traction_T * p_vehicle, Motor_T * p_motor, int16_t lever);
+extern void Traction_StartBrakeMode(const Traction_T * p_vehicle, Motor_T * p_motor);
+extern void Traction_ApplyBrakeValue(const Traction_T * p_vehicle, Motor_T * p_motor, uint16_t userCmdBrake);
+extern void Traction_ApplyBrakeHold(const Traction_T * p_vehicle, Motor_T * p_motor);
+extern void Traction_StartDriveZero(const Traction_T * p_vehicle, Motor_T * p_motor);
+extern void Traction_ProcRelease(const Traction_T * p_vehicle, Motor_T * p_motor);
 
 
 /******************************************************************************/

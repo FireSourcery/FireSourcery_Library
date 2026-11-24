@@ -108,7 +108,7 @@ typedef struct ElectricalCalibration
     int64_t   IqSumI;
     int64_t   IqSumQ;
 
-    int TauSet;
+    // int TauSet;
 
     FOC_Electrical_T Results;   /* L at turn base */
     FOC_Electrical_T ResultsSi;

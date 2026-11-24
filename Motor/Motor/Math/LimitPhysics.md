@@ -53,7 +53,7 @@ A symmetric VLimit keeps the limits enforced ([../../Decisions/0009_DirectionPol
     re-measured. Its return side flips by design at E² = 4R · |P_chg|. Cheaper alternative: LPF v_q.
 - Steady-state dq decomposition: v = R · i + u, u = ω × L · i + e.
   - u · i is the air-gap (mechanical) power, reluctance included. The supply EMF form needs u_q.
-  - e, the back EMF behind the reactances, serves sensorless (EEMF: ω · Lq on both axes), ψ online
+  - e, the back EMF behind the reactances, serves sensorless (active flux: ω · Lq on both axes), ψ online
     identification (e_q / ω) and the freewheel V match.
 - Stall rating: at standstill one leg carries the peak |i_dq| as DC, so equal dissipation needs
   I_stall = I_rated_peak / √2, the RMS rating.

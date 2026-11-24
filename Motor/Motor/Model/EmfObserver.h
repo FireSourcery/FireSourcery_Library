@@ -29,7 +29,7 @@
     @brief  Rotor angle from the EMF of the stator.
 */
 /******************************************************************************/
-#include "../Math/foc_sensorless_math.h"
+#include "../Math/stator_math.h"
 #include "Stator.h"
 #include "Math/Angle/Angle.h"
 #include "Math/Angle/AnglePll.h"
@@ -46,7 +46,7 @@
         StepVModel      voltage model, estimated dq             i_dq, v_dq → ê_dq → LPF → PLL → θ̂, ω̂
         StepEemf        SMO, estimated dq                       i_dq, v_dq → ê_dq → LPF → PLL → θ̂, ω̂
         StepEemfSta     super-twisting SMO, estimated dq        i_dq, v_dq → ê_dq → PLL → θ̂, ω̂
-    The tail detects the rotor vector of ê [foc_rotor_of_emf] in the shared [AnglePll_T].
+    The tail detects the rotor vector of ê [rotor_of_emf] in the shared [AnglePll_T].
 
     Caller owns the FOC chain. The integration layer:
         1. Each control tick, predicts θ̂ += ω̂ [AnglePll_Predict], and reads θ̂ from [Pll.Base].
@@ -148,6 +148,28 @@ static inline sign_t _EmfObserver_Direction(const Angle_T * p_frame) { return (A
 
 /******************************************************************************/
 /*!
+    @brief  EEMF phase-error extraction (estimated dq frame).
+
+    Takes the LPF'd EEMF (ê_d, ê_q) — typically lpf_step on (zd, zq) from
+    the observer output. The same map takes it to the rotor vector relative to θ̂,
+    for [angle_pll_error_normalized_relative].
+
+    Sign of ê_q encodes rotation direction (positive for forward, negative for
+    reverse). Caller supplies `sign` to disambiguate; pass +1 forward, -1 reverse.
+*/
+/******************************************************************************/
+/*
+    Normalized phase error ≈ −sin(θ − θ̂) in either direction, independent of |E|.
+    |ê| strips the magnitude of E, not its sign: `sign` restores the direction, e.g. sign(ω̂).
+    The signed ê_q would also restore it, but would make θ̂ = θ + π a second stable lock.
+    0 when |ê| is below the noise floor (lock indeterminate).
+*/
+/* The rotor vector −j·sign(ω)·e, along θ with length |ω|·ψ */
+static inline struct fract16_xy rotor_of_emf(sign_t sign, fract16_t e_x, fract16_t e_y) { return (struct fract16_xy) { .x = sign * e_y, .y = -sign * e_x }; }
+
+
+/******************************************************************************/
+/*!
     @brief  Rotor angle from the back-EMF.
 
     For CCW rotation (ω > 0), with d aligned to rotor flux, e = jω·ψ·e^{jθ}:
@@ -185,7 +207,7 @@ static void EmfObserver_AlphaBeta_Proc(EmfObserver_T * p_obs, fract16_t i_alpha,
     _EmfObserver_ProcSmoNext(p_obs, &p_obs->Beta, i_beta, v_beta);
 
     /* ê_αβ: the rotor vector, detected against θ̂ [AnglePll_ProcVector] */
-    struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->Alpha.Emf, p_obs->Beta.Emf);
+    struct fract16_xy rotor = rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->Alpha.Emf, p_obs->Beta.Emf);
     AnglePll_ProcVector(&p_obs->Pll, rotor.x, rotor.y);
 }
 
@@ -216,7 +238,7 @@ static void EmfObserver_AlphaBeta_ProcHeld(EmfObserver_T * p_obs, fract16_t i_al
     _EmfObserver_ProcSmo(p_obs, &p_obs->Alpha, i_alpha, v_alpha);
     _EmfObserver_ProcSmo(p_obs, &p_obs->Beta, i_beta, v_beta);
 
-    struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->Alpha.Emf, p_obs->Beta.Emf);
+    struct fract16_xy rotor = rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->Alpha.Emf, p_obs->Beta.Emf);
     AnglePll_ProcVector(&p_obs->Pll, rotor.x, rotor.y);
 }
 
@@ -227,6 +249,7 @@ static void EmfObserver_AlphaBeta_ProcHeld(EmfObserver_T * p_obs, fract16_t i_al
 */
 /******************************************************************************/
 /* ê_dq, already in the frame of θ̂: the rotor vector relative to it [AnglePll_ProcRelative] */
+
 /*
     Voltage model, frame θ̂ [foc_vemf_d] [foc_vemf_q]. Steady state: i_dq is DC at lock, so L·ΔI of the axes
     becomes X·J·i, X = ω̂·L [stator_reactance], with no difference of samples, and no LPF phase lag.
@@ -238,9 +261,10 @@ static void EmfObserver_VModel_Proc(EmfObserver_T * p_obs, fract16_t i_d, fract1
     p_obs->D.Emf = lpf_step(p_obs->Config.LpfCoef, p_obs->D.Emf, fract16_sat(foc_vemf_d(p_obs->Winding.R, x, v_d, i_d, i_q)));
     p_obs->Q.Emf = lpf_step(p_obs->Config.LpfCoef, p_obs->Q.Emf, fract16_sat(foc_vemf_q(p_obs->Winding.R, x, v_q, i_d, i_q)));
 
-    struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->D.Emf, p_obs->Q.Emf);
+    struct fract16_xy rotor = rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->D.Emf, p_obs->Q.Emf);
     AnglePll_ProcRelative(&p_obs->Pll, rotor.x, rotor.y);
 }
+
 
 
 /******************************************************************************/
@@ -252,13 +276,14 @@ static void EmfObserver_VModel_Proc(EmfObserver_T * p_obs, fract16_t i_d, fract1
         e_q  =  -e_α·sin(θ̂) + e_β·cos(θ̂)
     e_d → 0 at lock; near lock e_d ≈ −E·sin(θ − θ̂) ≈ −E·Δθ, E = ω·ψ.
 
-    Sign of e_d flips with rotation direction (E ∝ ω). The rotor vector [foc_rotor_of_emf]
+    Sign of e_d flips with rotation direction (E ∝ ω). The rotor vector [rotor_of_emf]
     removes it, so the detector [angle_pll_error] sees a vector along θ in either direction.
 */
 /******************************************************************************/
 /*
     EEMF SMO, frame θ̂. The model across the period [_EmfObserver_ProcSmo]: z of the last tick in place of e,
     and the frame's turn X·J·i on the measured current in the axis voltage, X = ω̂·L, [foc_vd_ff] [foc_vq_ff].
+    z stands in for the active-flux EMF [stator_math.h]: ω·ψ_a along the rotor's q, and (Ld − Lq)·di_d/dt along its d, a tilt of θ̂ while i_d moves.
     Each axis is then a scalar SMO. On î, the boundary layer's î − i ≈ E·thr/K would cross through X into the other axis,
     θ̂ lagging by atan(X·thr / (K + R·thr)).
     z is DC at lock, so the LPF takes the chatter without the lag it costs in the stationary frame.
@@ -278,7 +303,7 @@ static angle16_t EmfObserver_Eemf_Proc(EmfObserver_T * p_obs, fract16_t i_d, fra
     _EmfObserver_ProcSmo(p_obs, &p_obs->D, i_d, v_d - foc_vd_ff(x, i_q));
     _EmfObserver_ProcSmo(p_obs, &p_obs->Q, i_q, v_q - foc_vq_ff(x, 0, i_d));
 
-    struct fract16_xy rotor = foc_rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->D.Emf, p_obs->Q.Emf);
+    struct fract16_xy rotor = rotor_of_emf(_EmfObserver_Direction(&p_obs->Pll.Base), p_obs->D.Emf, p_obs->Q.Emf);
     AnglePll_ProcRelative(&p_obs->Pll, rotor.x, rotor.y);
     return Angle_Value(&p_obs->Pll.Base);
 }
@@ -358,7 +383,7 @@ static void EmfObserver_Init(EmfObserver_T * p_obs, const EmfObserver_Config_T *
 }
 
 /*
-    The plant from the motor's model at the turn base. Lq on both axes, the extended EMF: one plant for every front end. Validate checks (l_turn != 0U)
+    The plant from the motor's model at the turn base. Lq on both axes, the active-flux EMF [stator_math.h]: one plant for every front end. Validate checks (l_turn != 0U)
     The model steps once per [ticks] control ticks, the sample's period: G across it. L, and so X = ω̂·L, stays per control tick, as ω̂ does.
 */
 static inline void EmfObserver_InitWinding(EmfObserver_T * p_obs, accum32_t r, uint32_t l_turn) { Stator_Winding_Init(&p_obs->Winding, r, l_turn); }

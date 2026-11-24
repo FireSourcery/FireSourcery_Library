@@ -207,11 +207,11 @@ static inline accum32_t _foc_vq_ff_direct(accum32_t Ld_pu, accum32_t psi_pu, fra
     @brief  dq voltage model — back-EMF in the estimated dq frame, from the
             steady-state stator voltage equation (did/dt = diq/dt = 0).
 
-    Lq on both axes (EEMF form). Rs + ω·Lq·J is invariant under rotation, so the
+    Lq on both axes, the active-flux form [stator_math.h]. Rs + ω·Lq·J is invariant under rotation, so the
     saliency lands in E and ê_d stays a pure phase detector, IPM included:
         ê_d = vd − Rs·id − foc_vd_ff(ω·Lq, iq)      = vd − Rs·id + ω·Lq·iq    ≈ −E·sin(θ − θ̂)
         ê_q = vq − Rs·iq − foc_vq_ff(ω·Lq, 0, id)   = vq − Rs·iq − ω·Lq·id    ≈  E·cos(θ − θ̂)
-        E = ω·(ψ_f + (Ld − Lq)·id), signed with ω
+        E = ω·ψ_a = ω·(ψ_f + (Ld − Lq)·id), signed with ω
 
     Caller precomputes ω·Lq in v_pu basis, as for the decoupling feedforward.
     No internal state, no di/dt term — cheapest of the dq-frame trackers. Needs Rs and Lq;

@@ -11,7 +11,7 @@ The detail behind [Sensorless.md](Sensorless.md): why the observer has its shape
 
 ## The front end
 
-- **EEMF on Lq.** Lq on both axes, the extended EMF: one `Stator_Winding_T` for every front end, SPM or IPM. The αβ SMO's G comes from Lq too, not Ls.
+- **Lq on both axes.** The active-flux EMF ([stator_math.h](../../Math/stator_math.h)): one `Stator_Winding_T` for every front end, SPM or IPM. The αβ SMO's G comes from Lq too, not Ls. The extended EMF of DRM148 Eq. 30 puts Ld on both axes instead: the angle holds through current transients, where this form tilts θ̂ by (Ld − Lq)·di_d/dt while i_d moves. i_d is 0 under sensorless today: no field weakening, no MTPA.
 - **The frame θ̂ is the caller's.** The front ends take i_dq, v_dq already in θ̂: i Parked at θ̂, the held command at θ̂ − Δθ̂/2. The observer Parks the held command (`EmfObserver_ParkHold`); i_dq is the FOC's take. Where the FOC ran at another angle, `EmfObserver_ParkI` Parks Iα, Iβ at θ̂: not wired.
 - **The struct keeps outputs.** An input consumed in the call is not stored, so the observer holds no dq image. The one held input is the command, `VOutAlpha`, `VOutBeta`: it spans the period the next sample closes. A stored dq image of v carried a stale value across `EmfObserver_Reset`.
 - **The SMO step's order follows its v.** The same steps, one call shifted: `EmfObserver_AlphaBeta_ProcHeld` matches `EmfObserver_AlphaBeta_Proc` shifted one call, bit for bit.
