@@ -107,9 +107,9 @@ static inline uint16_t FilterValue(uint8_t shift, uint16_t prev, uint16_t value)
 
 ## Done already
 
-- 2026-11-23: the analysis above, and the per-motor Traction restructure (Traction acts per motor; the leaves fan
-  out over the motor table and keep the brake hold). It is independent of this block: the hysteresis and the lever
-  split sit on the input side.
+- 2026-11-23: the analysis above, and the Traction split: `Traction.h` (input, config), `Motor_Traction.h` (one
+  motor), `MotorController_Traction.c` (the leaves fan out over the motor table and keep the brake hold). It is
+  independent of this block: the hysteresis and the lever split sit on the input side, in `Traction.h`.
 
 ## Open for you
 

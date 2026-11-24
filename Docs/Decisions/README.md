@@ -41,5 +41,6 @@ Link the findings a decision rests on, in [../Findings/](../Findings/README.md).
 | [0010_SharedWordWrites.md](0010_SharedWordWrites.md) | Multi-word cross-thread values stay unguarded for now; each site carries the pointer here | Proposed, open |
 | [0011_StateMachineLockNesting.md](0011_StateMachineLockNesting.md) | The state-machine lock stays the raw disable/enable pair; decide with 0010 | Proposed, open |
 | [0012_VarEnumNaming.md](0012_VarEnumNaming.md) | The runtime var set is `Module_Var_T`; the config var set is proposed as `Module_ConfigVar_T`, the struct it indexes first and the kind last | Proposed, open |
+| [0013_TractionMotorAdapter.md](0013_TractionMotorAdapter.md) | Traction reaches each motor through `Motor_Traction` on the Motor's own interface; the leaves fan out and keep the all-motor decisions; no common `Motor_Input_T` | Accepted |
 
 Pending: `Peripheral/ADC/ADC_Batch_JoinVariants.md`, an open decision.

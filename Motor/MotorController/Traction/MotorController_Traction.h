@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "Traction.h"
+#include "Motor_Traction.h"
 
 #include "../MotorController_App.h"
 #include "../MotorController_StateMachine.h"

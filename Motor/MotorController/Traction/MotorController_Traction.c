@@ -76,21 +76,21 @@ MotorController_App_T MC_APP_TRACTION =
 /******************************************************************************/
 /*
     Traction over the motor table
-    Traction acts per motor [Traction.h]. The decisions that read every motor stay here.
+    Each motor through [Motor_Traction.h]. The decisions that read every motor stay here.
 */
 /******************************************************************************/
-typedef void (*Traction_MotorProc_T)(const Traction_T * p_vehicle, Motor_T * p_motor);
+typedef void (*Motor_TractionProc_T)(Motor_T * p_motor, const Traction_T * p_vehicle);
 
-static void ForEachMotor(MotorController_T * p_mc, Traction_MotorProc_T proc)
+static void ForEachMotor(MotorController_T * p_mc, Motor_TractionProc_T proc)
 {
-    for (uint8_t iMotor = 0U; iMotor < p_mc->MOTORS.LENGTH; iMotor++) { proc(TractionAdapter(p_mc), &p_mc->MOTORS.P_DEVS[iMotor]); }
+    for (uint8_t iMotor = 0U; iMotor < p_mc->MOTORS.LENGTH; iMotor++) { proc(&p_mc->MOTORS.P_DEVS[iMotor], TractionAdapter(p_mc)); }
 }
 
 /* The hold engages once no motor advances, so every motor holds together */
 static void ApplyBrakeValue(MotorController_T * p_mc, uint16_t userCmdBrake)
 {
-    for (uint8_t iMotor = 0U; iMotor < p_mc->MOTORS.LENGTH; iMotor++) { Traction_ApplyBrakeValue(TractionAdapter(p_mc), &p_mc->MOTORS.P_DEVS[iMotor], userCmdBrake); }
-    if (Motor_Table_IsAny(&p_mc->MOTORS, Motor_IsSpeedAligned) == false) { ForEachMotor(p_mc, Traction_ApplyBrakeHold); }
+    for (uint8_t iMotor = 0U; iMotor < p_mc->MOTORS.LENGTH; iMotor++) { Motor_Traction_ApplyBrakeValue(&p_mc->MOTORS.P_DEVS[iMotor], TractionAdapter(p_mc), userCmdBrake); }
+    if (Motor_Table_IsAny(&p_mc->MOTORS, Motor_IsSpeedAligned) == false) { ForEachMotor(p_mc, Motor_Traction_ApplyBrakeHold); }
 }
 
 /******************************************************************************/
@@ -146,9 +146,9 @@ static State_T * Drive_InputCmdStart(MotorController_T * p_mc, state_value_t mod
 {
     switch (mode)
     {
-        case TRACTION_CMD_BRAKE:     ForEachMotor(p_mc, Traction_StartBrakeMode);       break;
-        case TRACTION_CMD_THROTTLE:  ForEachMotor(p_mc, Traction_StartThrottleMode);    break;
-        case TRACTION_CMD_RELEASE:   ForEachMotor(p_mc, Traction_StartDriveZero);       break;
+        case TRACTION_CMD_BRAKE:     ForEachMotor(p_mc, Motor_Traction_StartBrakeMode);       break;
+        case TRACTION_CMD_THROTTLE:  ForEachMotor(p_mc, Motor_Traction_StartThrottleMode);    break;
+        case TRACTION_CMD_RELEASE:   ForEachMotor(p_mc, Motor_Traction_StartDriveZero);       break;
         default: break;
     }
     return NULL;
@@ -156,7 +156,7 @@ static State_T * Drive_InputCmdStart(MotorController_T * p_mc, state_value_t mod
 
 static State_T * Drive_InputThrottleValue(MotorController_T * p_mc, state_value_t value)
 {
-    for (uint8_t iMotor = 0U; iMotor < p_mc->MOTORS.LENGTH; iMotor++) { Traction_ApplyThrottleValue(TractionAdapter(p_mc), &p_mc->MOTORS.P_DEVS[iMotor], value); }
+    for (uint8_t iMotor = 0U; iMotor < p_mc->MOTORS.LENGTH; iMotor++) { Motor_Traction_ApplyThrottleValue(&p_mc->MOTORS.P_DEVS[iMotor], TractionAdapter(p_mc), value); }
 
     // Motor_Table_SetCmdWith(&p_mc->MOTORS, TractionAdapter(p_mc)->p_ThrottleDrive->APPLY_CMD, value / 2);
     return NULL;
@@ -177,7 +177,7 @@ static State_T * Drive_InputLeverDirection(MotorController_T * p_mc, state_value
 
 static State_T * Drive_InputLeverValue(MotorController_T * p_mc, state_value_t value)
 {
-    for (uint8_t iMotor = 0U; iMotor < p_mc->MOTORS.LENGTH; iMotor++) { Traction_ApplyLeverValue(TractionAdapter(p_mc), &p_mc->MOTORS.P_DEVS[iMotor], value); }
+    for (uint8_t iMotor = 0U; iMotor < p_mc->MOTORS.LENGTH; iMotor++) { Motor_Traction_ApplyLeverValue(&p_mc->MOTORS.P_DEVS[iMotor], TractionAdapter(p_mc), value); }
     return NULL;
 }
 
@@ -282,7 +282,7 @@ static State_T * Neutral_InputCmdStart(MotorController_T * p_mc, state_value_t m
     switch ((Traction_Cmd_T)mode)
     {
         case TRACTION_CMD_RELEASE:   Motor_Table_ApplyControl(&p_mc->MOTORS, PHASE_VOUT_Z);                            break;
-        case TRACTION_CMD_BRAKE:     ForEachMotor(p_mc, Traction_StartBrakeMode);                                       break;
+        case TRACTION_CMD_BRAKE:     ForEachMotor(p_mc, Motor_Traction_StartBrakeMode);                                 break;
         case TRACTION_CMD_THROTTLE:  break;
         default: break;
     }
