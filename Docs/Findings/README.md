@@ -25,3 +25,4 @@ finding may supersede an earlier one; say so in both.
 
 | Record | About |
 |---|---|
+| [2026-11-22_StructSemanticsPriorArt.md](2026-11-22_StructSemanticsPriorArt.md) | The shape/meaning split behind [StructSemantics.md](../Principles/StructSemantics.md) and its same-shape, distinct-type rule are 1972–1989 prior art; the kind table and binding the kind to the type have no stated precedent in the sources reviewed. |

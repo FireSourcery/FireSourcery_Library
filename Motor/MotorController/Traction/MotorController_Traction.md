@@ -294,23 +294,6 @@ sequenceDiagram
     end
 ```
 
-## Sources
-
-`MotorController/MotorController_StateMachine.c` (`Common_IsStandbyReady`, `Common_InputStandby`, `Standby_Entry`,
-`Standby_InputStateCmd`, `Main_Entry`, `Main_InputStateCmd`, `Lock_Entry`, `Lock_InputLockOp_Blocking`, `Fault_Entry`,
-`Fault_InputFault`, `TransitionFault`), `MotorController_StateMachine.h` (`MotorController_InputStateCommand`,
-`MotorController_SetFault`, `MotorController_ClearFault`), `MotorController_Analog.c` (`MC_STATE_LOCK_CALIBRATE_ADC`),
-`MotorController_Thread.h` (`MotorController_Main_Thread`, `_MotorController_ProcAnalogUser`, `_MotorController_VBus_Thread`),
-`MotorController_User.c` (`MotorController_CallSystemCmd`), `MotorController_User.h` (`MotorController_ForceDisableControl`),
-`MotAnalogUser/OptPin/MotorController_StandbyPin.h`; `Traction/MotorController_Traction.c` (`EnterMain`, `Drive_Entry`,
-`Drive_InputDirection`, `Drive_InputCmdStart`, `Neutral_Entry`, `Neutral_InputDirection`, `InputDriveDirection`,
-`Traction_StartThrottleMode`, `Traction_StartBrakeMode`, `Traction_ProcBrakeHold`, `Traction_StartDriveZero`,
-`MotorController_Traction_SetThrottle`, `SetBrake`, `SetThrottleBrake`, `SetLever`, `ApplyDirectionCmd`, `CaptureDirection`,
-`ProcAnalogUser`), `Traction/Traction.h` (`Traction_Input_EvaluateCmd`, the mode enums), `MotAnalogUser/Shifter/Shifter.c`
-and `Shifter.h` (`Shifter_ResolveDirection`, the FNR and R-only decode tables); Motor: `Motor_User.c` (`Motor_Apply*`,
-`Motor_ForceDisableControl`), `Motor_StateMachine.c`, `StateMachine/Motor_Intervention.c`, `Motor.h` (`Motor_IsSpeedAligned`),
-`Extension/Motor_Table.h` (`Motor_Table_IsEverySpeedZero`, `Motor_Table_IsEveryUserDirection`).
-
 ## Not shown / open
 
 - The lever path (`MotorController_Traction_SetLever`, `LEVER_DIRECTION` on engage, `LEVER_VALUE` in `THROUGH_ZERO`) is

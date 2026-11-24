@@ -87,10 +87,6 @@ The V side's output bands are recomputed inside the PI call every cycle, so a ch
 
 Of the two presets in the tree, one selects `_ON_MAIN` with `POWER_BALANCE`, `MIDCLAMP_CEILING` and a 0.54 radius; the other selects none of the `MOTOR_I_SUPPLY_LIMITS_ON_*`, so its window never closes.
 
-## Sources
-
-`Motor/Motor/Math/FOC.h` (`_FOC_VCircle`, `FOC_ProcIFeedback_Base`, `_Decouple`, `FOC_SetVLimits`, `_FOC_VFieldWeakening`, `FOC_ProcIdFieldWeakening`, `FOC_MatchIdFieldWeakening`), `Math/foc_math.h` (`foc_q_circle_limit`, `foc_iq_limits`, `foc_iq_phase_limits`), `Motor_FOC.c` (`_Motor_FOC_ProcTorqueReq`, `Motor_FOC_ResolveISupplyLimits`, `Motor_VBusILimits_*`, `Motor_FOC_MatchVFreewheel`), `Motor_FOC.h` (`_Motor_FOC_ProcIdReq`, `Motor_FOC_ResolveISupplyLimitsOnEntry`, `_OnSpeed`), `Motor.h` (`Motor_ILimitInterval`, `_Motor_ResolveILimits`, `_Motor_ApplyILimits`, `Motor_GetVLimitsAntiPlugging`), `Motor.c` (`Motor_ResolveILimits`, `Motor_ResolveVLimits`, `Motor_ResolveFeedbackLimits`, `Motor_SetDirection`, `Motor_SetILimitDerates`, `Motor_FOC_InitParams`, `Motor_Init`), `Motor_StateMachine.c` (`Run_Entry`, `Run_OnSpeed`, `Intervention_Entry`), `StateMachine/Motor_Intervention.c`, `Sensor/Encoder/Motor_Encoder.c`, `VBus/VBus.h` (`VBus_ILimitInterval`, the derate ramps, `VBus_GetSpeedDerate`), `VBus/VBus_FOC.h` (`VBus_FOC_IqLimits`, `_IqPhaseLimits`, `_IqDerateLimits`), `MotorController/MotorController.c` (`MotorController_ProcILimits`, `_ProcSpeedLimits`), `MotorController_Thread.h` (the `_ON_VBUS` and `_ON_MAIN` call sites), `Phase/Phase_Svpwm.h`, `Math/Ramp/Ramp.h` (`Ramp_SetLimits`), `Math/PID/PID.c` (`PID_CaptureOutputLimits`, the dynamic integral clamp).
-
 ## Not shown / open
 
 - `ILimit.Forward` / `.Reverse` and the protocol's directional limits (CiA 0x60E0/0x60E1): stored at FRACT16_MAX, no resolve reads them.

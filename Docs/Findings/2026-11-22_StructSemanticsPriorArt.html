@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Struct Semantics Prior Art</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+/* Layout: one 68ch reading column, figures widen to the 1080px frame. Each section's eyebrow quotes the clause of the principle it tests. */
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --ink:#17212C; --muted:#5B6776; --rule:#D3DAE2;
+  --shape:#61758A; --shape-soft:#E4EAF0;
+  --kind:#2C4BC7; --kind-soft:#E5EAFA;
+  --own:#94550A; --own-soft:#F7EBDA;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1319; --surface:#151C24; --ink:#E3E9EF; --muted:#98A4B2; --rule:#2A3441;
+    --shape:#8DA1B6; --shape-soft:#1C2630;
+    --kind:#8199FF; --kind-soft:#1A2142;
+    --own:#EFA640; --own-soft:#2E2211;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1319; --surface:#151C24; --ink:#E3E9EF; --muted:#98A4B2; --rule:#2A3441;
+  --shape:#8DA1B6; --shape-soft:#1C2630;
+  --kind:#8199FF; --kind-soft:#1A2142;
+  --own:#EFA640; --own-soft:#2E2211;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font:400 1.0625rem/1.62 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:0 4rem;
+}
+.wrap{max-width:1080px; margin:0 auto}
+.prose{max-width:68ch}
+h1,h2,h3,h4{font-family:var(--f-display); text-wrap:balance; line-height:1.14; margin:0; letter-spacing:-.005em}
+h1{font-size:clamp(2.1rem, 5.4vw, 3.4rem); font-weight:780; font-stretch:115%}
+h2{font-size:clamp(1.45rem, 3vw, 1.9rem); font-weight:720; font-stretch:110%}
+h3{font-size:1.12rem; font-weight:680; font-stretch:105%}
+h4{font-size:.95rem; font-weight:680}
+p{margin:0}
+a{color:var(--kind); text-decoration-thickness:1px; text-underline-offset:.18em}
+a:focus-visible{outline:2px solid var(--kind); outline-offset:2px; border-radius:2px}
+code,.mono{font-family:var(--f-mono); font-size:.84em}
+.stack{display:flex; flex-direction:column; gap:1rem}
+.label{font:600 .72rem/1.3 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+
+/* hero */
+.hero{padding-block:3.2rem 2.4rem; display:flex; flex-direction:column; gap:1.4rem}
+.lede{font-size:1.16rem; max-width:64ch}
+.stmt-box{background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.4rem 1.5rem; display:flex; flex-direction:column; gap:.9rem}
+.stmt{font:400 clamp(1.15rem, 2.4vw, 1.42rem)/1.62 var(--f-body)}
+.old{text-decoration:underline; text-decoration-color:var(--shape); text-decoration-thickness:2px; text-underline-offset:.28em}
+.new{background:var(--own-soft); box-shadow:inset 0 -2px 0 var(--own); padding:0 .12em; -webkit-box-decoration-break:clone; box-decoration-break:clone}
+.legend{display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font:400 .8rem/1.4 var(--f-mono); color:var(--muted)}
+.legend span{display:inline-flex; align-items:center; gap:.45rem}
+.sw{display:inline-block; width:1.6em; height:.75em; border-radius:2px; flex:none}
+.sw.old-sw{border-bottom:2px solid var(--shape); height:.5em}
+.sw.new-sw{background:var(--own-soft); box-shadow:inset 0 -2px 0 var(--own)}
+.sw.m-sw{background:var(--kind-soft); border:1.5px solid var(--kind)}
+.sw.s-sw{background:var(--shape-soft); border:1.5px solid var(--shape)}
+nav.toc{display:flex; flex-wrap:wrap; gap:.4rem 1.1rem; font:500 .82rem/1.5 var(--f-mono)}
+nav.toc a{color:var(--muted); text-decoration:none}
+nav.toc a:hover{color:var(--kind); text-decoration:underline}
+
+/* sections */
+section{border-top:1px solid var(--rule); padding-block:3rem; display:flex; flex-direction:column; gap:1.4rem}
+.clause{display:flex; flex-direction:column; gap:.3rem; max-width:72ch}
+.clause q{font:italic 400 1rem/1.5 var(--f-body); color:var(--kind); quotes:"\201C" "\201D"}
+
+/* verification marks */
+.v{display:inline-block; width:.62em; height:.62em; border-radius:50%; border:1.5px solid var(--muted); vertical-align:.04em; margin-left:.35em; flex:none}
+.v.p{background:var(--muted)}
+.v.f{background:linear-gradient(90deg, var(--muted) 50%, transparent 50%)}
+.v.u{border-style:dashed}
+
+/* quotes */
+.quotes{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap:1.6rem 2.2rem}
+.q{border-top:1px solid var(--rule); padding-top:.9rem; display:flex; flex-direction:column; gap:.55rem; min-width:0}
+.q blockquote{margin:0; font:400 1.02rem/1.55 var(--f-body)}
+.q blockquote::before{content:"\201C"} .q blockquote::after{content:"\201D"}
+.q cite{font:400 .76rem/1.45 var(--f-mono); font-style:normal; color:var(--muted)}
+.q strong{font-weight:600}
+
+/* glance rows */
+.vtable{display:flex; flex-direction:column}
+.vrow{display:grid; grid-template-columns:minmax(0,2.3fr) minmax(0,1.25fr) auto minmax(0,1.5fr); gap:.6rem 1.6rem; align-items:start; padding-block:1rem; border-top:1px solid var(--rule)}
+.vrow.head{padding-block:.4rem; border-top:0}
+.vclause{font-weight:600}
+.vkey{display:block; font:400 .76rem/1.45 var(--f-mono); color:var(--muted); margin-top:.25rem; font-weight:400}
+.verdict{font:600 .92rem/1.4 var(--f-display)}
+.vnew{font-size:.95rem}
+.vnew.has{color:var(--own)}
+.vnew.none{color:var(--muted)}
+.cov{display:flex; gap:6px}
+.cell{display:grid; justify-items:center; gap:3px; font:500 .6rem/1 var(--f-mono); color:var(--muted)}
+.sq{width:26px; height:26px; border:1.5px solid var(--kind); border-radius:3px}
+.sq.st{background:var(--kind)}
+.sq.pt{background:repeating-linear-gradient(135deg, var(--kind) 0 2px, transparent 2px 6px)}
+.sq.no{border-color:var(--rule)}
+.covlegend{display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; font:400 .78rem/1.4 var(--f-mono); color:var(--muted); align-items:center}
+.covlegend .sq{width:14px; height:14px; display:inline-block; vertical-align:-2px; margin-right:.4rem}
+@media (max-width:760px){
+  .vrow{grid-template-columns:1fr}
+  .vrow.head{display:none}
+}
+
+/* timeline */
+.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%}
+.tl{min-width:860px; font-size:.86rem; line-height:1.35}
+.tl th,.tl td{border-top:1px solid var(--rule); vertical-align:top; padding:.7rem .6rem; text-align:left}
+.tl thead th{font:600 .74rem/1.2 var(--f-mono); letter-spacing:.06em; color:var(--muted); border-top:0}
+.tl tbody th{font:680 .85rem/1.25 var(--f-display); width:9rem}
+.tl ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.4rem}
+.tl .yr{font:500 .74rem var(--f-mono); color:var(--muted); margin-right:.3rem}
+.tl li.cited{color:var(--muted); font-style:italic}
+.tl td.empty{color:var(--rule)}
+
+/* bytes figure */
+figure{margin:0; display:flex; flex-direction:column; gap:.8rem}
+figcaption{font:400 .82rem/1.5 var(--f-mono); color:var(--muted); max-width:80ch}
+.bytes{display:grid; grid-template-columns:7rem repeat(8, minmax(0,1fr)); gap:4px; background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1rem}
+.bytes .lab{grid-column:1; font:600 .7rem/1.3 var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); align-self:center}
+.bytes .lab small{display:block; text-transform:none; letter-spacing:0; font-weight:400}
+.bytes .off{font:500 .72rem var(--f-mono); color:var(--muted); text-align:center; padding-block:.15rem; border-bottom:1px solid var(--rule)}
+.bytes .fld{background:var(--shape-soft); border:1.5px solid var(--shape); border-radius:3px; text-align:center; padding:.45rem .2rem; font:500 .8rem/1.3 var(--f-mono); min-width:0}
+.bytes .fld small{display:block; color:var(--muted); font-size:.72rem}
+.bytes .klab{grid-column:1; grid-row:span 4; align-self:stretch; display:flex; flex-direction:column; justify-content:center; gap:.2rem; border-right:2px solid var(--kind); padding-right:.6rem; margin-right:.2rem; font:600 .7rem/1.3 var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--kind)}
+.bytes .klab small{text-transform:none; letter-spacing:0; font-weight:400; color:var(--muted)}
+.bytes .lens{grid-column:2 / -1; background:var(--kind-soft); border:1.5px solid var(--kind); border-radius:3px; padding:.5rem .75rem; display:flex; flex-wrap:wrap; gap:.2rem 1.1rem; align-items:baseline; min-width:0}
+.bytes .lens b{font:700 .92rem/1.3 var(--f-display); color:var(--kind)}
+.bytes .lens span{font:400 .76rem/1.4 var(--f-mono)}
+.bytes .gap{grid-column:1 / -1; height:.5rem}
+@media (max-width:560px){
+  .bytes{grid-template-columns:4.6rem repeat(8, minmax(0,1fr)); padding:.7rem; gap:3px}
+  .bytes .fld{font-size:.7rem}
+}
+
+/* layer stacks */
+.layers{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap:1.4rem}
+.lstack{display:flex; flex-direction:column; gap:4px; min-width:0}
+.lstack h4{margin-bottom:.4rem}
+.lyr{border-radius:3px; padding:.55rem .75rem; display:flex; flex-direction:column; gap:.1rem}
+.lyr b{font:650 .9rem/1.3 var(--f-display)}
+.lyr span{font:400 .76rem/1.4 var(--f-mono); color:var(--muted)}
+.lyr.m{background:var(--kind-soft); border:1.5px solid var(--kind)}
+.lyr.m b{color:var(--kind)}
+.lyr.s{background:var(--shape-soft); border:1.5px solid var(--shape)}
+.lyr.n{background:transparent; border:1.5px dashed var(--shape)}
+
+/* callouts */
+.callout{background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.2rem 1.4rem; display:flex; flex-direction:column; gap:.7rem; max-width:80ch}
+.callout.limit{background:var(--shape-soft); border-color:var(--shape)}
+.pairs{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap:1rem 1.6rem}
+.pairs > div{display:flex; flex-direction:column; gap:.3rem; min-width:0}
+.pairs > .callout{gap:.7rem}
+.pairs h4{font-size:.88rem}
+.pairs p{font-size:.92rem}
+
+/* axes grid */
+.axes{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap:1.4rem}
+.axis{display:flex; flex-direction:column; gap:.6rem; min-width:0}
+.axis h3{padding-bottom:.45rem; border-bottom:2px solid var(--kind)}
+.chip{background:var(--surface); border:1px solid var(--rule); border-radius:4px; padding:.55rem .7rem; font-size:.86rem; line-height:1.45}
+.chip .src{display:block; font:600 .72rem/1.3 var(--f-mono); color:var(--muted); margin-bottom:.15rem}
+
+/* role diagram */
+.roles{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap:1.6rem 2.4rem}
+.role{display:flex; flex-direction:column; gap:.6rem; min-width:0}
+.role svg{width:100%; height:auto; display:block; max-width:520px}
+.t-box{fill:var(--shape-soft); stroke:var(--shape); stroke-width:1.5}
+.k-box{fill:var(--kind-soft); stroke:var(--kind); stroke-width:1.5}
+.t-fld{fill:var(--surface); stroke:var(--shape); stroke-width:1}
+.t-cap{font:500 10.5px var(--f-mono); fill:var(--muted)}
+.t-name{font:600 13px var(--f-mono); fill:var(--ink)}
+.t-fl{font:500 9.5px var(--f-mono); fill:var(--muted); text-anchor:middle}
+.k-t{font:700 12px var(--f-display); fill:var(--kind)}
+.k-l{font:400 12px var(--f-body); fill:var(--ink)}
+.k-m{font:500 11px var(--f-mono); fill:var(--ink)}
+.arr{stroke:var(--muted); stroke-width:1.5; fill:none}
+.ah{fill:var(--muted)}
+.t-note{font:italic 400 11.5px var(--f-body); fill:var(--muted); text-anchor:middle}
+.t-dash{stroke:var(--muted); stroke-width:1; stroke-dasharray:3 3}
+
+/* three-up */
+.three{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap:1.4rem}
+.three > div{display:flex; flex-direction:column; gap:.5rem; min-width:0; border-top:2px solid var(--kind); padding-top:.7rem}
+.three p{font-size:.93rem}
+
+/* kinds table */
+.kt{min-width:780px; font-size:.88rem; line-height:1.45}
+.kt th,.kt td{border-top:1px solid var(--rule); padding:.7rem .7rem; vertical-align:top; text-align:left}
+.kt thead th{font:600 .72rem/1.2 var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); border-top:0}
+.kt td:first-child{font:680 .9rem/1.3 var(--f-display); width:11rem}
+.kt td:last-child{font-family:var(--f-mono); font-size:.78rem}
+.kt .cited{color:var(--muted); font-style:italic}
+
+/* naming lineage */
+.lineage{display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr); gap:.8rem; align-items:stretch}
+.node{background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1rem 1.1rem; display:flex; flex-direction:column; gap:.45rem; min-width:0}
+.node.decay{border-style:dashed}
+.node .yr{font:600 .72rem var(--f-mono); color:var(--muted); letter-spacing:.05em}
+.node p{font-size:.92rem}
+.arrow{align-self:center; font:400 1.4rem var(--f-mono); color:var(--muted)}
+@media (max-width:760px){
+  .lineage{grid-template-columns:1fr}
+  .arrow{transform:rotate(90deg); justify-self:center}
+}
+
+/* original */
+.own-band{background:var(--own-soft); border:1px solid var(--own); border-radius:6px; padding:1.5rem 1.6rem; display:flex; flex-direction:column; gap:1rem}
+.own-band h2{color:var(--own)}
+.own-list{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap:1rem 1.8rem}
+.own-list li{display:flex; flex-direction:column; gap:.25rem; padding-top:.6rem; border-top:1px solid var(--own)}
+.own-list b{font:680 .98rem/1.3 var(--f-display)}
+.own-list span{font-size:.92rem}
+
+/* edits + unverified */
+.edits{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:1rem; max-width:80ch}
+.edits li{display:grid; grid-template-columns:8.5rem minmax(0,1fr); gap:.2rem 1.2rem; padding-top:.8rem; border-top:1px solid var(--rule)}
+.edits li b{font:650 .86rem/1.35 var(--f-display)}
+@media (max-width:560px){ .edits li{grid-template-columns:1fr} }
+.unv{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap:1rem 2rem}
+.unv div{display:flex; flex-direction:column; gap:.35rem; min-width:0}
+.unv ul{margin:0; padding-left:1.1rem; font-size:.9rem; display:flex; flex-direction:column; gap:.25rem}
+footer{border-top:1px solid var(--rule); padding-top:1.6rem; display:flex; flex-direction:column; gap:.8rem; font-size:.88rem; color:var(--muted); max-width:80ch}
+.vlegend{display:flex; flex-wrap:wrap; gap:.4rem 1.4rem; font:400 .78rem/1.4 var(--f-mono)}
+.vlegend .v{margin-left:0; margin-right:.4rem}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+html{scroll-behavior:smooth}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="hero">
+  <p class="label">Literature survey · 22 Nov 2026 · Docs/Principles/StructSemantics.md</p>
+  <h1>Shape is old prior art. The kinds are new.</h1>
+  <p class="lede">StructSemantics.md says a struct is the shape of memory and its kind is the meaning wrapped around it. The split was in print between 1972 and 1989, and four languages and one kernel checker made “same shape, different type” a rule. The sources reviewed do not state the operational half: eight kinds of C struct defined by who writes them, when, where they live and how they are passed, with the kind fixing storage, passing form and API at the type. AUTOSAR comes closest. It attaches the kind to the role a data item plays and keeps one type across kinds.</p>
+
+  <div class="stmt-box">
+    <p class="label">The statement, marked against the literature</p>
+    <p class="stmt">
+      <span class="old">A struct defines the shape of memory;</span>
+      <span class="old">the module around it defines what the struct means.</span>
+      <span class="old">Each struct has</span>
+      <span class="new">a kind, set by its purpose and access pattern: who writes it, when, where it lives and how it is passed.</span>
+      <span class="old">The kind, not the shape,</span>
+      <span class="new">decides its storage, its passing form and its API.</span>
+      <span class="old">Two structs of one shape in different kinds are different types.</span>
+    </p>
+    <div class="legend">
+      <span><i class="sw old-sw"></i>stated in earlier work</span>
+      <span><i class="sw new-sw"></i>no stated precedent in the sources reviewed (the pieces exist in standards, attached to instances)</span>
+    </div>
+  </div>
+
+  <nav class="toc" aria-label="Sections">
+    <a href="#glance">At a glance</a>
+    <a href="#timeline">Timeline</a>
+    <a href="#shape">Shape and meaning</a>
+    <a href="#same-shape">Same shape, different type</a>
+    <a href="#access">Access pattern</a>
+    <a href="#storage">Storage, passing, API</a>
+    <a href="#naming">Naming the kind</a>
+    <a href="#original">What appears original</a>
+    <a href="#edits">Edits applied</a>
+    <a href="#unverified">Not verified</a>
+  </nav>
+</header>
+
+<!-- AT A GLANCE -->
+<section id="glance">
+  <h2>Each clause against four bodies of work</h2>
+  <div class="covlegend">
+    <span><i class="sq st"></i>states it</span>
+    <span><i class="sq pt"></i>partly, or by analogy</span>
+    <span><i class="sq no"></i>not found</span>
+    <span>T type theory · L languages and tools · D design practice · S standards and real-time</span>
+  </div>
+  <div class="vtable">
+    <div class="vrow head">
+      <p class="label">Clause</p><p class="label">Verdict</p><p class="label">Coverage</p><p class="label">New in the principle</p>
+    </div>
+    <div class="vrow">
+      <p class="vclause">The struct is the shape of memory; its meaning comes from outside<span class="vkey">Cardelli &amp; Wegner 1985 · C11 §6.2.5p1 · Simonyi · AUTOSAR TPS_SWCT_01229</span></p>
+      <p class="verdict">Anticipated almost verbatim</p>
+      <div class="cov" role="img" aria-label="Type theory states it, languages state it, design partly, standards state it">
+        <span class="cell"><i class="sq st"></i>T</span><span class="cell"><i class="sq st"></i>L</span><span class="cell"><i class="sq pt"></i>D</span><span class="cell"><i class="sq st"></i>S</span>
+      </div>
+      <p class="vnew none">Already stated</p>
+    </div>
+    <div class="vrow">
+      <p class="vclause">The module around the struct defines what it means<span class="vkey">Parnas 1972 · Morris 1973 · King 2020 “home module” · Hoare 1972 (not read)</span></p>
+      <p class="verdict">Anticipated</p>
+      <div class="cov" role="img" aria-label="Type theory states it, languages partly, design states it, standards partly">
+        <span class="cell"><i class="sq st"></i>T</span><span class="cell"><i class="sq pt"></i>L</span><span class="cell"><i class="sq st"></i>D</span><span class="cell"><i class="sq pt"></i>S</span>
+      </div>
+      <p class="vnew has">Three kinds keep the shape public; the classic line hides it</p>
+    </div>
+    <div class="vrow">
+      <p class="vclause">One shape in different kinds gives different types<span class="vkey">Morris §5 · Ada 83 §3.3 · Modula-3 brands · Breitner et al. 2014 · sparse</span></p>
+      <p class="verdict">Anticipated as a type rule</p>
+      <div class="cov" role="img" aria-label="Type theory states it, languages state it, design states it, standards partly">
+        <span class="cell"><i class="sq st"></i>T</span><span class="cell"><i class="sq st"></i>L</span><span class="cell"><i class="sq st"></i>D</span><span class="cell"><i class="sq pt"></i>S</span>
+      </div>
+      <p class="vnew has">The criterion for when to declare the second type</p>
+    </div>
+    <div class="vrow">
+      <p class="vclause">The kind is set by who writes it, when, where it lives and how it is passed<span class="vkey">AUTOSAR prototypes and ECUC classes · Kopetz §3.3 · Twelve-Factor · C volatile</span></p>
+      <p class="verdict">Axes found in standards, on instances</p>
+      <div class="cov" role="img" aria-label="Type theory partly, languages partly, design partly, standards state it">
+        <span class="cell"><i class="sq pt"></i>T</span><span class="cell"><i class="sq pt"></i>L</span><span class="cell"><i class="sq pt"></i>D</span><span class="cell"><i class="sq st"></i>S</span>
+      </div>
+      <p class="vnew has">The four axes as the definition of a kind</p>
+    </div>
+    <div class="vrow">
+      <p class="vclause">The kind decides storage, passing form and API<span class="vkey">AUTOSAR MemMap, SWS_BSW_00160, RTE §5.6, TPS_SWCT_01273 · C# · Eiffel</span></p>
+      <p class="verdict">Anticipated by AUTOSAR, on the role</p>
+      <div class="cov" role="img" aria-label="Type theory not found, languages partly, design partly, standards state it">
+        <span class="cell"><i class="sq no"></i>T</span><span class="cell"><i class="sq pt"></i>L</span><span class="cell"><i class="sq pt"></i>D</span><span class="cell"><i class="sq st"></i>S</span>
+      </div>
+      <p class="vnew has">Binding the kind to the type, with all three under one kind</p>
+    </div>
+    <div class="vrow">
+      <p class="vclause">Names carry the kind<span class="vkey">Simonyi · Spolsky 2005 · Stroustrup 2003 · kernel typedef rule</span></p>
+      <p class="verdict">Anticipated</p>
+      <div class="cov" role="img" aria-label="Type theory not found, languages not found, design states it, standards partly">
+        <span class="cell"><i class="sq no"></i>T</span><span class="cell"><i class="sq no"></i>L</span><span class="cell"><i class="sq st"></i>D</span><span class="cell"><i class="sq pt"></i>S</span>
+      </div>
+      <p class="vnew none">Already stated</p>
+    </div>
+  </div>
+  <p class="label" style="text-transform:none;letter-spacing:0;font-weight:400">The coverage cells are this survey's reading of the research notes. The verdicts follow the report.</p>
+</section>
+
+<!-- TIMELINE -->
+<section id="timeline">
+  <h2>Fifty years of prior art</h2>
+  <p class="prose">Each entry is placed by the year of the text that was read. Italic entries are already cited in StructSemantics.md. The marks show how each source was checked.</p>
+  <div class="vlegend">
+    <span><i class="v p"></i>matched against the primary text</span>
+    <span><i class="v f"></i>through a web-fetch summary, probably exact</span>
+    <span><i class="v"></i>secondary source only</span>
+    <span><i class="v u"></i>not read, or metadata only</span>
+  </div>
+  <div class="scroll">
+    <table class="tl">
+      <thead><tr><th></th><th>1970s</th><th>1980s</th><th>1990s</th><th>2000s</th><th>2010s</th><th>2020s</th></tr></thead>
+      <tbody>
+        <tr>
+          <th scope="row">Type theory</th>
+          <td><ul>
+            <li><span class="yr">1972</span>Parnas, modules<i class="v p"></i></li>
+            <li><span class="yr">1972</span>Hoare, data representations<i class="v u"></i></li>
+            <li><span class="yr">1973</span>Morris, protection<i class="v p"></i></li>
+            <li><span class="yr">1974</span>Liskov &amp; Zilles<i class="v"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">1983</span>Reynolds, abstraction<i class="v u"></i></li>
+            <li><span class="yr">1985</span>Cardelli &amp; Wegner<i class="v p"></i></li>
+            <li><span class="yr">1988</span>Mitchell &amp; Plotkin<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">1999</span>Foster, Fähndrich &amp; Aiken, qualifiers<i class="v p"></i></li>
+            <li><span class="yr">1999</span>Siff et al., physical subtyping<i class="v u"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2000</span>Reynolds, intrinsic vs extrinsic<i class="v p"></i></li>
+            <li><span class="yr">2009</span>Cook, data abstraction<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2011</span>ISO C11 (N1570)<i class="v p"></i></li>
+            <li><span class="yr">2014</span>Breitner et al., roles<i class="v p"></i></li>
+          </ul></td>
+          <td class="empty">·</td>
+        </tr>
+        <tr>
+          <th scope="row">Languages and tools</th>
+          <td class="empty">·</td>
+          <td><ul>
+            <li><span class="yr">1983</span>Ada 83 LRM<i class="v p"></i></li>
+            <li><span class="yr">1989</span>Modula-3 brands<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">1994</span>OSI X.200, abstract vs transfer syntax<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2002</span>DataScript<i class="v p"></i></li>
+            <li><span class="yr">2004</span>sparse <code>__bitwise</code><i class="v p"></i></li>
+            <li><span class="yr">2005</span>PADS<i class="v p"></i></li>
+            <li><span class="yr">2005</span>Diatchki, Jones &amp; Leslie, bitdata<i class="v p"></i></li>
+            <li><span class="yr">2006</span>Diatchki &amp; Jones, typed memory areas<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2010</span>Haskell <code>newtype</code><i class="v p"></i></li>
+            <li><span class="yr">2015</span>P0109 opaque typedefs<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2022</span>EverParse3D<i class="v p"></i></li>
+            <li><span class="yr">2022</span>Ada AARM 13.1 aspects<i class="v f"></i></li>
+          </ul></td>
+        </tr>
+        <tr>
+          <th scope="row">Design practice</th>
+          <td><ul>
+            <li><span class="yr">1976</span>Simonyi thesis<i class="v u"></i></li>
+          </ul></td>
+          <td class="empty">·</td>
+          <td><ul>
+            <li><span class="yr">1994</span>Cunningham, CHECKS<i class="v p"></i></li>
+            <li><span class="yr">1999</span>Simonyi, MSDN reprint<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li class="cited"><span class="yr">2002</span>Fowler, DTO</li>
+            <li class="cited"><span class="yr">2003</span>Evans, Entity and Value Object</li>
+            <li><span class="yr">2003</span>Stroustrup, Artima interview<i class="v p"></i></li>
+            <li><span class="yr">2005</span>Spolsky, “kind”<i class="v p"></i></li>
+            <li><span class="yr">2006</span>ECMA-367 Eiffel expanded<i class="v p"></i></li>
+            <li><span class="yr">2008</span>Cwalina &amp; Abrams, struct vs class<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2011</span>Douglass, embedded C patterns<i class="v p"></i></li>
+            <li><span class="yr">2011</span>Twelve-Factor config<i class="v p"></i></li>
+            <li><span class="yr">2011</span>Hickey talks<i class="v"></i></li>
+            <li><span class="yr">2015</span>C++ Core Guidelines<i class="v p"></i></li>
+            <li><span class="yr">2018</span>Fabian, data-oriented design<i class="v p"></i></li>
+            <li><span class="yr">2018</span>BARR-C<i class="v p"></i></li>
+            <li><span class="yr">2019</span>King, parse don't validate<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2020</span>King, names are not type safety<i class="v p"></i></li>
+            <li><span class="yr">2022</span>Sharvit, data-oriented programming<i class="v p"></i></li>
+          </ul></td>
+        </tr>
+        <tr>
+          <th scope="row">Standards and real-time</th>
+          <td class="empty">·</td>
+          <td class="empty">·</td>
+          <td><ul>
+            <li class="cited"><span class="yr">1997</span>Kopetz &amp; Nossal, temporal firewalls</li>
+            <li><span class="yr">1997</span>Stewart, Volpe &amp; Khosla, port-based objects<i class="v u"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2002</span>Kopetz, IFAC paper<i class="v p"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2011</span>Kopetz, <i>Real-Time Systems</i> 2nd ed.<i class="v f"></i></li>
+            <li><span class="yr">2012</span>MISRA C:2012 essential types<i class="v f"></i></li>
+            <li><span class="yr">2013</span>IEC 61131-3 Ed. 3<i class="v f"></i></li>
+          </ul></td>
+          <td><ul>
+            <li><span class="yr">2022</span>AUTOSAR Classic R22-11<i class="v p"></i></li>
+            <li><span class="yr">now</span>ASAM A2L wiki<i class="v f"></i></li>
+            <li><span class="yr">now</span>Simulink data objects<i class="v f"></i></li>
+          </ul></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SHAPE AND MEANING -->
+<section id="shape">
+  <div class="clause"><span class="label">Clause</span><q>A struct defines the shape of memory; the module around it defines what the struct means.</q></div>
+  <h2>Representation and meaning were split by 1985</h2>
+  <p class="prose">Cardelli and Wegner open their survey with this clause: memory is an untyped universe of bit strings, and its meaning comes from outside. C's own standard says the same in normative text. Parnas puts the meaning in one module, and Simonyi says a structure's operations are independent of the fields that determine its representation. Cardelli and Wegner's vocabulary runs the other way. For them the type is the armour, while in the principle the struct is the bare representation and the module is the armour. The structure of the claim is the same.</p>
+
+  <figure>
+    <div class="bytes" role="img" aria-label="One eight-byte shape with fields x, y and k, read under four kinds: runtime configuration, derived Ref, data model and packet">
+      <span class="lab">Offset</span>
+      <span class="off">0</span><span class="off">1</span><span class="off">2</span><span class="off">3</span><span class="off">4</span><span class="off">5</span><span class="off">6</span><span class="off">7</span>
+      <span class="lab">Shape<small>what C checks</small></span>
+      <span class="fld" style="grid-column:span 2">x<small>int16_t</small></span>
+      <span class="fld" style="grid-column:span 2">y<small>int16_t</small></span>
+      <span class="fld" style="grid-column:span 4">k<small>int32_t</small></span>
+      <span class="gap"></span>
+      <span class="klab">Kind<small>the contract the principle names</small></span>
+      <div class="lens"><b>Runtime configuration</b><span>written by user, protocol, NVM load</span><span>lives in NVM, RAM copy · pointer</span></div>
+      <div class="lens"><b>Derived (Ref)</b><span>written at Init and Reinit only</span><span>RAM · pointer to const</span></div>
+      <div class="lens"><b>Data model</b><span>written by the producer</span><span>RAM, or by value</span></div>
+      <div class="lens"><b>Packet</b><span>written by the wire or a builder</span><span>offsets are the contract · buffer, pointer</span></div>
+    </div>
+    <figcaption>Illustration. One 8-byte shape read under four of the principle's eight kinds, with each kind's row taken from the StructSemantics.md table. C checks the top two rows. The kind rows are what the 1972–1985 papers call the external interpretation.</figcaption>
+  </figure>
+
+  <div class="quotes">
+    <div class="q">
+      <blockquote><strong>The meaning of a piece of memory is critically determined by an external interpretation of its contents.</strong></blockquote>
+      <cite><a href="http://lucacardelli.name/Papers/OnUnderstanding.A4.pdf">Cardelli &amp; Wegner 1985</a>, §1.1, reprint p. 3<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>A type may be viewed as a set of clothes (or a suit of armor) that protects an underlying untyped representation from arbitrary or unintended use</blockquote>
+      <cite>Cardelli &amp; Wegner 1985, §1.2, p. 3<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>The meaning of a value stored in an object or returned by a function is determined by the type of the expression used to access it</blockquote>
+      <cite><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">ISO C11, N1570</a> §6.2.5p1<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>the invariant property of data structure, the set of operations in which the constructions participate, <strong>seems to be largely independent of the fields of the structure that determine only the representation</strong></blockquote>
+      <cite><a href="https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-6.0/aa260976(v=vs.60)">Simonyi, “Hungarian Notation”</a>, Naming Rules, MSDN reprint 1999<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>A data structure, its internal linkings, accessing procedures and modifying procedures are part of a single module.</blockquote>
+      <cite><a href="https://www.win.tue.nl/~wstomv/edu/2ip30/references/criteria_for_modularization.pdf">Parnas 1972</a>, CACM 15(12), p. 1056<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>Property mismatches that have their cause in conflicts of the conceptual interface models cannot be resolved by connection systems but require human intervention</blockquote>
+      <cite><a href="https://skoge.folk.ntnu.no/prost/proceedings/ifac2002/data/content/05006/5006.pdf">Kopetz, IFAC 2002</a>, §3.4<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+  </div>
+
+  <figure>
+    <h3>Where each tradition puts the meaning</h3>
+    <div class="legend"><span><i class="sw m-sw"></i>carries meaning</span><span><i class="sw s-sw"></i>carries shape</span></div>
+    <div class="layers">
+      <div class="lstack">
+        <h4>C, as StructSemantics.md reads it</h4>
+        <div class="lyr m"><b>Module around the struct</b><span>the kind: who writes it, when, where it lives, how it is passed</span></div>
+        <div class="lyr s"><b>struct type</b><span>offsets and member types, all the compiler checks</span></div>
+        <div class="lyr s"><b>Object representation</b><span>bytes, C11 §6.2.6</span></div>
+      </div>
+      <div class="lstack">
+        <h4>Ada and ASN.1</h4>
+        <div class="lyr m"><b>Logical type</b><span>Ada type · ASN.1 abstract syntax</span></div>
+        <div class="lyr s"><b>Representation clause · encoding rules</b><span>Ada 83 §13.1 · X.690 BER, PER · X.692 ECN</span></div>
+        <div class="lyr s"><b>Bits on the machine or the wire</b><span>transfer syntax, X.200 §7.2.1</span></div>
+      </div>
+      <div class="lstack">
+        <h4>AUTOSAR Classic</h4>
+        <div class="lyr m"><b>ApplicationDataType</b><span>units, CompuMethod, DataConstr · “do not become visible as data types in the code”</span></div>
+        <div class="lyr n"><b>DataTypeMappingSet</b><span>kept apart “for process reasons”</span></div>
+        <div class="lyr s"><b>ImplementationDataType</b><span>“finally boils down to a typedef”</span></div>
+        <div class="lyr s"><b>SwBaseType</b><span>the platform's base type</span></div>
+      </div>
+    </div>
+    <figcaption>C puts the layout in the type and leaves the meaning to the code around it. Ada and ASN.1 reverse the order: the type is logical and a second declaration attaches the layout. AUTOSAR keeps three levels with a mapping between them (TPS_SWCT_01229–01236, R22-11).</figcaption>
+  </figure>
+
+  <p class="prose">The principle departs from the classic line in one place. Parnas, Liskov and Zilles, and Cook assume the owning module hides the representation, and Cook names the C idiom of a struct forward-declared in the header (<a href="https://www.cs.utexas.edu/~wcook/Drafts/2009/essay.pdf">Cook 2009</a>, §2.3). Three of the principle's kinds (value, data model and packet) keep the shape public because the data is the interface. Their precedent is the data-description languages. <a href="https://pads.cs.tufts.edu/papers/pldi.pdf">PADS</a> lets analysts “describe the physical layout of their data, as it is”. <a href="https://people.cs.vt.edu/~gback/papers/gback-datascript-gpce2002.pdf">DataScript</a> says “no attempt is made to hide such details from the programmer”. <a href="https://microsoft.com/en-us/research/uploads/prod/2020/02/EverParse3D.pdf">EverParse3D</a> (§1.1) names the C habit of casting a byte array to a packed struct. In <a href="https://www.brics.dk/RS/00/32/BRICS-RS-00-32.pdf">Reynolds's</a> terms, the principle is extrinsic about bytes and intrinsic about meaning.</p>
+</section>
+
+<!-- SAME SHAPE -->
+<section id="same-shape">
+  <div class="clause"><span class="label">Clause</span><q>Two structs of one shape in different kinds are different types.</q></div>
+  <h2>Same shape, different type is a rule in four languages and a kernel checker</h2>
+  <p class="prose">Morris gave the earliest clear statement in 1973. Ada 83, Modula-3 brands, Haskell <code>newtype</code> and GHC roles made it mechanical, and sparse checks it on plain C. C already gives two struct tags two distinct types (C11 §6.7.2.3p5), so it supplies the mechanism. It gives no criterion for when to declare the second tag. The principle supplies the criterion.</p>
+  <div class="quotes">
+    <div class="q">
+      <blockquote>as intervals or as common, ordinary pairs, which they obviously are? Most people would agree that he should do the former and <strong>would regard as a type violation anything assuming the latter</strong></blockquote>
+      <cite><a href="https://science.slc.edu/jmarshall/courses/2005/fall/cs190/Spapers/9-MorrisProtection.pdf">Morris 1973</a>, “Protection in Programming Languages”, §5, p. 17<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>Two type definitions always define two distinct types, even if they are textually identical</blockquote>
+      <cite><a href="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html">Ada 83 LRM</a> §3.3<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>Brands distinguish types that would otherwise be the same; they have no other semantic effect</blockquote>
+      <cite><a href="https://softwarepreservation.computerhistory.org/modula3/archive/DEC_SRC/release-3.6-html/m3defn/html/refs.html">Modula-3 reference</a>, DEC SRC<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>this distinction cannot be made by the compiler; it can only be specified by the programmer</blockquote>
+      <cite><a href="https://www.cis.upenn.edu/~sweirich/papers/coercible.pdf">Breitner, Eisenberg, Peyton Jones &amp; Weirich</a>, ICFP 2014, pp. 4–5<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>Each typedef creates a type of it's own, and will thus create a bitwise type that is not compatible with anything else</blockquote>
+      <cite><a href="https://www.yarchive.net/comp/linux/sparse.html">Torvalds on sparse</a>, Sep 2004 (spelling as posted)<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>have the same existential type … points out a deficiency in the SOL typing discipline</blockquote>
+      <cite><a href="https://theory.stanford.edu/~jcm/papers/mitch-plotkin-88.pdf">Mitchell &amp; Plotkin</a>, TOPLAS 1988, pp. 483–484, on stacks and queues<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+  </div>
+
+  <div class="pairs">
+    <div class="callout">
+      <h3>A test for when</h3>
+      <p>Simonyi's type calculus asks: “could the same set of operations be meaningfully applied to the quantities in questions? If so, the types are thought to be the same”<i class="v p" title="matched against the primary text"></i>. Applied to the principle's own example, a config is persisted and written by the user, while an <code>AngleCounter_Ref_T</code> bundle is rebuilt at Init and never persisted. The operation sets differ, so the types differ even when the fields match.</p>
+    </div>
+    <div class="callout limit">
+      <h3>The limit: names are not type safety</h3>
+      <p>“On its own, a newtype is just a name. And names are not type safety.” A name-only distinction holds through the “home module”, “a trust boundary where internal invariants are enforced by restricting clients to a safe API”. And: “If a newtype is completely transparent, and it is routinely wrapped and unwrapped at will, it is likely not very helpful.” (<a href="https://lexi-lambda.github.io/blog/2020/11/01/names-are-not-type-safety/">King 2020</a><i class="v p" title="matched against the primary text"></i>)</p>
+      <p>For C this means a second tag gets compile-time non-interchangeability, while each kind's write rule stays a convention inside its module. Simonyi conceded the same in 1999: “If a quantity is incorrectly classified, we have a style problem, not a bug.”</p>
+    </div>
+  </div>
+
+  <h3>Counter-positions</h3>
+  <div class="pairs">
+    <div><h4>Barr, BARR-C:2018 §5.1</h4><p>Reuses one register-layout type on purpose: “this same type could then be used to create a shadow copy of the timer registers” (p. 33)<i class="v p" title="matched against the primary text"></i>.</p></div>
+    <div><h4>Hickey, 2011–2012</h4><p>“Don't feel like I have to write a class now because I have a new piece of information. That's just silly.”<i class="v" title="community transcript only"></i> His target is garbage-collected information systems.</p></div>
+    <div><h4>Sharvit, 2022</h4><p>Principle #2, “Representing data with generic data structures”<i class="v p" title="matched against the primary text"></i>.</p></div>
+    <div><h4>Physical subtyping</h4><p>C practice relies on layout prefixes (Siff et al. 1999; Chandra &amp; Reps 1999, metadata only<i class="v u" title="not read"></i>). The standard sanctions it only through the common initial sequence rule, §6.5.2.3p6.</p></div>
+  </div>
+  <p class="prose">None of these says meaning lives in the shape. They argue from convenience and reuse, and the disagreement is only about whether to name separate types. Modula-3's structural default and the GHC role design, which “generated vigorous debate” before choosing permissive defaults, sit on the same side.</p>
+
+  <div class="callout">
+    <h3>The converse case the principle does not state</h3>
+    <p>One meaning can take several shapes. Ada models it as distinct types joined by explicit conversion: “PACKED_DESCRIPTOR and DESCRIPTOR are two different types with identical characteristics, apart from their representation” (Ada 83 LRM §13.6)<i class="v p" title="matched against the primary text"></i>. AUTOSAR notes that one physical value “might look very different when sent over CAN” (TPS_SWCT_01235)<i class="v p" title="matched against the primary text"></i>, and Kopetz writes that “the semantic content of a variable is invariant to a change in representation” (2011, §2.2.4)<i class="v f" title="through a web-fetch summary"></i>. The principle's packet and data-model kinds carrying the same information are this case.</p>
+    <p>Morris adds that “representation can be a multilevel affair” (§5, p. 18): a routine that prints pairs “is unconcerned with all but the pair tag”. Serialisers, DMA and debuggers may see only the shape layer of a struct that also has a kind.</p>
+  </div>
+</section>
+
+<!-- ACCESS PATTERN -->
+<section id="access">
+  <div class="clause"><span class="label">Clause</span><q>Each struct has a kind, set by its purpose and access pattern: who writes it, when, where it lives and how it is passed.</q></div>
+  <h2>Standards classify by access pattern; type theory does not</h2>
+  <p class="prose">Type theory names the criterion only in general. Cardelli and Wegner say types “categorize objects according to their usage and behavior” (§1.1). Design guides sort aggregates on one axis at a time, mostly the invariant: <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rc-struct">C++ Core Guidelines C.2</a>, and Stroustrup's “if and only if you can consider an invariant” (<a href="https://www.artima.com/articles/the-c-style-sweet-spot">Artima 2003</a>). The principle's runtime-model kind sits on that axis. Industrial standards use all four of the principle's axes, each attached to an instance or a declaration.</p>
+  <div class="axes">
+    <div class="axis">
+      <h3>Who writes it</h3>
+      <div class="chip"><span class="src">AUTOSAR TPS_SWCT_01266<i class="v p"></i></span>VariableDataPrototypes “are changed by the application software at runtime”; ParameterDataPrototypes “are constant (except for calibration access)”.</div>
+      <div class="chip"><span class="src">ASAM A2L<i class="v f"></i></span>CHARACTERISTIC, “a tunable parameter”, against MEASUREMENT, “a recordable, ECU-internal variable”.</div>
+      <div class="chip"><span class="src">C11 §6.7.3p7<i class="v p"></i></span><code>volatile</code>: “may be modified in ways unknown to the implementation”.</div>
+    </div>
+    <div class="axis">
+      <h3>When it is bound or written</h3>
+      <div class="chip"><span class="src">AUTOSAR ECUC Table 2.15<i class="v p"></i></span>PreCompile, Link, PostBuild and PublishedInformation configuration classes.</div>
+      <div class="chip"><span class="src">AUTOSAR TPS_ECUC_02056–02058<i class="v p"></i></span>Derived configuration parameters, “taken over or calculated from other values”, inherit their sources' class.</div>
+      <div class="chip"><span class="src">Twelve-Factor, III. Config<i class="v p"></i></span>Config is what is “likely to vary between deploys”; wiring that does not vary “is best done in the code”.</div>
+      <div class="chip"><span class="src">IEC 61131-3<i class="v f"></i></span>CONSTANT and RETAIN qualifiers on declaration sections, apart from the data type.</div>
+    </div>
+    <div class="axis">
+      <h3>Where it lives</h3>
+      <div class="chip"><span class="src">AUTOSAR MemMap §7.2.1.2<i class="v p"></i></span>“two different kinds of constants”: CONFIG_DATA for configurable behaviour, CONST for fixed values.</div>
+      <div class="chip"><span class="src">AUTOSAR Table 5.46<i class="v p"></i></span>swImplPolicy <code>const</code> “can be applied for parameters (not for those in NVRAM)”.</div>
+      <div class="chip"><span class="src">sparse <code>__iomem</code><i class="v p"></i></span>Complain “if the pointer is ever dereferenced”; it lives in “address space 2”.</div>
+      <div class="chip"><span class="src">Kopetz 2002 §4.1<i class="v p"></i></span>The temporal firewall: state information exchanged through dedicated interface memory.</div>
+    </div>
+    <div class="axis">
+      <h3>How it is passed or consumed</h3>
+      <div class="chip"><span class="src">Kopetz 2002 §3.3<i class="v p"></i></span>State information needs “an update-in-place and a non-consumable read”; event information is “queued on sending and consumed on reading”.</div>
+      <div class="chip"><span class="src">AUTOSAR RTE §5.6.4–5.6.5<i class="v p"></i></span><code>Rte_Write</code> for data semantics, <code>Rte_Send</code> for event semantics.</div>
+      <div class="chip"><span class="src">Diatchki &amp; Jones 2006 §2.1<i class="v p"></i></span>A memory area “cannot be used directly as a function argument or result”, only by reference or pointer.</div>
+    </div>
+  </div>
+  <p class="prose">The principle's Derived (Ref) kind has three ancestors: AUTOSAR's derived configuration parameters, Cunningham's Visible Implication pattern (“Compute derived or redundant quantities implied by those already entered”, <a href="http://c2.com/ppr/checks.html">CHECKS 1994</a>), and King's statement of the risk the Init-only rule manages: “Duplicating the same data in multiple places introduces a trivially representable illegal state: the places getting out of sync” (<a href="https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/">King 2019</a>).</p>
+</section>
+
+<!-- STORAGE PASSING API -->
+<section id="storage">
+  <div class="clause"><span class="label">Clause</span><q>The kind, not the shape, decides its storage, its passing form and its API.</q></div>
+  <h2>AUTOSAR lets the kind choose all three, on the role</h2>
+  <p class="prose">AUTOSAR Classic R22-11 is the only source reviewed that does all three by data kind.</p>
+  <div class="three">
+    <div>
+      <h3>Storage</h3>
+      <p>SwAddrMethod and its MemorySectionType (“the essential nature of the data”) pick the MemMap section: VAR_INIT, VAR_CLEARED, CONST, CALIB, CONFIG_DATA_PREBUILD, CONFIG_DATA_POSTBUILD. Variables set later by an initialization routine still go in INIT or CLEARED.</p>
+      <p class="label" style="text-transform:none;letter-spacing:0">SWCT Table 5.92–5.94 · MemMap p. 26–31<i class="v p"></i></p>
+    </div>
+    <div>
+      <h3>Passing form</h3>
+      <p>Post-build configuration “shall be defined in a structure” in a separate segment, and is passed to <code>&lt;Mip&gt;_Init()</code> “via a const-qualified function parameter”.</p>
+      <p class="label" style="text-transform:none;letter-spacing:0">SWS_BSW_00057, SWS_BSW_00160, §10.2.5<i class="v p"></i></p>
+    </div>
+    <div>
+      <h3>API</h3>
+      <p><code>Rte_Write</code> or <code>Rte_Send</code> by swImplPolicy, <code>Rte_Pim</code> for per-instance memory, <code>Rte_Prm</code> and <code>Rte_CData</code> for parameters, where “Access is read-only”.</p>
+      <p class="label" style="text-transform:none;letter-spacing:0">SWS_RTE §5.6.4–5.6.17<i class="v p"></i></p>
+    </div>
+  </div>
+
+  <div class="roles">
+    <div class="role">
+      <h3>StructSemantics.md: the kind is on the type</h3>
+      <svg viewBox="0 0 400 252" role="img" aria-label="Two struct types with the same fields, X_Config_T and X_Ref_T, each with its own storage, passing form and writer">
+        <defs><marker id="ahL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+        <rect x="1" y="20" width="168" height="66" rx="4" class="t-box"/>
+        <text x="12" y="38" class="t-cap">Runtime configuration</text>
+        <text x="12" y="56" class="t-name">X_Config_T</text>
+        <rect x="12" y="64" width="36" height="14" class="t-fld"/><rect x="50" y="64" width="36" height="14" class="t-fld"/><rect x="88" y="64" width="70" height="14" class="t-fld"/>
+        <text x="30" y="75" class="t-fl">x</text><text x="68" y="75" class="t-fl">y</text><text x="123" y="75" class="t-fl">k</text>
+        <line x1="170" y1="53" x2="205" y2="53" class="arr" marker-end="url(#ahL)"/>
+        <rect x="207" y="14" width="190" height="78" rx="4" class="k-box"/>
+        <text x="219" y="36" class="k-l">lives: NVM, RAM copy</text>
+        <text x="219" y="56" class="k-l">passed: pointer</text>
+        <text x="219" y="76" class="k-l">writes: user, NVM load</text>
+
+        <line x1="85" y1="90" x2="85" y2="112" class="t-dash"/>
+        <text x="85" y="128" class="t-note">same fields, two tags</text>
+        <line x1="85" y1="136" x2="85" y2="158" class="t-dash"/>
+
+        <rect x="1" y="160" width="168" height="66" rx="4" class="t-box"/>
+        <text x="12" y="178" class="t-cap">Derived (Ref)</text>
+        <text x="12" y="196" class="t-name">X_Ref_T</text>
+        <rect x="12" y="204" width="36" height="14" class="t-fld"/><rect x="50" y="204" width="36" height="14" class="t-fld"/><rect x="88" y="204" width="70" height="14" class="t-fld"/>
+        <text x="30" y="215" class="t-fl">x</text><text x="68" y="215" class="t-fl">y</text><text x="123" y="215" class="t-fl">k</text>
+        <line x1="170" y1="193" x2="205" y2="193" class="arr" marker-end="url(#ahL)"/>
+        <rect x="207" y="154" width="190" height="78" rx="4" class="k-box"/>
+        <text x="219" y="176" class="k-l">lives: RAM</text>
+        <text x="219" y="196" class="k-l">passed: pointer to const</text>
+        <text x="219" y="216" class="k-l">writes: Init, Reinit only</text>
+      </svg>
+      <p class="label" style="text-transform:none;letter-spacing:0;font-weight:400">C keeps the two tags apart (§6.7.2.3p5). The type name shows the kind at every use.</p>
+    </div>
+    <div class="role">
+      <h3>AUTOSAR: the kind is on the role</h3>
+      <svg viewBox="0 0 400 290" role="img" aria-label="One ImplementationDataType X_T aggregated in three roles: ParameterDataPrototype, NvBlockDescriptor and arTypedPerInstanceMemory, each with its own section and API">
+        <defs><marker id="ahR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+        <rect x="1" y="106" width="168" height="74" rx="4" class="t-box"/>
+        <text x="12" y="126" class="t-cap">ImplementationDataType</text>
+        <text x="12" y="144" class="t-name">X_T</text>
+        <rect x="12" y="154" width="36" height="14" class="t-fld"/><rect x="50" y="154" width="36" height="14" class="t-fld"/><rect x="88" y="154" width="70" height="14" class="t-fld"/>
+        <text x="30" y="165" class="t-fl">x</text><text x="68" y="165" class="t-fl">y</text><text x="123" y="165" class="t-fl">k</text>
+        <path d="M170,143 C188,143 188,46 205,46" class="arr" marker-end="url(#ahR)"/>
+        <line x1="170" y1="143" x2="205" y2="143" class="arr" marker-end="url(#ahR)"/>
+        <path d="M170,143 C188,143 188,240 205,240" class="arr" marker-end="url(#ahR)"/>
+        <rect x="207" y="8" width="190" height="76" rx="4" class="k-box"/>
+        <text x="219" y="30" class="k-t">ParameterDataPrototype</text>
+        <text x="219" y="50" class="k-l">CONST or CALIB section</text>
+        <text x="219" y="70" class="k-m">Rte_Prm, Rte_CData</text>
+        <rect x="207" y="105" width="190" height="76" rx="4" class="k-box"/>
+        <text x="219" y="127" class="k-t">NvBlockDescriptor</text>
+        <text x="219" y="147" class="k-l">romBlock + ramBlock roles</text>
+        <text x="219" y="167" class="k-m">NvM block</text>
+        <rect x="207" y="202" width="190" height="76" rx="4" class="k-box"/>
+        <text x="219" y="224" class="k-t">arTypedPerInstanceMemory</text>
+        <text x="219" y="244" class="k-l">VAR section</text>
+        <text x="219" y="264" class="k-m">Rte_Pim</text>
+      </svg>
+      <p class="label" style="text-transform:none;letter-spacing:0;font-weight:400">One type; the structure is fixed and the policy is set per prototype.</p>
+    </div>
+  </div>
+
+  <div class="quotes">
+    <div class="q">
+      <blockquote><strong>the properties covering the structure shall not be redefined on DataPrototype. Implementation policy, semantics and code generation policy may be changed</strong> under consideration of compatibility rules</blockquote>
+      <cite><a href="https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_TPS_SoftwareComponentTemplate.pdf">AUTOSAR TPS SWCT R22-11</a>, TPS_SWCT_01273, pp. 346–347<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>the specific context gives the otherwise generic VariableDataPrototype a dedicated semantics</blockquote>
+      <cite>AUTOSAR TPS SWCT R22-11, Table 5.33, pp. 319–320<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+  </div>
+
+  <p class="prose">So AUTOSAR's rule is “different kind, different role”, a weaker rule than the principle's “different type”. Simulink, IEC 61131-3 and A2L also put the kind on the instance. AUTOSAR can do this because a generator carries the role to every use site: the RTE emits <code>Rte_Prm</code> or <code>Rte_Pim</code>, and MemMap emits the section. Plain C has no generator, so the type name is the one place a reader sees the kind at every use. This argument for binding the kind to the type is this survey's inference. Its cost, which AUTOSAR avoids, is duplicate same-shape types and the conversions between them.</p>
+  <p class="prose">The principle's own runtime-configuration row already follows the instance view: one type lives in NVM and in a RAM working copy, which is AUTOSAR's romBlock and ramBlock pair. “The kind decides storage” therefore means a storage plan that can name two places for one type.</p>
+
+  <h3>Passing form fixed at the type, outside AUTOSAR</h3>
+  <div class="quotes">
+    <div class="q">
+      <blockquote>logically represents a single value, similar to primitive types … has an instance size under 16 bytes … is immutable</blockquote>
+      <cite><a href="https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/choosing-between-class-and-struct">Framework Design Guidelines</a> (Cwalina &amp; Abrams 2008), when to choose a struct<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>References represent the modeling relation “knows about”; subobjects, as permitted by expanded types, represent the relation “has part”</blockquote>
+      <cite><a href="https://www.eiffel.org/doc/eiffel/ET-_The_Dynamic_Structure-_Execution_Model">eiffel.org</a>; ECMA-367 §7.4<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>a struct that has elements that can reasonably be directly accessed should never be a typedef</blockquote>
+      <cite><a href="https://www.kernel.org/doc/html/latest/process/coding-style.html#typedefs">Linux kernel coding style</a> §5<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>even types with the same layout can still differ in how they are passed across function boundaries</blockquote>
+      <cite><a href="https://doc.rust-lang.org/reference/type-layout.html">Rust Reference</a>, type layout<i class="v f" title="through a web-fetch summary"></i></cite>
+    </div>
+  </div>
+  <p class="prose">The C# guideline's 16-byte figure comes from copy cost; the principle's comes from AAPCS register passing. The AAPCS observation itself (structs over 4 bytes returned through memory unless inlined) has no counterpart in the sources reviewed.</p>
+
+  <h3>The eight kinds and their nearest ancestors</h3>
+  <div class="scroll">
+    <table class="kt">
+      <thead><tr><th>Kind</th><th>Ancestors in the literature</th><th>Nearest AUTOSAR form</th></tr></thead>
+      <tbody>
+        <tr><td>Compile-time context</td><td>MemMap's configurable constants (CONFIG_DATA) passed by const pointer to Init</td><td>CONFIG_DATA_PREBUILD · const pointer to &lt;Mip&gt;_Init()</td></tr>
+        <tr><td>HAL descriptor</td><td>CMSIS-SVD declares <code>access</code>, <code>modifiedWriteValues</code> and <code>readAction</code> beside <code>bitOffset</code>; sparse <code>__iomem</code></td><td>ParameterDataPrototype in constantMemory · swImplPolicy const or fixed · CONST</td></tr>
+        <tr><td>Runtime configuration</td><td>Twelve-Factor config; A2L CHARACTERISTIC</td><td>NvBlockDescriptor romBlock + ramBlock, or CALIB with swCalibrationAccess readWrite · never swImplPolicy const</td></tr>
+        <tr><td>Derived (Ref)</td><td>ECUC derived parameters; Cunningham's Visible Implication; King on duplicated data</td><td>ECUC derived parameters · VAR_INIT or CLEARED when built at Init</td></tr>
+        <tr><td>Runtime model</td><td>C++ Core Guidelines C.2 and Stroustrup's invariant rule; Parnas's module; <span class="cited">Evans, Entity</span></td><td>staticMemory or arTypedPerInstanceMemory · Rte_Pim · VAR</td></tr>
+        <tr><td>Value</td><td><span class="cited">Evans, Value Object</span>; C# struct guideline; Eiffel expanded types</td><td>ArgumentDataPrototype</td></tr>
+        <tr><td>Data model</td><td><span class="cited">Fowler, DTO</span>; Kopetz's state message</td><td>SenderReceiverInterface dataElement or inter-runnable variable · swImplPolicy standard</td></tr>
+        <tr><td>Packet</td><td>PADS, DataScript, EverParse3D; OSI transfer syntax; BARR-C §5.5 padding rule</td><td>ImplementationDataType mapped to a SystemSignal through COM</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="label" style="text-transform:none;letter-spacing:0;font-weight:400">Alignment by this survey, not stated by AUTOSAR. Italic: already cited in StructSemantics.md.</p>
+</section>
+
+<!-- NAMING -->
+<section id="naming">
+  <div class="clause"><span class="label">Clause</span><q>Names carry the kind where a suffix exists.</q></div>
+  <h2>Simonyi named the kind first, and Systems Hungarian shows how it decays</h2>
+  <div class="lineage">
+    <div class="node">
+      <span class="yr">SIMONYI · 1976 THESIS, 1999 REPRINT</span>
+      <h3>Type is the set of operations</h3>
+      <p>Type is “determined by the set of operations that can be applied to a quantity”. “I recommend the use of a new tag for every new data structure”, and the tag “should also be used as the structure name in the program”.<i class="v p" title="matched against the 1999 reprint"></i></p>
+    </div>
+    <span class="arrow" aria-hidden="true">→</span>
+    <div class="node">
+      <span class="yr">SPOLSKY · 2005</span>
+      <h3>The word “kind”</h3>
+      <p>“I'm using the word kind on purpose, there, because Simonyi mistakenly used the word type in his paper, and generations of programmers misunderstood what he meant.”<i class="v p" title="matched against the primary text"></i> (<a href="https://www.joelonsoftware.com/2005/05/11/making-wrong-code-look-wrong/">Making Wrong Code Look Wrong</a>)</p>
+    </div>
+    <span class="arrow" aria-hidden="true">→</span>
+    <div class="node decay">
+      <span class="yr">SYSTEMS HUNGARIAN · THE DECAY</span>
+      <h3>The prefix names the machine type</h3>
+      <p>“the only thing that the prefix told you was the actual data type of the variable”, which Spolsky calls “a subtle but complete misunderstanding of Simonyi's intention”.<i class="v p" title="matched against the primary text"></i></p>
+    </div>
+  </div>
+  <p class="prose">For the principle's suffixes the warning is concrete. A kind suffix stays useful while it names purpose and access pattern, and turns into Systems Hungarian once it names layout or storage section. Simonyi's <code>TypeFromType</code> conversion naming is a precedent for naming config-to-Ref builders.</p>
+  <div class="quotes">
+    <div class="q">
+      <blockquote>You'll maybe call it personnel_record or mailing_address. At that stage you believe name and address are not just strings</blockquote>
+      <cite><a href="https://www.artima.com/articles/the-c-style-sweet-spot">Stroustrup, Artima 2003</a><i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>a descriptive name that establishes a link between the chunk and its meaning helps human understanding</blockquote>
+      <cite>Kopetz, IFAC 2002, §3.4<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+    <div class="q">
+      <blockquote>the structure definition that defines the register layout</blockquote>
+      <cite><a href="https://barrgroup.com/sites/default/files/barr_c_coding_standard_2018.pdf">BARR-C:2018</a> §5.1, on <code>timer_reg_t</code>: a name chosen by layout<i class="v p" title="matched against the primary text"></i></cite>
+    </div>
+  </div>
+  <p class="prose">One terminology collision is worth a line in the document. In type theory “kind” already means the classifier of types, as in Diatchki and Jones's <code>*</code> against <code>Area</code>. Their <code>Area</code> is the one formal use that matches the principle's sense. No source reviewed uses “kind” for purpose or access-pattern classes of same-shape structs. That is a negative finding from limited search coverage.</p>
+</section>
+
+<!-- ORIGINAL -->
+<section id="original">
+  <div class="own-band">
+    <h2>What appears original</h2>
+    <p class="prose">Within the sources reviewed, five things have no stated precedent.</p>
+    <ul class="own-list">
+      <li><b>The eight-way taxonomy</b><span>Opaque state and transparent data as kinds of one aggregate. The members have separate ancestors; no source assembles them.</span></li>
+      <li><b>Kind defined by four operational axes</b><span>Type theory has only “usage and behavior”, and industry spreads the axes across separate attributes.</span></li>
+      <li><b>Kind as a type property in plain C</b><span>With no generator or checker. Stronger than AUTOSAR's “different role”.</span></li>
+      <li><b>One kind fixes storage, passing form and API</b><span>Outside AUTOSAR, precedents cover one or two of the three.</span></li>
+      <li><b>By value means <code>static inline</code></b><span>The platform rule drawn from AAPCS return conventions.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- EDITS -->
+<section id="edits">
+  <h2>Edits to StructSemantics.md</h2>
+  <p class="prose">Raised by the survey and applied to StructSemantics.md on 22 Nov 2026. The units item stays open there, with the prior art noted.</p>
+  <ul class="edits">
+    <li><b>Source line</b><span>Add Parnas 1972, Morris 1973, Cardelli and Wegner 1985 and Simonyi beside Evans, Fowler and Kopetz.</span></li>
+    <li><b>One type or two</b><span>Say when one type in two storage places is enough (the runtime-configuration row already does this) and when a second type is required: when the set of applicable operations differs, which is Simonyi's test.</span></li>
+    <li><b>What a type buys</b><span>For the transparent kinds a distinct type buys mix-up prevention. For the runtime model it buys write discipline, inside the home module only (King 2020).</span></li>
+    <li><b>Units, the open item</b><span>AUTOSAR and A2L keep the unit conversion as metadata and store the representation the code consumes. That favours <code>_Pu</code> in the struct, with user units shown by the protocol or app layer. This is an inference from the standards, not a rule they state.</span></li>
+    <li><b>The converse case</b><span>Add one meaning in several shapes (packet and data model), which Ada §13.6 models as distinct types joined by explicit conversion.</span></li>
+  </ul>
+</section>
+
+<!-- UNVERIFIED -->
+<section id="unverified">
+  <h2>Not verified</h2>
+  <p class="prose">Do not cite these as read.</p>
+  <div class="unv">
+    <div>
+      <h4>Type theory</h4>
+      <ul>
+        <li>Hoare 1972, data representations (paywalled)</li>
+        <li>Liskov &amp; Zilles 1974 (secondary only)</li>
+        <li>Morris, “Types Are Not Sets”, POPL 1973</li>
+        <li>Reynolds 1983 (image-only scan)</li>
+        <li>Pierce, TAPL §19.3</li>
+        <li>Mealy and Balzer 1967 (not located)</li>
+        <li>Kennedy 1997, House 1983, Siff et al. 1999, Chandra &amp; Reps 1999 (metadata only)</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Design practice</h4>
+      <ul>
+        <li>Grenning's module forms (secondary)</li>
+        <li>White, <i>Making Embedded Systems</i> (not found)</li>
+        <li>Evans's Specification; Fowler's Quantity; Refactoring's Primitive Obsession</li>
+        <li>Meyer, OOSC page reference</li>
+        <li>Hickey quotes (community transcripts)</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Standards and languages</h4>
+      <ul>
+        <li>IEC 61131-3, MISRA C:2012, ASAM MCD-2 MC (third-party pages only)</li>
+        <li>Kopetz 2011 book (SlideShare copy)</li>
+        <li>Kopetz &amp; Suri 2003; Stewart, Volpe &amp; Khosla (search snippets)</li>
+        <li>AADL port semantics; IP-XACT</li>
+        <li>Ada 83 Rationale; Habit report (not retrieved)</li>
+        <li>SRS_BSW_00414 requirement ID</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Four research passes on 22 Nov 2026: type theory, layout mechanisms in languages and tools, design practice, and embedded and automotive standards. Each quote keeps the check it received. AUTOSAR page numbers are the PDFs' own footers and may be off by one; the requirement IDs are the stable reference.</p>
+  <div class="vlegend">
+    <span><i class="v p"></i>matched against the primary text</span>
+    <span><i class="v f"></i>through a web-fetch summary</span>
+    <span><i class="v"></i>secondary source only</span>
+    <span><i class="v u"></i>not read, or metadata only</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>

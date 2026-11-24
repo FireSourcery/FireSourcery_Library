@@ -329,20 +329,6 @@ target; the leaf's `ON_SPEED` and `ON_PHASE` actions; the input slots the state 
 | `CALIBRATION_STATE_ELECTRICAL`, `CALIBRATION_STATE`, `CALIBRATION_STATE_HALL`, `CALIBRATION_STATE_SIN_COS` | `Motor_Calibration_StartElectrical` (`MOTOR_CALIBRATION_ELECTRICAL_ENABLE` or a debug build), `Motor_ADC_Calibrate`, `Motor_Hall_Calibrate` / `Motor_Hall_Cmd`, `Motor_SinCos_Calibrate` / `Motor_SinCos_Cmd` | the `CALIBRATION` branch |
 | `STATE_ENCODER_HOMING_ALIGN` | `Motor_Encoder_StartHoming`: the `CALIBRATION` input with the leaf | the `CALIBRATION` branch; from `DEACTIVATED` it lands on the bare root |
 
-## Sources
-
-`Motor_StateMachine.c` (roots, `TransitionFault`, `TransitionIntervention`, `_Motor_TransitionFeedbackLost`),
-`Motor_StateMachine.h` (`_Motor_StateMachine`, `Motor_Enable`, `Motor_Disable`, the fault inputs), `Motor_Thread.h`
-(`Motor_PWM_Thread`, `Motor_PollSpeed`), `StateMachine/Motor_Intervention.c`, `StateMachine/Motor_OpenLoop.c`,
-`StateMachine/Motor_CalibrationElectrical.c`, `ADC/Motor_ADC.c`, `Sensor/Motor_Sensor.c` (`Motor_Sensor_StartUpState`,
-`Motor_Sensor_FallbackState`), `Sensor/Sensorless/Motor_Sensorless.c`, `Sensor/Sensorless/Sensorless_Sensor.c`
-(`IS_FEEDBACK_AVAILABLE`), `Sensor/Encoder/Motor_Encoder.c`, `Sensor/Encoder/Encoder_Sensor.c`, `Sensor/Hall/Motor_Hall.c`,
-`Sensor/Hall/Hall_Sensor.h`, `Sensor/SinCos/Motor_SinCos.c`, `Sensor/SinCos/SinCos_Sensor.c`, `Motor_User.c` (the
-`Motor_Apply*` inputs), `Motor.h` (`Motor_IsSpeedZero`, `Motor_IsSpeedFreewheelLimitRange`, `Motor_ActivatePassiveOutput`);
-engine: `Framework/StateMachine/_State_Node.c` (`State_TransitionOfOutputUp`, `State_AcceptInputUp`, `State_CommonAncestorOf`,
-`State_TraverseEntryExit`), `_StateMachine_Tree.c` (`_StateMachine_Branch_ProcSyncOutput`, `_StateMachine_TraverseTransitionTo`),
-`_State.h` (`State_TransitionOfOutput`, `State_AcceptInput`).
-
 ## Not shown / open
 
 - `STATE_MACHINE_EXIT_FUNCTION_ENABLE` is off and no motor state defines `EXIT`; the `EXIT` column is therefore omitted.

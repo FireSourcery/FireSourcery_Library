@@ -169,22 +169,6 @@ drawn.
 | MotorController | main `LOOP`/`NEXT`, `STATE_CMD`, `LOCK`, `APP_USER` (unlocked) | the 1 ms ISR's fault input | old leaf's table, new state's context; its publish is then overwritten by main's |
 | MotorController | a locked fault input whose entry sends a motor input | the 1 ms ISR after the inner release (and the PWM ISR, which does not read this machine) | as above, for the tail of the entry |
 
-## Sources
-
-`_StateMachine_Lock.h` (`_StateMachine_AcquireAsyncIsr`, `_StateMachine_AcquireAsyncInput`, `_StateMachine_ReleaseAsyncInput`,
-`_StateMachine_AcquireAsyncTransition`), `StateMachine.h` (`StateMachine_Tree_Input`, `StateMachine_Tree_InputAsyncTransition`,
-`StateMachine_Tree_InvokeTransition`), `_StateMachine.c` (`_StateMachine_TransitionTo`), `_StateMachine_Tree.c`
-(`_StateMachine_TraverseTransitionTo`, `_StateMachine_Branch_ProcSyncOutput`, `_StateMachine_Branch_CallInput`),
-`_State_Node.c` (`State_TraverseEntryExit`, `ExitUp`, `EntryDown`), `System/Critical/Critical.h` (`_Critical_DisableIrq`,
-`_Critical_EnableIrq`); Motor: `Motor_StateMachine.h` (`_Motor_StateMachine`, `Motor_StateMachine_SetFault`), `Motor_Thread.h`
-(`Motor_PWM_Thread`, `Motor_PollSpeed`), `Motor_User.c`; MotorController: `MotorController_Thread.h`
-(`MotorController_Main_Thread`, `MotorController_Timer1Ms_Thread`, `_MotorController_VBus_Thread`),
-`MotorController_StateMachine.h` (`MotorController_InputStateCommand`, `MotorController_InputLock`, `MotorController_SetFault`),
-`MotorController_StateMachine.c` (`TransitionFault`, `Fault_Entry`, `Standby_Entry`, `Lock_Entry`, `Main_Entry`,
-`Common_InputStandby`, `MotorController_PollFaultFlags`), `MotorController.h` (`MotorController_PollRxLost`),
-`Traction/MotorController_Traction.c` (`_MotorController_Traction_ApplyCmd`), `MotorController_Analog.c`
-(`MotorController_Lock_CalibrateAdc`); Decisions 0010 and 0011.
-
 ## Not shown / open
 
 - `STATE_MACHINE_ASYNC_SIGNAL` and the buffered `SetInput` / `SyncInputMask` path are not built by either instance and are

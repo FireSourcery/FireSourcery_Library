@@ -39,10 +39,6 @@ The activation styles the ADC module holds, which preset builds each, and the sh
 | Completion priority | above the PWM ISR | above the PWM ISR |
 | Includes | `ADC_Thread.h`, `ADC_Channel.h` (table dropped), `ADC_Conversion.h` | `ADC_Sequence.h`, `ADC_Conversion.h` |
 
-## Sources
-
-`Peripheral/ADC/ADC.h` (`ADC_State_T`, the marker and flag accessors), `_ADC.h` (`_ADC_CaptureActive`, `_ADC_SetStateFrom`, `_ADC_ActivateDma`, `_ADC_MarkComplete`), `ADC_Thread.h` (`ADC_OnComplete_ISR`, `ADC_PollCompleteFifo`, `ADC_ActivateMarked`, `ADC_OnCompleteArmed_ISR`, `ADC_Arm`, `ADC_ArmMarked`), `ADC_Channel.h` (`ADC_Channel_OnComplete_ISR`), `ADC_Sequence.h` (`ADC_SequenceTrigger_*`), `ADC_Batch.h` (`_ADC_Batch_TakeEach`), `ADC_Conversion.h`, `HAL_ADC.h` (`HAL_ADC_ArmEach`, `HAL_ADC_SelectDmaSequence` and the capability macros); `Motor/MotorController/MotorController_Thread.h` (`MotorController_PWM_Thread`), `MotorController.c` (`MotorController_Init`); the presets' `Board_ADC.h`, `Board.c`, `Precompile.h`, `KMC_Main.c` (`KMC_PWM_HwTrigger_ISR`, `KMC_PWM_Dma_ISR`, `KMC_PWM_SwActivate_ISR`, `MOTOR_CONTROLLER_MAIN.ADC_COUNT`) and their build directories' `compile_commands.json` and map files; `.Test/ADC_Sequence_Test.c`, `.Test/ADC_Batch_Test.c`.
-
 ## Not shown / open
 
 - The ADC_Batch decision (join N ADCs on one trigger, or one `ADC_Sequence_T` per ADC): this map records that the header is unreferenced and does not compile; the choice is the owner's.

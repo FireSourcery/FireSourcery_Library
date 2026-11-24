@@ -88,10 +88,6 @@ The field-weakening request steps on the V the previous cycle wrote (`FOC_GetVMa
 
 The voltage path (`Motor_FOC_ProcAngleV`, built only with `MOTOR_VOLTAGE_CONTROL_MODE_ENABLE`) replaces the two PIs with `FOC_ProcVControl`: vq clamped into `VLimit`, then the circle at VBus/√3, the same inverse transforms and write. Passive and Deactivated run the capture side only, V while floating (`FOC_ProcVBemfClarkePark` into `Valpha`, `Vbeta`, `Vd`, `Vq`), I while shorted.
 
-## Sources
-
-`Motor/Motor/Phase_Input/Phase_ADC.h` (`Phase_ADC_IPuOf`, `Phase_ADC_VPuOf`, `Phase_Iabc_PuOfAdcu`), `Phase_Input/Phase_Input.h`, `ADC/Motor_ADC.h` (`Motor_ADC_CaptureIabc`), `VBus/VBus.h` (`VBus_Capture`, `VBus_ADC_Capture`), `Motor_FOC.c` (`Motor_FOC_CaptureI`, `Motor_FOC_AngleControl`, `_Motor_FOC_ProcTorqueReq`, `Motor_FOC_WriteDuty`, `Motor_FOC_ProcAngleV`), `Motor_FOC.h` (`_Motor_FOC_ProcIdReq`), `Math/FOC.h` (`FOC_SetTheta`, `FOC_ProcClarkePark`, `_FOC_ParkI`, `FOC_ProcIFeedback_Base`, `FOC_ProcInvClarkePark`, `FOC_ProcIdFieldWeakening`, `_FOC_VCircle`), `Math/foc_math.h`, `Math/svpwm_math.h` (`svpwm_norm_vbus_inv`, `svpwm_midclamp*`), `Phase/Phase_Svpwm.h` (`Phase_WriteSvpwm`), `Phase/Phase_VOut.c` (`Phase_WriteDuty`), `Phase/Phase_VOut.h` (`_Phase_SyncPwmDuty`), `Peripheral/PWM/PWM.h` (`_PWM_DutyTicksOf`, `PWM_DUTY_MAX`), `Peripheral/HAL/Platform/KE0x/HAL_PWM.h` (`HAL_PWM_WriteDuty`, `HAL_PWM_SyncModuleDuty`), `Motor/Motor/Motor_StateMachine.c` (`Run_Proc`), `Math/Ramp/Ramp.h`, `Math/PID/PID.c`.
-
 ## Not shown / open
 
 - The speed loop feeding `UserCmd`'s place (`Motor_ProcSpeedControlOf` on the speed tick) and the limit bands' sources: [LimitChain.md](LimitChain.md).

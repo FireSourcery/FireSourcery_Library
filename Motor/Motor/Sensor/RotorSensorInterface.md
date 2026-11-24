@@ -210,10 +210,6 @@ stateDiagram-v2
 
 The command-only encoder states ALIGN, VALIDATE_ALIGN and VALIDATE_CLOSED_LOOP mirror the START_UP_* chain and return to OPEN_LOOP instead of RUN. Every sub-state reports its root's id (`PATH_ID.Depth0`); sub-state ids are not allocated.
 
-## Sources
-
-`Motor/Motor/Sensor/RotorSensor.h` (`RotorSensor_VTable_T`, `RotorSensor_State_T`, `RotorSensor_UnitRef_T`, `RotorSensor_T`, `RotorSensor_Init`, `RotorSensor_InitUnitsFrom`, `_RotorSensor_SetDelta`, `_RotorSensor_SetSpeedPu`, `_Motor_Var_Rotor_Get`), `RotorSensor.c` (`MOTOR_SENSOR_VTABLE_EMPTY`), `RotorSensor_Table.h` (`RotorSensor_Id_T`, `RotorSensor_Table_T`, `RotorSensor_Of`, `RotorSensor_Validate`, the `*_ENABLE` defaults), `Motor_Sensor.h` (`MOTOR_SENSOR_TABLE_INIT_*`), `Motor_Sensor.c` (`Motor_Sensor_StartUpState`, `Motor_Sensor_FallbackState`), `Hall/Hall_Sensor.h` (`HALL_VTABLE` and its functions), `Encoder/Encoder_Sensor.c` (`ENCODER_VTABLE`), `SinCos/SinCos_Sensor.c` (`SIN_COS_VTABLE`), `Sensorless/Sensorless_Sensor.c` (`SENSORLESS_SENSOR_VTABLE`), `Hall/Motor_Hall.c` (`CALIBRATION_STATE_HALL`), `Encoder/Motor_Encoder.c` (homing, align, validate, start-up states), `SinCos/Motor_SinCos.c` (`CALIBRATION_STATE_SIN_COS`), `Sensorless/Motor_Sensorless.c` (`SENSORLESS_COAST`, `_ALIGN`, `_START_UP`, `_FALLBACK`), `Motor/Motor/Motor_Thread.h` (`Motor_PWM_Thread`, `Motor_CaptureSensor`, `Motor_CaptureStator`, `Motor_PollSpeed`), `Motor.c` (`Motor_Init`, `Motor_InitUnits`, `Motor_SetDirection`), `Motor_StateMachine.c` (`Init_Next`, `Passive_InputControl`, `_Motor_TransitionFeedbackLost`, `Intervention_InputControl`).
-
 ## Not shown / open
 
 - `RotorSensor_Table.h` turns `MOTOR_SENSOR_HALL_ENABLE` on when neither it nor `MOTOR_SENSOR_ENCODER_DISABLE` is defined; the second test reads as if `MOTOR_SENSOR_HALL_DISABLE` were meant. `RotorSensor_Of`'s HALL case and `ROTOR_SENSOR_ENABLED.HALL` are unconditional: the table has no build without Hall.
