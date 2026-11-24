@@ -6,9 +6,19 @@ The pattern is [Patterns/PlannedItemBrief.md](../Patterns/PlannedItemBrief.md). 
 (**Status**, Context, Design, Sketch, Done already, Open for you) and the lifecycle. The owner answers by ticking the
 boxes in **Open for you**. Applying an answer records the chosen option in the brief.
 
-**Landing** — the library keeps no dated log folder. A landed brief's outcome goes where its **Status** line names
-(a Decision, a convention, or a module's `.exp.md` record). The brief and its row here are then deleted. A brief
-abandoned instead of landed is recorded the same way, with the reason.
+**Landing** — the library keeps no dated log folder. A landed brief closes into a Decision in
+[../Decisions/](../Decisions/README.md): a new record, or a dated Amendment to the record it refines.
+- Context and Design condense into the record's Context.
+- The ticked boxes become the Decision, with the options not taken named as rejected.
+- Sketch and Done already are dropped: the code is the record of what was built.
+
+Two exceptions:
+- An outcome that is mechanism only, with no real alternatives, goes into the module's `.exp.md`.
+- A rule that applies across modules goes into `Docs/Conventions/`, with a short Decision as well if alternatives were
+  rejected.
+
+A brief abandoned instead of landed closes the same way, as a rejected record with the reason. That keeps the idea from
+being proposed again. The brief and its row here are then deleted.
 
 | Brief | About | Waits on |
 |---|---|---|

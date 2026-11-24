@@ -2,7 +2,7 @@
 
 Traction reaches each motor through a per-motor adapter on the Motor's own interface, and the controller's Traction leaves fan out over the motor table; Traction's input is not converted into a common `Motor_Input_T`.
 
-**Status** — accepted and implemented 2026-11-23.
+**Status** — accepted and implemented 2026-11-23; amended 2026-11-24 (signatures, below).
 
 **Context**
 
@@ -40,7 +40,7 @@ Traction reaches each motor through a per-motor adapter on the Motor's own inter
   | File | Holds |
   |---|---|
   | `Traction.h` / `.c` | The domain: input, command edges, lever math, config, ConfigId. No Motor headers. |
-  | `Motor_Traction.h` / `.c` | One motor: `Motor_Traction_*(Motor_T * p_motor, const Traction_T * p_vehicle, …)` through `Motor_User.h`, motor first as in `Motor_Cia402_*`. The header carries the mapping summary. |
+  | `Motor_Traction.h` / `.c` | One motor: `Motor_Traction_*(Motor_T * p_motor, const Traction_T * p_vehicle, …)` through `Motor_User.h`, motor first as in `Motor_Cia402_*`. The header carries the mapping summary. Signatures amended 2026-11-24, below. |
   | `MotorController_Traction.c` | The leaves. They run `Motor_Traction` over the motor table (`ForEachMotor`), and keep every decision that reads all the motors. |
 
 - The decisions that read every motor live in the leaves: the brake hold once no motor advances (`ApplyBrakeValue`,
@@ -58,3 +58,24 @@ Traction reaches each motor through a per-motor adapter on the Motor's own inter
 - Not ruled on: the commented sync-input sketch in `Motor_User.h` (`Motor_Input_T`, `Motor_ProcSyncInput`), which was
   meant for buffered synchronous input. This record rejects it only as Traction's interface. The commented
   `Traction_ToMotorInput` in `Traction.c` is the rejected form.
+
+**Amendment 2026-11-24 — signatures**
+
+The form stands; the signatures narrow. Where the Decision above shows `Motor_Traction_*(Motor_T *, const Traction_T *, …)`
+with a value parameter, it now reads as follows.
+
+- **Two layers, as in `Motor_Cia402`:**
+  - **Public:** every `Motor_Traction_*` takes `(Motor_T * p_motor, const Traction_T * p_traction)`, one signature.
+    The value functions read their value from `Traction_Input_T` (`ThrottleValue`, `LeverValue`, `BrakeValue`).
+  - **Protected:** `_Traction_ApplyThrottleValue`, `_Traction_ApplyLeverValue` and `_Traction_ApplyBrakeValue` take
+    `(Motor_T *, mode, value)`, the one config field each reads and the value. They are declared in `Motor_Traction.h`
+    under a Protected heading, with the leading underscore.
+- **Why:**
+  - One signature lets every leaf call go through `ForEachMotor`, which removes the separate loops for the throttle,
+    lever and brake values.
+  - The leaves read the same `Input` fields at the same moment as before, so behaviour is unchanged.
+  - The protected form covers a value that is not the input's: the release in `ZERO` writes throttle 0 through
+    `_Traction_ApplyThrottleValue`.
+- **Rejected:** keeping the value as a third parameter (two signatures, two fan-out forms in the leaves).
+- **Measured:** KE06 Release, a further 24 B smaller.
+- **Naming:** the parameter is `p_traction`, renamed from `p_vehicle`.

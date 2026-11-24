@@ -1,8 +1,14 @@
 # Decisions
 
-What we chose, and why. One record per decision. A record is not rewritten once accepted; a later
-record supersedes it. The format follows Nygard's architecture decision records ("Documenting
-Architecture Decisions", 2011).
+What we chose, and why. One record per decision. A record is not rewritten once accepted:
+- A refinement that keeps the decision is appended to the record as a dated **Amendment**, and the Status line notes
+  it.
+- A change of decision is a later record that supersedes it.
+
+The format follows Nygard's architecture decision records ("Documenting Architecture Decisions", 2011).
+
+Settled outcomes live here: accepted, rejected or superseded. An open question waits as a brief in
+[../Proposals/](../Proposals/README.md), and its outcome lands here.
 
 ---
 
@@ -41,6 +47,6 @@ Link the findings a decision rests on, in [../Findings/](../Findings/README.md).
 | [0010_SharedWordWrites.md](0010_SharedWordWrites.md) | Multi-word cross-thread values stay unguarded for now; each site carries the pointer here | Proposed, open |
 | [0011_StateMachineLockNesting.md](0011_StateMachineLockNesting.md) | The state-machine lock stays the raw disable/enable pair; decide with 0010 | Proposed, open |
 | [0012_VarEnumNaming.md](0012_VarEnumNaming.md) | The runtime var set is `Module_Var_T`; the config var set is proposed as `Module_ConfigVar_T`, the struct it indexes first and the kind last | Proposed, open |
-| [0013_TractionMotorAdapter.md](0013_TractionMotorAdapter.md) | Traction reaches each motor through `Motor_Traction` on the Motor's own interface; the leaves fan out and keep the all-motor decisions; no common `Motor_Input_T` | Accepted |
+| [0013_TractionMotorAdapter.md](0013_TractionMotorAdapter.md) | Traction reaches each motor through `Motor_Traction` on the Motor's own interface; the leaves fan out and keep the all-motor decisions; no common `Motor_Input_T` | Accepted, amended 2026-11-24 |
 
 Pending: `Peripheral/ADC/ADC_Batch_JoinVariants.md`, an open decision.

@@ -12,6 +12,8 @@ block — **Status**, **Context**, **Design** (drawn), **Sketch**, **Done alread
 boxes) — written when the block is deferred, the plan's seed at pickup, moved to the dated log when it lands.
 
 **Here** — instances live in `Docs/Proposals/`, created with its first deferred block (named `planned/` until 2026-11-22); its `README.md` indexes every
-entry with what each waits on. The app consumer keeps its own instances in its `doc/planned/`.
+entry with what each waits on. The app consumer keeps its own instances in its `doc/proposals/`. The library keeps no
+dated log: a landed brief closes into a Decision, a new record or a dated Amendment, by the landing rule in
+[Proposals/README.md](../Proposals/README.md) (since 2026-11-24).
 
 **Source** — none published; grown from this project's fill-out decision forms (2026-11-20) and their drift.

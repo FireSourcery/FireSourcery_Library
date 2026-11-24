@@ -126,7 +126,7 @@ static NvMemory_Status_T SaveEntry_Blocking(const MotNvm_T * p_motNvm, const Mot
 
 NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
 {
-    NvMemory_Status_T status;
+    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS; /* Without the flash erase, the loop writes it only on a failed entry */
 
 //    Critical_DisableIrq();
 #if defined(MOTOR_CONTROLLER_USER_NVM_FLASH)

@@ -51,11 +51,11 @@ void Motor_Traction_StartThrottleMode(Motor_T * p_motor, const Traction_T * p_tr
 // }
 
 /* if handle each value update with statemachine on input */
-void Motor_Traction_ApplyThrottleValue(Motor_T * p_motor, const Traction_T * p_traction, uint16_t userCmdThrottle)
+void _Traction_ApplyThrottleValue(Motor_T * p_motor, Traction_ThrottleMode_T mode, uint16_t userCmdThrottle)
 {
     int16_t cmdValue = (int32_t)userCmdThrottle / 2;
 
-    switch (p_traction->Config.ThrottleMode)
+    switch (mode)
     {
         case TRACTION_THROTTLE_MODE_SPEED:  Motor_SetSpeedMotoringCmd_Norm(p_motor->P_MOTOR, cmdValue);    break;
         case TRACTION_THROTTLE_MODE_TORQUE: Motor_SetICmd_Norm(p_motor->P_MOTOR, cmdValue);                break;
@@ -63,21 +63,29 @@ void Motor_Traction_ApplyThrottleValue(Motor_T * p_motor, const Traction_T * p_t
     }
 }
 
-
+void Motor_Traction_ApplyThrottleValue(Motor_T * p_motor, const Traction_T * p_traction)
+{
+    _Traction_ApplyThrottleValue(p_motor, p_traction->Config.ThrottleMode, p_traction->Input.ThrottleValue);
+}
 
 /*!
     User Forward frame, independent of the drive direction.
     Transition through zero speed is resolved by the Motor.
     @param[in] lever [-32768:32767]
 */
-void Motor_Traction_ApplyLeverValue(Motor_T * p_motor, const Traction_T * p_traction, int16_t lever)
+void _Traction_ApplyLeverValue(Motor_T * p_motor, Traction_ThrottleMode_T mode, int16_t lever)
 {
-    switch (p_traction->Config.ThrottleMode)
+    switch (mode)
     {
         case TRACTION_THROTTLE_MODE_SPEED:  Motor_SetSpeedCmd_Norm(p_motor->P_MOTOR, lever);     break;
         case TRACTION_THROTTLE_MODE_TORQUE: Motor_SetTorqueCmd_Norm(p_motor->P_MOTOR, lever);    break;
         default: break;
     }
+}
+
+void Motor_Traction_ApplyLeverValue(Motor_T * p_motor, const Traction_T * p_traction)
+{
+    _Traction_ApplyLeverValue(p_motor, p_traction->Config.ThrottleMode, p_traction->Input.LeverValue);
 }
 
 void Motor_Traction_StartBrakeMode(Motor_T * p_motor, const Traction_T * p_traction)
@@ -104,16 +112,21 @@ void Motor_Traction_StartBrakeMode(Motor_T * p_motor, const Traction_T * p_tract
 
     @param[in] brake [0:32767]
 */
-void Motor_Traction_ApplyBrakeValue(Motor_T * p_motor, const Traction_T * p_traction, uint16_t userCmdBrake)
+void _Traction_ApplyBrakeValue(Motor_T * p_motor, Traction_BrakeMode_T mode, uint16_t userCmdBrake)
 {
     int16_t cmdValue = 0 - ((int32_t)userCmdBrake / 2); // 32767 max
 
-    switch (p_traction->Config.BrakeMode)
+    switch (mode)
     {
         case TRACTION_BRAKE_MODE_TORQUE: Motor_SetICmd_Norm(p_motor->P_MOTOR, cmdValue); break; /* note: torqueRamp also written in voltage mode */
             // case TRACTION_BRAKE_MODE_VOLTAGE: Motor_SetRegenCmd(p_motor->P_MOTOR, 0); break;
         default: break;
     }
+}
+
+void Motor_Traction_ApplyBrakeValue(Motor_T * p_motor, const Traction_T * p_traction)
+{
+    _Traction_ApplyBrakeValue(p_motor, p_traction->Config.BrakeMode, p_traction->Input.BrakeValue);
 }
 
 /*
@@ -137,7 +150,7 @@ void Motor_Traction_StartDriveZero(Motor_T * p_motor, const Traction_T * p_tract
     switch (p_traction->Config.ZeroMode)
     {
         case TRACTION_ZERO_MODE_IZERO:   Motor_ApplyTorqueZero(p_motor);                                break;
-        case TRACTION_ZERO_MODE_ZERO:    Motor_Traction_ApplyThrottleValue(p_motor, p_traction, 0U);     break; /* The release edge carries no value */
+        case TRACTION_ZERO_MODE_ZERO:    _Traction_ApplyThrottleValue(p_motor, p_traction->Config.ThrottleMode, 0U);     break; /* The release edge carries no value */
         case TRACTION_ZERO_MODE_REGEN:   /* Traction_SetRegenMotorAll(p_this); not implemented, float */
         case TRACTION_ZERO_MODE_FLOAT:
         default: Motor_ApplyControlState(p_motor, PHASE_VOUT_Z); break;

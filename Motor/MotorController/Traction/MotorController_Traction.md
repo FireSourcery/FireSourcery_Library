@@ -10,7 +10,10 @@ the motor's `CW` / `CCW` by `Config.DirectionForward` in `Motor_ApplyUserDirecti
 Three files, as in CiA 402: `Traction.h` holds the input, its command edges and the config; `Motor_Traction.h` maps them
 onto one motor through the motor's interface; `MotorController_Traction.c` holds the leaves, which run `Motor_Traction`
 over the motor table and keep the decisions that read every motor: the brake hold once no motor advances
-(`ApplyBrakeValue`), a direction change at standstill (`Motor_Table_IsEverySpeedZero`). Why this form, and not a common
+(`ApplyBrakeValue`), a direction change at standstill (`Motor_Table_IsEverySpeedZero`). Every `Motor_Traction_*` takes
+`(Motor_T *, const Traction_T *)` and reads its value from `Traction_Input_T`, so each leaf call is one `ForEachMotor`.
+The protected `_Traction_Apply*(Motor_T *, mode, value)` take the one config field and the value, for a value that is
+not the input's: the release in `ZERO` writes throttle 0 through `_Traction_ApplyThrottleValue`. Why this form, and not a common
 `Motor_Input_T`: [0013_TractionMotorAdapter.md](../../../Docs/Decisions/0013_TractionMotorAdapter.md).
 
 ## Tree

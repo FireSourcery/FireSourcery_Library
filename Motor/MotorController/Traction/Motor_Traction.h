@@ -40,17 +40,35 @@
       Brake value         → TORQUE: Motor_SetICmd_Norm, minus value / 2
       Brake hold          → TORQUE: Motor_ApplySpeedZero. When, is the caller's
       Release (ZeroMode)  → IZERO: Motor_ApplyTorqueZero; ZERO: throttle value 0; FLOAT, REGEN: Motor_ApplyControlState Z
+
+    Two layers, as Motor_Cia402:
+      Outer   Motor_Traction_*(Motor_T *, const Traction_T *), one signature. The values come from [Traction_Input_T].
+      Inner   _Traction_Apply*(Motor_T *, mode, value), the one config field read and the value. For a value that is not the input's.
 */
 /******************************************************************************/
 #include "Traction.h"
 #include "Motor/Motor/Motor_User.h"
 
 
+/******************************************************************************/
+/*
+    Protected
+*/
+/******************************************************************************/
+extern void _Traction_ApplyThrottleValue(Motor_T * p_motor, Traction_ThrottleMode_T mode, uint16_t userCmdThrottle);
+extern void _Traction_ApplyLeverValue(Motor_T * p_motor, Traction_ThrottleMode_T mode, int16_t lever);
+extern void _Traction_ApplyBrakeValue(Motor_T * p_motor, Traction_BrakeMode_T mode, uint16_t userCmdBrake);
+
+/******************************************************************************/
+/*
+    Public
+*/
+/******************************************************************************/
 extern void Motor_Traction_StartThrottleMode(Motor_T * p_motor, const Traction_T * p_traction);
-extern void Motor_Traction_ApplyThrottleValue(Motor_T * p_motor, const Traction_T * p_traction, uint16_t userCmdThrottle);
-extern void Motor_Traction_ApplyLeverValue(Motor_T * p_motor, const Traction_T * p_traction, int16_t lever);
+extern void Motor_Traction_ApplyThrottleValue(Motor_T * p_motor, const Traction_T * p_traction);
+extern void Motor_Traction_ApplyLeverValue(Motor_T * p_motor, const Traction_T * p_traction);
 extern void Motor_Traction_StartBrakeMode(Motor_T * p_motor, const Traction_T * p_traction);
-extern void Motor_Traction_ApplyBrakeValue(Motor_T * p_motor, const Traction_T * p_traction, uint16_t userCmdBrake);
+extern void Motor_Traction_ApplyBrakeValue(Motor_T * p_motor, const Traction_T * p_traction);
 extern void Motor_Traction_ApplyBrakeHold(Motor_T * p_motor, const Traction_T * p_traction);
 extern void Motor_Traction_StartDriveZero(Motor_T * p_motor, const Traction_T * p_traction);
 extern void Motor_Traction_ProcRelease(Motor_T * p_motor, const Traction_T * p_traction);
